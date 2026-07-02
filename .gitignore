@@ -1,0 +1,25 @@
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Runtime and temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Node cache
+node_modules/
+
+# Local runtime outputs
+logs/*.log

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/task.schema.json",
+  "title": "Agent Runtime Task",
+  "type": "object",
+  "required": ["id", "title", "status", "created_at", "updated_at", "created_by", "source"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^task-[0-9]{8}-[0-9]{3,}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "running", "blocked", "finished", "failed"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "examples": ["console", "lark", "cron", "cli", "api"]
+    },
+    "assignee": {
+      "type": ["string", "null"]
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "urgent"],
+      "default": "normal"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "current_step": {
+      "type": ["string", "null"]
+    },
+    "summary": {
+      "type": ["string", "null"]
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "examples": ["file_written", "test_output", "diff_review", "screenshot", "external_confirmation", "blocker_report"]
+          },
+          "description": {
+            "type": "string"
+          },
+          "ref": {
+            "type": ["string", "null"]
+          }
+        }
+      }
+    },
+    "blocked_reason": {
+      "type": ["string", "null"],
+      "enum": [
+        "need_user_approval",
+        "need_user_input",
+        "permission_denied",
+        "tool_failed",
+        "network_error",
+        "policy_blocked",
+        "external_dependency",
+        "unclear_scope",
+        null
+      ]
+    },
+    "blocked_message": {
+      "type": ["string", "null"]
+    },
+    "failure_reason": {
+      "type": ["string", "null"]
+    },
+    "next_action": {
+      "type": ["string", "null"]
+    },
+    "parent_id": {
+      "type": ["string", "null"]
+    }
+  }
+}

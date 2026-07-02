@@ -1,0 +1,264 @@
+{
+  "version": 1,
+  "description": "Agent registry example for s-black harness engineering. This file is a routing reference only and does not invoke agents automatically.",
+  "agents": [
+    {
+      "id": "orchestrator",
+      "name": "Orchestrator",
+      "role": "Central planning agent for strategy, task routing, policy guardrails, and quality review.",
+      "enabled": true,
+      "workspace": "./workspaces/orchestrator",
+      "runtime": {
+        "kind": "qwenpaw_agent",
+        "call_method": "current_session_or_chat_with_agent",
+        "agent_id": "orchestrator",
+        "runner": null,
+        "command": null,
+        "workspace": "./workspaces/orchestrator"
+      },
+      "capabilities": ["planning", "quality_review", "policy_guardrail", "light_coding", "task_orchestration"],
+      "default_tasks": [
+        "Design runtime architecture",
+        "Draft policies, protocols, and documentation",
+        "Review delegated agent output",
+        "Handle high-risk preflight and completion checks"
+      ],
+      "avoid_tasks": [
+        "Long-running routine chores",
+        "Direct media generation when a specialist agent exists",
+        "Low-value tasks that do not need central review"
+      ],
+      "hard_boundaries": [
+        "Never expose secrets or private data",
+        "Require explicit approval before external publishing, deletion, push, proxy changes, or permission changes",
+        "Do not claim completion without evidence"
+      ],
+      "handoff": {
+        "can_receive_from": ["user"],
+        "can_delegate_to": ["media-agent", "memory-agent", "kimi-code", "claude-code", "omp"],
+        "default_reviewer": "orchestrator",
+        "requires_review": false
+      },
+      "cost_profile": {
+        "cost_level": "high",
+        "notes": "Use for planning, judgment, and review rather than routine execution."
+      },
+      "notes": [
+        "This agent owns project design and final review.",
+        "Coding tasks can be delegated to a lower-cost coding agent and reviewed here."
+      ]
+    },
+    {
+      "id": "media-agent",
+      "name": "Media Agent",
+      "role": "Content and media generation specialist.",
+      "enabled": true,
+      "workspace": "./workspaces/media-agent",
+      "runtime": {
+        "kind": "qwenpaw_agent",
+        "call_method": "chat_with_agent",
+        "agent_id": "media-agent",
+        "runner": null,
+        "command": null,
+        "workspace": "./workspaces/media-agent"
+      },
+      "capabilities": ["content_creation", "media_generation", "daily_ops", "web_search", "light_coding"],
+      "default_tasks": [
+        "Generate audio, video, image, or TTS content",
+        "Handle user-requested lightweight routine tasks",
+        "Collect and summarize simple web information"
+      ],
+      "avoid_tasks": [
+        "Secret management and high-risk permission decisions",
+        "Runtime architecture ownership",
+        "Deep engineering review"
+      ],
+      "hard_boundaries": [
+        "Do not modify another agent workspace without explicit handoff",
+        "Do not make high-risk external publishing decisions without review"
+      ],
+      "handoff": {
+        "can_receive_from": ["orchestrator", "user"],
+        "can_delegate_to": [],
+        "default_reviewer": "orchestrator",
+        "requires_review": true
+      },
+      "cost_profile": {
+        "cost_level": "medium",
+        "notes": "Use for media tasks when the artifact cost is acceptable."
+      },
+      "notes": [
+        "Best used for execution, not policy ownership."
+      ]
+    },
+    {
+      "id": "memory-agent",
+      "name": "Memory Agent",
+      "role": "Memory keeper for reading, distilling, storing, and answering memory-related questions.",
+      "enabled": true,
+      "workspace": "./workspaces/memory-agent",
+      "runtime": {
+        "kind": "qwenpaw_agent",
+        "call_method": "chat_with_agent",
+        "agent_id": "memory-agent",
+        "runner": null,
+        "command": null,
+        "workspace": "./workspaces/memory-agent"
+      },
+      "capabilities": ["memory_distillation", "quality_review"],
+      "default_tasks": [
+        "Review memory distillation rules",
+        "Answer memory lookup questions",
+        "Prepare cross-agent memory pointers"
+      ],
+      "avoid_tasks": [
+        "General execution tasks",
+        "External publishing or destructive operations",
+        "Engineering work unrelated to memory"
+      ],
+      "hard_boundaries": [
+        "Treat other agent workspaces as read-only unless ownership is explicitly handed off",
+        "Handle only memory-related work"
+      ],
+      "handoff": {
+        "can_receive_from": ["orchestrator", "user"],
+        "can_delegate_to": [],
+        "default_reviewer": "orchestrator",
+        "requires_review": true
+      },
+      "cost_profile": {
+        "cost_level": "medium",
+        "notes": "Use for memory governance rather than general execution."
+      },
+      "notes": [
+        "Long-term memory changes should be backed by source notes and review."
+      ]
+    },
+    {
+      "id": "kimi-code",
+      "name": "Kimi Code",
+      "role": "Preferred downstream agent for search, visual understanding, scripting, and mid-sized coding tasks.",
+      "enabled": true,
+      "workspace": "./workspaces/orchestrator",
+      "runtime": {
+        "kind": "acp_runner",
+        "call_method": "delegate_external_agent",
+        "agent_id": null,
+        "runner": "kimi_code",
+        "command": null,
+        "workspace": "./workspaces/orchestrator"
+      },
+      "capabilities": ["web_search", "light_coding", "heavy_coding", "vision", "tool_research"],
+      "default_tasks": [
+        "Default coding delegate",
+        "Web search and page reading",
+        "Mid-sized multi-file changes and technical investigation"
+      ],
+      "avoid_tasks": [
+        "Long-form fiction requiring a specific prose model",
+        "Publishing externally without orchestrator review"
+      ],
+      "hard_boundaries": [
+        "Do not bypass orchestrator review for high-risk operations",
+        "Do not claim completion before review when review is required"
+      ],
+      "handoff": {
+        "can_receive_from": ["orchestrator"],
+        "can_delegate_to": [],
+        "default_reviewer": "orchestrator",
+        "requires_review": true
+      },
+      "cost_profile": {
+        "cost_level": "low",
+        "notes": "Prefer for coding tasks when available and appropriate."
+      },
+      "notes": [
+        "Runner name is kimi_code in this example."
+      ]
+    },
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "role": "Specialist coding or writing delegate used only when its strengths justify the cost.",
+      "enabled": true,
+      "workspace": "./workspaces/orchestrator",
+      "runtime": {
+        "kind": "acp_runner",
+        "call_method": "delegate_external_agent",
+        "agent_id": null,
+        "runner": "claude_code",
+        "command": null,
+        "workspace": "./workspaces/orchestrator"
+      },
+      "capabilities": ["novel_writing", "heavy_coding", "quality_review"],
+      "default_tasks": [
+        "Long-form writing with strict style requirements",
+        "Deep engineering collaboration when explicitly selected"
+      ],
+      "avoid_tasks": [
+        "Routine coding",
+        "Simple search or scripting",
+        "Long-running tasks without cost review"
+      ],
+      "hard_boundaries": [
+        "Use cautiously when cost is high",
+        "Do not bypass orchestrator review"
+      ],
+      "handoff": {
+        "can_receive_from": ["orchestrator"],
+        "can_delegate_to": [],
+        "default_reviewer": "orchestrator",
+        "requires_review": true
+      },
+      "cost_profile": {
+        "cost_level": "high",
+        "notes": "Reserve for tasks that justify a more expensive delegate."
+      },
+      "notes": [
+        "This is an example entry; adapt it to your actual runner configuration."
+      ]
+    },
+    {
+      "id": "omp",
+      "name": "OMP / pi",
+      "role": "Engineering collaboration and model-routing delegate.",
+      "enabled": true,
+      "workspace": "./workspaces/orchestrator",
+      "runtime": {
+        "kind": "acp_runner",
+        "call_method": "delegate_external_agent",
+        "agent_id": null,
+        "runner": "omp",
+        "command": null,
+        "workspace": "./workspaces/orchestrator"
+      },
+      "capabilities": ["light_coding", "heavy_coding", "web_search", "tool_research"],
+      "default_tasks": [
+        "Engineering tasks that benefit from LSP or model routing",
+        "Technical investigation with tooling",
+        "Fallback coding delegate"
+      ],
+      "avoid_tasks": [
+        "Tasks that do not need engineering collaboration",
+        "Long-running tasks with unclear model cost"
+      ],
+      "hard_boundaries": [
+        "Do not use as the default when a simpler delegate is enough",
+        "Consider token cost before long-running work"
+      ],
+      "handoff": {
+        "can_receive_from": ["orchestrator"],
+        "can_delegate_to": [],
+        "default_reviewer": "orchestrator",
+        "requires_review": true
+      },
+      "cost_profile": {
+        "cost_level": "medium",
+        "notes": "Cost depends on the configured underlying model."
+      },
+      "notes": [
+        "This is an example ACP runner entry."
+      ]
+    }
+  ]
+}

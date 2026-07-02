@@ -1,0 +1,150 @@
+{
+  "version": 1,
+  "name": "wangcai-sample-policy",
+  "description": "Media Agent工作区样例 policy，重点约束 MiniMax 创作产物、轻量日常任务、外发动作和跨工作区边界。",
+  "owners": ["wangcai"],
+  "path_rules": [
+    {
+      "id": "wangcai-workspace-default",
+      "title": "Media Agent默认工作区",
+      "severity": "info",
+      "action": "log_only",
+      "match": {
+        "path_prefix": "./workspaces/media-agent/"
+      },
+      "message": "Media Agent默认在自己的工作区内处理日常任务和 MiniMax 创作。"
+    },
+    {
+      "id": "s-black-sensitive-readonly-for-wangcai",
+      "title": "Media Agent不得改写Orchestrator敏感工作区",
+      "severity": "block",
+      "action": "deny",
+      "match": {
+        "path_prefix": "./workspaces/orchestrator/"
+      },
+      "constraints": {
+        "readonly": true
+      },
+      "message": "Media Agent不得改写Orchestrator工作区；如需协作，应由Orchestrator接收结果后自行落盘。"
+    },
+    {
+      "id": "minimax-media-assets-only",
+      "title": "MiniMax 输出目录只放媒体资产",
+      "severity": "warn",
+      "action": "require_postflight",
+      "match": {
+        "path_contains": ["minimax", "output"]
+      },
+      "constraints": {
+        "allow_extensions": [".mp3", ".wav", ".mp4", ".mov", ".png", ".jpg", ".jpeg", ".webp", ".json", ".md"]
+      },
+      "message": "MiniMax 输出目录应只放媒体资产、结果 metadata 或必要说明文档。"
+    },
+    {
+      "id": "received-readonly",
+      "title": "用户原始来件只读",
+      "severity": "block",
+      "action": "deny",
+      "match": {
+        "path_contains": ["received/"]
+      },
+      "constraints": {
+        "readonly": true
+      },
+      "message": "received 目录中的用户原始来件默认只读，不得覆盖或清理。"
+    }
+  ],
+  "secret_patterns": [
+    {
+      "id": "openai-style-key",
+      "title": "OpenAI 风格密钥",
+      "severity": "block",
+      "action": "deny",
+      "regex": "sk-[A-Za-z0-9]{20,}",
+      "message": "文本中疑似包含 OpenAI 风格密钥，必须脱敏后再继续。"
+    },
+    {
+      "id": "github-token",
+      "title": "GitHub Token",
+      "severity": "block",
+      "action": "deny",
+      "regex": "ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{50,}",
+      "message": "文本中疑似包含 GitHub Token，必须脱敏后再继续。"
+    },
+    {
+      "id": "minimax-key",
+      "title": "MiniMax Key",
+      "severity": "block",
+      "action": "deny",
+      "regex": "mkt_[A-Za-z0-9]{20,}",
+      "message": "文本中疑似包含 MiniMax Key，必须脱敏后再继续。"
+    },
+    {
+      "id": "generic-bearer-token",
+      "title": "Bearer Token",
+      "severity": "block",
+      "action": "deny",
+      "regex": "Bearer\\s+[A-Za-z0-9._~+/-]{30,}",
+      "message": "文本中疑似包含 Bearer Token，必须脱敏后再继续。"
+    }
+  ],
+  "command_rules": [
+    {
+      "id": "external-send",
+      "title": "外部发送",
+      "severity": "block",
+      "action": "require_user_approval",
+      "regex": "\\b(lark-cli|himalaya|curl|gh)\\b.*\\b(send|create|comment|post|upload)\\b",
+      "postflight_required": true,
+      "message": "Media Agent执行外部发送或上传前必须确认目标和用户授权。"
+    },
+    {
+      "id": "delete-tree",
+      "title": "递归删除",
+      "severity": "block",
+      "action": "require_user_approval",
+      "regex": "\\b(rm\\s+-rf|rmdir\\s+/s)\\b",
+      "postflight_required": true,
+      "message": "递归删除属于高风险动作，必须先确认目标，优先使用可恢复删除。"
+    },
+    {
+      "id": "git-push",
+      "title": "Git Push",
+      "severity": "block",
+      "action": "require_user_approval",
+      "regex": "\\bgit\\s+push\\b",
+      "postflight_required": true,
+      "message": "git push 会离开本地，必须先确认目标、审查 diff、扫描密钥，并取得用户授权。"
+    }
+  ],
+  "publish_rules": [
+    {
+      "id": "lark-send-target-confirmed",
+      "title": "飞书发送目标确认",
+      "severity": "block",
+      "action": "require_user_approval",
+      "applies_to": ["lark_message"],
+      "required_checks": ["target_confirmed", "user_approval"],
+      "message": "飞书发送前必须确认 chat_id 与当前会话，不得用 user-id 猜测替代。"
+    },
+    {
+      "id": "media-publish-preflight",
+      "title": "媒体产物外发前检查",
+      "severity": "block",
+      "action": "require_secret_scan",
+      "applies_to": ["media_upload", "lark_message", "email"],
+      "required_checks": ["secret_scan", "target_confirmed", "user_approval", "artifact_exists"],
+      "message": "媒体产物外发前必须确认目标、产物存在且不含敏感信息。"
+    }
+  ],
+  "completion_rules": [
+    {
+      "id": "media-artifact-required",
+      "title": "创作任务必须有产物",
+      "severity": "warn",
+      "action": "require_postflight",
+      "required_evidence": ["file_written", "external_confirmation", "blocker_report"],
+      "message": "MiniMax 创作任务完成前必须提供产物路径、外部确认或明确 blocker。"
+    }
+  ]
+}

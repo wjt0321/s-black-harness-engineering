@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "name": "s-black-sample-policy",
+  "description": "Orchestrator工作区样例 policy，来自现有 harness POC 的上提抽象。",
+  "owners": ["s-black"],
+  "path_rules": [
+    {
+      "id": "image-prompts-flat-md",
+      "title": "image-prompts 保持扁平 Markdown 模板库",
+      "severity": "block",
+      "action": "deny",
+      "match": {
+        "path_prefix": "image-prompts/"
+      },
+      "constraints": {
+        "deny_directories": true,
+        "allow_extensions": [".md"]
+      },
+      "message": "image-prompts 是扁平提示词/模板库，默认只放编号 Markdown 文件。"
+    },
+    {
+      "id": "design-templates-website-only",
+      "title": "design-templates 只放网页和落地页模板",
+      "severity": "block",
+      "action": "deny",
+      "match": {
+        "path_prefix": "design-templates/",
+        "keywords_deny": ["cover", "封面", "prompt", "提示词", "头像", "生图"]
+      },
+      "message": "design-templates 用于网页/落地页设计模板，封面和生图提示词应放入 image-prompts。"
+    },
+    {
+      "id": "image-output-assets-only",
+      "title": "image-output 只放生成图片资产",
+      "severity": "block",
+      "action": "deny",
+      "match": {
+        "path_prefix": "image-output/"
+      },
+      "constraints": {
+        "allow_extensions": [".png", ".jpg", ".jpeg", ".webp", ".gif"]
+      },
+      "message": "image-output 只用于生成图片资产，不放提示词、模板或文档。"
+    },
+    {
+      "id": "competition-notes-readonly",
+      "title": "比赛目录只读",
+      "severity": "block",
+      "action": "deny",
+      "match": {
+        "path_prefix": "D:/competition_notes/"
+      },
+      "constraints": {
+        "readonly": true
+      },
+      "message": "D:/competition_notes 当前是只读审核区，未经用户明确同意不得写入。"
+    }
+  ],
+  "secret_patterns": [
+    {
+      "id": "openai-style-key",
+      "title": "OpenAI 风格密钥",
+      "severity": "block",
+      "action": "deny",
+      "regex": "sk-[A-Za-z0-9]{20,}",
+      "message": "文本中疑似包含 OpenAI 风格密钥，必须脱敏后再继续。"
+    },
+    {
+      "id": "github-token",
+      "title": "GitHub Token",
+      "severity": "block",
+      "action": "deny",
+      "regex": "ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{50,}",
+      "message": "文本中疑似包含 GitHub Token，必须脱敏后再继续。"
+    },
+    {
+      "id": "tavily-key",
+      "title": "Tavily Key",
+      "severity": "block",
+      "action": "deny",
+      "regex": "tvly-(dev-)?[A-Za-z0-9_-]{20,}",
+      "message": "文本中疑似包含 Tavily Key，必须脱敏后再继续。"
+    },
+    {
+      "id": "minimax-key",
+      "title": "MiniMax Key",
+      "severity": "block",
+      "action": "deny",
+      "regex": "mkt_[A-Za-z0-9]{20,}",
+      "message": "文本中疑似包含 MiniMax Key，必须脱敏后再继续。"
+    },
+    {
+      "id": "generic-bearer-token",
+      "title": "Bearer Token",
+      "severity": "block",
+      "action": "deny",
+      "regex": "Bearer\\s+[A-Za-z0-9._~+/-]{30,}",
+      "message": "文本中疑似包含 Bearer Token，必须脱敏后再继续。"
+    }
+  ],
+  "command_rules": [
+    {
+      "id": "delete-tree",
+      "title": "递归删除",
+      "severity": "block",
+      "action": "require_user_approval",
+      "regex": "\\b(rm\\s+-rf|rmdir\\s+/s)\\b",
+      "postflight_required": true,
+      "message": "递归删除属于高风险动作，必须先确认目标，优先使用可恢复删除。"
+    },
+    {
+      "id": "git-push",
+      "title": "Git Push",
+      "severity": "block",
+      "action": "require_user_approval",
+      "regex": "\\bgit\\s+push\\b",
+      "postflight_required": true,
+      "message": "git push 会离开本地，必须先确认目标、审查 diff、扫描密钥，并取得用户授权。"
+    },
+    {
+      "id": "gh-publish",
+      "title": "GitHub 发文",
+      "severity": "block",
+      "action": "require_secret_scan",
+      "regex": "\\bgh\\s+(issue|pr)\\s+(create|comment|edit)\\b",
+      "postflight_required": true,
+      "message": "GitHub 发文前必须扫描正文密钥，并使用标准 Markdown。"
+    },
+    {
+      "id": "proxy-change",
+      "title": "系统代理变更",
+      "severity": "block",
+      "action": "require_user_approval",
+      "regex": "\\b(reg\\s+add|netsh\\s+winhttp|ProxyEnable)\\b",
+      "postflight_required": true,
+      "message": "系统代理变更可能影响用户网络，必须取得授权并在结束后验证恢复。"
+    },
+    {
+      "id": "force-kill",
+      "title": "强杀进程",
+      "severity": "block",
+      "action": "require_user_approval",
+      "regex": "\\btaskkill\\b.*\\s/f\\b",
+      "postflight_required": true,
+      "message": "强杀进程属于高风险动作，必须确认目标进程和影响范围。"
+    }
+  ],
+  "publish_rules": [
+    {
+      "id": "github-publish-preflight",
+      "title": "GitHub 发布前检查",
+      "severity": "block",
+      "action": "require_secret_scan",
+      "applies_to": ["gh_issue", "gh_pr", "git_push"],
+      "required_checks": ["secret_scan", "markdown_format", "target_confirmed", "user_approval"],
+      "message": "GitHub 发布前必须完成密钥扫描、Markdown 格式检查、目标确认和用户授权。"
+    },
+    {
+      "id": "lark-send-target-confirmed",
+      "title": "飞书发送目标确认",
+      "severity": "block",
+      "action": "require_user_approval",
+      "applies_to": ["lark_message"],
+      "required_checks": ["target_confirmed", "user_approval"],
+      "message": "飞书发送前必须确认 chat_id 与当前会话，不得用 user-id 猜测替代。"
+    }
+  ],
+  "completion_rules": [
+    {
+      "id": "completion-evidence-required",
+      "title": "完成必须有证据",
+      "severity": "warn",
+      "action": "require_postflight",
+      "required_evidence": ["file_written", "test_output", "diff_review", "screenshot", "blocker_report"],
+      "message": "交付前必须至少提供一种完成证据，不能只凭口头结果宣称完成。"
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/policy.schema.json",
+  "title": "Agent Runtime Policy",
+  "type": "object",
+  "required": ["version", "name"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "owners": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "path_rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/path_rule" }
+    },
+    "secret_patterns": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/secret_pattern" }
+    },
+    "command_rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/command_rule" }
+    },
+    "publish_rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/publish_rule" }
+    },
+    "completion_rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/completion_rule" }
+    }
+  },
+  "$defs": {
+    "severity": {
+      "type": "string",
+      "enum": ["block", "warn", "info"]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "deny",
+        "require_user_approval",
+        "require_secret_scan",
+        "require_postflight",
+        "suggest_route",
+        "log_only"
+      ]
+    },
+    "base_rule_properties": {
+      "type": "object",
+      "required": ["id", "title", "severity", "action", "message"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "severity": { "$ref": "#/$defs/severity" },
+        "action": { "$ref": "#/$defs/action" },
+        "message": { "type": "string", "minLength": 1 },
+        "enabled": { "type": "boolean", "default": true }
+      }
+    },
+    "path_match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path_prefix": { "type": "string" },
+        "path_contains": { "type": "array", "items": { "type": "string" } },
+        "name_patterns": { "type": "array", "items": { "type": "string" } },
+        "extensions": { "type": "array", "items": { "type": "string" } },
+        "keywords_deny": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "path_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "readonly": { "type": "boolean" },
+        "deny_directories": { "type": "boolean" },
+        "allow_extensions": { "type": "array", "items": { "type": "string" } },
+        "deny_extensions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "path_rule": {
+      "allOf": [
+        { "$ref": "#/$defs/base_rule_properties" },
+        {
+          "type": "object",
+          "required": ["match"],
+          "properties": {
+            "match": { "$ref": "#/$defs/path_match" },
+            "constraints": { "$ref": "#/$defs/path_constraints" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "secret_pattern": {
+      "allOf": [
+        { "$ref": "#/$defs/base_rule_properties" },
+        {
+          "type": "object",
+          "required": ["regex"],
+          "properties": {
+            "regex": { "type": "string", "minLength": 1 }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "command_rule": {
+      "allOf": [
+        { "$ref": "#/$defs/base_rule_properties" },
+        {
+          "type": "object",
+          "required": ["regex"],
+          "properties": {
+            "regex": { "type": "string", "minLength": 1 },
+            "postflight_required": { "type": "boolean" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "publish_rule": {
+      "allOf": [
+        { "$ref": "#/$defs/base_rule_properties" },
+        {
+          "type": "object",
+          "required": ["applies_to", "required_checks"],
+          "properties": {
+            "applies_to": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "required_checks": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "completion_rule": {
+      "allOf": [
+        { "$ref": "#/$defs/base_rule_properties" },
+        {
+          "type": "object",
+          "required": ["required_evidence"],
+          "properties": {
+            "required_evidence": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

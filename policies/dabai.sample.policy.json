@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "name": "dabai-sample-policy",
+  "description": "Memory Agent工作区样例 policy，重点约束记忆守护边界、只读原则、跨 Agent 记忆归档和敏感信息保护。",
+  "owners": ["dabai"],
+  "path_rules": [
+    {
+      "id": "dabai-workspace-default",
+      "title": "Memory Agent默认工作区",
+      "severity": "info",
+      "action": "log_only",
+      "match": {
+        "path_prefix": "./workspaces/memory-agent/"
+      },
+      "message": "Memory Agent默认在自己的工作区内处理记忆整理、候选归档和问答材料。"
+    },
+    {
+      "id": "other-agent-workspace-readonly",
+      "title": "其他 Agent 工作区只读",
+      "severity": "block",
+      "action": "deny",
+      "match": {
+        "path_contains": ["./workspaces/orchestrator/", "./workspaces/media-agent/"]
+      },
+      "constraints": {
+        "readonly": true
+      },
+      "message": "Memory Agent对Orchestrator和Media Agent工作区默认只读；如需修改，应输出建议或候选，由对应 Agent 落盘。"
+    },
+    {
+      "id": "memory-core-no-overwrite",
+      "title": "长期记忆不得覆盖重写",
+      "severity": "block",
+      "action": "require_user_approval",
+      "match": {
+        "path_contains": ["MEMORY.md"]
+      },
+      "message": "长期记忆不得批量覆盖、压缩或删减；只能在备份后增量追加，且需由所属 Agent 确认。"
+    },
+    {
+      "id": "sensitive-candidates-private",
+      "title": "敏感候选只留私有记忆区",
+      "severity": "warn",
+      "action": "require_postflight",
+      "match": {
+        "path_contains": ["memory/candidates/", "memory/decisions/", "memory/projects/"]
+      },
+      "message": "记忆候选、决策和项目线索应避免包含原始密钥、隐私内容或可公开仓库不应同步的信息。"
+    }
+  ],
+  "secret_patterns": [
+    {
+      "id": "openai-style-key",
+      "title": "OpenAI 风格密钥",
+      "severity": "block",
+      "action": "deny",
+      "regex": "sk-[A-Za-z0-9]{20,}",
+      "message": "记忆材料中疑似包含 OpenAI 风格密钥，必须改为指针或脱敏描述。"
+    },
+    {
+      "id": "github-token",
+      "title": "GitHub Token",
+      "severity": "block",
+      "action": "deny",
+      "regex": "ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{50,}",
+      "message": "记忆材料中疑似包含 GitHub Token，必须改为指针或脱敏描述。"
+    },
+    {
+      "id": "tavily-key",
+      "title": "Tavily Key",
+      "severity": "block",
+      "action": "deny",
+      "regex": "tvly-(dev-)?[A-Za-z0-9_-]{20,}",
+      "message": "记忆材料中疑似包含 Tavily Key，必须改为指针或脱敏描述。"
+    },
+    {
+      "id": "generic-bearer-token",
+      "title": "Bearer Token",
+      "severity": "block",
+      "action": "deny",
+      "regex": "Bearer\\s+[A-Za-z0-9._~+/-]{30,}",
+      "message": "记忆材料中疑似包含 Bearer Token，必须改为指针或脱敏描述。"
+    }
+  ],
+  "command_rules": [
+    {
+      "id": "delete-or-rewrite-memory",
+      "title": "删除或重写记忆文件",
+      "severity": "block",
+      "action": "require_user_approval",
+      "regex": "\\b(del|erase|rm|rmdir|move|copy)\\b.*\\b(MEMORY\\.md|memory[/\\\\])",
+      "postflight_required": true,
+      "message": "删除、移动或覆盖记忆文件属于高风险动作，必须先备份并取得所属 Agent 或用户确认。"
+    },
+    {
+      "id": "git-push-memory",
+      "title": "记忆相关内容 push",
+      "severity": "block",
+      "action": "require_secret_scan",
+      "regex": "\\bgit\\s+push\\b",
+      "postflight_required": true,
+      "message": "记忆相关内容 push 前必须扫描密钥和隐私内容，并取得用户明确授权。"
+    },
+    {
+      "id": "external-send-memory",
+      "title": "记忆材料外发",
+      "severity": "block",
+      "action": "require_user_approval",
+      "regex": "\\b(lark-cli|himalaya|curl|gh)\\b.*\\b(send|create|comment|post|upload)\\b",
+      "postflight_required": true,
+      "message": "记忆材料外发前必须确认目标、脱敏并取得用户授权。"
+    }
+  ],
+  "publish_rules": [
+    {
+      "id": "memory-publish-preflight",
+      "title": "记忆内容外发前检查",
+      "severity": "block",
+      "action": "require_secret_scan",
+      "applies_to": ["lark_message", "email", "gh_issue", "gh_pr", "git_push"],
+      "required_checks": ["secret_scan", "privacy_review", "target_confirmed", "user_approval"],
+      "message": "记忆内容外发前必须完成密钥扫描、隐私审查、目标确认和用户授权。"
+    }
+  ],
+  "completion_rules": [
+    {
+      "id": "memory-distillation-evidence-required",
+      "title": "记忆蒸馏必须有来源和去向",
+      "severity": "warn",
+      "action": "require_postflight",
+      "required_evidence": ["source_notes", "file_written", "reviewed_by_owner", "blocker_report"],
+      "message": "记忆蒸馏完成前必须说明来源、去向、是否经所属 Agent 核对，或给出明确 blocker。"
+    }
+  ]
+}

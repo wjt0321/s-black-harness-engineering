@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/event.schema.json",
+  "title": "Agent Runtime Task Event",
+  "type": "object",
+  "required": ["event_id", "task_id", "timestamp", "actor", "event_type", "message"],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^evt-[0-9]{8}-[0-9]{3,}$"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^task-[0-9]{8}-[0-9]{3,}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "created",
+        "status_changed",
+        "assigned",
+        "progress",
+        "blocked",
+        "unblocked",
+        "artifact_added",
+        "evidence_added",
+        "finished",
+        "failed"
+      ]
+    },
+    "from_status": {
+      "type": ["string", "null"],
+      "enum": ["planned", "running", "blocked", "finished", "failed", null]
+    },
+    "to_status": {
+      "type": ["string", "null"],
+      "enum": ["planned", "running", "blocked", "finished", "failed", null]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
