@@ -7,7 +7,7 @@ The long-term Agent Runtime project lives outside the primary agent workspace.
 For the current local development environment, the working directory is:
 
 ```text
-D:\agent-runtime
+<local-project-root>
 ```
 
 ## Rationale

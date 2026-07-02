@@ -2,7 +2,7 @@
 
 ## 2026-07-02
 
-- 创建项目根目录：`D:\agent-runtime`。
+- 创建项目根目录：本地 checkout 目录。
 - 创建初始目录：`docs/`、`policies/`、`adapters/`、`tasks/`、`logs/`、`decisions/`、`notes/`。
 - 写入首批框架文件：README、愿景与边界、路线图、进度账本、项目位置决策。
 - 当前阶段：Stage 0 — 项目骨架。
