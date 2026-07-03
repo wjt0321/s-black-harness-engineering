@@ -123,19 +123,19 @@ def test_cli_policies_list_profile(capsys):
 
 
 def test_cli_task_status(capsys):
-    code = main(["--root", str(ROOT), "task", "status", "task-20260702-001"])
+    code = main(["--root", str(ROOT), "task", "status", "task-20260703-001"])
     captured = capsys.readouterr()
     assert code == 0
-    assert "Task: task-20260702-001" in captured.out
+    assert "Task: task-20260703-001" in captured.out
     assert "Status: finished" in captured.out
-    assert "docs/03-policy-schema.md" in captured.out
+    assert "agent_runtime/tasks.py" in captured.out
 
 
 def test_cli_task_status_json(capsys):
-    code = main(["--root", str(ROOT), "task", "status", "task-20260702-001", "--json"])
+    code = main(["--root", str(ROOT), "task", "status", "task-20260703-001", "--json"])
     captured = capsys.readouterr()
     assert code == 0
-    assert '"id": "task-20260702-001"' in captured.out
+    assert '"id": "task-20260703-001"' in captured.out
     assert '"status": "finished"' in captured.out
 
 
@@ -148,7 +148,7 @@ def test_cli_task_status_missing(capsys):
 
 
 def test_cli_task_events(capsys):
-    code = main(["--root", str(ROOT), "task", "events", "task-20260702-001"])
+    code = main(["--root", str(ROOT), "task", "events", "task-20260703-001"])
     captured = capsys.readouterr()
     assert code == 0
     assert "created" in captured.out

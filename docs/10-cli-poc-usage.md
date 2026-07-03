@@ -146,7 +146,7 @@ python -m agent_runtime.cli task status task-20260702-001
 python -m agent_runtime.cli task events task-20260702-001
 ```
 
-当前命令只读取 `tasks/tasks.jsonl`、`tasks/events.jsonl` 或仓库内示例 JSONL；不会写入真实任务账本。
+当前命令优先读取 `tasks/tasks.jsonl` 与 `tasks/events.jsonl`；如果真实 ledger 不存在，才回退到仓库内 `.examples.jsonl`。CLI 仍然只读，不会写入真实任务账本。
 
 JSON 输出：
 

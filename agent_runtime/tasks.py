@@ -8,8 +8,10 @@ from typing import Any
 from .loader import load_jsonl, normalize_path
 
 
-TASK_FILES = ("tasks/tasks.jsonl", "tasks/examples.jsonl")
-EVENT_FILES = ("tasks/events.jsonl", "tasks/events.examples.jsonl", "tasks/policy-event.examples.jsonl")
+TASK_FILES = ("tasks/tasks.jsonl",)
+TASK_FALLBACK_FILES = ("tasks/examples.jsonl",)
+EVENT_FILES = ("tasks/events.jsonl",)
+EVENT_FALLBACK_FILES = ("tasks/events.examples.jsonl", "tasks/policy-event.examples.jsonl")
 
 
 def _load_records(root: Path, relative_paths: tuple[str, ...]) -> list[dict[str, Any]]:
@@ -27,13 +29,15 @@ def _load_records(root: Path, relative_paths: tuple[str, ...]) -> list[dict[str,
 
 
 def load_tasks(root: Path) -> list[dict[str, Any]]:
-    """Load task snapshots from real ledger files first, then examples."""
-    return _load_records(root, TASK_FILES)
+    """Load real task snapshots, falling back to examples when no ledger exists."""
+    records = _load_records(root, TASK_FILES)
+    return records if records else _load_records(root, TASK_FALLBACK_FILES)
 
 
 def load_events(root: Path) -> list[dict[str, Any]]:
-    """Load task events from real ledger files first, then examples."""
-    return _load_records(root, EVENT_FILES)
+    """Load real task events, falling back to examples when no ledger exists."""
+    records = _load_records(root, EVENT_FILES)
+    return records if records else _load_records(root, EVENT_FALLBACK_FILES)
 
 
 def find_task(root: Path, task_id: str) -> dict[str, Any] | None:
