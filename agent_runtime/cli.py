@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from .adapter_plan import PlanResult, plan_adapter_action
+from .adapter_validation import validate_envelope_file
 from .doctor import run_doctor
 from .loader import load_adapters, load_agents, load_policies, discover_policies, normalize_path
 from .policy import check_action, check_path, check_text
@@ -171,6 +172,12 @@ def _emit_plan_result(result: PlanResult, json_output: bool) -> int:
         if result.envelope is not None:
             print(json.dumps(result.envelope, ensure_ascii=False, indent=2))
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_adapter_validate(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result = validate_envelope_file(root, args.file)
+    return emit(result, json_output=args.json, no_color=args.no_color)
 
 
 def _cmd_agents_list(args: argparse.Namespace) -> int:
@@ -351,6 +358,11 @@ def build_parser() -> argparse.ArgumentParser:
     adapter_plan_parser.add_argument("--task-id", default=None, help="Explicit task id")
     _add_global_args(adapter_plan_parser)
     adapter_plan_parser.set_defaults(func=_cmd_adapter_plan)
+
+    adapter_validate_parser = adapter_subparsers.add_parser("validate", help="Validate an adapter execution envelope JSON file")
+    adapter_validate_parser.add_argument("--file", required=True, help="Path to envelope JSON file")
+    _add_global_args(adapter_validate_parser)
+    adapter_validate_parser.set_defaults(func=_cmd_adapter_validate)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

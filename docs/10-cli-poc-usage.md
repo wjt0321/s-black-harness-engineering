@@ -257,6 +257,29 @@ python -m agent_runtime.cli --agent orchestrator adapter plan \
   --task-id task-20260703-001
 ```
 
+## Adapter Execution Envelope 校验
+
+`adapter validate` 用于只读校验已有的 adapter execution envelope JSON 文件是否符合 `adapters/execution-envelope.schema.json`。它不会执行 adapter、不会访问网络、不会写入 ledger。
+
+```bash
+python -m agent_runtime.cli adapter validate \
+  --file adapters/execution-envelope.examples.json
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli adapter validate \
+  --file adapters/execution-envelope.examples.json \
+  --json
+```
+
+校验规则：
+
+- 文件必须在项目根目录内。
+- 文件必须是安全的 `.json` 文件；不允许 `.env`、credential、密钥类文件。
+- 失败时只输出相对路径、schema 错误路径/规则和简短摘要，不回显整条 artifact 或敏感值。
+
 ## Registry 查询
 
 列出 Agent：

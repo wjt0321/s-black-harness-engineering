@@ -162,3 +162,13 @@
 - 已跑 `python -m pytest`：91 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+- 新增只读 `adapter validate` CLI 命令，用于校验 Adapter execution envelope JSON 文件。
+- 新增 `agent_runtime/adapter_validation.py`：检查文件位于项目根目录内且为安全 `.json` 文件，使用 `jsonschema` 校验整个 envelope，失败时只输出相对路径、schema 错误路径/规则和简短摘要，不回显整条 artifact 或敏感值。
+- 更新 `agent_runtime/cli.py`：在 `adapter` 子命令下新增 `validate`，支持 `--file` 与 `--json`。
+- 命令保持只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- 补充 `tests/test_adapter_validate.py`，覆盖：valid examples PASS、invalid JSON、schema invalid、outside-root、unsafe file、非 JSON 扩展名、JSON 输出、不写 ledger。
+- 更新 `docs/10-cli-poc-usage.md` 与 `tasks/progress.md`，记录 `adapter validate` 用法。
+- 已跑 `python -m pytest`：99 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
