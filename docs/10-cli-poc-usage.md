@@ -246,17 +246,44 @@ python -m agent_runtime.cli adapters list --risk external
 python -m agent_runtime.cli policies list
 ```
 
+列出 Policy（自动按 agent 选择 profile）：
+
+```bash
+python -m agent_runtime.cli --agent orchestrator policies list
+python -m agent_runtime.cli --assignee media-agent policies list
+```
+
 ## 全局参数
 
 | 参数 | 说明 |
 |:---|:---|
 | `--root <path>` | 指定项目根目录，默认当前目录 |
-| `--policy <file>` | 指定单个 policy 文件，优先于 policy profile |
-| `--policy-profile <name>` | 指定样例 policy profile：`s-black`、`wangcai`、`dabai` 或 `all`，默认 `all` |
+| `--policy <file>` | 指定单个 policy 文件，最高优先级 |
+| `--policy-profile <name>` | 指定样例 policy profile：`s-black`、`wangcai`、`dabai` 或 `all` |
+| `--agent <agent-id>` | 按 agent id 自动推断 policy profile |
+| `--assignee <agent-id>` | 按 assignee id 自动推断 policy profile（`--agent` 的别名） |
 | `--json` | 输出 JSON |
 | `--no-color` | 禁用彩色输出 |
 | `--quiet` | 保留给后续精简输出使用 |
 | `--verbose` | 保留给后续诊断输出使用 |
+
+## Policy Profile 解析优先级
+
+`check text`、`check path`、`check action`、`policies list` 等命令需要加载 policy 时，按以下优先级解析：
+
+1. `--policy <file>`：直接使用指定 policy 文件，最高优先级。
+2. `--policy-profile <name>`：手动指定 profile。
+3. `--agent <agent-id>` 或 `--assignee <agent-id>`：自动推断 profile。
+4. 默认 `all`。
+
+当前自动映射：
+
+| agent / assignee | profile |
+|:---|:---|
+| `orchestrator`、`s-black` | `s-black` |
+| `media-agent`、`wangcai` | `wangcai` |
+| `memory-agent`、`dabai` | `dabai` |
+| 未知 | `all` |
 
 ## 返回码
 

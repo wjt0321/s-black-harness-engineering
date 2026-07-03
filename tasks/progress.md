@@ -117,6 +117,16 @@
 - 已跑 `python -m pytest`：66 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+- 新增 `agent_runtime/policy_profile.py`，实现 agent -> policy profile 自动映射。
+- 新增 `--agent <agent-id>` 与 `--assignee <agent-id>` 全局参数，供 `check text`、`check path`、`check action`、`policies list` 自动选择 policy profile。
+- 解析优先级：`--policy` > `--policy-profile` > `--agent`/`--assignee` > 默认 `all`。
+- 自动映射：orchestrator/s-black -> s-black，media-agent/wangcai -> wangcai，memory-agent/dabai -> dabai，unknown -> all。
+- 不改变现有 `--policy-profile` 行为，已有测试继续通过。
+- 已补充 `tests/test_policy_profile.py`，覆盖显式 profile 优先、各 agent 映射、unknown 回退 all、显式 policy 文件优先于 agent、CLI 各命令使用 agent 推断。
+- 已更新 `docs/10-cli-poc-usage.md`、`tasks/progress.md`、`tasks/handoff-2026-07-03.md`。
+- 已跑 `python -m pytest`：84 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
 
 ## 下一步小任务
 

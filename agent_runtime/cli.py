@@ -11,6 +11,7 @@ from typing import Any, Sequence
 from .doctor import run_doctor
 from .loader import load_adapters, load_agents, load_policies, discover_policies, normalize_path
 from .policy import check_action, check_path, check_text
+from .policy_profile import resolve_profile
 from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS
 from .ledger_consistency import check_ledger_consistency
 from .task_validation import validate_records
@@ -25,6 +26,8 @@ def _add_global_args(parser: argparse.ArgumentParser) -> None:
         default=argparse.SUPPRESS,
         help="Policy profile to load: s-black, wangcai, dabai, or all",
     )
+    parser.add_argument("--agent", default=argparse.SUPPRESS, help="Agent id for automatic policy profile selection")
+    parser.add_argument("--assignee", default=argparse.SUPPRESS, help="Assignee id for automatic policy profile selection")
     parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="Output JSON")
     parser.add_argument("--no-color", action="store_true", default=argparse.SUPPRESS, help="Disable color output")
     parser.add_argument("--quiet", action="store_true", default=argparse.SUPPRESS, help="Only output necessary results")
@@ -36,6 +39,8 @@ def _ensure_global_defaults(args: argparse.Namespace) -> None:
         "root": ".",
         "policy": None,
         "policy_profile": None,
+        "agent": None,
+        "assignee": None,
         "json": False,
         "no_color": False,
         "quiet": False,
@@ -73,17 +78,11 @@ def _read_text_source(args: argparse.Namespace) -> str:
     raise argparse.ArgumentError(None, "Provide one of --text, --file, or --stdin")
 
 
-def _policy_profile(args: argparse.Namespace) -> str | None:
-    if args.policy:
-        return None
-    return args.policy_profile or "all"
-
-
 def _cmd_check_text(args: argparse.Namespace) -> int:
     root = _root_path(args)
     policy_path = _explicit_policy(args, root)
     text = _read_text_source(args)
-    result = check_text(root, text, explicit_policy=policy_path, profile=_policy_profile(args))
+    result = check_text(root, text, explicit_policy=policy_path, profile=resolve_profile(args))
     return emit(result, json_output=args.json, no_color=args.no_color)
 
 
@@ -97,7 +96,7 @@ def _cmd_check_path(args: argparse.Namespace) -> int:
         write=args.write,
         delete=args.delete,
         explicit_policy=policy_path,
-        profile=_policy_profile(args),
+        profile=resolve_profile(args),
     )
     return emit(result, json_output=args.json, no_color=args.no_color)
 
@@ -118,7 +117,7 @@ def _cmd_check_action(args: argparse.Namespace) -> int:
         args.operation,
         target=args.target,
         explicit_policy=policy_path,
-        profile=_policy_profile(args),
+        profile=resolve_profile(args),
     )
     return emit(result, json_output=args.json, no_color=args.no_color)
 
@@ -162,7 +161,7 @@ def _cmd_adapters_list(args: argparse.Namespace) -> int:
 
 def _cmd_policies_list(args: argparse.Namespace) -> int:
     root = _root_path(args)
-    policy_paths = discover_policies(root, profile=_policy_profile(args))
+    policy_paths = discover_policies(root, explicit=_explicit_policy(args, root), profile=resolve_profile(args))
     rows: list[dict[str, Any]] = []
     for path in policy_paths:
         policy = load_policies(root, explicit=path)[0]
