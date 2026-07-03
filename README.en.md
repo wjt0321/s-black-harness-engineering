@@ -24,9 +24,22 @@ It is not intended to replace QwenPaw immediately. The first phase focuses on do
 
 ## Current Status
 
-- Stage: planning and protocol skeleton
+- Stage: read-only CLI POC is runnable
 - Created: 2026-07-02
-- Runtime code: not implemented yet
+- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, and registry queries
+
+## Quick Start
+
+```bash
+python -m agent_runtime.cli doctor
+python -m agent_runtime.cli check text --text hello
+python -m agent_runtime.cli check path ./docs/06-adapter-layer.md --read
+python -m agent_runtime.cli agents list
+python -m agent_runtime.cli adapters list
+python -m agent_runtime.cli policies list
+```
+
+See `docs/10-cli-poc-usage.md` for more usage details.
 
 ## Initial Scope
 
@@ -72,6 +85,11 @@ The first phase does not:
 - `docs/03-policy-schema.md`
 - `docs/04-task-state-model.md`
 - `docs/05-agent-registry.md`
+- `docs/06-adapter-layer.md`
+- `docs/07-policy-task-bridge.md`
+- `docs/08-minimal-cli-design.md`
+- `docs/09-policy-checker-poc-plan.md`
+- `docs/10-cli-poc-usage.md`
 
 ## Development Principle
 

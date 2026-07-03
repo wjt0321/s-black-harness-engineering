@@ -65,8 +65,12 @@
 - 已跑公开扫描：OK public scan。
 - 已抽查 `check action --adapter github-cli --operation git_push` 返回 `NEEDS_APPROVAL`，低风险 shell read 返回 `PASS`。
 
+- 新增 `docs/10-cli-poc-usage.md`，说明当前 CLI POC 的运行方式、命令示例、全局参数、返回码、安全边界和当前限制。
+- 更新 `README.md` 和 `README.en.md`，加入“当前已可运行”和快速开始命令，并补齐当前文档列表。
+- 至此，项目完成一个阶段性闭环：从愿景/路线图 -> policy schema -> task state -> agent registry -> adapter layer -> policy-task bridge -> CLI 设计 -> policy checker POC 计划 -> 只读 CLI POC 实现 -> 使用说明。
+
 ## 下一步小任务
 
-1. 补 `docs/10-cli-poc-usage.md`，说明最小 CLI POC 的实际使用方法和当前限制。
-2. 后续可补 README 中的“当前已可运行”小节，但不要堆过多实现细节。
-3. 后续再扩展 `check action` 的 publish_rules / completion_rules 关联。
+1. 后续再扩展 `check action` 的 publish_rules / completion_rules 关联。
+2. 后续可增加真实 `tasks/tasks.jsonl` 与 `tasks/events.jsonl` 的只读查询样例。
+3. 后续可考虑发布版本标签，例如 `v0.1.0-planning-poc`。

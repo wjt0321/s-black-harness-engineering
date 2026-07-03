@@ -24,9 +24,22 @@
 
 ## 当前状态
 
-- 阶段：规划与协议骨架
+- 阶段：只读 CLI POC 已可运行
 - 创建日期：2026-07-02
-- 运行时代码：尚未实现
+- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight 和 registry 查询
+
+## 快速开始
+
+```bash
+python -m agent_runtime.cli doctor
+python -m agent_runtime.cli check text --text hello
+python -m agent_runtime.cli check path ./docs/06-adapter-layer.md --read
+python -m agent_runtime.cli agents list
+python -m agent_runtime.cli adapters list
+python -m agent_runtime.cli policies list
+```
+
+更多用法见 `docs/10-cli-poc-usage.md`。
 
 ## 初始范围
 
@@ -72,6 +85,11 @@
 - `docs/03-policy-schema.md`
 - `docs/04-task-state-model.md`
 - `docs/05-agent-registry.md`
+- `docs/06-adapter-layer.md`
+- `docs/07-policy-task-bridge.md`
+- `docs/08-minimal-cli-design.md`
+- `docs/09-policy-checker-poc-plan.md`
+- `docs/10-cli-poc-usage.md`
 
 ## 推进原则
 
