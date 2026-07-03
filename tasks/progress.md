@@ -50,8 +50,12 @@
 - 已验证 `cli/commands.sample.json` 为合法 JSON。
 - 明确进入真实 CLI 实现时，可优先委派 Kimi Code 负责编码，Orchestrator 负责验收。
 
+- 新增 `docs/09-policy-checker-poc-plan.md`，定义最小 Policy Checker POC 的目标、非目标、推荐代码位置、输入输出、`check text` / `check path` / `check action` 行为、测试样例、安全要求和验收标准。
+- 明确第一版 POC 只做只读检查，不执行外部命令、不访问网络、不写真实 task ledger、不读取密钥文件。
+- 明确后续进入代码实现时可委派 Kimi Code 编写，Orchestrator 负责安全与质量验收。
+
 ## 下一步小任务
 
-1. 后续可做一个最小 policy checker 读取新 schema，但暂不接入真实执行链路。
-2. 后续可开始 CLI POC，但第一版只做只读命令和校验命令，不执行外部动作。
-3. 后续可补 `docs/09-policy-checker-poc-plan.md`，把实现边界写清楚后再委派 Kimi 编码。
+1. 可开始准备 Kimi Code 编码任务说明，让 Kimi 实现只读 CLI POC。
+2. 代码实现范围优先：`doctor`、`check text`、`check path`、`agents list`、`adapters list`、`policies list`。
+3. 暂缓 `check action` 的复杂逻辑，等基础 checker 稳定后再做。
