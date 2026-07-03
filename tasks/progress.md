@@ -144,3 +144,11 @@
 1. 后续可继续完善 agent 到 policy profile 的自动映射。
 2. 后续可设计跨记录 ledger consistency 校验，例如 task_id 引用、事件顺序和状态流转合法性。
 3. 后续可在公开扫描脚本产品化后再考虑加入 CI。
+
+- 进入下一阶段：Adapter execution envelope 二期设计。
+- 新增 `docs/12-adapter-execution-envelope.md`，定义 adapter request、adapter response、approval record、execution event 四类 artifact。
+- 新增 `adapters/execution-envelope.schema.json`，作为 execution envelope artifact 集合的 JSON Schema。
+- 新增 `adapters/execution-envelope.examples.json`，提供 GitHub push 需授权场景和 shell read 只读成功场景。
+- 更新 `agent_runtime/doctor.py`，将 execution envelope schema 与 examples 纳入 doctor 校验。
+- 更新 README 中英文文档列表与当前状态说明。
+- 本阶段仍保持只读边界：不执行真实 adapter、不访问网络、不写 ledger、不记录真实密钥或本机私有路径。

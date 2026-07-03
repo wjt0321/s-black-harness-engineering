@@ -29,6 +29,7 @@ SCHEMA_FILES = [
     "policies/policy.schema.json",
     "agents/agents.schema.json",
     "adapters/adapter.schema.json",
+    "adapters/execution-envelope.schema.json",
     "tasks/task.schema.json",
     "tasks/event.schema.json",
 ]
@@ -37,6 +38,7 @@ SAMPLE_TO_SCHEMA: list[tuple[str, str]] = [
     ("policies/*.sample.policy.json", "policies/policy.schema.json"),
     ("agents/agents.sample.json", "agents/agents.schema.json"),
     ("adapters/adapters.sample.json", "adapters/adapter.schema.json"),
+    ("adapters/execution-envelope.examples.json", "adapters/execution-envelope.schema.json"),
 ]
 
 JSONL_PATTERNS = ["tasks/*.jsonl"]

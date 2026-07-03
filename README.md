@@ -26,7 +26,8 @@
 
 - 阶段：只读 CLI POC 已可运行
 - 创建日期：2026-07-02
-- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight 和 registry 查询
+- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询和 ledger 校验
+- 下一阶段设计：Adapter execution envelope，定义 adapter request / response / approval / event 边界
 
 ## 持续集成
 
@@ -95,6 +96,7 @@ python -m agent_runtime.cli policies list
 - `docs/09-policy-checker-poc-plan.md`
 - `docs/10-cli-poc-usage.md`
 - `docs/11-release-notes-v0.1.md`
+- `docs/12-adapter-execution-envelope.md`
 
 ## 推进原则
 

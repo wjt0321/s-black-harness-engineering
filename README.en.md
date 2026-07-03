@@ -26,7 +26,8 @@ It is not intended to replace QwenPaw immediately. The first phase focuses on do
 
 - Stage: read-only CLI POC is runnable
 - Created: 2026-07-02
-- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, and registry queries
+- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, and ledger validation
+- Next design step: Adapter execution envelope for adapter request / response / approval / event boundaries
 
 ## Continuous Integration
 
@@ -95,6 +96,7 @@ The first phase does not:
 - `docs/09-policy-checker-poc-plan.md`
 - `docs/10-cli-poc-usage.md`
 - `docs/11-release-notes-v0.1.md`
+- `docs/12-adapter-execution-envelope.md`
 
 ## Development Principle
 
