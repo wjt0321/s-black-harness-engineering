@@ -236,7 +236,7 @@ python -m agent_runtime.cli adapter plan \
   --target README.md
 ```
 
-JSON 输出：
+默认人类输出只展示 artifact 摘要，不打印完整 envelope；需要完整 envelope 时使用 JSON 输出：
 
 ```bash
 python -m agent_runtime.cli adapter plan \

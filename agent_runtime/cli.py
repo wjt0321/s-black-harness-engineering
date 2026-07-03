@@ -170,8 +170,44 @@ def _emit_plan_result(result: PlanResult, json_output: bool) -> int:
         if result.next_action:
             print(f"Next: {result.next_action}")
         if result.envelope is not None:
-            print(json.dumps(result.envelope, ensure_ascii=False, indent=2))
+            print(_render_plan_summary(result.envelope))
+            print("Use --json to print the full adapter execution envelope.")
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _render_plan_summary(envelope: dict[str, Any]) -> str:
+    """Render a compact human summary for an adapter execution envelope."""
+    lines = ["Artifacts:"]
+    for artifact in envelope.get("artifacts", []):
+        artifact_type = artifact.get("artifact_type", "unknown")
+        if artifact_type == "adapter_request":
+            preflight = artifact.get("preflight", {}).get("status", "unknown")
+            lines.append(
+                "- adapter_request "
+                f"{artifact.get('request_id', '-')} "
+                f"adapter={artifact.get('adapter_id', '-')} "
+                f"operation={artifact.get('operation', '-')} "
+                f"target={artifact.get('target', '-')} "
+                f"preflight={preflight}"
+            )
+        elif artifact_type == "approval_record":
+            scope = artifact.get("scope", {})
+            lines.append(
+                "- approval_record "
+                f"{artifact.get('approval_id', '-')} "
+                f"status={artifact.get('status', '-')} "
+                f"operation={scope.get('operation', '-')} "
+                f"target={scope.get('target', '-')}"
+            )
+        elif artifact_type == "execution_event":
+            lines.append(
+                "- execution_event "
+                f"{artifact.get('event_id', '-')} "
+                f"event_type={artifact.get('event_type', '-')}"
+            )
+        else:
+            lines.append(f"- {artifact_type}")
+    return "\n".join(lines)
 
 
 def _cmd_adapter_validate(args: argparse.Namespace) -> int:
