@@ -23,6 +23,7 @@ _STATUS_TO_EXIT = {
     "needs_approval": EXIT_NEEDS_APPROVAL,
     "needs_input": EXIT_NEEDS_INPUT,
     "error": EXIT_ERROR,
+    "validation_failed": EXIT_VALIDATION_FAILED,
 }
 
 SEVERITY_ORDER = {"info": 0, "warn": 1, "block": 2}

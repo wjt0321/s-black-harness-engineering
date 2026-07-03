@@ -88,9 +88,18 @@
 - 更新 CLI 使用说明，补充可编辑安装方式。
 - 新增 `.github/workflows/ci.yml`，在 push / pull_request 到 main 时用 Python 3.11 和 3.12 跑 `pytest` 与 `doctor`。
 - 更新中英文 README 的持续集成说明。
+- 新增 ledger 写入前 preflight schema 校验层 `agent_runtime/task_validation.py`。
+- 新增 CLI 命令 `python -m agent_runtime.cli task validate --record-file <file> --schema task|event`。
+- 校验保持只读：不写入、不追加、不修改 ledger，不执行外部命令，不访问网络。
+- 失败输出仅包含行号、schema 类型和简短错误摘要，不回显整条 record 或敏感字段完整值。
+- 补充测试覆盖：valid/invalid task、valid/invalid event、JSONL 语法错误行号、CLI valid/invalid、JSON 输出。
+- 更新 `docs/10-cli-poc-usage.md` 与 `tasks/progress.md` 记录新命令。
+- 已跑 `python -m pytest`：45 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已抽查 `task validate` 对合法 JSONL 返回 PASS，对缺字段/非法 JSON 返回 `VALIDATION_FAILED` 并正确报告行号。
 
 ## 下一步小任务
 
-1. 下次优先做 ledger 写入前的 preflight schema 校验设计与只读 CLI validation，不开放真实写入能力。
-2. 后续可继续完善 agent 到 policy profile 的自动映射。
+1. 后续可继续完善 agent 到 policy profile 的自动映射。
+2. 后续可设计跨记录 ledger consistency 校验，例如 task_id 引用、事件顺序和状态流转合法性。
 3. 后续可在公开扫描脚本产品化后再考虑加入 CI。

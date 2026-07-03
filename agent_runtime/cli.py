@@ -12,6 +12,7 @@ from .doctor import run_doctor
 from .loader import load_adapters, load_agents, load_policies, discover_policies, normalize_path
 from .policy import check_action, check_path, check_text
 from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS
+from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
 
@@ -228,6 +229,16 @@ def _cmd_task_events(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def _cmd_task_validate(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result = validate_records(
+        root,
+        record_file=args.record_file,
+        schema_type=args.schema,
+    )
+    return emit(result, json_output=args.json, no_color=args.no_color)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="agent-runtime",
@@ -280,6 +291,12 @@ def build_parser() -> argparse.ArgumentParser:
     task_events_parser.add_argument("task_id", help="Task id")
     _add_global_args(task_events_parser)
     task_events_parser.set_defaults(func=_cmd_task_events)
+
+    task_validate_parser = task_subparsers.add_parser("validate", help="Validate a JSONL ledger file against a schema")
+    task_validate_parser.add_argument("--record-file", required=True, help="Path to JSONL record file")
+    task_validate_parser.add_argument("--schema", required=True, choices=["task", "event"], help="Schema type: task or event")
+    _add_global_args(task_validate_parser)
+    task_validate_parser.set_defaults(func=_cmd_task_validate)
 
     # agents list
     agents_parser = subparsers.add_parser("agents", help="List registered agents")

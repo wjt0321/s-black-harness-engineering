@@ -142,7 +142,7 @@ PASS
 查看任务快照：
 
 ```bash
-python -m agent_runtime.cli task status task-20260702-001
+python -m agent_runtime.cli task status task-20260703-001
 ```
 
 期望输出会包含任务标题、状态、负责人、产物、证据和下一步。
@@ -150,7 +150,7 @@ python -m agent_runtime.cli task status task-20260702-001
 查看任务事件流：
 
 ```bash
-python -m agent_runtime.cli task events task-20260702-001
+python -m agent_runtime.cli task events task-20260703-001
 ```
 
 当前命令优先读取 `tasks/tasks.jsonl` 与 `tasks/events.jsonl`；如果真实 ledger 不存在，才回退到仓库内 `.examples.jsonl`。CLI 仍然只读，不会写入真实任务账本。
@@ -158,8 +158,25 @@ python -m agent_runtime.cli task events task-20260702-001
 JSON 输出：
 
 ```bash
-python -m agent_runtime.cli task status task-20260702-001 --json
-python -m agent_runtime.cli task events task-20260702-001 --json
+python -m agent_runtime.cli task status task-20260703-001 --json
+python -m agent_runtime.cli task events task-20260703-001 --json
+```
+
+## Ledger 写入前 Preflight Schema 校验
+
+在真实写入 `tasks/tasks.jsonl` 或 `tasks/events.jsonl` 之前，可以先对候选 JSONL 文件做只读 schema 校验：
+
+```bash
+python -m agent_runtime.cli task validate --record-file tasks/tasks.jsonl --schema task
+python -m agent_runtime.cli task validate --record-file tasks/events.jsonl --schema event
+```
+
+该命令仅读取并校验项目根目录内的安全 JSONL 文件，不会写入、追加或修改任何 ledger。失败时会输出错的行号、schema 类型和简短错误摘要，不会回显整条 record。
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli task validate --record-file tasks/tasks.jsonl --schema task --json
 ```
 
 ## Registry 查询
