@@ -96,6 +96,8 @@ python -m agent_runtime.cli check path ./some-target.md --delete
 
 ## Action 检查
 
+`check action` 会聚合 adapter 风险、command rules、publish rules 和 completion rules 的只读判断。它只输出 preflight / postflight 要求，不执行真实动作。
+
 检查 GitHub push 这类外部动作：
 
 ```bash
@@ -120,6 +122,31 @@ python -m agent_runtime.cli check action --adapter shell-local --operation read_
 
 ```text
 PASS
+```
+
+## 任务账本查询
+
+查看任务快照：
+
+```bash
+python -m agent_runtime.cli task status task-20260702-001
+```
+
+期望输出会包含任务标题、状态、负责人、产物、证据和下一步。
+
+查看任务事件流：
+
+```bash
+python -m agent_runtime.cli task events task-20260702-001
+```
+
+当前命令只读取 `tasks/tasks.jsonl`、`tasks/events.jsonl` 或仓库内示例 JSONL；不会写入真实任务账本。
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli task status task-20260702-001 --json
+python -m agent_runtime.cli task events task-20260702-001 --json
 ```
 
 ## Registry 查询

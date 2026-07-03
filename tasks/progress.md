@@ -70,8 +70,17 @@
 - 至此，项目完成一个阶段性闭环：从愿景/路线图 -> policy schema -> task state -> agent registry -> adapter layer -> policy-task bridge -> CLI 设计 -> policy checker POC 计划 -> 只读 CLI POC 实现 -> 使用说明。
 - 新增 `tasks/handoff-2026-07-03.md`，为下一阶段留下恢复上下文、已完成清单、验收命令和候选路线。
 
+- 进入下一阶段：真实 task ledger 只读查询。
+- 新增 `agent_runtime/tasks.py`，从 `tasks/tasks.jsonl` / `tasks/events.jsonl` 或示例 JSONL 中读取任务快照与事件流。
+- 接入 CLI：`python -m agent_runtime.cli task status <task-id>` 与 `python -m agent_runtime.cli task events <task-id>`。
+- 补充 CLI 测试，覆盖任务快照、事件流、JSON 输出和缺失任务返回 `NEEDS_INPUT`。
+- 更新 `docs/10-cli-poc-usage.md`，记录任务账本查询命令。
+- 继续扩展 `check action`：现在会聚合 adapter 风险、command rules、publish rules 和 completion rules。
+- GitHub publish 类动作会同时提示用户授权与 required checks；完成类动作会提示 required evidence。
+- 补充对应 CLI 测试，覆盖 publish preflight 与 completion evidence。
+
 ## 下一步小任务
 
-1. 后续再扩展 `check action` 的 publish_rules / completion_rules 关联。
-2. 后续可增加真实 `tasks/tasks.jsonl` 与 `tasks/events.jsonl` 的只读查询样例。
-3. 后续可考虑发布版本标签，例如 `v0.1.0-planning-poc`。
+1. 后续可增加真实 `tasks/tasks.jsonl` 与 `tasks/events.jsonl` 的本地只读样例。
+2. 后续可考虑补 release notes 或 GitHub Release 正文。
+3. 后续可考虑为多 policy 聚合增加 agent/policy 选择策略，避免无关 policy 同时提示。

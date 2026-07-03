@@ -12,6 +12,7 @@ from .doctor import run_doctor
 from .loader import load_adapters, load_agents, load_policies, discover_policies, normalize_path
 from .policy import check_action, check_path, check_text
 from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS
+from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
 
 def _add_global_args(parser: argparse.ArgumentParser) -> None:
@@ -161,6 +162,44 @@ def _cmd_policies_list(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def _cmd_task_status(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    task = find_task(root, args.task_id)
+    if task is None:
+        result = CheckResult(
+            status="needs_input",
+            findings=[],
+            next_action=f"Task not found: {args.task_id}",
+        )
+        return emit(result, json_output=args.json, no_color=args.no_color)
+
+    if args.json:
+        print(json.dumps({"task": task}, ensure_ascii=False, indent=2))
+        return EXIT_PASS
+
+    print(render_task_status(task))
+    return EXIT_PASS
+
+
+def _cmd_task_events(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    events = find_task_events(root, args.task_id)
+    if not events:
+        result = CheckResult(
+            status="needs_input",
+            findings=[],
+            next_action=f"No events found for task: {args.task_id}",
+        )
+        return emit(result, json_output=args.json, no_color=args.no_color)
+
+    if args.json:
+        print(json.dumps({"events": events}, ensure_ascii=False, indent=2))
+        return EXIT_PASS
+
+    print(render_task_events(events))
+    return EXIT_PASS
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="agent-runtime",
@@ -199,6 +238,20 @@ def build_parser() -> argparse.ArgumentParser:
     action_parser.add_argument("--target", default=None, help="Operation target")
     _add_global_args(action_parser)
     action_parser.set_defaults(func=_cmd_check_action)
+
+    # task queries
+    task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")
+    task_subparsers = task_parser.add_subparsers(dest="task_command", required=True)
+
+    task_status_parser = task_subparsers.add_parser("status", help="Show a task snapshot")
+    task_status_parser.add_argument("task_id", help="Task id")
+    _add_global_args(task_status_parser)
+    task_status_parser.set_defaults(func=_cmd_task_status)
+
+    task_events_parser = task_subparsers.add_parser("events", help="Show task event history")
+    task_events_parser.add_argument("task_id", help="Task id")
+    _add_global_args(task_events_parser)
+    task_events_parser.set_defaults(func=_cmd_task_events)
 
     # agents list
     agents_parser = subparsers.add_parser("agents", help="List registered agents")

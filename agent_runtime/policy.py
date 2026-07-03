@@ -197,6 +197,51 @@ def check_path(
     return CheckResult(status="pass")
 
 
+def _action_status(action: str, severity: str) -> str:
+    if action == "deny":
+        return "blocked"
+    if action == "require_user_approval":
+        return "needs_approval"
+    if action in {"require_secret_scan", "require_postflight"}:
+        return "needs_input"
+    return _severity_to_status(severity)
+
+
+def _action_next_action(findings: list[Finding]) -> str | None:
+    actions = {finding.action for finding in findings}
+    steps: list[str] = []
+    if "deny" in actions:
+        steps.append("review or change the blocked operation")
+    if "require_secret_scan" in actions:
+        steps.append("run secret scan for the payload or diff")
+    if "require_user_approval" in actions:
+        steps.append("ask for approval for this task, target, and operation")
+    if "require_postflight" in actions:
+        steps.append("collect completion evidence or run postflight checks")
+    if not steps:
+        return None
+    return "; ".join(steps) + "."
+
+
+def _operation_aliases(adapter: dict[str, Any], operation: str) -> set[str]:
+    aliases = {operation}
+    kind = adapter.get("kind")
+    if kind == "github":
+        if operation in {"git_push", "push"}:
+            aliases.add("git_push")
+        if operation in {"issue_create", "issue_comment", "issue_edit", "gh_issue"}:
+            aliases.add("gh_issue")
+        if operation in {"pr_create", "pr_comment", "pr_edit", "gh_pr"}:
+            aliases.add("gh_pr")
+    if kind == "lark" and operation in {"send", "message_send", "card_send", "lark_message"}:
+        aliases.add("lark_message")
+    return aliases
+
+
+def _is_completion_operation(operation: str) -> bool:
+    return operation in {"finish", "finished", "mark_finished", "task_finish", "complete_task"}
+
+
 def check_action(
     root: Path,
     adapter_id: str,
@@ -226,25 +271,21 @@ def check_action(
             next_action="Register the adapter or check the adapter id.",
         )
 
+    findings: list[Finding] = []
     risk_level = adapter.get("risk_level", "local")
     requires_approval = adapter.get("requires_approval", False)
+    operation_aliases = _operation_aliases(adapter, operation)
 
-    # Simple heuristic rules from docs/09-policy-checker-poc-plan.md
     if risk_level == "external" or requires_approval:
-        return CheckResult(
-            status="needs_approval",
-            findings=[
-                Finding(
-                    rule_id=f"{adapter_id}-approval",
-                    severity="block",
-                    action="require_user_approval",
-                    message=f"{adapter_id}: this external operation requires explicit user approval.",
-                )
-            ],
-            next_action="Ask for approval for this task, this target, this operation.",
+        findings.append(
+            Finding(
+                rule_id=f"{adapter_id}-approval",
+                severity="block",
+                action="require_user_approval",
+                message=f"{adapter_id}: this external operation requires explicit user approval.",
+            )
         )
 
-    # Check command rules for operation string matches
     for policy in policies:
         for rule in policy.get("command_rules", []):
             if not rule.get("enabled", True):
@@ -254,17 +295,53 @@ def check_action(
             except re.error:
                 continue
             if compiled.search(operation) or (target and compiled.search(target)):
-                return CheckResult(
-                    status="blocked",
-                    findings=[
-                        Finding(
-                            rule_id=rule["id"],
-                            severity=rule.get("severity", "block"),
-                            action=rule.get("action", "deny"),
-                            message=rule.get("message", "Operation blocked by policy."),
-                        )
-                    ],
-                    next_action="Review the blocked operation before proceeding.",
+                findings.append(
+                    Finding(
+                        rule_id=rule["id"],
+                        severity=rule.get("severity", "block"),
+                        action=rule.get("action", "deny"),
+                        message=rule.get("message", "Operation blocked by policy."),
+                    )
                 )
+
+        for rule in policy.get("publish_rules", []):
+            if not rule.get("enabled", True):
+                continue
+            applies_to = set(rule.get("applies_to", []))
+            if not operation_aliases.intersection(applies_to):
+                continue
+            required_checks = ", ".join(rule.get("required_checks", []))
+            suffix = f" Required checks: {required_checks}." if required_checks else ""
+            findings.append(
+                Finding(
+                    rule_id=rule["id"],
+                    severity=rule.get("severity", "block"),
+                    action=rule.get("action", "require_secret_scan"),
+                    message=rule.get("message", "Publishing action requires preflight checks.") + suffix,
+                )
+            )
+
+        if _is_completion_operation(operation):
+            for rule in policy.get("completion_rules", []):
+                if not rule.get("enabled", True):
+                    continue
+                required_evidence = ", ".join(rule.get("required_evidence", []))
+                suffix = f" Required evidence: {required_evidence}." if required_evidence else ""
+                findings.append(
+                    Finding(
+                        rule_id=rule["id"],
+                        severity=rule.get("severity", "warn"),
+                        action=rule.get("action", "require_postflight"),
+                        message=rule.get("message", "Completion requires evidence.") + suffix,
+                    )
+                )
+
+    if findings:
+        statuses = [_action_status(f.action, f.severity) for f in findings]
+        return CheckResult(
+            status=coalesce_status(statuses),
+            findings=findings,
+            next_action=_action_next_action(findings),
+        )
 
     return CheckResult(status="pass")
