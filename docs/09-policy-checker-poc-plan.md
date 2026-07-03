@@ -347,26 +347,35 @@ agent-runtime policies list
 - Git 工作树只包含预期文件。
 - README 不需要因为 POC 增加过多实现细节。
 
-## 委派给 Kimi Code 的任务边界
+## 实现边界与验收重点
 
-进入实现时，可以委派 Kimi Code 编写 POC。
+进入实现时，编码者应直接依据本计划和 `docs/08-minimal-cli-design.md` 实现最小只读 CLI POC。
 
-建议任务说明：
+第一版推荐范围：
 
-```text
-在 s-black harness engineering 中实现最小只读 CLI POC。
-范围：doctor、check text、check path、agents list、adapters list、policies list。
-禁止：执行外部命令、访问网络、写入真实 task ledger、删除文件、读取 .env 或任何密钥文件。
-要求：保留 schema 校验、JSON 输出、测试样例，并确保 public scan 通过。
-```
+- `doctor`
+- `check text`
+- `check path`
+- `agents list`
+- `adapters list`
+- `policies list`
 
-Orchestrator 验收重点：
+第一版仍然禁止：
+
+- 执行外部命令
+- 访问网络
+- 写入真实 task ledger
+- 删除文件
+- 读取 `.env` 或任何密钥文件
+
+验收重点：
 
 - 代码是否真的只读。
 - 是否可能泄露完整 secret match。
 - 路径规则是否跨平台可用。
 - 错误返回码是否符合 `docs/08-minimal-cli-design.md`。
 - 是否新增了不必要依赖。
+- public scan、JSON / JSONL 校验和单元测试是否通过。
 
 ## 第一版落地范围
 
