@@ -41,9 +41,12 @@
 - 新增 `adapters/adapters.sample.json`，包含 QwenPaw Agent API、Kimi Code ACP、Claude Code ACP、OMP / pi ACP、Shell、飞书、GitHub、WebBridge 八类适配器样例。
 - 已验证 `adapter.schema.json` 和 `adapters.sample.json` 均为合法 JSON。
 - 已验证 `adapters.sample.json` 通过 `adapter.schema.json` 校验。
+- 新增 `docs/07-policy-task-bridge.md`，定义 Policy 检查结果如何映射到 Task 的 `blocked`、`running`、`finished`、`failed` 状态。
+- 新增 `tasks/policy-event.examples.jsonl`，提供 policy 命中、用户授权恢复、secret scan evidence、只读路径阻断、completion evidence 不足等事件样例。
+- 已验证 `tasks/policy-event.examples.jsonl` 为合法 JSONL。
 
 ## 下一步小任务
 
-1. 后续把 policy 命中结果与任务 `blocked` 状态串起来，可写 `docs/07-policy-task-bridge.md`。
-2. 后续可做一个最小 policy checker 读取新 schema，但暂不接入真实执行链路。
-3. 后续可设计最小 Runtime CLI 命令边界，但不要急着实现后台服务。
+1. 后续可做一个最小 policy checker 读取新 schema，但暂不接入真实执行链路。
+2. 后续可设计最小 Runtime CLI 命令边界，但不要急着实现后台服务。
+3. 后续可补 `docs/08-minimal-cli-design.md`，先设计命令，不实现后台服务。
