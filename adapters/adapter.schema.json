@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://s-black-harness-engineering.local/schemas/adapter.schema.json",
+  "title": "Adapter Registry",
+  "type": "object",
+  "required": ["version", "adapters"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "adapters": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/adapter" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "adapter": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "enabled",
+        "capabilities",
+        "risk_level",
+        "requires_approval",
+        "input_schema",
+        "output_schema"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "qwenpaw_agent_api",
+            "acp_runner",
+            "cli_tool",
+            "shell",
+            "lark",
+            "github",
+            "webbridge",
+            "manual"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": ["local", "external", "destructive", "privileged"]
+        },
+        "requires_approval": {
+          "type": "boolean"
+        },
+        "input_schema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "output_schema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "preflight_checks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "postflight_checks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "failure_mapping": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["blocked", "failed"]
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

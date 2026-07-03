@@ -1,0 +1,312 @@
+{
+  "version": 1,
+  "description": "First adapter registry example for s-black harness engineering. These entries define boundaries only; they do not implement runtime calls.",
+  "adapters": [
+    {
+      "id": "qwenpaw-agent-api",
+      "name": "QwenPaw Agent API",
+      "kind": "qwenpaw_agent_api",
+      "description": "Call configured QwenPaw agents through foreground or background agent APIs.",
+      "enabled": true,
+      "capabilities": ["agent_call", "delegation", "background_task"],
+      "risk_level": "external",
+      "requires_approval": false,
+      "input_schema": {
+        "type": "object",
+        "required": ["agent_id", "message"],
+        "properties": {
+          "agent_id": { "type": "string" },
+          "message": { "type": "string" },
+          "mode": { "type": "string", "enum": ["foreground", "background"] }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["status", "message"],
+        "properties": {
+          "status": { "type": "string" },
+          "message": { "type": "string" },
+          "task_id": { "type": ["string", "null"] }
+        }
+      },
+      "preflight_checks": ["policy_check", "target_confirmed"],
+      "postflight_checks": ["review_required"],
+      "failure_mapping": {
+        "permission_denied": "blocked",
+        "tool_timeout": "blocked",
+        "agent_failed": "failed"
+      },
+      "notes": [
+        "Delegated output should be reviewed before the parent task is marked finished."
+      ]
+    },
+    {
+      "id": "kimi-code-acp",
+      "name": "Kimi Code ACP",
+      "kind": "acp_runner",
+      "description": "Delegate search, visual understanding, scripting, and coding tasks to Kimi Code through ACP.",
+      "enabled": true,
+      "capabilities": ["web_search", "vision", "light_coding", "tool_research"],
+      "risk_level": "external",
+      "requires_approval": false,
+      "input_schema": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string" },
+          "cwd": { "type": "string" },
+          "timeout_seconds": { "type": "integer" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["status", "summary"],
+        "properties": {
+          "status": { "type": "string" },
+          "summary": { "type": "string" },
+          "artifacts": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "preflight_checks": ["policy_check", "scope_confirmed"],
+      "postflight_checks": ["review_required"],
+      "failure_mapping": {
+        "network_error": "blocked",
+        "tool_timeout": "blocked",
+        "agent_failed": "failed"
+      },
+      "notes": [
+        "Use for coding and research when the task can be delegated and reviewed."
+      ]
+    },
+    {
+      "id": "claude-code-acp",
+      "name": "Claude Code ACP",
+      "kind": "acp_runner",
+      "description": "Delegate selected writing or deep engineering tasks to Claude Code through ACP.",
+      "enabled": true,
+      "capabilities": ["novel_writing", "heavy_coding", "quality_review"],
+      "risk_level": "external",
+      "requires_approval": false,
+      "input_schema": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string" },
+          "cwd": { "type": "string" },
+          "timeout_seconds": { "type": "integer" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["status", "summary"],
+        "properties": {
+          "status": { "type": "string" },
+          "summary": { "type": "string" },
+          "artifacts": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "preflight_checks": ["policy_check", "scope_confirmed", "cost_review"],
+      "postflight_checks": ["review_required"],
+      "failure_mapping": {
+        "network_error": "blocked",
+        "tool_timeout": "blocked",
+        "agent_failed": "failed"
+      },
+      "notes": [
+        "Cost is a routing consideration, not a low-level policy blocker."
+      ]
+    },
+    {
+      "id": "omp-acp",
+      "name": "OMP / pi ACP",
+      "kind": "acp_runner",
+      "description": "Engineering collaboration and model-routing delegate.",
+      "enabled": true,
+      "capabilities": ["light_coding", "heavy_coding", "tool_research"],
+      "risk_level": "external",
+      "requires_approval": false,
+      "input_schema": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string" },
+          "cwd": { "type": "string" },
+          "timeout_seconds": { "type": "integer" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["status", "summary"],
+        "properties": {
+          "status": { "type": "string" },
+          "summary": { "type": "string" },
+          "artifacts": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "preflight_checks": ["policy_check", "scope_confirmed"],
+      "postflight_checks": ["review_required"],
+      "failure_mapping": {
+        "network_error": "blocked",
+        "tool_timeout": "blocked",
+        "agent_failed": "failed"
+      },
+      "notes": [
+        "Use when engineering collaboration or model routing is materially useful."
+      ]
+    },
+    {
+      "id": "shell-local",
+      "name": "Local Shell",
+      "kind": "shell",
+      "description": "Run local shell commands for checks, tests, formatting, and repository inspection.",
+      "enabled": true,
+      "capabilities": ["local_command", "test", "format", "git_status"],
+      "risk_level": "local",
+      "requires_approval": false,
+      "input_schema": {
+        "type": "object",
+        "required": ["command"],
+        "properties": {
+          "command": { "type": "string" },
+          "cwd": { "type": "string" },
+          "timeout_seconds": { "type": "integer" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["status", "stdout", "stderr"],
+        "properties": {
+          "status": { "type": "string" },
+          "stdout": { "type": "string" },
+          "stderr": { "type": "string" },
+          "exit_code": { "type": "integer" }
+        }
+      },
+      "preflight_checks": ["policy_check"],
+      "postflight_checks": ["capture_output"],
+      "failure_mapping": {
+        "policy_blocked": "blocked",
+        "command_not_found": "failed",
+        "nonzero_exit": "blocked"
+      },
+      "notes": [
+        "Destructive or privileged commands should be represented by separate high-risk operations."
+      ]
+    },
+    {
+      "id": "lark-cli",
+      "name": "Lark CLI",
+      "kind": "lark",
+      "description": "Send messages or cards and operate Lark resources through a CLI adapter.",
+      "enabled": true,
+      "capabilities": ["message_send", "card_send", "document_ops"],
+      "risk_level": "external",
+      "requires_approval": true,
+      "input_schema": {
+        "type": "object",
+        "required": ["operation", "target"],
+        "properties": {
+          "operation": { "type": "string" },
+          "target": { "type": "string" },
+          "body_ref": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["status", "message"],
+        "properties": {
+          "status": { "type": "string" },
+          "message": { "type": "string" },
+          "external_ref": { "type": ["string", "null"] }
+        }
+      },
+      "preflight_checks": ["policy_check", "target_confirmed", "secret_scan", "user_approval"],
+      "postflight_checks": ["external_confirmation"],
+      "failure_mapping": {
+        "target_unknown": "blocked",
+        "permission_denied": "blocked",
+        "api_error": "failed"
+      },
+      "notes": [
+        "Multi-line formatted messages should use card-style payloads."
+      ]
+    },
+    {
+      "id": "github-cli",
+      "name": "GitHub CLI",
+      "kind": "github",
+      "description": "Create repositories, issues, pull requests, comments, and push commits through GitHub CLI or API.",
+      "enabled": true,
+      "capabilities": ["repo_create", "issue_ops", "pr_ops", "git_push", "remote_status"],
+      "risk_level": "external",
+      "requires_approval": true,
+      "input_schema": {
+        "type": "object",
+        "required": ["operation"],
+        "properties": {
+          "operation": { "type": "string" },
+          "repository": { "type": "string" },
+          "body_ref": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["status", "message"],
+        "properties": {
+          "status": { "type": "string" },
+          "message": { "type": "string" },
+          "url": { "type": ["string", "null"] }
+        }
+      },
+      "preflight_checks": ["policy_check", "secret_scan", "target_confirmed", "diff_review", "user_approval"],
+      "postflight_checks": ["remote_status_verified", "git_status_clean"],
+      "failure_mapping": {
+        "network_error": "blocked",
+        "permission_denied": "blocked",
+        "auth_failed": "blocked",
+        "api_error": "failed"
+      },
+      "notes": [
+        "Public publishing operations must pass secret scanning before execution."
+      ]
+    },
+    {
+      "id": "webbridge",
+      "name": "WebBridge",
+      "kind": "webbridge",
+      "description": "Read, search, or interact with web pages through a real browser bridge.",
+      "enabled": true,
+      "capabilities": ["web_read", "web_search", "browser_interaction"],
+      "risk_level": "external",
+      "requires_approval": false,
+      "input_schema": {
+        "type": "object",
+        "required": ["operation"],
+        "properties": {
+          "operation": { "type": "string" },
+          "url": { "type": "string" },
+          "query": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["status", "summary"],
+        "properties": {
+          "status": { "type": "string" },
+          "summary": { "type": "string" },
+          "source_refs": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "preflight_checks": ["policy_check", "scope_confirmed"],
+      "postflight_checks": ["source_refs_recorded"],
+      "failure_mapping": {
+        "network_error": "blocked",
+        "login_required": "blocked",
+        "page_unavailable": "blocked"
+      },
+      "notes": [
+        "Read-only browsing is lower risk; form submission or account actions require explicit approval."
+      ]
+    }
+  ]
+}

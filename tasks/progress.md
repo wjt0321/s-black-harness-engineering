@@ -33,8 +33,17 @@
 - 更新 `docs/03-policy-schema.md` 的 Stage 1 落地范围说明。
 - 会话结束前新增交接文档 `tasks/handoff-2026-07-02.md`，记录项目定位、今日完成、当前文件结构、明天建议入口和注意事项。
 
+## 2026-07-03
+
+- 继续 Stage 4 — 工具适配器层。
+- 新增 `docs/06-adapter-layer.md`，定义 Adapter 的目标、非目标、统一字段、风险级别、输入/输出 envelope、preflight/postflight、failure mapping，以及与 Policy Schema、Task State、Agent Registry 的关系。
+- 新增 `adapters/adapter.schema.json`，作为 Adapter 注册项 JSON Schema 草案。
+- 新增 `adapters/adapters.sample.json`，包含 QwenPaw Agent API、Kimi Code ACP、Claude Code ACP、OMP / pi ACP、Shell、飞书、GitHub、WebBridge 八类适配器样例。
+- 已验证 `adapter.schema.json` 和 `adapters.sample.json` 均为合法 JSON。
+- 已验证 `adapters.sample.json` 通过 `adapter.schema.json` 校验。
+
 ## 下一步小任务
 
-1. 后续把 policy 命中结果与任务 `blocked` 状态串起来。
-2. 后续设计工具适配器层：QwenPaw、Kimi、Claude、OMP、Shell、飞书、GitHub、WebBridge。
-3. 后续可做一个最小 policy checker 读取新 schema，但暂不接入真实执行链路。
+1. 后续把 policy 命中结果与任务 `blocked` 状态串起来，可写 `docs/07-policy-task-bridge.md`。
+2. 后续可做一个最小 policy checker 读取新 schema，但暂不接入真实执行链路。
+3. 后续可设计最小 Runtime CLI 命令边界，但不要急着实现后台服务。
