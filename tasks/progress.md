@@ -91,6 +91,6 @@
 
 ## 下一步小任务
 
-1. 后续可继续完善 agent 到 policy profile 的自动映射。
-2. 后续可设计 ledger 写入前的 preflight schema 校验，但仍暂不开放写入能力。
-3. 已新增 GitHub Actions CI；后续可在公开扫描脚本产品化后再考虑加入 CI。
+1. 下次优先做 ledger 写入前的 preflight schema 校验设计与只读 CLI validation，不开放真实写入能力。
+2. 后续可继续完善 agent 到 policy profile 的自动映射。
+3. 后续可在公开扫描脚本产品化后再考虑加入 CI。
