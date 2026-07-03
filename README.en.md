@@ -90,6 +90,7 @@ The first phase does not:
 - `docs/08-minimal-cli-design.md`
 - `docs/09-policy-checker-poc-plan.md`
 - `docs/10-cli-poc-usage.md`
+- `docs/11-release-notes-v0.1.md`
 
 ## Development Principle
 

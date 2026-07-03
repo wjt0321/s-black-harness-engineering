@@ -82,9 +82,11 @@
 - 新增真实本地只读 ledger 样例：`tasks/tasks.jsonl` 与 `tasks/events.jsonl`。
 - 调整 task loader：真实 ledger 存在时优先读取真实文件；不存在时才回退 `.examples.jsonl`。
 - 补充 task loader 测试，覆盖真实 ledger 优先级与 fallback 行为。
+- 新增 `docs/11-release-notes-v0.1.md`，沉淀 v0.1 release notes、当前 CLI 能力、安全边界、验证方式和已知限制。
+- 更新 `README.md` 与 `README.en.md` 的文档列表。
 
 ## 下一步小任务
 
-1. 后续可考虑补 release notes 或 GitHub Release 正文。
-2. 后续可继续完善 agent 到 policy profile 的自动映射。
-3. 后续可设计 ledger 写入前的 preflight schema 校验，但仍暂不开放写入能力。
+1. 后续可继续完善 agent 到 policy profile 的自动映射。
+2. 后续可设计 ledger 写入前的 preflight schema 校验，但仍暂不开放写入能力。
+3. 后续可增加 package metadata / CI，让外部用户更容易验证。
