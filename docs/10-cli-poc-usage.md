@@ -252,13 +252,29 @@ python -m agent_runtime.cli policies list
 - 不读取 `.env`、`.env.local` 或密钥文件。
 - 不回显完整 secret match。
 
+## 公开发布前扫描
+
+仓库内已提供只读 public scan 脚本，用于在发布前检查文本文件中是否残留 token 模式或本机路径痕迹：
+
+```bash
+python tools/public_scan.py
+```
+
+扫描规则包括常见 token 模式、Windows 绝对路径（如 `DRIVE:/...`）、Unix home 路径（如 `/home/<user>/`）等。命中时只输出相对路径、行号和规则 id，不输出完整命中值。
+
+返回码：
+
+- `0`：通过
+- `1`：发现风险项
+
+该脚本已加入 CI，在 `pytest` 和 `doctor` 之后运行。
+
 ## 当前限制
 
 - `check action` 仍然只做 preflight 判断，不执行真实外部动作。
 - `tasks/tasks.jsonl` 和 `tasks/events.jsonl` 目前只支持 CLI 查询，不支持 CLI 写入。
 - 还没有后台服务。
 - 还没有插件系统或真实 adapter 执行。
-- 公开扫描脚本仍是维护者本地发布前防线，尚未产品化为仓库内 CI 步骤。
 
 ## 阶段性结论
 

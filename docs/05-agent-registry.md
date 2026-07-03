@@ -142,7 +142,7 @@ agents/
 "hard_boundaries": [
   "未经用户明确授权不得 push Obsidian 仓库",
   "不得读取或外泄其他 Agent 的敏感内容",
-  "不得删除 D:/workspace 内容"
+  "不得删除 ./workspace 内容"
 ]
 ```
 

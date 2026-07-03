@@ -97,6 +97,16 @@
 - 已跑 `python -m pytest`：45 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已抽查 `task validate` 对合法 JSONL 返回 PASS，对缺字段/非法 JSON 返回 `VALIDATION_FAILED` 并正确报告行号。
+- 新增仓库内 `tools/public_scan.py`，替代维护者本地临时 public scan 脚本。
+- public scan 只读：仅扫描仓库内文本文件，不读 `.env`/credential，不访问网络，不执行外部命令，不写文件。
+- public scan 覆盖 token 模式、Windows 绝对路径、Unix home 路径；命中时只输出相对路径、行号、规则 id，不回显完整命中值。
+- 已加入 CI：`.github/workflows/ci.yml` 在 pytest 与 doctor 后运行 `python tools/public_scan.py`。
+- 已替换仓库内遗留的 Windows 绝对路径示例（如 `DRIVE:/competition_notes/`、`DRIVE:/workspace`）为相对路径示例，避免 public scan 误报。
+- 已补充 `tests/test_public_scan.py`，覆盖 clean 文本、token/路径命中、输出脱敏、跳过 credential 文件与二进制目录、行号报告、仓库级扫描通过。
+- 已更新 `docs/10-cli-poc-usage.md`、`docs/11-release-notes-v0.1.md`、`tasks/progress.md`、`tasks/handoff-2026-07-03.md`，说明 public scan 已产品化并纳入 CI。
+- 已跑 `python -m pytest`：55 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
 
 ## 下一步小任务
 

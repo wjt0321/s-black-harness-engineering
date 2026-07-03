@@ -48,12 +48,12 @@
       "severity": "block",
       "action": "deny",
       "match": {
-        "path_prefix": "D:/competition_notes/"
+        "path_prefix": "./competition_notes/"
       },
       "constraints": {
         "readonly": true
       },
-      "message": "D:/competition_notes 当前是只读审核区，未经用户明确同意不得写入。"
+      "message": "./competition_notes 当前是只读审核区，未经用户明确同意不得写入。"
     }
   ],
   "secret_patterns": [

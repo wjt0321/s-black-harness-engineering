@@ -29,3 +29,6 @@ jobs:
 
       - name: Run doctor
         run: python -m agent_runtime.cli doctor
+
+      - name: Run public scan
+        run: python tools/public_scan.py

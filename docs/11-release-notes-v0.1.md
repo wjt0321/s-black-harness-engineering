@@ -23,6 +23,8 @@ The project now has a documented runtime boundary, policy model, task state mode
 - Action preflight now aggregates adapter risk, command rules, publish rules, and completion rules.
 - Policy profile selection is available through `--policy-profile`.
 - Local read-only task ledger examples are available in `tasks/tasks.jsonl` and `tasks/events.jsonl`.
+- Preflight schema validation for task/event ledger records is available via `task validate`.
+- A sanitized in-repository public scan script is available at `tools/public_scan.py` and runs in CI.
 
 ## CLI Commands
 
@@ -62,13 +64,13 @@ The release has been validated with:
 ```text
 python -m pytest tests -q
 python -m agent_runtime.cli doctor
-public repository scan
+python tools/public_scan.py
 ```
 
 Expected current result:
 
 ```text
-34 passed
+55 passed
 PASS
 OK public scan
 ```
@@ -84,7 +86,6 @@ OK public scan
 
 ## Recommended Next Steps
 
-1. Add preflight schema validation for future ledger writes while keeping writes disabled.
-2. Add automatic agent-to-policy profile mapping.
-3. Productize the public repository scan as a sanitized in-repository tool before adding it to CI.
-4. Design the adapter execution envelope without connecting real external systems yet.
+1. Add automatic agent-to-policy profile mapping.
+2. Design the adapter execution envelope without connecting real external systems yet.
+3. Add cross-record ledger consistency checks (event order, task_id existence, status transitions).
