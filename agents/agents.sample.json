@@ -43,6 +43,7 @@
         "cost_level": "high",
         "notes": "Use for planning, judgment, and review rather than routine execution."
       },
+      "policy_profile": "s-black",
       "notes": [
         "This agent owns project design and final review.",
         "Coding tasks can be delegated to a lower-cost coding agent and reviewed here."
@@ -87,6 +88,7 @@
         "cost_level": "medium",
         "notes": "Use for media tasks when the artifact cost is acceptable."
       },
+      "policy_profile": "wangcai",
       "notes": [
         "Best used for execution, not policy ownership."
       ]
@@ -130,6 +132,7 @@
         "cost_level": "medium",
         "notes": "Use for memory governance rather than general execution."
       },
+      "policy_profile": "dabai",
       "notes": [
         "Long-term memory changes should be backed by source notes and review."
       ]
@@ -172,6 +175,7 @@
         "cost_level": "low",
         "notes": "Prefer for coding tasks when available and appropriate."
       },
+      "policy_profile": "s-black",
       "notes": [
         "Runner name is kimi_code in this example."
       ]
@@ -214,6 +218,7 @@
         "cost_level": "high",
         "notes": "Reserve for tasks that justify a more expensive delegate."
       },
+      "policy_profile": "s-black",
       "notes": [
         "This is an example entry; adapt it to your actual runner configuration."
       ]
@@ -256,6 +261,7 @@
         "cost_level": "medium",
         "notes": "Cost depends on the configured underlying model."
       },
+      "policy_profile": "s-black",
       "notes": [
         "This is an example ACP runner entry."
       ]

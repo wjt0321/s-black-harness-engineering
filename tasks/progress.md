@@ -128,6 +128,16 @@
 - 已跑 `python -m pytest`：84 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+- 将 agent -> policy profile 映射从 `agent_runtime/policy_profile.py` 硬编码迁移到 `agents/agents.sample.json` 的 `policy_profile` 字段。
+- 更新 `agents/agents.schema.json`：新增可选字段 `policy_profile`，类型 string，minLength 1，给出常见示例。
+- 更新 `agents/agents.sample.json`：orchestrator/kimi-code/claude-code/omp -> s-black，media-agent -> wangcai，memory-agent -> dabai。
+- 改写 `agent_runtime/policy_profile.py`：从 agent registry 读取映射，保留极小 fallback；`resolve_profile(args, root)` 支持传入 root。
+- 更新 `agent_runtime/cli.py`：所有 `resolve_profile` 调用传入 `root`。
+- 更新 `tests/test_policy_profile.py`：覆盖 registry 读取、registry 覆盖 fallback、未知 agent 回退 all、缺失 registry 使用 fallback、原有 CLI 覆盖优先级。
+- 更新 `docs/05-agent-registry.md`、`docs/10-cli-poc-usage.md`、`tasks/progress.md`、`tasks/handoff-2026-07-03.md`。
+- 已跑 `python -m pytest`：84 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
 
 ## 下一步小任务
 

@@ -70,6 +70,11 @@
         "cost_profile": {
           "$ref": "#/$defs/cost_profile"
         },
+        "policy_profile": {
+          "type": "string",
+          "minLength": 1,
+          "examples": ["s-black", "wangcai", "dabai", "all"]
+        },
         "notes": {
           "type": "array",
           "items": { "type": "string" }

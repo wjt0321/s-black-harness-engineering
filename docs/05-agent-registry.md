@@ -58,6 +58,7 @@ agents/
 | `hard_boundaries` | array | 否 | 硬边界，不能越过 |
 | `handoff` | object | 否 | 委派和验收关系 |
 | `cost_profile` | object | 否 | 成本/额度备注 |
+| `policy_profile` | string | 否 | 默认 policy profile，例如 `s-black`、`wangcai`、`dabai`、`all` |
 | `notes` | array | 否 | 其他备注 |
 
 ## runtime 字段
@@ -164,6 +165,29 @@ agents/
 - Media Agent适合内容创作、MiniMax 任务和轻量日常活。
 - Memory Agent负责记忆整理和记忆问答，不越界处理普通执行任务。
 - 编程任务默认优先 Kimi Code；Claude Code 主要留给小说创作或明确必要场景。
+
+## policy_profile 默认 Policy Profile
+
+`policy_profile` 用于在 CLI 检查中自动选择该 Agent 对应的 policy profile，减少无关 policy 噪音。
+
+示例：
+
+```json
+"policy_profile": "s-black"
+```
+
+当前样例配置：
+
+| Agent | policy_profile | 说明 |
+|:---|:---|:---|
+| `orchestrator` | `s-black` | 中枢 Agent，使用 Orchestrator 工作区 policy |
+| `media-agent` | `wangcai` | Media Agent，使用 Media Agent 工作区 policy |
+| `memory-agent` | `dabai` | Memory Agent，使用 Memory Agent 工作区 policy |
+| `kimi-code` | `s-black` | 下游编程 delegate，工作区与审查归 orchestrator |
+| `claude-code` | `s-black` | 下游编程/写作 delegate，工作区与审查归 orchestrator |
+| `omp` | `s-black` | 下游工程协作 delegate，工作区与审查归 orchestrator |
+
+CLI 解析优先级：`--policy` > `--policy-profile` > `--agent`/`--assignee` 自动映射 > 默认 `all`。
 
 ## cost_profile 成本备注
 

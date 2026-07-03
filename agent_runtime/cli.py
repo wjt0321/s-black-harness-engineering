@@ -82,7 +82,7 @@ def _cmd_check_text(args: argparse.Namespace) -> int:
     root = _root_path(args)
     policy_path = _explicit_policy(args, root)
     text = _read_text_source(args)
-    result = check_text(root, text, explicit_policy=policy_path, profile=resolve_profile(args))
+    result = check_text(root, text, explicit_policy=policy_path, profile=resolve_profile(args, root))
     return emit(result, json_output=args.json, no_color=args.no_color)
 
 
@@ -96,7 +96,7 @@ def _cmd_check_path(args: argparse.Namespace) -> int:
         write=args.write,
         delete=args.delete,
         explicit_policy=policy_path,
-        profile=resolve_profile(args),
+        profile=resolve_profile(args, root),
     )
     return emit(result, json_output=args.json, no_color=args.no_color)
 
@@ -117,7 +117,7 @@ def _cmd_check_action(args: argparse.Namespace) -> int:
         args.operation,
         target=args.target,
         explicit_policy=policy_path,
-        profile=resolve_profile(args),
+        profile=resolve_profile(args, root),
     )
     return emit(result, json_output=args.json, no_color=args.no_color)
 
@@ -161,7 +161,7 @@ def _cmd_adapters_list(args: argparse.Namespace) -> int:
 
 def _cmd_policies_list(args: argparse.Namespace) -> int:
     root = _root_path(args)
-    policy_paths = discover_policies(root, explicit=_explicit_policy(args, root), profile=resolve_profile(args))
+    policy_paths = discover_policies(root, explicit=_explicit_policy(args, root), profile=resolve_profile(args, root))
     rows: list[dict[str, Any]] = []
     for path in policy_paths:
         policy = load_policies(root, explicit=path)[0]

@@ -1,4 +1,4 @@
-"""Tests for policy profile resolution via --agent, --assignee, and overrides."""
+"""Tests for policy profile resolution via agent registry and overrides."""
 
 from pathlib import Path
 
@@ -16,11 +16,20 @@ def _namespace(**kwargs) -> object:
     ns = Namespace()
     for key, value in kwargs.items():
         setattr(ns, key, value)
-    # Ensure default None for missing keys used by resolve_profile.
     for key in ("policy", "policy_profile", "agent", "assignee"):
         if not hasattr(ns, key):
             setattr(ns, key, None)
     return ns
+
+
+def _write_agents_sample(tmp_path: Path, agents: list[dict]) -> Path:
+    agents_file = tmp_path / "agents" / "agents.sample.json"
+    agents_file.parent.mkdir(parents=True, exist_ok=True)
+    agents_file.write_text(
+        '{"version":1,"agents":' + str(agents).replace("'", '"') + "}",
+        encoding="utf-8",
+    )
+    return agents_file
 
 
 def test_resolve_profile_explicit_policy_returns_none():
@@ -28,62 +37,73 @@ def test_resolve_profile_explicit_policy_returns_none():
     assert resolve_profile(ns) is None
 
 
-def test_resolve_profile_explicit_profile_priority():
+def test_resolve_profile_explicit_profile_priority_over_agent():
     ns = _namespace(policy_profile="wangcai", agent="orchestrator")
-    assert resolve_profile(ns) == "wangcai"
+    assert resolve_profile(ns, ROOT) == "wangcai"
 
 
-def test_resolve_profile_agent_orchestrator():
+def test_resolve_profile_reads_registry_for_orchestrator(tmp_path):
+    _write_agents_sample(
+        tmp_path,
+        [{"id": "orchestrator", "policy_profile": "s-black"}],
+    )
     ns = _namespace(agent="orchestrator")
-    assert resolve_profile(ns) == "s-black"
+    assert resolve_profile(ns, tmp_path) == "s-black"
 
 
-def test_resolve_profile_agent_s_black():
-    ns = _namespace(agent="s-black")
-    assert resolve_profile(ns) == "s-black"
+def test_resolve_profile_registry_overrides_fallback(tmp_path):
+    # Fallback says orchestrator -> s-black; registry says orchestrator -> wangcai.
+    _write_agents_sample(
+        tmp_path,
+        [{"id": "orchestrator", "policy_profile": "wangcai"}],
+    )
+    ns = _namespace(agent="orchestrator")
+    assert resolve_profile(ns, tmp_path) == "wangcai"
 
 
-def test_resolve_profile_agent_media_agent():
-    ns = _namespace(agent="media-agent")
-    assert resolve_profile(ns) == "wangcai"
-
-
-def test_resolve_profile_agent_wangcai():
-    ns = _namespace(agent="wangcai")
-    assert resolve_profile(ns) == "wangcai"
-
-
-def test_resolve_profile_agent_memory_agent():
-    ns = _namespace(agent="memory-agent")
-    assert resolve_profile(ns) == "dabai"
-
-
-def test_resolve_profile_agent_dabai():
-    ns = _namespace(agent="dabai")
-    assert resolve_profile(ns) == "dabai"
-
-
-def test_resolve_profile_assignee_fallback():
-    ns = _namespace(assignee="memory-agent")
-    assert resolve_profile(ns) == "dabai"
-
-
-def test_resolve_profile_unknown_agent_defaults_all():
+def test_resolve_profile_unknown_agent_defaults_all(tmp_path):
+    _write_agents_sample(
+        tmp_path,
+        [{"id": "orchestrator", "policy_profile": "s-black"}],
+    )
     ns = _namespace(agent="unknown-agent")
-    assert resolve_profile(ns) == "all"
+    assert resolve_profile(ns, tmp_path) == "all"
+
+
+def test_resolve_profile_missing_registry_uses_fallback():
+    # tmp_path has no agents.sample.json, so fallback table is used.
+    ns = _namespace(agent="orchestrator")
+    assert resolve_profile(ns, ROOT) == "s-black"
+
+
+def test_resolve_profile_assignee_fallback(tmp_path):
+    _write_agents_sample(
+        tmp_path,
+        [{"id": "memory-agent", "policy_profile": "dabai"}],
+    )
+    ns = _namespace(assignee="memory-agent")
+    assert resolve_profile(ns, tmp_path) == "dabai"
 
 
 def test_resolve_profile_default_all():
     ns = _namespace()
-    assert resolve_profile(ns) == "all"
+    assert resolve_profile(ns, ROOT) == "all"
 
 
-def test_resolve_profile_from_agent_helper():
-    assert resolve_profile_from_agent("orchestrator") == "s-black"
-    assert resolve_profile_from_agent("media-agent") == "wangcai"
-    assert resolve_profile_from_agent("memory-agent") == "dabai"
-    assert resolve_profile_from_agent("unknown") == "all"
-    assert resolve_profile_from_agent(None) == "all"
+def test_resolve_profile_from_agent_uses_registry(tmp_path):
+    _write_agents_sample(
+        tmp_path,
+        [{"id": "media-agent", "policy_profile": "wangcai"}],
+    )
+    assert resolve_profile_from_agent("media-agent", tmp_path) == "wangcai"
+
+
+def test_resolve_profile_from_agent_unknown(tmp_path):
+    _write_agents_sample(
+        tmp_path,
+        [{"id": "media-agent", "policy_profile": "wangcai"}],
+    )
+    assert resolve_profile_from_agent("unknown", tmp_path) == "all"
 
 
 def test_cli_check_action_with_agent_orchestrator_uses_s_black(capsys):
@@ -161,8 +181,6 @@ def test_cli_explicit_policy_file_overrides_agent(capsys, tmp_path):
         encoding="utf-8",
     )
     token = "sk-" + "Z" * 24
-    # With --agent orchestrator alone, s-black policy would block the OpenAI-style key.
-    # With --policy empty.policy.json, the explicit empty policy should take precedence and pass.
     code = main([
         "--root", str(ROOT),
         "--policy", str(policy_file),

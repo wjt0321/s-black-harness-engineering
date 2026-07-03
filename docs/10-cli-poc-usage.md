@@ -276,13 +276,14 @@ python -m agent_runtime.cli --assignee media-agent policies list
 3. `--agent <agent-id>` 或 `--assignee <agent-id>`：自动推断 profile。
 4. 默认 `all`。
 
-当前自动映射：
+当前自动映射从 `agents/agents.sample.json` 的 `policy_profile` 字段读取：
 
 | agent / assignee | profile |
 |:---|:---|
-| `orchestrator`、`s-black` | `s-black` |
-| `media-agent`、`wangcai` | `wangcai` |
-| `memory-agent`、`dabai` | `dabai` |
+| `orchestrator` | `s-black` |
+| `media-agent` | `wangcai` |
+| `memory-agent` | `dabai` |
+| `kimi-code`、`claude-code`、`omp` | `s-black` |
 | 未知 | `all` |
 
 ## 返回码
