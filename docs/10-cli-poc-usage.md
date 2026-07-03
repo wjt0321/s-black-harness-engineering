@@ -179,6 +179,35 @@ JSON 输出：
 python -m agent_runtime.cli task validate --record-file tasks/tasks.jsonl --schema task --json
 ```
 
+## Ledger 跨记录一致性检查
+
+在写入前，还可以对 task 与 event ledger 做跨记录一致性检查：
+
+```bash
+python -m agent_runtime.cli task check-ledger \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl
+```
+
+检查内容：
+
+- 每个 `event.task_id` 必须存在于 task ledger。
+- 每个 task 的事件按 `timestamp` 排序后，状态流转必须连续合法。
+- `created` 事件的 `from_status` 必须为 `null`。
+- `finished`/`failed` 为终态，之后不得再进入 `running`/`planned`。
+- task snapshot 的 `status` 必须与该 task 最新带 `to_status` 的事件一致。
+
+该命令只读取 JSONL 文件，不写入、不修复、不追加 ledger。
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli task check-ledger \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl \
+  --json
+```
+
 ## Registry 查询
 
 列出 Agent：

@@ -12,6 +12,7 @@ from .doctor import run_doctor
 from .loader import load_adapters, load_agents, load_policies, discover_policies, normalize_path
 from .policy import check_action, check_path, check_text
 from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS
+from .ledger_consistency import check_ledger_consistency
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -239,6 +240,16 @@ def _cmd_task_validate(args: argparse.Namespace) -> int:
     return emit(result, json_output=args.json, no_color=args.no_color)
 
 
+def _cmd_task_check_ledger(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result = check_ledger_consistency(
+        root,
+        tasks_file=args.tasks_file,
+        events_file=args.events_file,
+    )
+    return emit(result, json_output=args.json, no_color=args.no_color)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="agent-runtime",
@@ -297,6 +308,12 @@ def build_parser() -> argparse.ArgumentParser:
     task_validate_parser.add_argument("--schema", required=True, choices=["task", "event"], help="Schema type: task or event")
     _add_global_args(task_validate_parser)
     task_validate_parser.set_defaults(func=_cmd_task_validate)
+
+    task_check_ledger_parser = task_subparsers.add_parser("check-ledger", help="Check cross-record consistency between task and event ledgers")
+    task_check_ledger_parser.add_argument("--tasks-file", required=True, help="Path to tasks JSONL file")
+    task_check_ledger_parser.add_argument("--events-file", required=True, help="Path to events JSONL file")
+    _add_global_args(task_check_ledger_parser)
+    task_check_ledger_parser.set_defaults(func=_cmd_task_check_ledger)
 
     # agents list
     agents_parser = subparsers.add_parser("agents", help="List registered agents")

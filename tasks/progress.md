@@ -107,6 +107,16 @@
 - 已跑 `python -m pytest`：55 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+- 新增 ledger 跨记录一致性校验层 `agent_runtime/ledger_consistency.py`。
+- 新增 CLI 命令 `python -m agent_runtime.cli task check-ledger --tasks-file <file> --events-file <file>`。
+- 校验内容：event.task_id 存在性、状态流转连续性、created from_status 为 null、终态不可回退、snapshot status 与最新 event to_status 一致。
+- 命令只读 JSONL，不写入/修复/追加 ledger，不执行外部命令，不访问网络。
+- 失败输出仅含 event_id/task_id、行号、规则 id 与简短说明，不回显整条 record。
+- 已补充 `tests/test_ledger_consistency.py`，覆盖当前 ledger 通过、未知 task_id、snapshot 不一致、终态回退、时间乱序排序、created 规则、首事件非 created、状态不连续、输出不脱敏、CLI valid/invalid。
+- 已更新 `docs/10-cli-poc-usage.md`、`tasks/progress.md`、`tasks/handoff-2026-07-03.md`。
+- 已跑 `python -m pytest`：66 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
 
 ## 下一步小任务
 
