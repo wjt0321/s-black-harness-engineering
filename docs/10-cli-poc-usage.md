@@ -208,6 +208,55 @@ python -m agent_runtime.cli task check-ledger \
   --json
 ```
 
+## Adapter Execution Envelope 计划
+
+`adapter plan` 把 `check action` 的 preflight 结果包装成只读的 Adapter execution envelope 草案。它不会执行真实 adapter、不会访问网络、不会写入 task ledger。
+
+生成 GitHub push 的 envelope（需要授权）：
+
+```bash
+python -m agent_runtime.cli adapter plan \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main
+```
+
+期望输出包含：
+
+- `adapter_request`：preflight 状态、findings、context（含 `dry_run: true`）。
+- `approval_record`：当 preflight 状态为 `needs_approval` 时生成。
+- `execution_event`（`event_type: approval_requested`）：当需要授权时生成。
+
+生成低风险 shell read 的 envelope（不需要授权）：
+
+```bash
+python -m agent_runtime.cli adapter plan \
+  --adapter shell-local \
+  --operation read_file \
+  --target README.md
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli adapter plan \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --json
+```
+
+支持 `--agent` / `--assignee` 自动选择 policy profile，也支持 `--actor` 和 `--task-id` 自定义 envelope 字段：
+
+```bash
+python -m agent_runtime.cli --agent orchestrator adapter plan \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --actor cli \
+  --task-id task-20260703-001
+```
+
 ## Registry 查询
 
 列出 Agent：
@@ -269,7 +318,7 @@ python -m agent_runtime.cli --assignee media-agent policies list
 
 ## Policy Profile 解析优先级
 
-`check text`、`check path`、`check action`、`policies list` 等命令需要加载 policy 时，按以下优先级解析：
+`check text`、`check path`、`check action`、`policies list`、`adapter plan` 等命令需要加载 policy 时，按以下优先级解析：
 
 1. `--policy <file>`：直接使用指定 policy 文件，最高优先级。
 2. `--policy-profile <name>`：手动指定 profile。

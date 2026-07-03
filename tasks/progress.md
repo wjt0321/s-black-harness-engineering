@@ -152,3 +152,13 @@
 - 更新 `agent_runtime/doctor.py`，将 execution envelope schema 与 examples 纳入 doctor 校验。
 - 更新 README 中英文文档列表与当前状态说明。
 - 本阶段仍保持只读边界：不执行真实 adapter、不访问网络、不写 ledger、不记录真实密钥或本机私有路径。
+
+- 新增只读 `adapter plan` CLI 命令，把 `check action` 的 preflight 结果包装成 Adapter execution envelope 草案。
+- 新增 `agent_runtime/adapter_plan.py`：加载 adapter registry、运行 `check_action`、生成 `adapter_request`；当 preflight 为 `needs_approval` 时附加 `approval_record` 与 `approval_requested` execution event；并用 `jsonschema` 校验 envelope。
+- 更新 `agent_runtime/cli.py`：新增 `adapter plan` 子命令，支持 `--adapter`、`--operation`、`--target`、`--actor`、`--task-id` 和全局 `--agent`/`--policy-profile`。
+- 命令保持只读：不执行真实 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- 补充 `tests/test_adapter_plan.py`，覆盖：GitHub push 需要授权、shell read PASS、JSON 输出 schema 校验、不写入 ledger、未知 adapter、按 agent 选择 profile、自定义 actor/task-id。
+- 更新 `docs/10-cli-poc-usage.md` 与 `tasks/progress.md`，记录 `adapter plan` 用法。
+- 已跑 `python -m pytest`：91 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。

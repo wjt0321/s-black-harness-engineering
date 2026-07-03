@@ -8,11 +8,12 @@ import sys
 from pathlib import Path
 from typing import Any, Sequence
 
+from .adapter_plan import PlanResult, plan_adapter_action
 from .doctor import run_doctor
 from .loader import load_adapters, load_agents, load_policies, discover_policies, normalize_path
 from .policy import check_action, check_path, check_text
 from .policy_profile import resolve_profile
-from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS
+from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS, _STATUS_TO_EXIT
 from .ledger_consistency import check_ledger_consistency
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
@@ -120,6 +121,56 @@ def _cmd_check_action(args: argparse.Namespace) -> int:
         profile=resolve_profile(args, root),
     )
     return emit(result, json_output=args.json, no_color=args.no_color)
+
+
+def _cmd_adapter_plan(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    if not args.adapter or not args.operation:
+        result = PlanResult(
+            status="error",
+            findings=[],
+            next_action="--adapter and --operation are required for adapter plan.",
+            envelope=None,
+        )
+        return _emit_plan_result(result, json_output=args.json)
+
+    plan_result = plan_adapter_action(
+        root,
+        args.adapter,
+        args.operation,
+        target=args.target,
+        actor=args.actor or "cli",
+        task_id=args.task_id,
+        args=args,
+    )
+    return _emit_plan_result(plan_result, json_output=args.json)
+
+
+def _emit_plan_result(result: PlanResult, json_output: bool) -> int:
+    if json_output:
+        if result.envelope is not None:
+            print(json.dumps(result.envelope, ensure_ascii=False, indent=2))
+        else:
+            print(
+                json.dumps(
+                    {
+                        "status": result.status,
+                        "findings": [f.to_dict() for f in result.findings],
+                        "next_action": result.next_action,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+    else:
+        print(result.status.upper())
+        for finding in result.findings:
+            print(f"- {finding.rule_id}: {finding.message}")
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+        if result.envelope is not None:
+            print(json.dumps(result.envelope, ensure_ascii=False, indent=2))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
 def _cmd_agents_list(args: argparse.Namespace) -> int:
@@ -287,6 +338,19 @@ def build_parser() -> argparse.ArgumentParser:
     action_parser.add_argument("--target", default=None, help="Operation target")
     _add_global_args(action_parser)
     action_parser.set_defaults(func=_cmd_check_action)
+
+    # adapter plan
+    adapter_parser = subparsers.add_parser("adapter", help="Plan adapter execution envelopes")
+    adapter_subparsers = adapter_parser.add_subparsers(dest="adapter_command", required=True)
+
+    adapter_plan_parser = adapter_subparsers.add_parser("plan", help="Generate an adapter execution envelope draft")
+    adapter_plan_parser.add_argument("--adapter", required=True, help="Adapter id")
+    adapter_plan_parser.add_argument("--operation", required=True, help="Operation name")
+    adapter_plan_parser.add_argument("--target", default=None, help="Operation target")
+    adapter_plan_parser.add_argument("--actor", default="cli", help="Actor identifier")
+    adapter_plan_parser.add_argument("--task-id", default=None, help="Explicit task id")
+    _add_global_args(adapter_plan_parser)
+    adapter_plan_parser.set_defaults(func=_cmd_adapter_plan)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")
