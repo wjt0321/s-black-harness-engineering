@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "description": "Minimal CLI command registry draft. This is design data only; commands are not implemented yet.",
+  "commands": [
+    {
+      "name": "check action",
+      "purpose": "Check an action descriptor against policy before any adapter execution.",
+      "risk": "read_only",
+      "writes_files": false,
+      "external_effect": false,
+      "arguments": ["--adapter", "--operation", "--target", "--payload-file", "--risk-level", "--json"],
+      "returns": ["PASS", "WARN", "BLOCKED", "NEEDS_APPROVAL", "NEEDS_INPUT", "ERROR"]
+    },
+    {
+      "name": "check text",
+      "purpose": "Scan text, stdin, or a file for configured secret patterns.",
+      "risk": "read_only",
+      "writes_files": false,
+      "external_effect": false,
+      "arguments": ["--file", "--stdin", "--json"],
+      "returns": ["PASS", "BLOCKED", "ERROR"]
+    },
+    {
+      "name": "check path",
+      "purpose": "Check path ownership, read-only rules, and operation risk.",
+      "risk": "read_only",
+      "writes_files": false,
+      "external_effect": false,
+      "arguments": ["path", "--read", "--write", "--delete", "--json"],
+      "returns": ["PASS", "WARN", "BLOCKED", "NEEDS_APPROVAL", "ERROR"]
+    },
+    {
+      "name": "task status",
+      "purpose": "Read a task snapshot from task ledger files.",
+      "risk": "read_only",
+      "writes_files": false,
+      "external_effect": false,
+      "arguments": ["task_id", "--json"],
+      "returns": ["PASS", "ERROR"]
+    },
+    {
+      "name": "task events",
+      "purpose": "Read task event history from event ledger files.",
+      "risk": "read_only",
+      "writes_files": false,
+      "external_effect": false,
+      "arguments": ["task_id", "--json"],
+      "returns": ["PASS", "ERROR"]
+    },
+    {
+      "name": "agents list",
+      "purpose": "List agents from the agent registry.",
+      "risk": "read_only",
+      "writes_files": false,
+      "external_effect": false,
+      "arguments": ["--capability", "--json"],
+      "returns": ["PASS", "ERROR"]
+    },
+    {
+      "name": "adapters list",
+      "purpose": "List adapters from the adapter registry.",
+      "risk": "read_only",
+      "writes_files": false,
+      "external_effect": false,
+      "arguments": ["--kind", "--risk", "--json"],
+      "returns": ["PASS", "ERROR"]
+    },
+    {
+      "name": "policies list",
+      "purpose": "List policy files and rule counts.",
+      "risk": "read_only",
+      "writes_files": false,
+      "external_effect": false,
+      "arguments": ["--json"],
+      "returns": ["PASS", "ERROR"]
+    },
+    {
+      "name": "doctor",
+      "purpose": "Validate project structure, JSON, JSONL, schema compatibility, and public-scan rules.",
+      "risk": "read_only",
+      "writes_files": false,
+      "external_effect": false,
+      "arguments": ["--json", "--verbose"],
+      "returns": ["PASS", "ERROR"]
+    }
+  ]
+}

@@ -45,8 +45,13 @@
 - 新增 `tasks/policy-event.examples.jsonl`，提供 policy 命中、用户授权恢复、secret scan evidence、只读路径阻断、completion evidence 不足等事件样例。
 - 已验证 `tasks/policy-event.examples.jsonl` 为合法 JSONL。
 
+- 新增 `docs/08-minimal-cli-design.md`，定义最小 CLI 命令边界：`check action`、`check text`、`check path`、`task status`、`task events`、`agents list`、`adapters list`、`policies list`、`doctor`。
+- 新增 `cli/commands.sample.json`，把 CLI 命令边界结构化为样例数据，方便后续实现。
+- 已验证 `cli/commands.sample.json` 为合法 JSON。
+- 明确进入真实 CLI 实现时，可优先委派 Kimi Code 负责编码，Orchestrator 负责验收。
+
 ## 下一步小任务
 
 1. 后续可做一个最小 policy checker 读取新 schema，但暂不接入真实执行链路。
-2. 后续可设计最小 Runtime CLI 命令边界，但不要急着实现后台服务。
-3. 后续可补 `docs/08-minimal-cli-design.md`，先设计命令，不实现后台服务。
+2. 后续可开始 CLI POC，但第一版只做只读命令和校验命令，不执行外部动作。
+3. 后续可补 `docs/09-policy-checker-poc-plan.md`，把实现边界写清楚后再委派 Kimi 编码。
