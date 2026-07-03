@@ -49,19 +49,22 @@ def load_jsonl(path: Path) -> list[Any]:
     return records
 
 
-def discover_policies(root: Path, explicit: Path | None = None) -> list[Path]:
+def discover_policies(root: Path, explicit: Path | None = None, profile: str | None = None) -> list[Path]:
     """Return policy file paths to load."""
     if explicit is not None:
         return [explicit]
     policies_dir = root / "policies"
     if not policies_dir.is_dir():
         return []
+    if profile and profile != "all":
+        path = policies_dir / f"{profile}.sample.policy.json"
+        return [path] if path.is_file() else []
     return sorted(policies_dir.glob("*.sample.policy.json"))
 
 
-def load_policies(root: Path, explicit: Path | None = None) -> list[dict[str, Any]]:
+def load_policies(root: Path, explicit: Path | None = None, profile: str | None = None) -> list[dict[str, Any]]:
     policies: list[dict[str, Any]] = []
-    for path in discover_policies(root, explicit=explicit):
+    for path in discover_policies(root, explicit=explicit, profile=profile):
         policies.append(load_json(path))
     return policies
 

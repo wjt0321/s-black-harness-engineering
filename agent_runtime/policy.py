@@ -21,9 +21,14 @@ def _line_col(text: str, pos: int) -> tuple[int, int]:
     return line, col
 
 
-def check_text(root: Path, text: str, explicit_policy: Path | None = None) -> CheckResult:
+def check_text(
+    root: Path,
+    text: str,
+    explicit_policy: Path | None = None,
+    profile: str | None = None,
+) -> CheckResult:
     """Scan text for configured secret patterns."""
-    policies = load_policies(root, explicit=explicit_policy)
+    policies = load_policies(root, explicit=explicit_policy, profile=profile)
     findings: list[Finding] = []
     seen: set[tuple[int, int, str]] = set()  # de-duplicate by (line, col, rule)
 
@@ -118,9 +123,10 @@ def check_path(
     write: bool = False,
     delete: bool = False,
     explicit_policy: Path | None = None,
+    profile: str | None = None,
 ) -> CheckResult:
     """Check a target path against path_rules."""
-    policies = load_policies(root, explicit=explicit_policy)
+    policies = load_policies(root, explicit=explicit_policy, profile=profile)
     normalized = normalize_path(target).lstrip("./")
     path_obj = Path(target)
     mode = _operation_mode(write=write, delete=delete, read=read)
@@ -248,10 +254,11 @@ def check_action(
     operation: str,
     target: str | None = None,
     explicit_policy: Path | None = None,
+    profile: str | None = None,
 ) -> CheckResult:
     """Check an action descriptor against adapters and policy rules."""
     adapters_data = load_adapters(root)
-    policies = load_policies(root, explicit=explicit_policy)
+    policies = load_policies(root, explicit=explicit_policy, profile=profile)
 
     adapter = next(
         (a for a in adapters_data.get("adapters", []) if a.get("id") == adapter_id),

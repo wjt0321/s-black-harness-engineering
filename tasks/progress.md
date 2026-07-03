@@ -78,9 +78,10 @@
 - 继续扩展 `check action`：现在会聚合 adapter 风险、command rules、publish rules 和 completion rules。
 - GitHub publish 类动作会同时提示用户授权与 required checks；完成类动作会提示 required evidence。
 - 补充对应 CLI 测试，覆盖 publish preflight 与 completion evidence。
+- 新增 `--policy-profile` 参数，支持按 `s-black`、`wangcai`、`dabai` 或 `all` 选择样例 policy；同时修复重复注册全局参数时前置参数被子命令默认值覆盖的问题。
 
 ## 下一步小任务
 
 1. 后续可增加真实 `tasks/tasks.jsonl` 与 `tasks/events.jsonl` 的本地只读样例。
 2. 后续可考虑补 release notes 或 GitHub Release 正文。
-3. 后续可考虑为多 policy 聚合增加 agent/policy 选择策略，避免无关 policy 同时提示。
+3. 已新增 `--policy-profile` 降噪入口；后续可继续完善 agent 到 policy profile 的自动映射。

@@ -76,6 +76,22 @@ def test_cli_check_action_completion_requires_evidence(capsys):
     assert "test_output" in captured.out
 
 
+def test_cli_check_action_policy_profile_limits_rules(capsys):
+    code = main([
+        "--root", str(ROOT),
+        "--policy-profile", "s-black",
+        "check", "action",
+        "--adapter", "shell-local",
+        "--operation", "mark_finished",
+        "--target", "task-20260702-001",
+    ])
+    captured = capsys.readouterr()
+    assert code == 4
+    assert "completion-evidence-required" in captured.out
+    assert "memory-distillation-evidence-required" not in captured.out
+    assert "media-artifact-required" not in captured.out
+
+
 def test_cli_agents_list(capsys):
     code = main(["--root", str(ROOT), "agents", "--capability", "planning"])
     captured = capsys.readouterr()
@@ -95,6 +111,15 @@ def test_cli_policies_list(capsys):
     captured = capsys.readouterr()
     assert code == 0
     assert "s-black.sample.policy.json" in captured.out
+
+
+def test_cli_policies_list_profile(capsys):
+    code = main(["--root", str(ROOT), "--policy-profile", "s-black", "policies"])
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "s-black.sample.policy.json" in captured.out
+    assert "wangcai.sample.policy.json" not in captured.out
+    assert "dabai.sample.policy.json" not in captured.out
 
 
 def test_cli_task_status(capsys):

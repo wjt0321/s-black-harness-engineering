@@ -112,6 +112,12 @@ NEEDS_APPROVAL
 Next: Ask for approval for this task, this target, this operation.
 ```
 
+按单个 policy profile 降噪：
+
+```bash
+python -m agent_runtime.cli --policy-profile s-black check action --adapter github-cli --operation git_push --target origin/main
+```
+
 低风险只读动作示例：
 
 ```bash
@@ -192,7 +198,8 @@ python -m agent_runtime.cli policies list
 | 参数 | 说明 |
 |:---|:---|
 | `--root <path>` | 指定项目根目录，默认当前目录 |
-| `--policy <file>` | 指定单个 policy 文件 |
+| `--policy <file>` | 指定单个 policy 文件，优先于 policy profile |
+| `--policy-profile <name>` | 指定样例 policy profile：`s-black`、`wangcai`、`dabai` 或 `all`，默认 `all` |
 | `--json` | 输出 JSON |
 | `--no-color` | 禁用彩色输出 |
 | `--quiet` | 保留给后续精简输出使用 |

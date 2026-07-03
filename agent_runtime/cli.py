@@ -16,12 +16,32 @@ from .tasks import find_task, find_task_events, render_task_events, render_task_
 
 
 def _add_global_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--root", default=".", help="Project root directory")
-    parser.add_argument("--policy", default=None, help="Explicit policy file")
-    parser.add_argument("--json", action="store_true", help="Output JSON")
-    parser.add_argument("--no-color", action="store_true", help="Disable color output")
-    parser.add_argument("--quiet", action="store_true", help="Only output necessary results")
-    parser.add_argument("--verbose", action="store_true", help="Output more diagnostic info")
+    parser.add_argument("--root", default=argparse.SUPPRESS, help="Project root directory")
+    parser.add_argument("--policy", default=argparse.SUPPRESS, help="Explicit policy file")
+    parser.add_argument(
+        "--policy-profile",
+        default=argparse.SUPPRESS,
+        help="Policy profile to load: s-black, wangcai, dabai, or all",
+    )
+    parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="Output JSON")
+    parser.add_argument("--no-color", action="store_true", default=argparse.SUPPRESS, help="Disable color output")
+    parser.add_argument("--quiet", action="store_true", default=argparse.SUPPRESS, help="Only output necessary results")
+    parser.add_argument("--verbose", action="store_true", default=argparse.SUPPRESS, help="Output more diagnostic info")
+
+
+def _ensure_global_defaults(args: argparse.Namespace) -> None:
+    defaults = {
+        "root": ".",
+        "policy": None,
+        "policy_profile": None,
+        "json": False,
+        "no_color": False,
+        "quiet": False,
+        "verbose": False,
+    }
+    for name, value in defaults.items():
+        if not hasattr(args, name):
+            setattr(args, name, value)
 
 
 def _root_path(args: argparse.Namespace) -> Path:
@@ -51,11 +71,17 @@ def _read_text_source(args: argparse.Namespace) -> str:
     raise argparse.ArgumentError(None, "Provide one of --text, --file, or --stdin")
 
 
+def _policy_profile(args: argparse.Namespace) -> str | None:
+    if args.policy:
+        return None
+    return args.policy_profile or "all"
+
+
 def _cmd_check_text(args: argparse.Namespace) -> int:
     root = _root_path(args)
     policy_path = _explicit_policy(args, root)
     text = _read_text_source(args)
-    result = check_text(root, text, explicit_policy=policy_path)
+    result = check_text(root, text, explicit_policy=policy_path, profile=_policy_profile(args))
     return emit(result, json_output=args.json, no_color=args.no_color)
 
 
@@ -69,6 +95,7 @@ def _cmd_check_path(args: argparse.Namespace) -> int:
         write=args.write,
         delete=args.delete,
         explicit_policy=policy_path,
+        profile=_policy_profile(args),
     )
     return emit(result, json_output=args.json, no_color=args.no_color)
 
@@ -89,6 +116,7 @@ def _cmd_check_action(args: argparse.Namespace) -> int:
         args.operation,
         target=args.target,
         explicit_policy=policy_path,
+        profile=_policy_profile(args),
     )
     return emit(result, json_output=args.json, no_color=args.no_color)
 
@@ -132,7 +160,7 @@ def _cmd_adapters_list(args: argparse.Namespace) -> int:
 
 def _cmd_policies_list(args: argparse.Namespace) -> int:
     root = _root_path(args)
-    policy_paths = discover_policies(root)
+    policy_paths = discover_policies(root, profile=_policy_profile(args))
     rows: list[dict[str, Any]] = []
     for path in policy_paths:
         policy = load_policies(root, explicit=path)[0]
@@ -292,6 +320,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    _ensure_global_defaults(args)
     try:
         return args.func(args)
     except FileNotFoundError as exc:
