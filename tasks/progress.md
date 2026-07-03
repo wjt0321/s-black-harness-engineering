@@ -54,8 +54,19 @@
 - 明确第一版 POC 只做只读检查，不执行外部命令、不访问网络、不写真实 task ledger、不读取密钥文件。
 - 明确后续进入代码实现时可委派 Kimi Code 编写，Orchestrator 负责安全与质量验收。
 
+- 完成最小只读 CLI POC 第一版实现，新增 `agent_runtime/` 与 `tests/`。
+- 已支持 `python -m agent_runtime.cli` 与 `python -m agent_runtime`。
+- 已实现：`doctor`、`check text`、`check path`、`check action`、`agents list`、`adapters list`、`policies list`。
+- 已补聚焦测试：text secret scan、path rules、doctor、CLI 基础行为。
+- 已确认 `check text` 不回显完整 secret match；测试中的 token 仅在内存中动态拼接。
+- 已确认第一版只读：不执行外部命令、不访问网络、不发送消息、不删除文件、不写真实 task ledger。
+- 已跑 `python -m pytest tests -q`：23 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑公开扫描：OK public scan。
+- 已抽查 `check action --adapter github-cli --operation git_push` 返回 `NEEDS_APPROVAL`，低风险 shell read 返回 `PASS`。
+
 ## 下一步小任务
 
-1. 可开始准备 Kimi Code 编码任务说明，让 Kimi 实现只读 CLI POC。
-2. 代码实现范围优先：`doctor`、`check text`、`check path`、`agents list`、`adapters list`、`policies list`。
-3. 暂缓 `check action` 的复杂逻辑，等基础 checker 稳定后再做。
+1. 补 `docs/10-cli-poc-usage.md`，说明最小 CLI POC 的实际使用方法和当前限制。
+2. 后续可补 README 中的“当前已可运行”小节，但不要堆过多实现细节。
+3. 后续再扩展 `check action` 的 publish_rules / completion_rules 关联。
