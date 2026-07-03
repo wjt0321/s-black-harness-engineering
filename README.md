@@ -28,6 +28,10 @@
 - 创建日期：2026-07-02
 - 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight 和 registry 查询
 
+## 持续集成
+
+push 和 pull_request 到 `main` 分支时，GitHub Actions 会在 Python 3.11 和 3.12 上运行 `pytest` 与 `python -m agent_runtime.cli doctor`。详见 `.github/workflows/ci.yml`。
+
 ## 快速开始
 
 ```bash

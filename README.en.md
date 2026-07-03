@@ -28,6 +28,10 @@ It is not intended to replace QwenPaw immediately. The first phase focuses on do
 - Created: 2026-07-02
 - Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, and registry queries
 
+## Continuous Integration
+
+On push and pull_request to `main`, GitHub Actions runs `pytest` and `python -m agent_runtime.cli doctor` against Python 3.11 and 3.12. See `.github/workflows/ci.yml`.
+
 ## Quick Start
 
 ```bash

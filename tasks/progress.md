@@ -86,9 +86,11 @@
 - 更新 `README.md` 与 `README.en.md` 的文档列表。
 - 新增 `pyproject.toml`，提供 Python 包元数据、pytest 配置、dev 依赖和可选 `agent-runtime` console script。
 - 更新 CLI 使用说明，补充可编辑安装方式。
+- 新增 `.github/workflows/ci.yml`，在 push / pull_request 到 main 时用 Python 3.11 和 3.12 跑 `pytest` 与 `doctor`。
+- 更新中英文 README 的持续集成说明。
 
 ## 下一步小任务
 
 1. 后续可继续完善 agent 到 policy profile 的自动映射。
 2. 后续可设计 ledger 写入前的 preflight schema 校验，但仍暂不开放写入能力。
-3. 已新增 `pyproject.toml` 作为本地开发包配置；后续可继续补 CI，让外部用户更容易验证。
+3. 已新增 GitHub Actions CI；后续可在公开扫描脚本产品化后再考虑加入 CI。
