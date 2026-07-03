@@ -30,7 +30,7 @@
 
 ## 持续集成
 
-push 和 pull_request 到 `main` 分支时，GitHub Actions 会在 Python 3.11 和 3.12 上运行 `pytest` 与 `python -m agent_runtime.cli doctor`。详见 `.github/workflows/ci.yml`。
+push 和 pull_request 到 `main` 分支时，GitHub Actions 会在 Python 3.11 和 3.12 上运行 `pytest`、`doctor`、ledger CLI smoke checks 和 `public_scan`。详见 `.github/workflows/ci.yml`。
 
 ## 快速开始
 

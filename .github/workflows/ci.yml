@@ -30,5 +30,11 @@ jobs:
       - name: Run doctor
         run: python -m agent_runtime.cli doctor
 
+      - name: Run ledger CLI smoke checks
+        run: |
+          python -m agent_runtime.cli task validate --record-file tasks/tasks.jsonl --schema task
+          python -m agent_runtime.cli task validate --record-file tasks/events.jsonl --schema event
+          python -m agent_runtime.cli task check-ledger --tasks-file tasks/tasks.jsonl --events-file tasks/events.jsonl
+
       - name: Run public scan
         run: python tools/public_scan.py

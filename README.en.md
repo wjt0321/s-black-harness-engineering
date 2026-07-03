@@ -30,7 +30,7 @@ It is not intended to replace QwenPaw immediately. The first phase focuses on do
 
 ## Continuous Integration
 
-On push and pull_request to `main`, GitHub Actions runs `pytest` and `python -m agent_runtime.cli doctor` against Python 3.11 and 3.12. See `.github/workflows/ci.yml`.
+On push and pull_request to `main`, GitHub Actions runs `pytest`, `doctor`, ledger CLI smoke checks, and `public_scan` against Python 3.11 and 3.12. See `.github/workflows/ci.yml`.
 
 ## Quick Start
 

@@ -87,6 +87,7 @@
 - 新增 `pyproject.toml`，提供 Python 包元数据、pytest 配置、dev 依赖和可选 `agent-runtime` console script。
 - 更新 CLI 使用说明，补充可编辑安装方式。
 - 新增 `.github/workflows/ci.yml`，在 push / pull_request 到 main 时用 Python 3.11 和 3.12 跑 `pytest` 与 `doctor`。
+- CI 已补充 ledger CLI smoke checks：`task validate` task/event 与 `task check-ledger`。
 - 更新中英文 README 的持续集成说明。
 - 新增 ledger 写入前 preflight schema 校验层 `agent_runtime/task_validation.py`。
 - 新增 CLI 命令 `python -m agent_runtime.cli task validate --record-file <file> --schema task|event`。
