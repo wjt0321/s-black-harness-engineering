@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "s-black-harness-engineering"
+version = "0.1.0"
+description = "Read-only policy, task ledger, agent registry, and adapter boundary POC for a lightweight agent runtime."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "s-black harness engineering maintainers" }
+]
+keywords = ["agent-runtime", "policy", "task-ledger", "orchestration"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+  "jsonschema>=4.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0"
+]
+
+[project.scripts]
+agent-runtime = "agent_runtime.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["agent_runtime*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

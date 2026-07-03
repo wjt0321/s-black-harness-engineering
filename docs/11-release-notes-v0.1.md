@@ -80,7 +80,7 @@ OK public scan
 - Task ledger files are still local JSONL files.
 - The CLI can query task records, but it does not write task records.
 - Policy profiles are selected manually; automatic agent-to-policy mapping is not implemented yet.
-- There is no package metadata or console script installation yet.
+- Package metadata and a console script are available for local development, but the documented default remains `python -m agent_runtime.cli`.
 
 ## Recommended Next Steps
 

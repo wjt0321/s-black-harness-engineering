@@ -84,9 +84,11 @@
 - 补充 task loader 测试，覆盖真实 ledger 优先级与 fallback 行为。
 - 新增 `docs/11-release-notes-v0.1.md`，沉淀 v0.1 release notes、当前 CLI 能力、安全边界、验证方式和已知限制。
 - 更新 `README.md` 与 `README.en.md` 的文档列表。
+- 新增 `pyproject.toml`，提供 Python 包元数据、pytest 配置、dev 依赖和可选 `agent-runtime` console script。
+- 更新 CLI 使用说明，补充可编辑安装方式。
 
 ## 下一步小任务
 
 1. 后续可继续完善 agent 到 policy profile 的自动映射。
 2. 后续可设计 ledger 写入前的 preflight schema 校验，但仍暂不开放写入能力。
-3. 后续可增加 package metadata / CI，让外部用户更容易验证。
+3. 已新增 `pyproject.toml` 作为本地开发包配置；后续可继续补 CI，让外部用户更容易验证。

@@ -14,9 +14,13 @@ Desktop.ini
 .env.*
 !.env.example
 
-# Python cache
+# Python cache and build metadata
 __pycache__/
 *.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
 
 # Node cache
 node_modules/

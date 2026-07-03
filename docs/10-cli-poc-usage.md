@@ -20,6 +20,13 @@ python -m agent_runtime.cli <command>
 python -m agent_runtime <command>
 ```
 
+如果已经以可编辑模式安装，也可以使用 console script：
+
+```bash
+python -m pip install -e .[dev]
+agent-runtime <command>
+```
+
 ## 快速自检
 
 ```bash
