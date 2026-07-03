@@ -85,6 +85,6 @@ OK public scan
 ## Recommended Next Steps
 
 1. Add preflight schema validation for future ledger writes while keeping writes disabled.
-2. Add package metadata for local development convenience.
-3. Add CI to run tests, doctor, and public scan.
+2. Add automatic agent-to-policy profile mapping.
+3. Productize the public repository scan as a sanitized in-repository tool before adding it to CI.
 4. Design the adapter execution envelope without connecting real external systems yet.

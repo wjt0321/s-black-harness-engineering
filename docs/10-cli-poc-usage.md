@@ -237,11 +237,11 @@ python -m agent_runtime.cli policies list
 
 ## 当前限制
 
-- `check action` 还是基础版，只做 adapter 风险、授权和部分 command rule 判断。
-- 还没有真实 `tasks/tasks.jsonl` 和 `tasks/events.jsonl` 写入能力。
+- `check action` 仍然只做 preflight 判断，不执行真实外部动作。
+- `tasks/tasks.jsonl` 和 `tasks/events.jsonl` 目前只支持 CLI 查询，不支持 CLI 写入。
 - 还没有后台服务。
 - 还没有插件系统或真实 adapter 执行。
-- 还没有打包发布为全局命令。
+- 公开扫描脚本仍是维护者本地发布前防线，尚未产品化为仓库内 CI 步骤。
 
 ## 阶段性结论
 
