@@ -174,3 +174,21 @@
 - 已跑 `python tools/public_scan.py`：OK public scan。
 
 - 新增明日接续文档 `tasks/handoff-2026-07-04.md`，记录当前远端状态、Adapter execution envelope 阶段成果、只读 `adapter plan` / `adapter validate` 能力、验证结果、推送与代理记录，以及明日建议路线。
+
+## 2026-07-04
+
+- 继续 Adapter execution envelope 阶段：在 `adapter validate` 中集成跨 artifact 一致性校验。
+- 修改 `agent_runtime/adapter_validation.py`：schema 校验通过后，新增 `_check_envelope_consistency` 对 envelope 内 artifact 做只读一致性检查。
+- 一致性规则：
+  - `duplicate-request-id`：`adapter_request.request_id` 唯一。
+  - `approval-references-unknown-request`、`response-references-unknown-request`、`event-references-unknown-request`：各 artifact 的 `request_id` 必须引用存在的 `adapter_request`。
+  - `approval-scope-mismatch`：`approval_record.scope` 的 `task_id` / `adapter_id` / `operation` / `target` 必须与对应 `adapter_request` 完全一致。
+  - `needs-approval-missing-record`：`requires_approval` 且 `preflight.status == "needs_approval"` 的请求必须存在 pending/granted 的 `approval_record`。
+  - `approval-requested-event-unknown-approval`：`approval_requested` 事件的 `metadata.approval_id` 必须引用存在的 `approval_record`。
+- 保持只读边界：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential；失败输出仅含相对路径、artifact id、规则 id 和简短摘要，不回显完整 artifact 或 payload。
+- 补充 `tests/test_adapter_validate.py`：覆盖 unknown approval request、unknown response request、unknown event request、approval scope mismatch、needs approval missing record、unknown approval_id in event、duplicate request_id，以及 JSON 输出和不写 ledger。
+- 更新 `docs/10-cli-poc-usage.md`，说明 `adapter validate` 现在包含 schema + consistency 双重校验。
+- 更新 `tasks/progress.md` 记录本次进展。
+- 已跑 `python -m pytest`：106 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。

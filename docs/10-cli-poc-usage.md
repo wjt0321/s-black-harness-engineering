@@ -259,7 +259,12 @@ python -m agent_runtime.cli --agent orchestrator adapter plan \
 
 ## Adapter Execution Envelope 校验
 
-`adapter validate` 用于只读校验已有的 adapter execution envelope JSON 文件是否符合 `adapters/execution-envelope.schema.json`。它不会执行 adapter、不会访问网络、不会写入 ledger。
+`adapter validate` 用于只读校验已有的 adapter execution envelope JSON 文件。校验分两步：
+
+1. **Schema 校验**：检查 envelope 是否符合 `adapters/execution-envelope.schema.json`。
+2. **跨 artifact 一致性校验**：检查 artifact 之间的引用和 scope 是否一致。
+
+它不会执行 adapter、不会访问网络、不会写入 ledger。
 
 ```bash
 python -m agent_runtime.cli adapter validate \
@@ -278,7 +283,13 @@ python -m agent_runtime.cli adapter validate \
 
 - 文件必须在项目根目录内。
 - 文件必须是安全的 `.json` 文件；不允许 `.env`、credential、密钥类文件。
-- 失败时只输出相对路径、schema 错误路径/规则和简短摘要，不回显整条 artifact 或敏感值。
+- Schema 失败时只输出相对路径、schema 错误路径/规则和简短摘要，不回显整条 artifact 或敏感值。
+- 一致性失败时只输出相对路径、artifact id、规则 id 和简短摘要，例如：
+  - `duplicate-request-id`：`adapter_request.request_id` 必须唯一。
+  - `approval-references-unknown-request`、`response-references-unknown-request`、`event-references-unknown-request`：引用必须指向存在的 `adapter_request`。
+  - `approval-scope-mismatch`：`approval_record.scope` 的 `task_id` / `adapter_id` / `operation` / `target` 必须与对应 `adapter_request` 一致。
+  - `needs-approval-missing-record`：`requires_approval` 且 `preflight.status == "needs_approval"` 的请求必须有 pending/granted 的 `approval_record`。
+  - `approval-requested-event-unknown-approval`：`approval_requested` 事件的 `metadata.approval_id` 必须引用存在的 `approval_record`。
 
 ## Registry 查询
 

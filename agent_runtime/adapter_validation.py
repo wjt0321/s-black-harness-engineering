@@ -42,6 +42,130 @@ def _safe_error_message(exc: JsonSchemaValidationError) -> str:
     return f"validation failed at {path}"
 
 
+def _check_envelope_consistency(
+    envelope: dict[str, Any],
+    rel_path: str,
+) -> CheckResult | None:
+    """Check cross-artifact references inside an already schema-valid envelope.
+
+    Returns None when no consistency issues are found, otherwise a
+    CheckResult with status ``validation_failed``.
+    """
+    artifacts = envelope.get("artifacts", [])
+
+    requests: dict[str, dict[str, Any]] = {}
+    request_ids_seen: set[str] = set()
+    approvals: dict[str, dict[str, Any]] = {}
+
+    for artifact in artifacts:
+        artifact_type = artifact.get("artifact_type")
+        if artifact_type == "adapter_request":
+            request_id = artifact.get("request_id")
+            if request_id in request_ids_seen:
+                return CheckResult(
+                    status="validation_failed",
+                    findings=[
+                        Finding(
+                            rule_id="duplicate-request-id",
+                            severity="error",
+                            action="error",
+                            message=f"{rel_path}: duplicate adapter_request.request_id {request_id}",
+                        )
+                    ],
+                    next_action="Ensure every adapter_request has a unique request_id.",
+                )
+            request_ids_seen.add(request_id)
+            requests[request_id] = artifact
+        elif artifact_type == "approval_record":
+            approval_id = artifact.get("approval_id")
+            approvals[approval_id] = artifact
+
+    findings: list[Finding] = []
+
+    def _finding(rule_id: str, message: str) -> Finding:
+        return Finding(
+            rule_id=rule_id,
+            severity="error",
+            action="error",
+            message=message,
+        )
+
+    for artifact in artifacts:
+        artifact_type = artifact.get("artifact_type")
+        if artifact_type == "approval_record":
+            request_id = artifact.get("request_id")
+            if request_id not in requests:
+                findings.append(
+                    _finding(
+                        "approval-references-unknown-request",
+                        f"{rel_path}: approval_record {artifact.get('approval_id')} references unknown request_id {request_id}",
+                    )
+                )
+                continue
+            request = requests[request_id]
+            scope = artifact.get("scope", {})
+            for field in ("task_id", "adapter_id", "operation", "target"):
+                if scope.get(field) != request.get(field):
+                    findings.append(
+                        _finding(
+                            "approval-scope-mismatch",
+                            f"{rel_path}: approval_record {artifact.get('approval_id')} scope.{field} does not match adapter_request {request_id}",
+                        )
+                    )
+        elif artifact_type == "adapter_response":
+            request_id = artifact.get("request_id")
+            if request_id not in requests:
+                findings.append(
+                    _finding(
+                        "response-references-unknown-request",
+                        f"{rel_path}: adapter_response {artifact.get('response_id')} references unknown request_id {request_id}",
+                    )
+                )
+        elif artifact_type == "execution_event":
+            request_id = artifact.get("request_id")
+            if request_id not in requests:
+                findings.append(
+                    _finding(
+                        "event-references-unknown-request",
+                        f"{rel_path}: execution_event {artifact.get('event_id')} references unknown request_id {request_id}",
+                    )
+                )
+            if artifact.get("event_type") == "approval_requested":
+                approval_id = artifact.get("metadata", {}).get("approval_id")
+                if approval_id is not None and approval_id not in approvals:
+                    findings.append(
+                        _finding(
+                            "approval-requested-event-unknown-approval",
+                            f"{rel_path}: execution_event {artifact.get('event_id')} metadata.approval_id references unknown approval_record {approval_id}",
+                        )
+                    )
+
+    for request_id, request in requests.items():
+        context = request.get("context", {})
+        preflight = request.get("preflight", {})
+        if context.get("requires_approval") and preflight.get("status") == "needs_approval":
+            has_approval = any(
+                a.get("request_id") == request_id
+                and a.get("status") in ("pending", "granted")
+                for a in approvals.values()
+            )
+            if not has_approval:
+                findings.append(
+                    _finding(
+                        "needs-approval-missing-record",
+                        f"{rel_path}: adapter_request {request_id} requires approval but has no pending/granted approval_record",
+                    )
+                )
+
+    if findings:
+        return CheckResult(
+            status="validation_failed",
+            findings=findings,
+            next_action="Fix envelope artifact references and approval coverage before execution.",
+        )
+    return None
+
+
 def validate_envelope_file(
     root: Path,
     file: str,
@@ -151,8 +275,12 @@ def validate_envelope_file(
             next_action="Fix the envelope structure before execution.",
         )
 
+    consistency_result = _check_envelope_consistency(envelope, rel_path)
+    if consistency_result is not None:
+        return consistency_result
+
     return CheckResult(
         status="pass",
         findings=[],
-        next_action=f"Envelope {rel_path} passed schema validation.",
+        next_action=f"Envelope {rel_path} passed schema and consistency validation.",
     )

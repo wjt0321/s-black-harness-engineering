@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from agent_runtime.cli import main
 
@@ -136,6 +137,31 @@ def test_adapter_validate_not_json_extension(capsys, tmp_path):
     assert "unsafe-envelope-file" in {f["rule_id"] for f in result["findings"]}
 
 
+def _write_modified_envelope(tmp_path: Path, modifier) -> Path:
+    """Return a fake root containing a modified copy of the example envelope."""
+    fake_root = _setup_fake_root(tmp_path)
+    envelope = json.loads((ROOT / "adapters" / "execution-envelope.examples.json").read_text(encoding="utf-8"))
+    modifier(envelope)
+    bad_file = fake_root / "envelope.json"
+    bad_file.write_text(json.dumps(envelope), encoding="utf-8")
+    return fake_root
+
+
+def _assert_validation_failed(capsys, fake_root: Path, expected_rule_id: str) -> dict[str, Any]:
+    code = main([
+        "--root", str(fake_root),
+        "adapter", "validate",
+        "--file", "envelope.json",
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    assert code == 5
+    result = json.loads(captured.out)
+    assert result["status"] == "validation_failed"
+    assert expected_rule_id in {f["rule_id"] for f in result["findings"]}
+    return result
+
+
 def test_adapter_validate_does_not_write_ledger(capsys, tmp_path):
     tasks_src = ROOT / "tasks" / "tasks.jsonl"
     events_src = ROOT / "tasks" / "events.jsonl"
@@ -152,3 +178,64 @@ def test_adapter_validate_does_not_write_ledger(capsys, tmp_path):
     assert code == 0
     assert tasks_src.read_bytes() == tasks_copy.read_bytes()
     assert events_src.read_bytes() == events_copy.read_bytes()
+
+
+def test_adapter_validate_consistency_unknown_approval_request(capsys, tmp_path):
+    def modify(env):
+        for artifact in env["artifacts"]:
+            if artifact["artifact_type"] == "approval_record":
+                artifact["request_id"] = "req-20260703-999"
+    fake_root = _write_modified_envelope(tmp_path, modify)
+    _assert_validation_failed(capsys, fake_root, "approval-references-unknown-request")
+
+
+def test_adapter_validate_consistency_unknown_response_request(capsys, tmp_path):
+    def modify(env):
+        for artifact in env["artifacts"]:
+            if artifact["artifact_type"] == "adapter_response":
+                artifact["request_id"] = "req-20260703-999"
+    fake_root = _write_modified_envelope(tmp_path, modify)
+    _assert_validation_failed(capsys, fake_root, "response-references-unknown-request")
+
+
+def test_adapter_validate_consistency_unknown_event_request(capsys, tmp_path):
+    def modify(env):
+        for artifact in env["artifacts"]:
+            if artifact["artifact_type"] == "execution_event":
+                artifact["request_id"] = "req-20260703-999"
+    fake_root = _write_modified_envelope(tmp_path, modify)
+    _assert_validation_failed(capsys, fake_root, "event-references-unknown-request")
+
+
+def test_adapter_validate_consistency_approval_scope_mismatch(capsys, tmp_path):
+    def modify(env):
+        for artifact in env["artifacts"]:
+            if artifact["artifact_type"] == "approval_record":
+                artifact["scope"]["target"] = "origin/other"
+    fake_root = _write_modified_envelope(tmp_path, modify)
+    _assert_validation_failed(capsys, fake_root, "approval-scope-mismatch")
+
+
+def test_adapter_validate_consistency_needs_approval_missing_record(capsys, tmp_path):
+    def modify(env):
+        env["artifacts"] = [a for a in env["artifacts"] if a["artifact_type"] != "approval_record"]
+    fake_root = _write_modified_envelope(tmp_path, modify)
+    _assert_validation_failed(capsys, fake_root, "needs-approval-missing-record")
+
+
+def test_adapter_validate_consistency_unknown_approval_id_in_event(capsys, tmp_path):
+    def modify(env):
+        for artifact in env["artifacts"]:
+            if artifact["artifact_type"] == "execution_event" and artifact.get("event_type") == "approval_requested":
+                artifact["metadata"]["approval_id"] = "appr-unknown-999"
+    fake_root = _write_modified_envelope(tmp_path, modify)
+    _assert_validation_failed(capsys, fake_root, "approval-requested-event-unknown-approval")
+
+
+def test_adapter_validate_consistency_duplicate_request_id(capsys, tmp_path):
+    def modify(env):
+        requests = [a for a in env["artifacts"] if a["artifact_type"] == "adapter_request"]
+        if len(requests) >= 2:
+            requests[1]["request_id"] = requests[0]["request_id"]
+    fake_root = _write_modified_envelope(tmp_path, modify)
+    _assert_validation_failed(capsys, fake_root, "duplicate-request-id")
