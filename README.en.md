@@ -27,7 +27,7 @@ It is not intended to replace QwenPaw immediately. The first phase focuses on do
 - Stage: read-only CLI POC plus Adapter execution envelope checks are runnable
 - Created: 2026-07-02
 - Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, ledger validation, adapter envelope plan / validate / inspect / approval check / response check / gate check, task + adapter envelope runtime plan (including `--draft-json` envelope draft output), runtime gate check, and runtime ledger audit
-- Current boundary: adapter flows, runtime plan, runtime gate, and runtime ledger audit remain read-only and do not execute real external actions
+- Current boundary: adapter flows, runtime plan, runtime draft validate / inspect, runtime gate, and runtime ledger audit remain read-only and do not execute real external actions
 
 ## Continuous Integration
 
@@ -101,6 +101,8 @@ The first phase does not:
 - `docs/14-task-runtime-bridge.md`
 - `docs/15-runtime-ledger-audit.md`
 - `docs/16-runtime-plan.md`
+- `docs/17-runtime-planning-bridge.md`
+- `docs/18-release-notes-runtime-planning-bridge.md`
 
 ## Development Principle
 

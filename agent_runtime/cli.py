@@ -21,6 +21,7 @@ from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS, _STATUS_TO_EXIT, F
 from .ledger_consistency import check_ledger_consistency
 from .runtime_gate import RuntimeGateResult, check_runtime_gate
 from .runtime_ledger import RuntimeLedgerResult, check_runtime_ledger
+from .runtime_draft import inspect_runtime_draft, validate_runtime_draft
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
@@ -406,6 +407,77 @@ def _cmd_adapter_gate_check(args: argparse.Namespace) -> int:
     root = _root_path(args)
     result = check_adapter_gate(root, args.file, args.request_id)
     return _emit_gate_result(result, json_output=args.json)
+
+
+def _render_runtime_draft_summary(summary: dict[str, Any]) -> str:
+    """Render a compact human-readable runtime draft summary."""
+    lines = ["PASS"]
+    lines.append(f"Source: {summary['source']}")
+    if "task_id" in summary:
+        lines.append(f"task_id: {summary['task_id']}")
+    if "status" in summary:
+        lines.append(f"plan_status: {summary['status']}")
+    lines.append(
+        f"Envelope: version={summary['version']}, description={summary['description']}"
+    )
+
+    artifact_counts = summary.get("artifact_counts", {})
+    if artifact_counts:
+        counts = ", ".join(f"{kind}={count}" for kind, count in artifact_counts.items())
+        lines.append(f"Artifact counts: {counts}")
+    else:
+        lines.append("Artifact counts: none")
+
+    lines.append("Requests:")
+    for request in summary.get("requests", []):
+        lines.append(
+            f"- {request['request_id']} "
+            f"{request['adapter_id']} "
+            f"{request['operation']} "
+            f"preflight={request['preflight_status']} "
+            f"requires_approval={request['requires_approval']} "
+            f"risk={request['risk_level']}"
+        )
+
+    approvals = summary.get("approvals", [])
+    if approvals:
+        lines.append("Approvals:")
+        for approval in approvals:
+            lines.append(
+                f"- {approval['approval_id']} "
+                f"request={approval['request_id']} "
+                f"status={approval['status']}"
+            )
+
+    event_counts = summary.get("events", {})
+    if event_counts:
+        events = ", ".join(f"{kind}={count}" for kind, count in event_counts.items())
+        lines.append(f"Events: {events}")
+
+    overall = summary.get("overall", {})
+    flags = ", ".join(f"{name}={value}" for name, value in overall.items())
+    lines.append(f"Overall: {flags}")
+
+    return "\n".join(lines)
+
+
+def _cmd_runtime_draft_validate(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result = validate_runtime_draft(root, file=args.file, stdin=args.stdin)
+    return emit(result, json_output=args.json, no_color=args.no_color)
+
+
+def _cmd_runtime_draft_inspect(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result, summary = inspect_runtime_draft(root, file=args.file, stdin=args.stdin)
+    if result.status != "pass":
+        return emit(result, json_output=args.json, no_color=args.no_color)
+
+    if args.json:
+        print(json.dumps({"status": "pass", "summary": summary}, ensure_ascii=False, indent=2))
+    else:
+        print(_render_runtime_draft_summary(summary))
+    return EXIT_PASS
 
 
 def _render_runtime_gate_summary(result: RuntimeGateResult) -> str:
@@ -873,6 +945,29 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_check_ledger_parser.add_argument("--envelope", required=True, help="Path to adapter execution envelope JSON file")
     _add_global_args(runtime_check_ledger_parser)
     runtime_check_ledger_parser.set_defaults(func=_cmd_runtime_check_ledger)
+
+    runtime_draft_parser = runtime_subparsers.add_parser(
+        "draft", help="Validate and inspect runtime plan envelope drafts"
+    )
+    runtime_draft_subparsers = runtime_draft_parser.add_subparsers(dest="draft_command", required=True)
+
+    runtime_draft_validate_parser = runtime_draft_subparsers.add_parser(
+        "validate", help="Validate a runtime plan envelope draft JSON file or stdin"
+    )
+    source_group = runtime_draft_validate_parser.add_mutually_exclusive_group(required=True)
+    source_group.add_argument("--file", default=None, help="Path to runtime draft JSON file")
+    source_group.add_argument("--stdin", action="store_true", help="Read runtime draft JSON from stdin")
+    _add_global_args(runtime_draft_validate_parser)
+    runtime_draft_validate_parser.set_defaults(func=_cmd_runtime_draft_validate)
+
+    runtime_draft_inspect_parser = runtime_draft_subparsers.add_parser(
+        "inspect", help="Inspect a runtime plan envelope draft JSON file or stdin"
+    )
+    inspect_group = runtime_draft_inspect_parser.add_mutually_exclusive_group(required=True)
+    inspect_group.add_argument("--file", default=None, help="Path to runtime draft JSON file")
+    inspect_group.add_argument("--stdin", action="store_true", help="Read runtime draft JSON from stdin")
+    _add_global_args(runtime_draft_inspect_parser)
+    runtime_draft_inspect_parser.set_defaults(func=_cmd_runtime_draft_inspect)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

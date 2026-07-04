@@ -298,3 +298,13 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 - 已抽查 `runtime plan --draft-json` 对 running task + shell-local read_file 输出 schema 合法 envelope；对 github-cli git_push 输出含 approval_record 与 approval_requested event；对 finished task 输出 `envelope_draft: null`。
+
+
+- Runtime read-only planning bridge 阶段收口。
+  - 新增 `agent_runtime/runtime_draft.py`：支持 `runtime draft validate` 与 `runtime draft inspect`，可从项目内安全 `.json` 文件或 stdin 读取 direct envelope / `runtime plan --draft-json` wrapper，并复用 envelope schema + consistency 校验。
+  - 更新 `agent_runtime/cli.py`：新增 `runtime draft validate --file/--stdin` 与 `runtime draft inspect --file/--stdin`，inspect 输出 compact 摘要，不回显完整 target/input/evidence/raw_ref/decision_ref。
+  - 新增 `tests/test_runtime_draft.py`：覆盖 file/stdin validate、outer wrapper、schema invalid、consistency invalid、inspect summary/JSON、安全路径、不写文件、安全输出。
+  - 新增 `docs/17-runtime-planning-bridge.md` 与 `docs/18-release-notes-runtime-planning-bridge.md`，描述 runtime planning bridge 闭环与阶段 release 收口。
+  - 已跑 `python -m pytest`：207 passed。
+  - 已跑 `python -m agent_runtime.cli doctor`：PASS。
+  - 已跑 `python tools/public_scan.py`：OK public scan。

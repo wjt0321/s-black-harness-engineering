@@ -856,6 +856,129 @@ python -m agent_runtime.cli runtime plan \
 - 输出不回显完整 `input` payload、`evidence`、`raw_ref`、`decision_ref` 或 secret match。
 - 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
 
+## Runtime Draft 校验
+
+`runtime draft validate` 用于只读校验 `runtime plan --draft-json` 产生的 envelope draft。它接受两种输入格式：
+
+- 直接 envelope：`{"version": 1, "artifacts": [...]}`
+- `runtime plan --draft-json` 外层包装：`{"status": "...", "envelope_draft": {...}}`
+
+从文件校验：
+
+```bash
+python -m agent_runtime.cli runtime draft validate --file draft.json
+```
+
+从 stdin 校验：
+
+```bash
+python -m agent_runtime.cli runtime plan \
+  --task-id task-20260703-001 \
+  --adapter shell-local \
+  --operation read_file \
+  --target docs/06-adapter-layer.md \
+  --draft-json | python -m agent_runtime.cli runtime draft validate --stdin
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli runtime draft validate --file draft.json --json
+```
+
+校验内容：
+
+1. **文件/输入安全检查**：`--file` 必须在项目根目录内、为安全 `.json` 文件；拒绝 `.env`/credential 类文件；`--stdin` 不落盘。
+2. **Envelope 提取**：自动识别直接 envelope 或外层 `envelope_draft`；识别失败返回 `validation_failed`。
+3. **Schema 校验**：按 `adapters/execution-envelope.schema.json` 校验内层 envelope。
+4. **一致性校验**：复用 `adapter validate` 的跨 artifact 一致性规则（`duplicate-request-id`、引用存在性、`approval-scope-mismatch`、`needs-approval-missing-record`、`approval-requested-event-unknown-approval` 等）。
+
+输出只包含状态、规则 id、简短摘要和 `next_action`；不回显完整 input payload、`evidence`、`raw_ref`、`decision_ref` 或 secret match。
+
+## Runtime Draft 摘要
+
+`runtime draft inspect` 先对 runtime draft 做与 `runtime draft validate` 相同的校验，通过后输出一个紧凑的 draft 摘要，用于快速了解 draft 中 artifact 的分布与状态。
+
+```bash
+python -m agent_runtime.cli runtime draft inspect --file draft.json
+```
+
+从 stdin：
+
+```bash
+python -m agent_runtime.cli runtime plan \
+  --task-id task-20260703-001 \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --draft-json | python -m agent_runtime.cli runtime draft inspect --stdin
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli runtime draft inspect --file draft.json --json
+```
+
+JSON 结构：
+
+```json
+{
+  "status": "pass",
+  "summary": {
+    "source": "draft.json",
+    "task_id": "task-20260703-001",
+    "status": "needs_approval",
+    "version": 1,
+    "description": "...",
+    "artifact_counts": {
+      "adapter_request": 1,
+      "approval_record": 1,
+      "execution_event": 1
+    },
+    "requests": [
+      {
+        "request_id": "req-...",
+        "adapter_id": "github-cli",
+        "operation": "git_push",
+        "preflight_status": "needs_approval",
+        "requires_approval": true,
+        "risk_level": "external"
+      }
+    ],
+    "approvals": [
+      {
+        "approval_id": "appr-...",
+        "request_id": "req-...",
+        "status": "pending"
+      }
+    ],
+    "responses": [],
+    "events": {
+      "approval_requested": 1
+    },
+    "overall": {
+      "requires_approval_count": 1,
+      "pending_approval_count": 1,
+      "response_count": 0,
+      "evidence_count": 0
+    }
+  }
+}
+```
+
+与 `adapter inspect` 的区别：
+
+- 更强调 "draft"：摘要不包含 `target`，不输出 `input` payload。
+- 支持从外层 `envelope_draft` 提取 `task_id` 与 `status`。
+- 失败时返回与 `runtime draft validate` 相同的状态/返回码，不输出 `summary`。
+
+行为约束：
+
+- 先执行 schema + consistency 校验；失败不输出 summary。
+- 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- 人类/JSON 输出不回显完整 `input`、`evidence`、`raw_ref`、`decision_ref` 或 secret match。
+
 ## Registry 查询
 
 列出 Agent：

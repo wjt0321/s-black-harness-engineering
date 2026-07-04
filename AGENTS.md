@@ -25,6 +25,7 @@
 - `task check-ledger`：检查 task 与 event ledger 之间的跨记录一致性。
 - `runtime gate check`：只读聚合 task ledger 与 adapter gate，输出是否可继续推进及建议 event draft（不落盘）。
 - `runtime check-ledger`：只读审计 task/event ledger 与 adapter envelope 的跨系统一致性。
+- `runtime draft validate` / `runtime draft inspect`：只读校验和摘要展示 runtime plan envelope draft，支持项目内 JSON 文件或 stdin。
 - `runtime plan`：为指定 task 生成 adapter action 的只读草案摘要（含可选 approval/event 草案）；`--draft-json` 输出完整但脱敏的 envelope 机器草案，已按 `adapters/execution-envelope.schema.json` 校验，不落盘。
 - `agents list` / `adapters list` / `policies list`：只读列表查询，支持过滤、policy profile 选择和 JSON 输出。
 
