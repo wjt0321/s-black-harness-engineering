@@ -97,6 +97,7 @@ The first phase does not:
 - `docs/10-cli-poc-usage.md`
 - `docs/11-release-notes-v0.1.md`
 - `docs/12-adapter-execution-envelope.md`
+- `docs/13-release-notes-adapter-envelope.md`
 
 ## Development Principle
 

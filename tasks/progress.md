@@ -237,3 +237,6 @@
 - 补充 `tests/test_adapter_gate.py`：覆盖不需要授权 + succeeded evidence PASS、pending approval NEEDS_APPROVAL stage approval、granted 但 missing response NEEDS_INPUT stage response、granted + succeeded evidence PASS、denied BLOCKED stage approval、response succeeded 无 evidence BLOCKED stage response、unknown request NEEDS_INPUT、invalid envelope 不输出 payload summary、outside-root/unsafe 文件被拒、不写 ledger、人类输出紧凑。
 - 更新 `docs/10-cli-poc-usage.md`，新增 `adapter gate check` 用法说明、JSON 结构、聚合规则与状态映射表。
 - 更新 `tasks/progress.md` 记录本次进展。
+
+- 新增 `docs/13-release-notes-adapter-envelope.md`，对 Adapter execution envelope 只读 gate 链路做阶段收口：覆盖 plan / validate / inspect / approval check / response check / gate check、只读安全边界、验证结果、已知限制与下一阶段建议。
+- 更新 README 中英文文档列表，加入 `docs/13-release-notes-adapter-envelope.md`。
