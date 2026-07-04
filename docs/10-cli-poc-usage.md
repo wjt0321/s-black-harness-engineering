@@ -488,6 +488,117 @@ JSON 结构：
 - 输出摘要包含 `request_id`、`adapter_id`、`operation`、`target`、`response_id`、`response_status`、`artifact_count`、`evidence_count`、`raw_ref_present`；不输出 `input` payload、evidence description 或 `raw_ref` 值。
 - 文件必须在项目根目录内，且为安全的 `.json` 文件；`.env`、credential、密钥类文件会被拒绝。
 
+## Adapter Gate 检查
+
+`adapter gate check` 聚合 `adapter approval check` 与 `adapter response check`，对某个 `adapter_request` 给出当前是否可继续的单一判断。它只读访问 envelope JSON 文件，不执行 adapter、不写 ledger、不访问网络。
+
+检查示例 envelope 中 `req-20260703-002`（不需要授权且已有 succeeded + evidence 的 response）：
+
+```bash
+python -m agent_runtime.cli adapter gate check \
+  --file adapters/execution-envelope.examples.json \
+  --request-id req-20260703-002
+```
+
+期望输出：
+
+```text
+PASS
+stage=response request_id=req-20260703-002 approval_status=pass response_status=pass can_proceed=True
+```
+
+检查 `req-20260703-001`（当前 approval 为 pending）会停在 approval 阶段：
+
+```bash
+python -m agent_runtime.cli adapter gate check \
+  --file adapters/execution-envelope.examples.json \
+  --request-id req-20260703-001
+```
+
+期望输出：
+
+```text
+NEEDS_APPROVAL
+stage=approval request_id=req-20260703-001 approval_status=needs_approval response_status=None can_proceed=False
+- approval-pending: Approval appr-20260703-001 is pending.
+Next: Wait for the approval to be granted before proceeding.
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli adapter gate check \
+  --file adapters/execution-envelope.examples.json \
+  --request-id req-20260703-002 \
+  --json
+```
+
+JSON 结构：
+
+```json
+{
+  "status": "pass",
+  "gate": {
+    "request_id": "req-20260703-002",
+    "stage": "response",
+    "approval_status": "pass",
+    "response_status": "pass",
+    "can_proceed": true,
+    "next_action": "Response succeeded and evidence is present.",
+    "approval": {
+      "request_id": "req-20260703-002",
+      "adapter_id": "shell-local",
+      "operation": "read_file",
+      "target": "docs/06-adapter-layer.md",
+      "requires_approval": false,
+      "approval_id": null,
+      "approval_status": null,
+      "decision_ref": null
+    },
+    "response": {
+      "request_id": "req-20260703-002",
+      "adapter_id": "shell-local",
+      "operation": "read_file",
+      "target": "docs/06-adapter-layer.md",
+      "response_id": "resp-20260703-001",
+      "response_status": "succeeded",
+      "artifact_count": 1,
+      "evidence_count": 1,
+      "raw_ref_present": false
+    }
+  },
+  "next_action": "Response succeeded and evidence is present."
+}
+```
+
+聚合规则：
+
+* 先执行 approval check。
+* 若 approval check 返回非 `pass` 状态（`validation_failed` / `error` / `needs_input` / `needs_approval` / `blocked`），gate 直接返回同等状态，`stage` 标记为 `approval`，不再执行 response check。
+* 若 approval check 返回 `pass`，再执行 response check；response check 的状态成为 gate 最终状态，`stage` 标记为 `response`。
+* 最终 `status == "pass"` 当且仅当 approval 已满足且 response 为 succeeded 并包含 evidence；此时 `can_proceed` 为 `true`，否则为 `false`。
+
+状态映射：
+
+| 场景 | CLI 返回状态 | 返回码 | stage | can_proceed | 说明 |
+|:---|:---:|:---:|:---:|:---:|:---|
+| 不需要授权 + succeeded + evidence | `pass` | `0` | `response` | `true` | 可继续 |
+| approval pending | `needs_approval` | `3` | `approval` | `false` | 等待授权 |
+| approval denied / expired | `blocked` | `2` | `approval` | `false` | 授权被拒绝/过期 |
+| approval granted 但无 response | `needs_input` | `4` | `response` | `false` | 等待 response |
+| response succeeded 但无 evidence | `blocked` | `2` | `response` | `false` | 缺少证据 |
+| response blocked/failed/skipped | `blocked` | `2` | `response` | `false` | response 未成功 |
+| response needs_approval/needs_input | 对应状态 | `3`/`4` | `response` | `false` | response 本身未就绪 |
+| 请求不存在 | `needs_input` | `4` | `approval` | `false` | 指定 request_id 不在 envelope 中 |
+| envelope 非法 | `validation_failed`/`error` | `5`/`1` | `approval` | `false` | 校验失败或路径/文件不安全 |
+
+行为约束：
+
+- 复用现有的 `check_adapter_approval` 与 `check_adapter_response`，保持与二者相同的 schema + consistency 前置校验。
+- 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- 输出摘要包含 `request_id`、`stage`、`approval_status`、`response_status`、`can_proceed`、`next_action`，可附带 approval/response 子摘要；不输出 `input` payload、evidence description 或 `raw_ref` 值。
+- 文件必须在项目根目录内，且为安全的 `.json` 文件；`.env`、credential、密钥类文件会被拒绝。
+
 ## Registry 查询
 
 列出 Agent：

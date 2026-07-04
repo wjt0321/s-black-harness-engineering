@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from .adapter_approval import ApprovalCheckResult, check_adapter_approval
+from .adapter_gate import GateCheckResult, check_adapter_gate
 from .adapter_plan import PlanResult, plan_adapter_action
 from .adapter_response import ResponseCheckResult, check_adapter_response
 from .adapter_validation import inspect_envelope_file, validate_envelope_file
@@ -370,6 +371,40 @@ def _cmd_adapter_response_check(args: argparse.Namespace) -> int:
     return _emit_response_result(result, json_output=args.json)
 
 
+def _render_gate_summary(result: GateCheckResult) -> str:
+    """Render a compact human-readable gate check summary."""
+    lines = [result.status.upper()]
+    gate = result.gate
+    if gate:
+        summary_parts = [
+            f"stage={gate.get('stage', '-')}",
+            f"request_id={gate.get('request_id', '-')}",
+            f"approval_status={gate.get('approval_status', '-')}",
+            f"response_status={gate.get('response_status', '-')}",
+            f"can_proceed={gate.get('can_proceed', False)}",
+        ]
+        lines.append(" ".join(summary_parts))
+    for finding in result.findings:
+        lines.append(f"- {finding.rule_id}: {finding.message}")
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+    return "\n".join(lines)
+
+
+def _emit_gate_result(result: GateCheckResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_gate_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_adapter_gate_check(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result = check_adapter_gate(root, args.file, args.request_id)
+    return _emit_gate_result(result, json_output=args.json)
+
+
 def _cmd_agents_list(args: argparse.Namespace) -> int:
     root = _root_path(args)
     data = load_agents(root)
@@ -580,6 +615,17 @@ def build_parser() -> argparse.ArgumentParser:
     adapter_response_check_parser.add_argument("--request-id", required=True, help="Adapter request id")
     _add_global_args(adapter_response_check_parser)
     adapter_response_check_parser.set_defaults(func=_cmd_adapter_response_check)
+
+    adapter_gate_parser = adapter_subparsers.add_parser("gate", help="Aggregate approval + response check for an adapter request")
+    adapter_gate_subparsers = adapter_gate_parser.add_subparsers(dest="gate_command", required=True)
+
+    adapter_gate_check_parser = adapter_gate_subparsers.add_parser(
+        "check", help="Check whether an adapter request may proceed"
+    )
+    adapter_gate_check_parser.add_argument("--file", required=True, help="Path to envelope JSON file")
+    adapter_gate_check_parser.add_argument("--request-id", required=True, help="Adapter request id")
+    _add_global_args(adapter_gate_check_parser)
+    adapter_gate_check_parser.set_defaults(func=_cmd_adapter_gate_check)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

@@ -228,3 +228,12 @@
 - 已跑 `python -m pytest`：140 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+- 新增只读 `adapter gate check` CLI 命令，用于聚合 `adapter approval check` 与 `adapter response check`，给出某个 request 当前是否可继续的单一判断。
+- 新增 `agent_runtime/adapter_gate.py`：复用 `check_adapter_approval` 与 `check_adapter_response`，先跑 approval check；若未通过则 stage 为 `approval` 并直接返回 approval 状态；若通过则 stage 为 `response` 并以 response 状态为最终状态；`can_proceed` 仅在最终状态为 `pass` 时为 `true`。
+- 状态映射：不需要授权 + succeeded + evidence -> `pass`；approval pending -> `needs_approval`；approval denied/expired -> `blocked`；approval granted 但无 response -> `needs_input`；response succeeded 无 evidence -> `blocked`；response blocked/failed/skipped -> `blocked`；response needs_approval/needs_input -> 对应状态；请求不存在 -> `needs_input`；envelope 非法 -> `validation_failed`/`error`。
+- 输出摘要包含 `request_id`、`stage`、`approval_status`、`response_status`、`can_proceed`、`next_action`，可附带 approval/response 子摘要；不输出 `input` payload、evidence description 或 `raw_ref` 值。
+- 更新 `agent_runtime/cli.py`：在 `adapter` 下新增 `gate check` 子命令，支持 `--file`、`--request-id` 与 `--json`。
+- 补充 `tests/test_adapter_gate.py`：覆盖不需要授权 + succeeded evidence PASS、pending approval NEEDS_APPROVAL stage approval、granted 但 missing response NEEDS_INPUT stage response、granted + succeeded evidence PASS、denied BLOCKED stage approval、response succeeded 无 evidence BLOCKED stage response、unknown request NEEDS_INPUT、invalid envelope 不输出 payload summary、outside-root/unsafe 文件被拒、不写 ledger、人类输出紧凑。
+- 更新 `docs/10-cli-poc-usage.md`，新增 `adapter gate check` 用法说明、JSON 结构、聚合规则与状态映射表。
+- 更新 `tasks/progress.md` 记录本次进展。
