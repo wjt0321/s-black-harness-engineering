@@ -26,8 +26,8 @@
 
 - 阶段：只读 CLI POC + Adapter execution envelope 检查链路已可运行
 - 创建日期：2026-07-02
-- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询、ledger 校验，以及 adapter envelope 的 plan / validate / inspect / approval check / response check / gate check
-- 当前边界：adapter 链路仍只读，不执行真实外部动作
+- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询、ledger 校验，以及 adapter envelope 的 plan / validate / inspect / approval check / response check / gate check，和 task + adapter envelope 的 runtime gate check
+- 当前边界：adapter 链路与 runtime gate 仍只读，不执行真实外部动作
 
 ## 持续集成
 
@@ -98,6 +98,7 @@ python -m agent_runtime.cli policies list
 - `docs/11-release-notes-v0.1.md`
 - `docs/12-adapter-execution-envelope.md`
 - `docs/13-release-notes-adapter-envelope.md`
+- `docs/14-task-runtime-bridge.md`
 
 ## 推进原则
 

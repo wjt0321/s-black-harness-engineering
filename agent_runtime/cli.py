@@ -19,6 +19,7 @@ from .policy import check_action, check_path, check_text
 from .policy_profile import resolve_profile
 from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS, _STATUS_TO_EXIT
 from .ledger_consistency import check_ledger_consistency
+from .runtime_gate import RuntimeGateResult, check_runtime_gate
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -405,6 +406,65 @@ def _cmd_adapter_gate_check(args: argparse.Namespace) -> int:
     return _emit_gate_result(result, json_output=args.json)
 
 
+def _render_runtime_gate_summary(result: RuntimeGateResult) -> str:
+    """Render a compact human-readable runtime gate summary."""
+    lines = [result.status.upper()]
+    lines.append(
+        f"task_id={result.task_id} "
+        f"task_status={result.task_status or '-'} "
+        f"request_id={result.request_id or '-'}"
+    )
+
+    gate = result.gate
+    if gate:
+        lines.append(
+            f"gate: stage={gate.get('stage', '-')} "
+            f"approval_status={gate.get('approval_status', '-')} "
+            f"response_status={gate.get('response_status', '-')} "
+            f"can_proceed={gate.get('can_proceed', False)}"
+        )
+
+    draft = result.suggested_event_draft
+    if draft is not None:
+        lines.append("Suggested event draft:")
+        lines.append(f"- event_type: {draft.get('event_type', '-')}")
+        lines.append(f"  from_status: {draft.get('from_status', '-')}")
+        lines.append(f"  to_status: {draft.get('to_status', '-')}")
+        lines.append(f"  message: {draft.get('message', '-')}")
+        metadata = draft.get("metadata", {})
+        metadata_str = ", ".join(f"{k}={v}" for k, v in metadata.items())
+        lines.append(f"  metadata: {{{metadata_str}}}")
+
+    for finding in result.findings:
+        lines.append(f"- {finding.rule_id}: {finding.message}")
+
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+
+    return "\n".join(lines)
+
+
+def _emit_runtime_gate_result(result: RuntimeGateResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_runtime_gate_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_runtime_gate_check(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result = check_runtime_gate(
+        root,
+        task_id=args.task_id,
+        request_id=args.request_id,
+        envelope_file=args.envelope,
+        tasks_file=args.tasks_file,
+        events_file=args.events_file,
+    )
+    return _emit_runtime_gate_result(result, json_output=args.json)
+
+
 def _cmd_agents_list(args: argparse.Namespace) -> int:
     root = _root_path(args)
     data = load_agents(root)
@@ -626,6 +686,26 @@ def build_parser() -> argparse.ArgumentParser:
     adapter_gate_check_parser.add_argument("--request-id", required=True, help="Adapter request id")
     _add_global_args(adapter_gate_check_parser)
     adapter_gate_check_parser.set_defaults(func=_cmd_adapter_gate_check)
+
+    # runtime gate check
+    runtime_parser = subparsers.add_parser("runtime", help="Read-only runtime gate checks over task ledger and adapter envelopes")
+    runtime_subparsers = runtime_parser.add_subparsers(dest="runtime_command", required=True)
+
+    runtime_gate_parser = runtime_subparsers.add_parser(
+        "gate", help="Runtime gate checks for task + adapter request pairs"
+    )
+    runtime_gate_subparsers = runtime_gate_parser.add_subparsers(dest="gate_command", required=True)
+
+    runtime_gate_check_parser = runtime_gate_subparsers.add_parser(
+        "check", help="Check whether a task + adapter request pair may proceed"
+    )
+    runtime_gate_check_parser.add_argument("--task-id", required=True, help="Task id")
+    runtime_gate_check_parser.add_argument("--request-id", required=True, help="Adapter request id")
+    runtime_gate_check_parser.add_argument("--envelope", required=True, help="Path to adapter execution envelope JSON file")
+    runtime_gate_check_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
+    runtime_gate_check_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
+    _add_global_args(runtime_gate_check_parser)
+    runtime_gate_check_parser.set_defaults(func=_cmd_runtime_gate_check)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

@@ -240,3 +240,17 @@
 
 - 新增 `docs/13-release-notes-adapter-envelope.md`，对 Adapter execution envelope 只读 gate 链路做阶段收口：覆盖 plan / validate / inspect / approval check / response check / gate check、只读安全边界、验证结果、已知限制与下一阶段建议。
 - 更新 README 中英文文档列表，加入 `docs/13-release-notes-adapter-envelope.md`。
+
+- 进入下一阶段：Task Runtime Bridge / Runtime Gate POC。
+- 新增 `docs/14-task-runtime-bridge.md`，中文说明 task preflight / runtime gate / task event draft 如何衔接 adapter gate 与 task ledger：定义数据流、聚合规则、event draft 生成规则、CLI 用法和只读安全边界。
+- 新增 `agent_runtime/runtime_gate.py`：实现 `check_runtime_gate`，按 `task_id` + `request_id` 读取 task snapshot、task event stream 和 adapter envelope，复用 `adapter_gate.check_adapter_gate`，聚合 task 状态与 gate 状态，生成建议的 task event draft。
+- 更新 `agent_runtime/tasks.py`：`load_tasks` / `load_events` / `find_task` / `find_task_events` 支持可选的 `explicit_file` 参数，方便 `runtime gate check` 显式指定 ledger 文件；`_load_records` 兼容绝对路径输入。
+- 更新 `agent_runtime/cli.py`：新增 `runtime gate check` 子命令，支持 `--task-id`、`--request-id`、`--envelope`、`--tasks-file`、`--events-file` 与全局 `--json`；输出包含 task 状态、gate 摘要和建议 event draft，均不回显完整 payload/evidence/raw_ref。
+- 补充 `tests/test_runtime_gate.py`：覆盖 task running + gate pass、approval pending/denied、missing response、task 终态阻断、task 不存在、request 不存在、envelope 非法、人类输出脱敏、显式 ledger 文件、拒绝根目录外/不安全 ledger 路径、不写 ledger、终态优先阻断。
+- 更新 `docs/10-cli-poc-usage.md`：新增 `runtime gate check` 用法、JSON 结构、聚合规则、event draft 说明和行为约束。
+- 更新 `README.md` 与 `README.en.md`：加入 `docs/14-task-runtime-bridge.md` 与 runtime gate check 能力说明。
+- 保持只读边界：不执行 adapter、不访问网络、不发送消息、不删除文件、不写真实 ledger、不读取 `.env`/credential；输出不回显完整 `input` / `evidence` / `raw_ref` / `decision_ref`。
+- 已跑 `python -m pytest`：167 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
+- 已抽查 `runtime gate check` 对 task-20260703-001 + req-20260703-002 返回 BLOCKED（task 已 finished），对缺失 task 返回 ERROR，对缺失 request 返回 NEEDS_INPUT，JSON 输出脱敏。

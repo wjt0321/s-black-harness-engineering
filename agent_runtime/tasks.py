@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .loader import load_jsonl, normalize_path
+from .loader import is_safe_to_read, load_jsonl, normalize_path
 
 
 TASK_FILES = ("tasks/tasks.jsonl",)
@@ -16,8 +16,14 @@ EVENT_FALLBACK_FILES = ("tasks/events.examples.jsonl", "tasks/policy-event.examp
 
 def _load_records(root: Path, relative_paths: tuple[str, ...]) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
+    root = root.resolve()
     for relative_path in relative_paths:
-        path = root / relative_path
+        candidate = Path(relative_path)
+        path = (candidate if candidate.is_absolute() else root / relative_path).resolve()
+        if path != root and root not in path.parents:
+            continue
+        if not is_safe_to_read(path) or path.suffix.lower() != ".jsonl":
+            continue
         if not path.is_file():
             continue
         for record in load_jsonl(path):
@@ -28,27 +34,46 @@ def _load_records(root: Path, relative_paths: tuple[str, ...]) -> list[dict[str,
     return records
 
 
-def load_tasks(root: Path) -> list[dict[str, Any]]:
-    """Load real task snapshots, falling back to examples when no ledger exists."""
+def load_tasks(root: Path, explicit_file: str | None = None) -> list[dict[str, Any]]:
+    """Load real task snapshots, falling back to examples when no ledger exists.
+
+    If ``explicit_file`` is provided, only that file is loaded; no fallback is
+    used. This lets callers such as the runtime gate check use a specific ledger
+    path while remaining read-only.
+    """
+    if explicit_file is not None:
+        return _load_records(root, (explicit_file,))
     records = _load_records(root, TASK_FILES)
     return records if records else _load_records(root, TASK_FALLBACK_FILES)
 
 
-def load_events(root: Path) -> list[dict[str, Any]]:
-    """Load real task events, falling back to examples when no ledger exists."""
+def load_events(root: Path, explicit_file: str | None = None) -> list[dict[str, Any]]:
+    """Load real task events, falling back to examples when no ledger exists.
+
+    If ``explicit_file`` is provided, only that file is loaded; no fallback is
+    used.
+    """
+    if explicit_file is not None:
+        return _load_records(root, (explicit_file,))
     records = _load_records(root, EVENT_FILES)
     return records if records else _load_records(root, EVENT_FALLBACK_FILES)
 
 
-def find_task(root: Path, task_id: str) -> dict[str, Any] | None:
-    for task in load_tasks(root):
+def find_task(root: Path, task_id: str, explicit_file: str | None = None) -> dict[str, Any] | None:
+    for task in load_tasks(root, explicit_file=explicit_file):
         if task.get("id") == task_id:
             return task
     return None
 
 
-def find_task_events(root: Path, task_id: str) -> list[dict[str, Any]]:
-    events = [event for event in load_events(root) if event.get("task_id") == task_id]
+def find_task_events(
+    root: Path, task_id: str, explicit_file: str | None = None
+) -> list[dict[str, Any]]:
+    events = [
+        event
+        for event in load_events(root, explicit_file=explicit_file)
+        if event.get("task_id") == task_id
+    ]
     return sorted(events, key=lambda event: str(event.get("timestamp", "")))
 
 

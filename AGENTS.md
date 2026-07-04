@@ -10,7 +10,7 @@
 
 **s-black harness engineering**（仓库内也称 `agent_runtime`）是一个轻量的 Agent Runtime / Harness Orchestrator 长期工程。目标是逐步把 Agent 调度、规则门禁、任务账本、工具适配器和完成验证流程，从单一宿主框架中抽象成一套小型、可审计、可迁移的运行层。
 
-当前阶段：**只读 CLI POC 已可运行**（版本 `0.1.0`）。第一阶段只做文档、协议、schema、样例和边界设计，不接入真实执行链路，也不会替代 [QwenPaw](https://github.com/agentscope-ai/QwenPaw)。QwenPaw 被视为未来可接入的宿主/适配器之一。
+当前阶段：**只读 CLI POC + Adapter execution envelope + Runtime gate POC 已可运行**。当前实现仍只做文档、协议、schema、样例和只读检查链路，不接入真实执行链路，也不会替代 [QwenPaw](https://github.com/agentscope-ai/QwenPaw)。QwenPaw 被视为未来可接入的宿主/适配器之一。
 
 ### 当前已实现能力
 
@@ -19,10 +19,11 @@
 - `check path`：对目标路径做只读、目录、扩展名等路径规则检查。
 - `check action`：对 adapter + operation 做风险级别、command rule、publish rule 和 completion rule 判断。
 - `adapter plan`：将 `check action` 的 preflight 结果包装成 adapter execution envelope 草案（包含 `adapter_request`、`approval_record`、`execution_event`），不执行真实适配器。
-- `adapter validate`：校验 adapter execution envelope JSON 文件是否符合 `adapters/execution-envelope.schema.json`。
+- `adapter validate` / `adapter inspect` / `adapter approval check` / `adapter response check` / `adapter gate check`：校验与聚合 adapter execution envelope 的只读状态。
 - `task status` / `task events`：只读查询任务快照与事件流。
 - `task validate`：对 task/event JSONL 逐行做 schema 校验。
 - `task check-ledger`：检查 task 与 event ledger 之间的跨记录一致性。
+- `runtime gate check`：只读聚合 task ledger 与 adapter gate，输出是否可继续推进及建议 event draft（不落盘）。
 - `agents list` / `adapters list` / `policies list`：只读列表查询，支持过滤、policy profile 选择和 JSON 输出。
 
 ### 明确不做的（第一阶段）
@@ -54,7 +55,7 @@
 
 ### 关键源文件
 
-- `agent_runtime/__init__.py`：包入口，定义 `__version__ = "0.1.0"`。
+- `agent_runtime/__init__.py`：包入口，定义包版本。
 - `agent_runtime/__main__.py`：支持 `python -m agent_runtime`。
 - `agent_runtime/cli.py`：argparse 命令行入口与所有子命令调度。
 - `agent_runtime/doctor.py`：`doctor` 命令实现，校验结构、schema、JSONL 和公开扫描。
@@ -67,6 +68,8 @@
 - `agent_runtime/ledger_consistency.py`：task 与 event JSONL 之间的跨记录一致性检查。
 - `agent_runtime/adapter_plan.py`：生成 adapter execution envelope 草案。
 - `agent_runtime/adapter_validation.py`：校验 adapter execution envelope JSON 文件。
+- `agent_runtime/adapter_approval.py` / `adapter_response.py` / `adapter_gate.py`：只读检查 adapter approval、response 与 gate 状态。
+- `agent_runtime/runtime_gate.py`：只读聚合 task ledger 与 adapter envelope gate，并生成建议 event draft。
 - `tools/public_scan.py`：仓库公开发布风险文本扫描，只读、不回显完整命中值。
 
 ### 关键 Schema 与样例
@@ -127,6 +130,8 @@ python -m agent_runtime.cli check path ./docs/06-adapter-layer.md --read
 python -m agent_runtime.cli check action --adapter github-cli --operation git_push --target origin/main
 python -m agent_runtime.cli adapter plan --adapter github-cli --operation git_push --target origin/main
 python -m agent_runtime.cli adapter validate --file adapters/execution-envelope.examples.json
+python -m agent_runtime.cli adapter gate check --file adapters/execution-envelope.examples.json --request-id req-20260703-002
+python -m agent_runtime.cli runtime gate check --task-id task-20260703-001 --request-id req-20260703-002 --envelope adapters/execution-envelope.examples.json
 python -m agent_runtime.cli task status task-20260703-001
 python -m agent_runtime.cli task events task-20260703-001
 python -m agent_runtime.cli task validate --record-file tasks/tasks.jsonl --schema task
@@ -172,7 +177,7 @@ Policy profile 解析优先级：`--policy` > `--policy-profile` > `--agent` / `
 python -m pytest tests -q
 ```
 
-当前共有 99 个测试，覆盖：
+当前测试数量以 `python -m pytest` 输出为准，覆盖：
 
 - `tests/test_cli.py`：CLI 入口与主要命令行为。
 - `tests/test_doctor.py`：`doctor` 校验通过/失败场景。
@@ -184,6 +189,8 @@ python -m pytest tests -q
 - `tests/test_ledger_consistency.py`：task 与 event ledger 跨记录一致性。
 - `tests/test_adapter_plan.py`：adapter execution envelope 草案生成。
 - `tests/test_adapter_validate.py`：adapter execution envelope schema 校验。
+- `tests/test_adapter_approval.py` / `test_adapter_response.py` / `test_adapter_gate.py`：adapter envelope 检查链路。
+- `tests/test_runtime_gate.py`：runtime gate 只读聚合、输出脱敏与不写 ledger。
 - `tests/test_public_scan.py`：仓库公开发布风险扫描。
 
 ### 写测试的约定

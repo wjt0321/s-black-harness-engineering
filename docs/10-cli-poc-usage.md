@@ -599,6 +599,93 @@ JSON 结构：
 - 输出摘要包含 `request_id`、`stage`、`approval_status`、`response_status`、`can_proceed`、`next_action`，可附带 approval/response 子摘要；不输出 `input` payload、evidence description 或 `raw_ref` 值。
 - 文件必须在项目根目录内，且为安全的 `.json` 文件；`.env`、credential、密钥类文件会被拒绝。
 
+## Runtime Gate 检查
+
+`runtime gate check` 把 task ledger、task event stream 与 adapter execution envelope 聚合成一个单一判断：给定 task + request 对当前能否继续推进。它只读访问 ledger 和 envelope，不执行 adapter、不写 ledger、不访问网络。
+
+检查示例 task 与 request（task 已 finished，因此即使 adapter gate 通过也不会继续推进）：
+
+```bash
+python -m agent_runtime.cli runtime gate check \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --envelope adapters/execution-envelope.examples.json
+```
+
+显式指定 ledger 文件：
+
+```bash
+python -m agent_runtime.cli runtime gate check \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --envelope adapters/execution-envelope.examples.json \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl
+```
+
+JSON 输出（仍脱敏）：
+
+```bash
+python -m agent_runtime.cli runtime gate check \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --envelope adapters/execution-envelope.examples.json \
+  --json
+```
+
+输出结构：
+
+```json
+{
+  "status": "blocked",
+  "task_id": "task-20260703-001",
+  "task_status": "finished",
+  "request_id": "req-20260703-002",
+  "gate": {
+    "stage": "response",
+    "approval_status": "pass",
+    "response_status": "pass",
+    "can_proceed": true
+  },
+  "suggested_event_draft": {
+    "event_type": "blocked",
+    "from_status": "finished",
+    "to_status": "finished",
+    "message": "Task is already in a terminal state (finished); do not proceed.",
+    "metadata": {
+      "request_id": "req-20260703-002",
+      "adapter_id": "shell-local",
+      "operation": "read_file"
+    },
+    "artifacts": []
+  },
+  "next_action": "Task is already in a terminal state (finished); do not proceed."
+}
+```
+
+聚合规则：
+
+* task 必须存在于 task ledger；否则返回 `error`。
+* request 必须存在于 envelope；否则返回 `needs_input`。
+* envelope 必须能通过 schema + consistency 校验；否则返回 `validation_failed` / `error`。
+* task 处于 `finished` / `failed` 终态时，即使 adapter gate 通过也会返回 `blocked`。
+* `can_proceed == true` 当且仅当 task 非终态且 adapter gate `can_proceed == true`。
+
+建议的 event draft：
+
+* gate 通过 -> `status_changed`，`to_status: running`。
+* approval pending -> `blocked`，`blocked_reason: need_user_approval`。
+* approval denied / expired -> `blocked`，`blocked_reason: policy_blocked`。
+* response 缺失 / needs_input -> `blocked`，`blocked_reason: need_user_input`。
+* response blocked / failed / skipped -> `blocked`，`blocked_reason: tool_failed`。
+* task 已是终态 -> `blocked`，`to_status` 保持终态。
+
+行为约束：
+
+- 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- 人类/JSON 输出中不包含完整 `input`、`evidence`、`raw_ref`、`decision_ref` 值。
+- 建议的 event draft 只打印摘要，不落盘；metadata 仅保留 id、adapter/operation 名称、阻塞原因等安全字段。
+
 ## Registry 查询
 
 列出 Agent：
