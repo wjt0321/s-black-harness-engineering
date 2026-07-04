@@ -204,3 +204,15 @@
 - 已跑 `python -m pytest`：113 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+- 新增只读 `adapter approval check` CLI 命令，用于检查某个 `adapter_request` 是否存在可继续执行的 `approval_record`。
+- 新增 `agent_runtime/adapter_approval.py`：复用 `adapter_validation.validate_envelope_file` 做 schema + consistency 校验，再按 `request_id` 定位请求与授权记录，返回 `pass` / `blocked` / `needs_approval` / `needs_input` / `validation_failed`。
+- 状态映射：`granted` -> `pass`（返回码 0），`pending` -> `needs_approval`（返回码 3），`denied` / `expired` -> `blocked`（返回码 2），请求不存在 -> `needs_input`（返回码 4），不需要授权 -> `pass`，校验失败 -> `validation_failed`（返回码 5）。
+- 放宽 `adapter_validation` 中 `needs-approval-missing-record` 一致性规则：只要存在对应 `approval_record` 即满足要求（不再限定 `pending`/`granted`），使 `denied`/`expired` 也能作为合法 envelope 状态被检查。
+- 输出摘要包含 `request_id`、`adapter_id`、`operation`、`target`、`requires_approval`、`approval_id`、`approval_status`、`decision_ref`（如有），不包含 `input` payload。
+- 更新 `agent_runtime/cli.py`：在 `adapter` 下新增 `approval check` 子命令，支持 `--file`、`--request-id` 与 `--json`。
+- 补充 `tests/test_adapter_approval.py`：覆盖 `granted` PASS、`pending` NEEDS_APPROVAL、`denied` BLOCKED、`expired` BLOCKED、不需要授权 PASS、未知请求 NEEDS_INPUT、非法 envelope 不输出 approval 摘要、outside-root/unsafe 文件被拒、不写 ledger。
+- 更新 `docs/10-cli-poc-usage.md`，新增 `adapter approval check` 用法说明与状态映射表。
+- 已跑 `python -m pytest`：125 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。

@@ -238,15 +238,13 @@ def _check_envelope_consistency(
         preflight = request.get("preflight", {})
         if context.get("requires_approval") and preflight.get("status") == "needs_approval":
             has_approval = any(
-                a.get("request_id") == request_id
-                and a.get("status") in ("pending", "granted")
-                for a in approvals.values()
+                a.get("request_id") == request_id for a in approvals.values()
             )
             if not has_approval:
                 findings.append(
                     _finding(
                         "needs-approval-missing-record",
-                        f"{rel_path}: adapter_request {request_id} requires approval but has no pending/granted approval_record",
+                        f"{rel_path}: adapter_request {request_id} requires approval but has no approval_record",
                     )
                 )
 

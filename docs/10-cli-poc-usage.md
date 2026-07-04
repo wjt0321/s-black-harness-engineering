@@ -288,7 +288,7 @@ python -m agent_runtime.cli adapter validate \
   - `duplicate-request-id`：`adapter_request.request_id` 必须唯一。
   - `approval-references-unknown-request`、`response-references-unknown-request`、`event-references-unknown-request`：引用必须指向存在的 `adapter_request`。
   - `approval-scope-mismatch`：`approval_record.scope` 的 `task_id` / `adapter_id` / `operation` / `target` 必须与对应 `adapter_request` 一致。
-  - `needs-approval-missing-record`：`requires_approval` 且 `preflight.status == "needs_approval"` 的请求必须有 pending/granted 的 `approval_record`。
+  - `needs-approval-missing-record`：`requires_approval` 且 `preflight.status == "needs_approval"` 的请求必须有对应的 `approval_record`（状态可为 `pending`、`granted`、`denied` 或 `expired`）。
   - `approval-requested-event-unknown-approval`：`approval_requested` 事件的 `metadata.approval_id` 必须引用存在的 `approval_record`。
 
 ## Adapter Execution Envelope 摘要
@@ -343,6 +343,81 @@ JSON 结构为：
 - 命令会先执行 schema + consistency 校验；若校验失败，返回与 `adapter validate` 相同的状态/返回码，不会继续输出 `summary`。
 - 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
 - 失败输出不回显完整 artifact 或 input payload。
+
+## Adapter Approval 检查
+
+`adapter approval check` 用于检查某个 `adapter_request` 是否存在可继续执行的 `approval_record`。它只读访问 envelope JSON 文件，不执行 adapter、不写 ledger、不访问网络。
+
+检查示例 envelope 中 `req-20260703-001` 的授权状态（当前为 `pending`）：
+
+```bash
+python -m agent_runtime.cli adapter approval check \
+  --file adapters/execution-envelope.examples.json \
+  --request-id req-20260703-001
+```
+
+期望输出：
+
+```text
+NEEDS_APPROVAL
+request_id=req-20260703-001 adapter_id=github-cli operation=git_push target=origin/main requires_approval=True approval_id=appr-20260703-001 approval_status=pending
+- approval-pending: Approval appr-20260703-001 is pending.
+Next: Wait for the approval to be granted before proceeding.
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli adapter approval check \
+  --file adapters/execution-envelope.examples.json \
+  --request-id req-20260703-001 \
+  --json
+```
+
+JSON 结构：
+
+```json
+{
+  "status": "needs_approval",
+  "approval": {
+    "request_id": "req-20260703-001",
+    "adapter_id": "github-cli",
+    "operation": "git_push",
+    "target": "origin/main",
+    "requires_approval": true,
+    "approval_id": "appr-20260703-001",
+    "approval_status": "pending",
+    "decision_ref": null
+  },
+  "findings": [
+    {
+      "rule_id": "approval-pending",
+      "severity": "warn",
+      "action": "needs_approval",
+      "message": "Approval appr-20260703-001 is pending."
+    }
+  ],
+  "next_action": "Wait for the approval to be granted before proceeding."
+}
+```
+
+状态映射：
+
+| `approval_status` | CLI 返回状态 | 返回码 | 说明 |
+|:---|:---:|:---:|:---|
+| 请求不存在 | `needs_input` | `4` | `approval-request-not-found` |
+| `requires_approval: false` | `pass` | `0` | 不需要授权 |
+| `granted` | `pass` | `0` | 授权已批准，可继续 |
+| `pending` | `needs_approval` | `3` | 等待授权 |
+| `denied` | `blocked` | `2` | 授权被拒绝，不可继续 |
+| `expired` | `blocked` | `2` | 授权已过期，不可继续 |
+
+行为约束：
+
+- 先执行与 `adapter validate` 相同的 schema + consistency 校验；校验失败时返回同样的状态/返回码，且不输出 `approval` 摘要。
+- 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- 输出摘要包含 `request_id`、`adapter_id`、`operation`、`target`、`requires_approval`、`approval_id`、`approval_status`、`decision_ref`（如有），不输出 `input` payload。
+- 文件必须在项目根目录内，且为安全的 `.json` 文件；`.env`、credential、密钥类文件会被拒绝。
 
 ## Registry 查询
 

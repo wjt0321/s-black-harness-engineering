@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any, Sequence
 
+from .adapter_approval import ApprovalCheckResult, check_adapter_approval
 from .adapter_plan import PlanResult, plan_adapter_action
 from .adapter_validation import inspect_envelope_file, validate_envelope_file
 from .doctor import run_doctor
@@ -287,6 +288,46 @@ def _cmd_adapter_inspect(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def _render_approval_summary(result: ApprovalCheckResult) -> str:
+    """Render a compact human-readable approval check summary."""
+    lines = [result.status.upper()]
+    approval = result.approval
+    if approval:
+        summary_parts = [
+            f"request_id={approval.get('request_id', '-')}",
+            f"adapter_id={approval.get('adapter_id', '-')}",
+            f"operation={approval.get('operation', '-')}",
+            f"target={approval.get('target', '-')}",
+            f"requires_approval={approval.get('requires_approval', '-')}",
+        ]
+        if approval.get("approval_id") is not None:
+            summary_parts.append(f"approval_id={approval['approval_id']}")
+        if approval.get("approval_status") is not None:
+            summary_parts.append(f"approval_status={approval['approval_status']}")
+        if approval.get("decision_ref") is not None:
+            summary_parts.append(f"decision_ref={approval['decision_ref']}")
+        lines.append(" ".join(summary_parts))
+    for finding in result.findings:
+        lines.append(f"- {finding.rule_id}: {finding.message}")
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+    return "\n".join(lines)
+
+
+def _emit_approval_result(result: ApprovalCheckResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_approval_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_adapter_approval_check(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result = check_adapter_approval(root, args.file, args.request_id)
+    return _emit_approval_result(result, json_output=args.json)
+
+
 def _cmd_agents_list(args: argparse.Namespace) -> int:
     root = _root_path(args)
     data = load_agents(root)
@@ -475,6 +516,17 @@ def build_parser() -> argparse.ArgumentParser:
     adapter_inspect_parser.add_argument("--file", required=True, help="Path to envelope JSON file")
     _add_global_args(adapter_inspect_parser)
     adapter_inspect_parser.set_defaults(func=_cmd_adapter_inspect)
+
+    adapter_approval_parser = adapter_subparsers.add_parser("approval", help="Check approval status for an adapter request")
+    adapter_approval_subparsers = adapter_approval_parser.add_subparsers(dest="approval_command", required=True)
+
+    adapter_approval_check_parser = adapter_approval_subparsers.add_parser(
+        "check", help="Check whether a request has an approval record that allows it to proceed"
+    )
+    adapter_approval_check_parser.add_argument("--file", required=True, help="Path to envelope JSON file")
+    adapter_approval_check_parser.add_argument("--request-id", required=True, help="Adapter request id")
+    _add_global_args(adapter_approval_check_parser)
+    adapter_approval_check_parser.set_defaults(func=_cmd_adapter_approval_check)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")
