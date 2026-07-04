@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from .adapter_plan import PlanResult, plan_adapter_action
-from .adapter_validation import validate_envelope_file
+from .adapter_validation import inspect_envelope_file, validate_envelope_file
 from .doctor import run_doctor
 from .loader import load_adapters, load_agents, load_policies, discover_policies, normalize_path
 from .policy import check_action, check_path, check_text
@@ -216,6 +216,77 @@ def _cmd_adapter_validate(args: argparse.Namespace) -> int:
     return emit(result, json_output=args.json, no_color=args.no_color)
 
 
+def _render_inspect_summary(summary: dict[str, Any]) -> str:
+    """Render a compact human-readable summary of an envelope."""
+    lines = ["PASS"]
+    lines.append(
+        f"Envelope: version={summary['version']}, description={summary['description']}"
+    )
+
+    artifact_counts = summary.get("artifact_counts", {})
+    if artifact_counts:
+        counts = ", ".join(f"{kind}={count}" for kind, count in artifact_counts.items())
+        lines.append(f"Artifact counts: {counts}")
+    else:
+        lines.append("Artifact counts: none")
+
+    lines.append("Requests:")
+    for request in summary.get("requests", []):
+        lines.append(
+            f"- {request['request_id']} "
+            f"{request['adapter_id']} "
+            f"{request['operation']} "
+            f"target={request['target']} "
+            f"preflight={request['preflight_status']} "
+            f"requires_approval={request['requires_approval']}"
+        )
+
+    approvals = summary.get("approvals", [])
+    if approvals:
+        lines.append("Approvals:")
+        for approval in approvals:
+            lines.append(
+                f"- {approval['approval_id']} "
+                f"request={approval['request_id']} "
+                f"status={approval['status']}"
+            )
+
+    responses = summary.get("responses", [])
+    if responses:
+        lines.append("Responses:")
+        for response in responses:
+            lines.append(
+                f"- {response['response_id']} "
+                f"request={response['request_id']} "
+                f"status={response['status']} "
+                f"evidence={response['evidence_count']}"
+            )
+
+    event_counts = summary.get("events", {})
+    if event_counts:
+        events = ", ".join(f"{kind}={count}" for kind, count in event_counts.items())
+        lines.append(f"Events: {events}")
+
+    overall = summary.get("overall", {})
+    flags = ", ".join(f"{name}={value}" for name, value in overall.items())
+    lines.append(f"Overall: {flags}")
+
+    return "\n".join(lines)
+
+
+def _cmd_adapter_inspect(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result, summary = inspect_envelope_file(root, args.file)
+    if result.status != "pass":
+        return emit(result, json_output=args.json, no_color=args.no_color)
+
+    if args.json:
+        print(json.dumps({"status": "pass", "summary": summary}, ensure_ascii=False, indent=2))
+    else:
+        print(_render_inspect_summary(summary))
+    return EXIT_PASS
+
+
 def _cmd_agents_list(args: argparse.Namespace) -> int:
     root = _root_path(args)
     data = load_agents(root)
@@ -399,6 +470,11 @@ def build_parser() -> argparse.ArgumentParser:
     adapter_validate_parser.add_argument("--file", required=True, help="Path to envelope JSON file")
     _add_global_args(adapter_validate_parser)
     adapter_validate_parser.set_defaults(func=_cmd_adapter_validate)
+
+    adapter_inspect_parser = adapter_subparsers.add_parser("inspect", help="Inspect an adapter execution envelope JSON file and print a summary")
+    adapter_inspect_parser.add_argument("--file", required=True, help="Path to envelope JSON file")
+    _add_global_args(adapter_inspect_parser)
+    adapter_inspect_parser.set_defaults(func=_cmd_adapter_inspect)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

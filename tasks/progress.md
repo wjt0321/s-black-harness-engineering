@@ -192,3 +192,15 @@
 - 已跑 `python -m pytest`：106 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+- 新增只读 `adapter inspect` CLI 命令，用于读取 Adapter execution envelope JSON 文件并输出紧凑摘要。
+- 新增 `agent_runtime/adapter_validation.py` 中 `_load_envelope` / `_build_envelope_summary` / `inspect_envelope_file` 逻辑：先调用 `validate_envelope_file` 做 schema + consistency 校验，校验通过后再解析并汇总 artifact 信息。
+- 复用现有安全读取逻辑：文件必须在项目根目录内、为安全 `.json` 文件、拒绝 `.env`/credential 类文件。
+- 摘要包含 envelope version/description、artifact counts by type、requests/approvals/responses 列表、event_type 计数、overall flags（requires_approval_count、pending_approval_count、response_count、evidence_count）。
+- 人类输出紧凑，不打印完整 envelope 与 input payload；JSON 输出结构化为 `{status, summary}`；失败时返回与 `adapter validate` 相同的状态/返回码且不输出 summary。
+- 更新 `agent_runtime/cli.py`：在 `adapter` 子命令下新增 `inspect`，支持 `--file` 与 `--json`。
+- 补充 `tests/test_adapter_inspect.py`：覆盖合法 envelope 人类输出与 JSON 输出、schema/JSON 非法时不输出 summary、outside-root/unsafe 文件被拒、不写 ledger。
+- 更新 `docs/10-cli-poc-usage.md`，新增 `adapter inspect` 用法说明。
+- 已跑 `python -m pytest`：113 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。

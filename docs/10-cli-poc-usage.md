@@ -291,6 +291,59 @@ python -m agent_runtime.cli adapter validate \
   - `needs-approval-missing-record`：`requires_approval` 且 `preflight.status == "needs_approval"` 的请求必须有 pending/granted 的 `approval_record`。
   - `approval-requested-event-unknown-approval`：`approval_requested` 事件的 `metadata.approval_id` 必须引用存在的 `approval_record`。
 
+## Adapter Execution Envelope 摘要
+
+`adapter inspect` 在 `adapter validate` 的基础上输出一个紧凑的 envelope 摘要，用于快速了解 envelope 内 artifact 的分布、请求状态、授权情况和证据数量。
+
+```bash
+python -m agent_runtime.cli adapter inspect \
+  --file adapters/execution-envelope.examples.json
+```
+
+期望输出包含：
+
+- envelope 的 `version` 与 `description`。
+- 各 `artifact_type` 的数量。
+- 每个 `adapter_request` 的 `request_id`、`adapter_id`、`operation`、`target`、`preflight.status`、`requires_approval`。
+- 每个 `approval_record` 的 `approval_id`、`request_id`、`status`。
+- 每个 `adapter_response` 的 `response_id`、`request_id`、`status`、`evidence` 数量。
+- `execution_event` 按 `event_type` 聚合的计数。
+- 总体指标：`requires_approval_count`、`pending_approval_count`、`response_count`、`evidence_count`。
+
+人类输出保持紧凑，不打印完整 envelope，也不打印 `input` payload。
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli adapter inspect \
+  --file adapters/execution-envelope.examples.json \
+  --json
+```
+
+JSON 结构为：
+
+```json
+{
+  "status": "pass",
+  "summary": {
+    "version": 1,
+    "description": "...",
+    "artifact_counts": {...},
+    "requests": [...],
+    "approvals": [...],
+    "responses": [...],
+    "events": {...},
+    "overall": {...}
+  }
+}
+```
+
+行为约束：
+
+- 命令会先执行 schema + consistency 校验；若校验失败，返回与 `adapter validate` 相同的状态/返回码，不会继续输出 `summary`。
+- 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- 失败输出不回显完整 artifact 或 input payload。
+
 ## Registry 查询
 
 列出 Agent：
