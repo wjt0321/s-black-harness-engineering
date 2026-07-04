@@ -24,10 +24,10 @@ It is not intended to replace QwenPaw immediately. The first phase focuses on do
 
 ## Current Status
 
-- Stage: read-only CLI POC is runnable
+- Stage: read-only CLI POC plus Adapter execution envelope checks are runnable
 - Created: 2026-07-02
-- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, and ledger validation
-- Next design step: Adapter execution envelope for adapter request / response / approval / event boundaries
+- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, ledger validation, and adapter envelope plan / validate / inspect / approval check / response check
+- Current boundary: adapter flows remain read-only and do not execute real external actions
 
 ## Continuous Integration
 

@@ -24,10 +24,10 @@
 
 ## 当前状态
 
-- 阶段：只读 CLI POC 已可运行
+- 阶段：只读 CLI POC + Adapter execution envelope 检查链路已可运行
 - 创建日期：2026-07-02
-- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询和 ledger 校验
-- 下一阶段设计：Adapter execution envelope，定义 adapter request / response / approval / event 边界
+- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询、ledger 校验，以及 adapter envelope 的 plan / validate / inspect / approval check / response check
+- 当前边界：adapter 链路仍只读，不执行真实外部动作
 
 ## 持续集成
 
