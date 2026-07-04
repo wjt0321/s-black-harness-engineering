@@ -169,5 +169,6 @@ python -m agent_runtime.cli runtime gate check \
 下一步可以在保持只读的前提下扩展：
 
 - `runtime plan`：根据 task 当前状态生成下一步 adapter request draft。
-- `runtime check-ledger`：检查 task ledger 中 event draft 与实际 envelope 状态是否一致。
 - 真正的 event 写入接口（需要显式授权机制后才实现）。
+
+> `runtime check-ledger` 已实现，详见 `docs/15-runtime-ledger-audit.md`。

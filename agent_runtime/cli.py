@@ -20,6 +20,7 @@ from .policy_profile import resolve_profile
 from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS, _STATUS_TO_EXIT
 from .ledger_consistency import check_ledger_consistency
 from .runtime_gate import RuntimeGateResult, check_runtime_gate
+from .runtime_ledger import RuntimeLedgerResult, check_runtime_ledger
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -452,6 +453,39 @@ def _emit_runtime_gate_result(result: RuntimeGateResult, json_output: bool) -> i
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _render_runtime_ledger_summary(result: RuntimeLedgerResult) -> str:
+    """Render a compact human-readable runtime ledger audit summary."""
+    lines = [result.status.upper()]
+    counts = result.counts
+    if counts:
+        parts = ", ".join(f"{k}={v}" for k, v in counts.items())
+        lines.append(f"counts: {parts}")
+    for finding in result.findings:
+        lines.append(f"- {finding.rule_id}: {finding.message}")
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+    return "\n".join(lines)
+
+
+def _emit_runtime_ledger_result(result: RuntimeLedgerResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_runtime_ledger_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_runtime_check_ledger(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result = check_runtime_ledger(
+        root,
+        tasks_file=args.tasks_file,
+        events_file=args.events_file,
+        envelope_file=args.envelope,
+    )
+    return _emit_runtime_ledger_result(result, json_output=args.json)
+
+
 def _cmd_runtime_gate_check(args: argparse.Namespace) -> int:
     root = _root_path(args)
     result = check_runtime_gate(
@@ -706,6 +740,15 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_gate_check_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
     _add_global_args(runtime_gate_check_parser)
     runtime_gate_check_parser.set_defaults(func=_cmd_runtime_gate_check)
+
+    runtime_check_ledger_parser = runtime_subparsers.add_parser(
+        "check-ledger", help="Check cross-system consistency between task/event ledgers and an adapter envelope"
+    )
+    runtime_check_ledger_parser.add_argument("--tasks-file", required=True, help="Path to tasks JSONL file")
+    runtime_check_ledger_parser.add_argument("--events-file", required=True, help="Path to events JSONL file")
+    runtime_check_ledger_parser.add_argument("--envelope", required=True, help="Path to adapter execution envelope JSON file")
+    _add_global_args(runtime_check_ledger_parser)
+    runtime_check_ledger_parser.set_defaults(func=_cmd_runtime_check_ledger)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

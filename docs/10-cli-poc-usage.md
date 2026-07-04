@@ -686,6 +686,38 @@ python -m agent_runtime.cli runtime gate check \
 - 人类/JSON 输出中不包含完整 `input`、`evidence`、`raw_ref`、`decision_ref` 值。
 - 建议的 event draft 只打印摘要，不落盘；metadata 仅保留 id、adapter/operation 名称、阻塞原因等安全字段。
 
+## Runtime Ledger Audit
+
+`runtime check-ledger` 检查 task ledger、event ledger 与 adapter execution envelope 之间的跨系统一致性。它保持只读，不执行 adapter、不写 ledger、不访问网络。
+
+```bash
+python -m agent_runtime.cli runtime check-ledger \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl \
+  --envelope adapters/execution-envelope.examples.json
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli runtime check-ledger \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl \
+  --envelope adapters/execution-envelope.examples.json \
+  --json
+```
+
+检查内容：
+
+- tasks/events 基础一致性（复用 `task check-ledger`）。
+- envelope 中 `adapter_request.task_id` 是否存在于 task ledger。
+- envelope 中 `execution_event.task_id` 是否存在于 task ledger。
+- envelope 中 `execution_event.request_id` 是否引用已知 `adapter_request`。
+- task ledger 中是否存在与 request_id 相关的 event metadata/artifacts 线索（仅 warn）。
+- task 已 `finished` / `failed` 但 envelope request 仍要求继续时 warn。
+
+输出不回显完整 `input`、`evidence`、`raw_ref`、`decision_ref`、`target` 值。
+
 ## Registry 查询
 
 列出 Agent：

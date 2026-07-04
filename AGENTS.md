@@ -24,6 +24,7 @@
 - `task validate`：对 task/event JSONL 逐行做 schema 校验。
 - `task check-ledger`：检查 task 与 event ledger 之间的跨记录一致性。
 - `runtime gate check`：只读聚合 task ledger 与 adapter gate，输出是否可继续推进及建议 event draft（不落盘）。
+- `runtime check-ledger`：只读审计 task/event ledger 与 adapter envelope 的跨系统一致性。
 - `agents list` / `adapters list` / `policies list`：只读列表查询，支持过滤、policy profile 选择和 JSON 输出。
 
 ### 明确不做的（第一阶段）
@@ -132,6 +133,7 @@ python -m agent_runtime.cli adapter plan --adapter github-cli --operation git_pu
 python -m agent_runtime.cli adapter validate --file adapters/execution-envelope.examples.json
 python -m agent_runtime.cli adapter gate check --file adapters/execution-envelope.examples.json --request-id req-20260703-002
 python -m agent_runtime.cli runtime gate check --task-id task-20260703-001 --request-id req-20260703-002 --envelope adapters/execution-envelope.examples.json
+python -m agent_runtime.cli runtime check-ledger --tasks-file tasks/tasks.jsonl --events-file tasks/events.jsonl --envelope adapters/execution-envelope.examples.json
 python -m agent_runtime.cli task status task-20260703-001
 python -m agent_runtime.cli task events task-20260703-001
 python -m agent_runtime.cli task validate --record-file tasks/tasks.jsonl --schema task
@@ -191,6 +193,7 @@ python -m pytest tests -q
 - `tests/test_adapter_validate.py`：adapter execution envelope schema 校验。
 - `tests/test_adapter_approval.py` / `test_adapter_response.py` / `test_adapter_gate.py`：adapter envelope 检查链路。
 - `tests/test_runtime_gate.py`：runtime gate 只读聚合、输出脱敏与不写 ledger。
+- `tests/test_runtime_ledger.py`：runtime ledger audit 跨系统一致性、输出脱敏与不写 ledger。
 - `tests/test_public_scan.py`：仓库公开发布风险扫描。
 
 ### 写测试的约定

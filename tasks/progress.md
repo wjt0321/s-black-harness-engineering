@@ -254,3 +254,18 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 - 已抽查 `runtime gate check` 对 task-20260703-001 + req-20260703-002 返回 BLOCKED（task 已 finished），对缺失 task 返回 ERROR，对缺失 request 返回 NEEDS_INPUT，JSON 输出脱敏。
+
+- 继续下一阶段：Runtime Ledger Audit。
+- 新增 `docs/superpowers/specs/2026-07-04-runtime-ledger-audit-design.md` 与 `docs/superpowers/plans/2026-07-04-runtime-ledger-audit.md`，记录设计与实现计划。
+- 新增 `agent_runtime/runtime_ledger.py`：实现 `check_runtime_ledger()` 与 `RuntimeLedgerResult`，复用 `ledger_consistency.check_ledger_consistency()` 做 tasks/events 基础一致性检查，复用 `adapter_validation._load_envelope()` 安全加载 envelope；检查 adapter_request.task_id / execution_event.task_id 是否存在于 task ledger、execution_event.request_id 是否引用已知 adapter_request、task ledger 中是否有 request_id 相关 event metadata/artifacts 线索（仅 warn）、task 已 terminal 但 envelope request 仍要求继续时 warn。
+- 更新 `agent_runtime/cli.py`：新增 `runtime check-ledger` 子命令，支持 `--tasks-file`、`--events-file`、`--envelope` 与全局 `--json`；输出 compact 摘要（status / counts / findings / next_action），JSON 输出结构化且脱敏。
+- 补充 `tests/test_runtime_ledger.py`：覆盖正常通过、缺失 request task_id、缺失 event task_id、缺失 event request_id、无 event metadata 线索 warn、task 终态 warn、ledger 一致性失败、非法 envelope、人类输出脱敏、不写 ledger。
+- 新增 `docs/15-runtime-ledger-audit.md`：说明命令目标、非目标、核心概念、数据流、检查规则表、输出格式、CLI 用法、模块关系和安全边界。
+- 更新 `docs/10-cli-poc-usage.md`：新增 `runtime check-ledger` 用法说明。
+- 更新 `docs/14-task-runtime-bridge.md`：将 `runtime check-ledger` 从候选列表中移除，并指向 `docs/15-runtime-ledger-audit.md`。
+- 更新 `README.md`：在文档索引中加入 `docs/15-runtime-ledger-audit.md`，并在当前状态中补充 `runtime check-ledger`。
+- 保持只读边界：不执行 adapter、不访问网络、不发送消息、不删除文件、不写真实 ledger、不读取 `.env`/credential；输出不回显完整 `input` / `evidence` / `raw_ref` / `decision_ref` / `target`。
+- 已跑 `python -m pytest`：177 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
+- 已抽查 `runtime check-ledger` 对仓库样例文件返回 WARN，正确报告 `request-id-no-event-metadata` 与 `task-terminal-but-request-pending`，JSON 输出脱敏。
