@@ -17,10 +17,11 @@ from .doctor import run_doctor
 from .loader import load_adapters, load_agents, load_policies, discover_policies, normalize_path
 from .policy import check_action, check_path, check_text
 from .policy_profile import resolve_profile
-from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS, _STATUS_TO_EXIT
+from .result import CheckResult, emit, EXIT_ERROR, EXIT_PASS, _STATUS_TO_EXIT, Finding
 from .ledger_consistency import check_ledger_consistency
 from .runtime_gate import RuntimeGateResult, check_runtime_gate
 from .runtime_ledger import RuntimeLedgerResult, check_runtime_ledger
+from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -453,6 +454,98 @@ def _emit_runtime_gate_result(result: RuntimeGateResult, json_output: bool) -> i
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _render_runtime_plan_summary(result: RuntimePlanResult) -> str:
+    """Render a compact human-readable runtime plan summary."""
+    lines = [result.status.upper()]
+    lines.append(
+        f"task_id={result.task_id} task_status={result.task_status or '-'}"
+    )
+
+    request = result.request_draft
+    if request is not None:
+        lines.append(
+            f"request_draft: "
+            f"request_id={request.get('request_id', '-')} "
+            f"adapter={request.get('adapter_id', '-')} "
+            f"operation={request.get('operation', '-')} "
+            f"target={request.get('target', '-')} "
+            f"profile={request.get('policy_profile', '-')} "
+            f"risk={request.get('risk_level', '-')} "
+            f"requires_approval={request.get('requires_approval', '-')} "
+            f"preflight={request.get('preflight_status', '-')}"
+        )
+
+    approval = result.approval_draft
+    if approval is not None:
+        lines.append(
+            f"approval_draft: "
+            f"approval_id={approval.get('approval_id', '-')} "
+            f"request_id={approval.get('request_id', '-')} "
+            f"status={approval.get('status', '-')}"
+        )
+
+    event = result.event_draft
+    if event is not None:
+        parts = [
+            f"event_id={event.get('event_id', '-')}",
+            f"event_type={event.get('event_type', '-')}",
+        ]
+        if event.get("approval_id") is not None:
+            parts.append(f"approval_id={event['approval_id']}")
+        if event.get("adapter_id") is not None:
+            parts.append(f"adapter={event['adapter_id']}")
+        if event.get("operation") is not None:
+            parts.append(f"operation={event['operation']}")
+        lines.append(f"event_draft: {' '.join(parts)}")
+
+    for finding in result.findings:
+        lines.append(f"- {finding.rule_id}: {finding.message}")
+
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+
+    return "\n".join(lines)
+
+
+def _emit_runtime_plan_result(result: RuntimePlanResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_runtime_plan_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_runtime_plan(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    if not args.adapter or not args.operation:
+        result = RuntimePlanResult(
+            status="error",
+            task_id=args.task_id or "-",
+            findings=[
+                Finding(
+                    rule_id="missing-args",
+                    severity="error",
+                    action="error",
+                    message="--adapter and --operation are required for runtime plan.",
+                )
+            ],
+            next_action="Provide --adapter and --operation.",
+        )
+        return _emit_runtime_plan_result(result, json_output=args.json)
+
+    result = plan_runtime_action(
+        root,
+        task_id=args.task_id,
+        adapter_id=args.adapter,
+        operation=args.operation,
+        target=args.target,
+        actor=args.actor or "cli",
+        args=args,
+        tasks_file=args.tasks_file,
+    )
+    return _emit_runtime_plan_result(result, json_output=args.json)
+
+
 def _render_runtime_ledger_summary(result: RuntimeLedgerResult) -> str:
     """Render a compact human-readable runtime ledger audit summary."""
     lines = [result.status.upper()]
@@ -724,6 +817,18 @@ def build_parser() -> argparse.ArgumentParser:
     # runtime gate check
     runtime_parser = subparsers.add_parser("runtime", help="Read-only runtime gate checks over task ledger and adapter envelopes")
     runtime_subparsers = runtime_parser.add_subparsers(dest="runtime_command", required=True)
+
+    runtime_plan_parser = runtime_subparsers.add_parser(
+        "plan", help="Plan an adapter action for a task without executing it"
+    )
+    runtime_plan_parser.add_argument("--task-id", required=True, help="Task id")
+    runtime_plan_parser.add_argument("--adapter", required=True, help="Adapter id")
+    runtime_plan_parser.add_argument("--operation", required=True, help="Operation name")
+    runtime_plan_parser.add_argument("--target", default=None, help="Operation target")
+    runtime_plan_parser.add_argument("--actor", default="cli", help="Actor identifier")
+    runtime_plan_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
+    _add_global_args(runtime_plan_parser)
+    runtime_plan_parser.set_defaults(func=_cmd_runtime_plan)
 
     runtime_gate_parser = runtime_subparsers.add_parser(
         "gate", help="Runtime gate checks for task + adapter request pairs"

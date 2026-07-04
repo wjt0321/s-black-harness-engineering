@@ -269,3 +269,17 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 - 已抽查 `runtime check-ledger` 对仓库样例文件返回 WARN，正确报告 `request-id-no-event-metadata` 与 `task-terminal-but-request-pending`，JSON 输出脱敏。
+
+- 进入下一阶段：Runtime Plan POC。
+- 新增 `docs/16-runtime-plan.md`，说明 `runtime plan` 的目标、非目标、数据流、输出格式、CLI 用法、状态映射、模块关系与安全边界。
+- 新增 `agent_runtime/runtime_plan.py`：实现 `plan_runtime_action()` 与 `RuntimePlanResult`，读取 task ledger 确认 task 存在且非终态，复用 `adapter_plan.plan_adapter_action()` 生成 envelope 草案，再提取安全的 `request_draft`；当 preflight 为 `needs_approval` 时额外提取 `approval_draft` 与 `event_draft`。
+- 更新 `agent_runtime/cli.py`：新增 `runtime plan` 子命令，支持 `--task-id`、`--adapter`、`--operation`、`--target`、`--actor`、`--tasks-file` 与全局 `--json` / `--agent` / `--policy-profile`；输出 compact 人类摘要或脱敏 JSON。
+- 补充 `tests/test_runtime_plan.py`：覆盖 pass、needs_approval、terminal task blocked、missing task、unknown adapter、JSON 脱敏、人类输出、不写 ledger、agent profile 选择、显式 tasks-file。
+- 更新 `docs/10-cli-poc-usage.md`：新增 `runtime plan` 用法说明。
+- 更新 `README.md` 与 `README.en.md`：加入 `docs/16-runtime-plan.md` 与 runtime plan 能力说明。
+- 更新 `AGENTS.md`：在已实现的 CLI 能力、关键源文件、测试列表与设计文档索引中加入 `runtime plan`。
+- 保持只读边界：不执行 adapter、不访问网络、不发送消息、不删除文件、不写真实 ledger、不读取 `.env`/credential；输出不回显完整 `input` / `evidence` / `raw_ref` / `decision_ref` / secret match。
+- 已跑 `python -m pytest`：189 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
+- 已抽查 `runtime plan` 对 task-20260703-001 + shell-local read_file 因 task 已 finished 返回 BLOCKED；对 running task 返回 PASS 或 NEEDS_APPROVAL，JSON 输出脱敏。

@@ -718,6 +718,49 @@ python -m agent_runtime.cli runtime check-ledger \
 
 输出不回显完整 `input`、`evidence`、`raw_ref`、`decision_ref`、`target` 值。
 
+## Runtime Plan
+
+`runtime plan` 为指定 task 生成 adapter action 的只读草案摘要。它会先检查 task 是否存在且未进入终态，然后复用 `adapter plan` 的 preflight 逻辑生成 `request_draft`；当动作需要授权时，还会生成 `approval_draft` 与 `event_draft` 摘要。所有草案不落盘。
+
+低风险只读动作示例：
+
+```bash
+python -m agent_runtime.cli runtime plan \
+  --task-id task-20260703-001 \
+  --adapter shell-local \
+  --operation read_file \
+  --target docs/06-adapter-layer.md
+```
+
+需要授权的外部动作示例：
+
+```bash
+python -m agent_runtime.cli runtime plan \
+  --task-id task-20260703-001 \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli runtime plan \
+  --task-id task-20260703-001 \
+  --adapter shell-local \
+  --operation read_file \
+  --target docs/06-adapter-layer.md \
+  --json
+```
+
+支持 `--actor`、`--tasks-file`，以及 `--policy-profile` / `--agent` / `--assignee` 选择 policy profile。详细输出格式与状态映射见 `docs/16-runtime-plan.md`。
+
+行为约束：
+
+- 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- task 不存在时返回 `error`；task 已 `finished` / `failed` 时返回 `blocked`。
+- 输出不回显完整 `input` payload、`evidence`、`raw_ref`、`decision_ref` 或 secret match。
+
 ## Registry 查询
 
 列出 Agent：
