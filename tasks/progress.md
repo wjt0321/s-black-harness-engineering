@@ -216,3 +216,15 @@
 - 已跑 `python -m pytest`：125 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+- 新增只读 `adapter response check` CLI 命令，用于检查某个 `adapter_request` 是否已有 `adapter_response` 以及 response/evidence 状态。
+- 新增 `agent_runtime/adapter_response.py`：复用 `adapter_validation.validate_envelope_file` 做 schema + consistency 校验，再按 `request_id` 定位请求与 response，返回 `pass` / `blocked` / `needs_approval` / `needs_input` / `validation_failed`。
+- 状态映射：`succeeded` 且 `evidence_count > 0` -> `pass`（返回码 0）；`succeeded` 但 `evidence_count == 0` -> `blocked`（返回码 2）；`blocked` -> `blocked`；`failed` -> `blocked`；`needs_approval` -> `needs_approval`（返回码 3）；`needs_input` -> `needs_input`（返回码 4）；`skipped` -> `blocked`；无 response -> `needs_input`（返回码 4）；请求不存在 -> `needs_input`（返回码 4）；校验失败 -> `validation_failed`（返回码 5）。
+- 输出摘要包含 `request_id`、`adapter_id`、`operation`、`target`、`response_id`、`response_status`、`artifact_count`、`evidence_count`、`raw_ref_present`；不输出 `input` payload、evidence description 或 `raw_ref` 值。
+- 更新 `agent_runtime/cli.py`：在 `adapter` 下新增 `response check` 子命令，支持 `--file`、`--request-id` 与 `--json`。
+- 补充 `tests/test_adapter_response.py`：覆盖 `succeeded` + evidence PASS、`succeeded` 无 evidence BLOCKED、missing response NEEDS_INPUT、unknown request NEEDS_INPUT、`blocked`/`failed`/`needs_approval`/`needs_input`/`skipped` 各状态、非法 envelope 不输出 response 摘要、outside-root/unsafe 文件被拒、不写 ledger。
+- 更新 `docs/10-cli-poc-usage.md`，新增 `adapter response check` 用法说明与状态映射表。
+- 更新 `tasks/progress.md` 记录本次进展。
+- 已跑 `python -m pytest`：140 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。

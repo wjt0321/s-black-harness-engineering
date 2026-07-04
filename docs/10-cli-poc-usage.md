@@ -419,6 +419,75 @@ JSON 结构：
 - 输出摘要包含 `request_id`、`adapter_id`、`operation`、`target`、`requires_approval`、`approval_id`、`approval_status`、`decision_ref`（如有），不输出 `input` payload。
 - 文件必须在项目根目录内，且为安全的 `.json` 文件；`.env`、credential、密钥类文件会被拒绝。
 
+## Adapter Response 检查
+
+`adapter response check` 用于检查某个 `adapter_request` 是否已有 `adapter_response` 以及 response/evidence 状态。它只读访问 envelope JSON 文件，不执行 adapter、不写 ledger、不访问网络。
+
+检查示例 envelope 中 `req-20260703-002` 的响应状态（当前为 `succeeded` 且含 evidence）：
+
+```bash
+python -m agent_runtime.cli adapter response check \
+  --file adapters/execution-envelope.examples.json \
+  --request-id req-20260703-002
+```
+
+期望输出：
+
+```text
+PASS
+request_id=req-20260703-002 adapter_id=shell-local operation=read_file target=docs/06-adapter-layer.md response_id=resp-20260703-001 response_status=succeeded artifact_count=1 evidence_count=1 raw_ref_present=False
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli adapter response check \
+  --file adapters/execution-envelope.examples.json \
+  --request-id req-20260703-002 \
+  --json
+```
+
+JSON 结构：
+
+```json
+{
+  "status": "pass",
+  "response": {
+    "request_id": "req-20260703-002",
+    "adapter_id": "shell-local",
+    "operation": "read_file",
+    "target": "docs/06-adapter-layer.md",
+    "response_id": "resp-20260703-001",
+    "response_status": "succeeded",
+    "artifact_count": 1,
+    "evidence_count": 1,
+    "raw_ref_present": false
+  },
+  "next_action": "Response succeeded and evidence is present."
+}
+```
+
+状态映射：
+
+| response 状态 | CLI 返回状态 | 返回码 | rule_id | 说明 |
+|:---|:---:|:---:|:---|:---|
+| 请求不存在 | `needs_input` | `4` | `response-request-not-found` | 指定的 `request_id` 不在 envelope 中 |
+| 无 `adapter_response` | `needs_input` | `4` | `response-missing` | 请求存在但尚未记录 response |
+| `succeeded` 且 `evidence_count > 0` | `pass` | `0` | — | response 成功且包含 evidence |
+| `succeeded` 但 `evidence_count == 0` | `blocked` | `2` | `response-evidence-missing` | response 成功但缺少 evidence |
+| `blocked` | `blocked` | `2` | `response-blocked` | response 被阻断 |
+| `failed` | `blocked` | `2` | `response-failed` | response 失败 |
+| `needs_approval` | `needs_approval` | `3` | `response-needs-approval` | response 等待授权 |
+| `needs_input` | `needs_input` | `4` | `response-needs-input` | response 需要补充输入 |
+| `skipped` | `blocked` | `2` | `response-skipped` | response 被跳过，不能作为完成证据 |
+
+行为约束：
+
+- 先执行与 `adapter validate` 相同的 schema + consistency 校验；校验失败时返回同样的状态/返回码，且不输出 `response` 摘要。
+- 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- 输出摘要包含 `request_id`、`adapter_id`、`operation`、`target`、`response_id`、`response_status`、`artifact_count`、`evidence_count`、`raw_ref_present`；不输出 `input` payload、evidence description 或 `raw_ref` 值。
+- 文件必须在项目根目录内，且为安全的 `.json` 文件；`.env`、credential、密钥类文件会被拒绝。
+
 ## Registry 查询
 
 列出 Agent：

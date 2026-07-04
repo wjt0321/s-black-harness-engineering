@@ -10,6 +10,7 @@ from typing import Any, Sequence
 
 from .adapter_approval import ApprovalCheckResult, check_adapter_approval
 from .adapter_plan import PlanResult, plan_adapter_action
+from .adapter_response import ResponseCheckResult, check_adapter_response
 from .adapter_validation import inspect_envelope_file, validate_envelope_file
 from .doctor import run_doctor
 from .loader import load_adapters, load_agents, load_policies, discover_policies, normalize_path
@@ -328,6 +329,47 @@ def _cmd_adapter_approval_check(args: argparse.Namespace) -> int:
     return _emit_approval_result(result, json_output=args.json)
 
 
+def _render_response_summary(result: ResponseCheckResult) -> str:
+    """Render a compact human-readable response check summary."""
+    lines = [result.status.upper()]
+    response = result.response
+    if response:
+        summary_parts = [
+            f"request_id={response.get('request_id', '-')}",
+            f"adapter_id={response.get('adapter_id', '-')}",
+            f"operation={response.get('operation', '-')}",
+            f"target={response.get('target', '-')}",
+        ]
+        if response.get("response_id") is not None:
+            summary_parts.append(f"response_id={response['response_id']}")
+        if response.get("response_status") is not None:
+            summary_parts.append(f"response_status={response['response_status']}")
+        if response.get("response_id") is not None:
+            summary_parts.append(f"artifact_count={response.get('artifact_count', 0)}")
+            summary_parts.append(f"evidence_count={response.get('evidence_count', 0)}")
+            summary_parts.append(f"raw_ref_present={response.get('raw_ref_present', False)}")
+        lines.append(" ".join(summary_parts))
+    for finding in result.findings:
+        lines.append(f"- {finding.rule_id}: {finding.message}")
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+    return "\n".join(lines)
+
+
+def _emit_response_result(result: ResponseCheckResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_response_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_adapter_response_check(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result = check_adapter_response(root, args.file, args.request_id)
+    return _emit_response_result(result, json_output=args.json)
+
+
 def _cmd_agents_list(args: argparse.Namespace) -> int:
     root = _root_path(args)
     data = load_agents(root)
@@ -527,6 +569,17 @@ def build_parser() -> argparse.ArgumentParser:
     adapter_approval_check_parser.add_argument("--request-id", required=True, help="Adapter request id")
     _add_global_args(adapter_approval_check_parser)
     adapter_approval_check_parser.set_defaults(func=_cmd_adapter_approval_check)
+
+    adapter_response_parser = adapter_subparsers.add_parser("response", help="Check adapter response and evidence status")
+    adapter_response_subparsers = adapter_response_parser.add_subparsers(dest="response_command", required=True)
+
+    adapter_response_check_parser = adapter_response_subparsers.add_parser(
+        "check", help="Check whether a request has a response and whether evidence is present"
+    )
+    adapter_response_check_parser.add_argument("--file", required=True, help="Path to envelope JSON file")
+    adapter_response_check_parser.add_argument("--request-id", required=True, help="Adapter request id")
+    _add_global_args(adapter_response_check_parser)
+    adapter_response_check_parser.set_defaults(func=_cmd_adapter_response_check)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")
