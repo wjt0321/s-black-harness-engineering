@@ -283,3 +283,18 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 - 已抽查 `runtime plan` 对 task-20260703-001 + shell-local read_file 因 task 已 finished 返回 BLOCKED；对 running task 返回 PASS 或 NEEDS_APPROVAL，JSON 输出脱敏。
+
+- 扩展 `runtime plan` 支持 `--draft-json`，输出完整但脱敏的 envelope 机器草案。
+- 修改 `agent_runtime/runtime_plan.py`：`RuntimePlanResult` 新增 `envelope_draft` 字段；`plan_runtime_action()` 在 task 非终态且 envelope schema 校验通过后，把完整 envelope 存入 `envelope_draft`。
+- 修改 `agent_runtime/cli.py`：`runtime plan` 子命令新增 `--draft-json` 参数；`_emit_runtime_plan_result()` 在 `--draft-json` 时输出 `{status, task_id, task_status, envelope_draft, findings, next_action}`；普通 `--json` 仍保持 compact 摘要，不包含 `envelope_draft`。
+- 安全约束：`envelope_draft` 复用 `adapter_plan.plan_adapter_action()` 已做 schema 校验的 envelope；`input` payload 仅含 `operation`/`target`；`decision_ref` 为 `null`；不存在 `raw_ref`；task 终态/缺失时 `envelope_draft` 为 `null`。
+- 补充 `tests/test_runtime_plan.py`：覆盖 `--draft-json` schema 校验通过、needs_approval 包含 approval/event、terminal task 不输出 draft、draft 中不含 raw_ref/decision_ref 真实值、普通 `--json` 兼容、不写 ledger。
+- 更新 `docs/10-cli-poc-usage.md`：新增 `runtime plan --draft-json` 用法、输出结构与行为约束。
+- 更新 `docs/16-runtime-plan.md`：新增 `--draft-json` 详细说明与安全约束。
+- 更新 `README.md` 与 `README.en.md`：当前状态中补充 `--draft-json` envelope draft 输出能力。
+- 更新 `AGENTS.md`：在已实现的 CLI 能力与 `runtime plan` 关键源文件说明中加入 `--draft-json`。
+- 保持只读边界：不执行 adapter、不访问网络、不发送消息、不删除文件、不写真实 ledger、不读取 `.env`/credential。
+- 已跑 `python -m pytest`：195 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
+- 已抽查 `runtime plan --draft-json` 对 running task + shell-local read_file 输出 schema 合法 envelope；对 github-cli git_push 输出含 approval_record 与 approval_requested event；对 finished task 输出 `envelope_draft: null`。

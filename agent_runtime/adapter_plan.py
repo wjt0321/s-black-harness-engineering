@@ -171,7 +171,6 @@ def plan_adapter_action(
             "requested_at": timestamp,
             "decided_at": None,
             "decided_by": None,
-            "decision_ref": None,
         }
         envelope["artifacts"].append(approval_record)
 

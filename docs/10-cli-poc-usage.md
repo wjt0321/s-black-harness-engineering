@@ -755,11 +755,106 @@ python -m agent_runtime.cli runtime plan \
 
 支持 `--actor`、`--tasks-file`，以及 `--policy-profile` / `--agent` / `--assignee` 选择 policy profile。详细输出格式与状态映射见 `docs/16-runtime-plan.md`。
 
+### Runtime Plan Envelope Draft（--draft-json）
+
+`runtime plan` 默认输出 compact 摘要。若需要拿到可直接送入 `adapter validate` 或后续 gate 的完整 envelope 机器草案，使用 `--draft-json`：
+
+```bash
+python -m agent_runtime.cli runtime plan \
+  --task-id task-20260703-001 \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --draft-json
+```
+
+输出结构：
+
+```json
+{
+  "status": "needs_approval",
+  "task_id": "task-20260703-001",
+  "task_status": "running",
+  "envelope_draft": {
+    "version": 1,
+    "description": "Adapter execution plan for github-cli git_push",
+    "artifacts": [
+      {
+        "artifact_type": "adapter_request",
+        "request_id": "req-20260704-...",
+        "task_id": "task-20260703-001",
+        "adapter_id": "github-cli",
+        "operation": "git_push",
+        "actor": "cli",
+        "target": "origin/main",
+        "input": {
+          "operation": "git_push",
+          "target": "origin/main"
+        },
+        "context": {
+          "source": "cli",
+          "policy_profile": "all",
+          "risk_level": "external",
+          "dry_run": true,
+          "requires_approval": true,
+          "approval_id": "appr-20260704-...",
+          "payload_refs": []
+        },
+        "preflight": {
+          "status": "needs_approval",
+          "findings": []
+        },
+        "created_at": "2026-07-04T..."
+      },
+      {
+        "artifact_type": "approval_record",
+        "approval_id": "appr-20260704-...",
+        "request_id": "req-20260704-...",
+        "status": "pending",
+        "scope": {
+          "task_id": "task-20260703-001",
+          "adapter_id": "github-cli",
+          "operation": "git_push",
+          "target": "origin/main"
+        },
+        "requested_at": "2026-07-04T...",
+        "decided_at": null,
+        "decided_by": null
+      },
+      {
+        "artifact_type": "execution_event",
+        "event_id": "exe-20260704-...",
+        "task_id": "task-20260703-001",
+        "request_id": "req-20260704-...",
+        "timestamp": "2026-07-04T...",
+        "actor": "cli",
+        "event_type": "approval_requested",
+        "message": "Approval requested before adapter execution.",
+        "metadata": {
+          "approval_id": "appr-20260704-...",
+          "adapter_id": "github-cli",
+          "operation": "git_push",
+          "target": "origin/main",
+          "preflight_status": "needs_approval"
+        }
+      }
+    ]
+  },
+  "findings": [],
+  "next_action": "..."
+}
+```
+
 行为约束：
 
-- 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- `envelope_draft` 已经过 `adapters/execution-envelope.schema.json` schema 校验。
+- `input` payload 保持最小，仅包含 `operation` 与 `target`。
+- 不输出 `raw_ref`；pending `approval_record` 不包含 `decision_ref` 字段。
+- task 不存在或已处于 `finished` / `failed` 终态时，`envelope_draft` 为 `null`。
+- 普通 `--json` 仍保持 compact 摘要输出，不包含 `envelope_draft`。
 - task 不存在时返回 `error`；task 已 `finished` / `failed` 时返回 `blocked`。
 - 输出不回显完整 `input` payload、`evidence`、`raw_ref`、`decision_ref` 或 secret match。
+- 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
 
 ## Registry 查询
 

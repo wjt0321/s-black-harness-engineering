@@ -25,7 +25,7 @@
 - `task check-ledger`：检查 task 与 event ledger 之间的跨记录一致性。
 - `runtime gate check`：只读聚合 task ledger 与 adapter gate，输出是否可继续推进及建议 event draft（不落盘）。
 - `runtime check-ledger`：只读审计 task/event ledger 与 adapter envelope 的跨系统一致性。
-- `runtime plan`：为指定 task 生成 adapter action 的只读草案摘要（含可选 approval/event 草案），不落盘。
+- `runtime plan`：为指定 task 生成 adapter action 的只读草案摘要（含可选 approval/event 草案）；`--draft-json` 输出完整但脱敏的 envelope 机器草案，已按 `adapters/execution-envelope.schema.json` 校验，不落盘。
 - `agents list` / `adapters list` / `policies list`：只读列表查询，支持过滤、policy profile 选择和 JSON 输出。
 
 ### 明确不做的（第一阶段）
@@ -72,7 +72,7 @@
 - `agent_runtime/adapter_validation.py`：校验 adapter execution envelope JSON 文件。
 - `agent_runtime/adapter_approval.py` / `adapter_response.py` / `adapter_gate.py`：只读检查 adapter approval、response 与 gate 状态。
 - `agent_runtime/runtime_gate.py`：只读聚合 task ledger 与 adapter envelope gate，并生成建议 event draft。
-- `agent_runtime/runtime_plan.py`：为指定 task 生成 adapter action 的只读草案摘要（含可选 approval/event 草案）。
+- `agent_runtime/runtime_plan.py`：为指定 task 生成 adapter action 的只读草案摘要（含可选 approval/event 草案）；`--draft-json` 时返回完整 envelope 草案。
 - `tools/public_scan.py`：仓库公开发布风险文本扫描，只读、不回显完整命中值。
 
 ### 关键 Schema 与样例
@@ -196,6 +196,7 @@ python -m pytest tests -q
 - `tests/test_adapter_approval.py` / `test_adapter_response.py` / `test_adapter_gate.py`：adapter envelope 检查链路。
 - `tests/test_runtime_gate.py`：runtime gate 只读聚合、输出脱敏与不写 ledger。
 - `tests/test_runtime_ledger.py`：runtime ledger audit 跨系统一致性、输出脱敏与不写 ledger。
+- `tests/test_runtime_plan.py`：runtime plan 摘要输出、`--draft-json` envelope 草案 schema 校验、终态/缺失 task 不输出 draft、脱敏与不写 ledger。
 - `tests/test_public_scan.py`：仓库公开发布风险扫描。
 
 ### 写测试的约定

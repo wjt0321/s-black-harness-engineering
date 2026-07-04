@@ -507,9 +507,26 @@ def _render_runtime_plan_summary(result: RuntimePlanResult) -> str:
     return "\n".join(lines)
 
 
-def _emit_runtime_plan_result(result: RuntimePlanResult, json_output: bool) -> int:
-    if json_output:
-        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+def _emit_runtime_plan_result(
+    result: RuntimePlanResult, json_output: bool, draft_json: bool = False
+) -> int:
+    if draft_json:
+        draft: dict[str, Any] = {
+            "status": result.status,
+            "task_id": result.task_id,
+            "task_status": result.task_status,
+            "envelope_draft": result.envelope_draft,
+        }
+        if result.findings:
+            draft["findings"] = [f.to_dict() for f in result.findings]
+        if result.next_action is not None:
+            draft["next_action"] = result.next_action
+        print(json.dumps(draft, ensure_ascii=False, indent=2))
+    elif json_output:
+        # Preserve the original compact summary shape for backward compatibility.
+        summary = result.to_dict()
+        summary.pop("envelope_draft", None)
+        print(json.dumps(summary, ensure_ascii=False, indent=2))
     else:
         print(_render_runtime_plan_summary(result))
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
@@ -517,6 +534,7 @@ def _emit_runtime_plan_result(result: RuntimePlanResult, json_output: bool) -> i
 
 def _cmd_runtime_plan(args: argparse.Namespace) -> int:
     root = _root_path(args)
+    draft_json = getattr(args, "draft_json", False)
     if not args.adapter or not args.operation:
         result = RuntimePlanResult(
             status="error",
@@ -531,7 +549,7 @@ def _cmd_runtime_plan(args: argparse.Namespace) -> int:
             ],
             next_action="Provide --adapter and --operation.",
         )
-        return _emit_runtime_plan_result(result, json_output=args.json)
+        return _emit_runtime_plan_result(result, json_output=args.json, draft_json=draft_json)
 
     result = plan_runtime_action(
         root,
@@ -543,7 +561,7 @@ def _cmd_runtime_plan(args: argparse.Namespace) -> int:
         args=args,
         tasks_file=args.tasks_file,
     )
-    return _emit_runtime_plan_result(result, json_output=args.json)
+    return _emit_runtime_plan_result(result, json_output=args.json, draft_json=draft_json)
 
 
 def _render_runtime_ledger_summary(result: RuntimeLedgerResult) -> str:
@@ -827,6 +845,7 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_plan_parser.add_argument("--target", default=None, help="Operation target")
     runtime_plan_parser.add_argument("--actor", default="cli", help="Actor identifier")
     runtime_plan_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
+    runtime_plan_parser.add_argument("--draft-json", action="store_true", default=argparse.SUPPRESS, help="Output full schema-valid envelope draft (JSON)")
     _add_global_args(runtime_plan_parser)
     runtime_plan_parser.set_defaults(func=_cmd_runtime_plan)
 

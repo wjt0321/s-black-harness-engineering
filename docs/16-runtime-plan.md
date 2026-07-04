@@ -165,6 +165,34 @@ python -m agent_runtime.cli --agent orchestrator runtime plan \
   --target origin/main
 ```
 
+## Envelope Draft 输出（--draft-json）
+
+`--draft-json` 输出完整但脱敏的 envelope 机器草案，可直接用于 `adapter validate` 或后续 gate 检查：
+
+```bash
+python -m agent_runtime.cli runtime plan \
+  --task-id task-20260703-001 \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --draft-json
+```
+
+输出字段：
+
+- `status`：与 compact 输出相同的状态。
+- `task_id` / `task_status`：task 标识与当前状态。
+- `envelope_draft`：完整 envelope，已按 `adapters/execution-envelope.schema.json` schema 校验；包含 `adapter_request`，需要授权时额外包含 `approval_record` 与 `execution_event`。
+- `findings` / `next_action`：preflight findings 与下一步建议。
+
+安全约束：
+
+- `input` payload 只包含 `operation` 与 `target`，不携带任意大 payload。
+- pending `approval_record` 不包含 `decision_ref` 字段，不暴露真实授权引用。
+- 无 `adapter_response`，因此不存在 `raw_ref`。
+- task 不存在或处于 `finished` / `failed` 终态时，`envelope_draft` 为 `null`。
+- 普通 `--json` 保持 compact 摘要，不包含 `envelope_draft`。
+
 ## 状态与返回码
 
 | 场景 | CLI 状态 | 返回码 | 说明 |

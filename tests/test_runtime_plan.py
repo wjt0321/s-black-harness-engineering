@@ -7,7 +7,10 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from jsonschema import validate
+
 from agent_runtime.cli import main
+from agent_runtime.loader import load_schema
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -321,3 +324,162 @@ def test_runtime_plan_explicit_tasks_file(capsys, tmp_path):
     result = json.loads(captured.out)
     assert result["status"] == "pass"
     assert result["task_status"] == "running"
+
+
+def _envelope_schema(root: Path) -> dict:
+    return load_schema(root, "adapters/execution-envelope.schema.json")
+
+
+def test_runtime_plan_draft_json_pass_validates_schema(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root, "running")
+
+    code = main([
+        "--root", str(fake_root),
+        "runtime", "plan",
+        "--task-id", "task-20260703-001",
+        "--adapter", "shell-local",
+        "--operation", "read_file",
+        "--target", "docs/06-adapter-layer.md",
+        "--draft-json",
+    ])
+    captured = capsys.readouterr()
+    assert code == 0
+    result = json.loads(captured.out)
+    assert result["status"] == "pass"
+    assert result["task_status"] == "running"
+
+    envelope = result["envelope_draft"]
+    assert envelope is not None
+    assert envelope["version"] == 1
+    schema = _envelope_schema(fake_root)
+    validate(instance=envelope, schema=schema)
+
+    artifacts = envelope["artifacts"]
+    request = next(a for a in artifacts if a["artifact_type"] == "adapter_request")
+    assert request["adapter_id"] == "shell-local"
+    assert request["operation"] == "read_file"
+    assert request["context"]["dry_run"] is True
+    assert not any(a["artifact_type"] == "approval_record" for a in artifacts)
+
+
+def test_runtime_plan_draft_json_needs_approval_includes_artifacts(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root, "running")
+
+    code = main([
+        "--root", str(fake_root),
+        "runtime", "plan",
+        "--task-id", "task-20260703-001",
+        "--adapter", "github-cli",
+        "--operation", "git_push",
+        "--target", "origin/main",
+        "--draft-json",
+    ])
+    captured = capsys.readouterr()
+    assert code == 3
+    result = json.loads(captured.out)
+    assert result["status"] == "needs_approval"
+
+    envelope = result["envelope_draft"]
+    assert envelope is not None
+    artifacts = envelope["artifacts"]
+    assert any(a["artifact_type"] == "adapter_request" for a in artifacts)
+    assert any(a["artifact_type"] == "approval_record" for a in artifacts)
+    assert any(
+        a["artifact_type"] == "execution_event" and a["event_type"] == "approval_requested"
+        for a in artifacts
+    )
+
+    approval = next(a for a in artifacts if a["artifact_type"] == "approval_record")
+    assert approval["status"] == "pending"
+    assert "decision_ref" not in approval
+
+    event = next(a for a in artifacts if a["artifact_type"] == "execution_event")
+    assert event["metadata"]["approval_id"] == approval["approval_id"]
+
+
+def test_runtime_plan_draft_json_terminal_task_no_envelope(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root, "finished")
+
+    code = main([
+        "--root", str(fake_root),
+        "runtime", "plan",
+        "--task-id", "task-20260703-001",
+        "--adapter", "shell-local",
+        "--operation", "read_file",
+        "--target", "docs/06-adapter-layer.md",
+        "--draft-json",
+    ])
+    captured = capsys.readouterr()
+    assert code == 2
+    result = json.loads(captured.out)
+    assert result["status"] == "blocked"
+    assert result["envelope_draft"] is None
+
+
+def test_runtime_plan_draft_json_sanitizes_refs(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root, "running")
+
+    code = main([
+        "--root", str(fake_root),
+        "runtime", "plan",
+        "--task-id", "task-20260703-001",
+        "--adapter", "github-cli",
+        "--operation", "git_push",
+        "--target", "origin/main",
+        "--draft-json",
+    ])
+    captured = capsys.readouterr()
+    assert code == 3
+    text = captured.out
+    assert "raw_ref" not in text
+    assert "decision_ref" not in text
+
+
+def test_runtime_plan_regular_json_compatible(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root, "running")
+
+    code = main([
+        "--root", str(fake_root),
+        "runtime", "plan",
+        "--task-id", "task-20260703-001",
+        "--adapter", "shell-local",
+        "--operation", "read_file",
+        "--target", "docs/06-adapter-layer.md",
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    assert code == 0
+    result = json.loads(captured.out)
+    assert result["status"] == "pass"
+    assert "request_draft" in result
+    assert "approval_draft" in result
+    assert "event_draft" in result
+    # Regular --json remains a compact summary; envelope_draft is not included.
+    assert "envelope_draft" not in result
+
+
+def test_runtime_plan_draft_json_does_not_write_ledger(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    tasks_file = _write_tasks(fake_root, "running")
+    events_file = _write_events(fake_root)
+
+    tasks_before = tasks_file.read_bytes()
+    events_before = events_file.read_bytes()
+
+    code = main([
+        "--root", str(fake_root),
+        "runtime", "plan",
+        "--task-id", "task-20260703-001",
+        "--adapter", "github-cli",
+        "--operation", "git_push",
+        "--target", "origin/main",
+        "--draft-json",
+    ])
+    assert code == 3
+    assert tasks_file.read_bytes() == tasks_before
+    assert events_file.read_bytes() == events_before

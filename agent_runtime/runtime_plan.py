@@ -31,6 +31,7 @@ class RuntimePlanResult:
     request_draft: dict[str, Any] | None = None
     approval_draft: dict[str, Any] | None = None
     event_draft: dict[str, Any] | None = None
+    envelope_draft: dict[str, Any] | None = None
     findings: list[Finding] = field(default_factory=list)
     next_action: str | None = None
 
@@ -42,6 +43,7 @@ class RuntimePlanResult:
             "request_draft": self.request_draft,
             "approval_draft": self.approval_draft,
             "event_draft": self.event_draft,
+            "envelope_draft": self.envelope_draft,
         }
         if self.findings:
             d["findings"] = [f.to_dict() for f in self.findings]
@@ -224,6 +226,11 @@ def plan_runtime_action(
         findings=plan_result.findings,
         next_action=plan_result.next_action,
     )
+
+    # The envelope has already been schema-validated by plan_adapter_action.
+    # It contains only minimal input (operation/target), no raw_ref, and
+    # decision_ref is null, so it is safe to expose as a machine draft.
+    result.envelope_draft = envelope
 
     if plan_result.status == "needs_approval":
         approval = _artifact_by_type(envelope, "approval_record")

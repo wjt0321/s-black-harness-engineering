@@ -203,8 +203,7 @@
         "scope",
         "requested_at",
         "decided_at",
-        "decided_by",
-        "decision_ref"
+        "decided_by"
       ],
       "additionalProperties": false,
       "properties": {
