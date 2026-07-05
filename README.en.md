@@ -109,6 +109,7 @@ The first phase does not:
 - `docs/22-runtime-draft-export-dry-run.md`
 - `docs/23-release-notes-runtime-draft-export-dry-run.md`
 - `docs/24-runtime-draft-export-commit.md`
+- `docs/25-release-notes-runtime-draft-export-commit.md`
 
 ## Development Principle
 

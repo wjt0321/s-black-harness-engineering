@@ -402,3 +402,9 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 - 已抽查 `runtime draft export --commit` 对 shell-local read_file 写入 `drafts/runtime/.../*.json` 并通过 post validate/inspect；对 schema invalid 和已存在文件均不写且正确报错。
+
+- Runtime Draft Export Commit 阶段正式收口。
+  - 新增 `docs/25-release-notes-runtime-draft-export-commit.md`：记录 v0.6 阶段定位、新增能力、写入边界、验证结果与后续建议。
+  - 新增 `tasks/handoff-2026-07-05-draft-export-commit.md`：记录 v0.6 接续上下文、当前链路、恢复命令、安全边界和下一阶段建议。
+  - 更新 `README.md` 与 `README.en.md` 文档索引。
+  - 阶段冻结 tag：`v0.6.0-runtime-draft-export-commit`。
