@@ -979,6 +979,52 @@ JSON 结构：
 - 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
 - 人类/JSON 输出不回显完整 `input`、`evidence`、`raw_ref`、`decision_ref` 或 secret match。
 
+## `runtime report`
+
+`runtime report` 把 task snapshot、task event stream 摘要、adapter execution envelope 摘要、runtime gate 状态、runtime ledger audit 状态汇总到一份只读报告中，并给出 blockers 与 next_action 建议。
+
+```bash
+python -m agent_runtime.cli runtime report \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --envelope adapters/execution-envelope.examples.json
+```
+
+可选参数：
+
+- `--tasks-file <path>`：指定 tasks JSONL 文件（默认 `tasks/tasks.jsonl`）。
+- `--events-file <path>`：指定 events JSONL 文件（默认 `tasks/events.jsonl`）。
+- `--json`：输出 JSON 聚合报告。
+
+文本输出示例：
+
+```text
+PASS
+Task: task-20260703-001 (running): Runtime report test task
+Events: 2 events, latest=status_changed at 2026-07-03T10:05:00+08:00
+Envelope: adapter_request=1, adapter_response=1, execution_event=1
+Gate: stage=response, can_proceed=true
+Ledger: pass (tasks=1, events=2, requests=1, execution_events=1)
+Blockers: none
+Next: Proceed with adapter execution.
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli runtime report \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --envelope adapters/execution-envelope.examples.json \
+  --json
+```
+
+行为约束：
+
+- 只读：不执行 adapter、不访问网络、不写 ledger、不读取 `.env`/credential。
+- 人类/JSON 输出不回显完整 `target`、`input` payload、`evidence` 描述、`raw_ref` 或 `decision_ref`。
+- 终态 task（`finished` / `failed`）会被标记为 BLOCKED，且不能继续推进。
+
 ## Registry 查询
 
 列出 Agent：

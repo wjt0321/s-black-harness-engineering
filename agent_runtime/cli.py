@@ -23,6 +23,7 @@ from .runtime_gate import RuntimeGateResult, check_runtime_gate
 from .runtime_ledger import RuntimeLedgerResult, check_runtime_ledger
 from .runtime_draft import inspect_runtime_draft, validate_runtime_draft
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
+from .runtime_report import RuntimeReportResult, check_runtime_report
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -658,6 +659,85 @@ def _emit_runtime_ledger_result(result: RuntimeLedgerResult, json_output: bool) 
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _render_runtime_report_summary(result: RuntimeReportResult) -> str:
+    """Render a compact human-readable runtime report."""
+    lines = [result.status.upper()]
+    lines.append(
+        f"Task: {result.task_id} "
+        f"({result.task_status or '-'}): {result.task_snapshot.get('title', '-')}"
+    )
+
+    event_summary = result.event_summary
+    if event_summary:
+        total = event_summary.get("total", 0)
+        latest = event_summary.get("latest", {})
+        latest_type = latest.get("event_type", "-")
+        latest_ts = latest.get("timestamp", "-")
+        lines.append(f"Events: {total} events, latest={latest_type} at {latest_ts}")
+
+    envelope = result.envelope_summary
+    if envelope is not None:
+        artifact_counts = envelope.get("artifact_counts", {})
+        counts = ", ".join(f"{k}={v}" for k, v in artifact_counts.items())
+        lines.append(f"Envelope: {counts or 'no artifacts'}")
+    else:
+        lines.append("Envelope: validation failed")
+
+    gate = result.gate
+    if gate is not None:
+        lines.append(
+            f"Gate: stage={gate.get('stage', '-')}, "
+            f"can_proceed={gate.get('can_proceed', False)}"
+        )
+    else:
+        lines.append("Gate: unavailable")
+
+    ledger = result.ledger
+    if ledger is not None:
+        counts = ledger.get("counts", {})
+        counts_str = ", ".join(f"{k}={v}" for k, v in counts.items())
+        lines.append(f"Ledger: {ledger.get('status', '-')} ({counts_str})")
+    else:
+        lines.append("Ledger: unavailable")
+
+    if result.blockers:
+        lines.append("Blockers:")
+        for blocker in result.blockers:
+            lines.append(f"- {blocker}")
+    else:
+        lines.append("Blockers: none")
+
+    for finding in result.findings:
+        lines.append(f"- {finding.rule_id}: {finding.message}")
+
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+
+    return "\n".join(lines)
+
+
+def _emit_runtime_report_result(result: RuntimeReportResult, json_output: bool) -> int:
+    """Print a runtime report and return the appropriate exit code."""
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_runtime_report_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_runtime_report(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    result = check_runtime_report(
+        root,
+        task_id=args.task_id,
+        request_id=args.request_id,
+        envelope_file=args.envelope,
+        tasks_file=args.tasks_file,
+        events_file=args.events_file,
+    )
+    return _emit_runtime_report_result(result, json_output=args.json)
+
+
 def _cmd_runtime_check_ledger(args: argparse.Namespace) -> int:
     root = _root_path(args)
     result = check_runtime_ledger(
@@ -945,6 +1025,17 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_check_ledger_parser.add_argument("--envelope", required=True, help="Path to adapter execution envelope JSON file")
     _add_global_args(runtime_check_ledger_parser)
     runtime_check_ledger_parser.set_defaults(func=_cmd_runtime_check_ledger)
+
+    runtime_report_parser = runtime_subparsers.add_parser(
+        "report", help="Generate an aggregated runtime report for a task + request pair"
+    )
+    runtime_report_parser.add_argument("--task-id", required=True, help="Task id")
+    runtime_report_parser.add_argument("--request-id", required=True, help="Adapter request id")
+    runtime_report_parser.add_argument("--envelope", required=True, help="Path to adapter execution envelope JSON file")
+    runtime_report_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
+    runtime_report_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
+    _add_global_args(runtime_report_parser)
+    runtime_report_parser.set_defaults(func=_cmd_runtime_report)
 
     runtime_draft_parser = runtime_subparsers.add_parser(
         "draft", help="Validate and inspect runtime plan envelope drafts"
