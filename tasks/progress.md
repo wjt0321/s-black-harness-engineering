@@ -360,3 +360,9 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 - 已抽查 `runtime draft export --dry-run` 对 running task + shell-local read_file 输出 PASS 且不创建目标文件；对含 GitHub token 的 draft 返回 BLOCKED 且不回显 token。
+
+- Runtime Draft Export Dry-run 阶段正式收口。
+  - 新增 `docs/23-release-notes-runtime-draft-export-dry-run.md`：记录 v0.5 阶段定位、新增能力、安全边界、验证结果与后续建议。
+  - 新增 `tasks/handoff-2026-07-05-draft-export.md`：记录 v0.5 接续上下文、当前链路、恢复命令、安全边界和下一阶段建议。
+  - 更新 `README.md` 与 `README.en.md` 文档索引。
+  - 阶段冻结 tag：`v0.5.0-runtime-draft-export-dry-run`。

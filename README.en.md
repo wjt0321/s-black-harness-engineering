@@ -107,6 +107,7 @@ The first phase does not:
 - `docs/20-release-notes-runtime-report.md`
 - `docs/21-controlled-write-boundaries.md`
 - `docs/22-runtime-draft-export-dry-run.md`
+- `docs/23-release-notes-runtime-draft-export-dry-run.md`
 
 ## Development Principle
 

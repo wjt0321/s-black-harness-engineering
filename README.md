@@ -107,6 +107,7 @@ python -m agent_runtime.cli policies list
 - `docs/20-release-notes-runtime-report.md`
 - `docs/21-controlled-write-boundaries.md`
 - `docs/22-runtime-draft-export-dry-run.md`
+- `docs/23-release-notes-runtime-draft-export-dry-run.md`
 
 ## 推进原则
 
