@@ -53,6 +53,30 @@ python -m agent_runtime.cli runtime event append \
 - 输出不回显完整 target / input payload / evidence description / raw_ref / decision_ref / secret match。
 - 未修改 `AGENTS.md`。
 
+## 压缩前最新状态（2026-07-05）
+
+压缩前最后一次文档上下文提交：
+
+```text
+d6fe7ff Document runtime event append commit plan
+```
+
+当前远端应为：
+
+```text
+main...origin/main
+HEAD: d6fe7ff Document runtime event append commit plan
+latest frozen tag: v0.7.0-runtime-event-append-dry-run -> 580543b
+```
+
+`d6fe7ff` 只新增下一阶段预备设计文档，不实现代码、不改变 Runtime 行为：
+
+```text
+docs/28-runtime-event-append-commit.md
+```
+
+下次恢复时，优先从该文档出发，再决定是否实现 `runtime event append --commit`。
+
 ## 下一步建议
 
 1. 如需继续 Controlled Write，可实现 `runtime event append --commit`：
