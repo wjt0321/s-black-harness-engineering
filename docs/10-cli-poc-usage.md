@@ -1031,13 +1031,40 @@ Next: Use --commit to persist the draft (not yet implemented).
 
 行为约束：
 
-- 只读：仅 `--dry-run`，不支持 `--commit`，不写文件、不覆盖文件。
+- 只读：`--dry-run` 不写文件、不覆盖文件；需要持久化时请使用 `--commit`。
 - 输出路径必须在项目根目录内、以 `.json` 结尾、不能指向 credential/git internals，且默认禁止覆盖已存在文件。
 - 输入 envelope 必须通过 schema + consistency 校验。
 - 导出内容会通过 policy secret scan 与 public scan，命中则 block 且不回显完整匹配值。
 - JSON/人类输出不回显完整 `target` / `input` / `raw_ref` / `decision_ref` / evidence description。
 
 详细设计见 `docs/22-runtime-draft-export-dry-run.md`。
+
+## Runtime Draft Export Commit
+
+`runtime draft export --commit` 将已通过 dry-run 全部检查的 envelope draft 持久化到 `drafts/runtime/.../*.json`。
+
+```bash
+python -m agent_runtime.cli runtime plan \
+  --task-id task-20260703-001 \
+  --adapter shell-local \
+  --operation read_file \
+  --target docs/06-adapter-layer.md \
+  --draft-json | \
+  python -m agent_runtime.cli runtime draft export \
+    --stdin \
+    --output drafts/runtime/task-20260703-001/req-xxx.envelope.json \
+    --commit
+```
+
+约束：
+
+- `--dry-run` 与 `--commit` 互斥，必须显式提供其中一个。
+- `--output` 在 `--commit` 模式下必须位于 `drafts/runtime/` 下，后缀 `.json`。
+- 不支持 overwrite；目标文件已存在即 blocked。
+- 写入后会重新 `runtime draft validate` 与 `runtime draft inspect`；失败时删除半写入文件。
+- 不回显完整 `target` / `input` / `raw_ref` / `decision_ref` / evidence description / secret match。
+
+详细设计见 `docs/24-runtime-draft-export-commit.md`。
 
 ## `runtime report`
 
