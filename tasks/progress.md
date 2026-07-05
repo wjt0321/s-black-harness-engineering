@@ -360,3 +360,39 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 - 已抽查 `runtime draft export --dry-run` 对 running task + shell-local read_file 输出 PASS 且不创建目标文件；对含 GitHub token 的 draft 返回 BLOCKED 且不回显 token。
+
+## 2026-07-05（续）
+
+- 进入下一阶段：最小 Controlled Write POC 第二步 —— `runtime draft export --commit`。
+- 扩展 `agent_runtime/runtime_draft_export.py`：
+  - 新增 `export_draft(..., commit=False)` 统一入口；保留 `dry_run_export` 兼容旧调用。
+  - 新增 `committed`、`post_validate`、`post_inspect` 字段到 `DraftExportResult`。
+  - commit 路径复用 dry-run 全部预检（load/validate/path guard/scan）。
+  - 新增 `drafts/runtime/` 路径守卫：commit 模式下 `--output` 必须位于 `drafts/runtime/...`。
+  - 写入格式稳定：`json.dumps(..., ensure_ascii=False, indent=2) + "\n"`。
+  - 写入后调用 `validate_runtime_draft` 与 `inspect_runtime_draft` 做二次校验。
+  - 失败回滚：post-write 校验失败时 `unlink()` 半写入文件；回滚失败时返回 `rollback-failed`。
+- 更新 `agent_runtime/cli.py`：
+  - `--dry-run` 与 `--commit` 改为两个独立标志，由命令逻辑保证互斥与必选一个。
+  - 都不提供或同时提供时返回结构化 `error` 结果。
+  - 渲染函数输出 `Committed`/`Post validate`/`Post inspect`。
+- 新增 `tests/test_runtime_draft_export_commit.py`，覆盖：
+  - commit pass 写入新文件且内容可被 `runtime draft validate` 通过。
+  - commit 自动创建 `drafts/runtime/...` 父目录。
+  - dry-run 仍不写文件。
+  - `--dry-run`/`--commit` 互斥报错。
+  - 二者都不提供报错。
+  - commit 输出不在 `drafts/runtime/` 下被 block。
+  - 已存在输出文件被 block 且不覆盖。
+  - schema invalid 时不写文件。
+  - secret/public scan 命中时不写文件且不回显。
+  - post-validation 失败触发回滚、文件被删除。
+- 新增 `docs/24-runtime-draft-export-commit.md`：说明 commit 目标、CLI 用法、路径守卫、写入/回滚、扫描、错误状态。
+- 更新 `docs/10-cli-poc-usage.md`：新增 `runtime draft export --commit` 用法与约束。
+- 更新 `README.md` 与 `README.en.md`：文档索引加入 `docs/24-runtime-draft-export-commit.md`，当前状态补充 `--commit` 能力与边界。
+- 保持安全边界：不执行 adapter、不访问网络、不发送消息、不删除非本命令创建的文件、不写 task/event ledger、不读取 `.env`/credential。
+- 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest tests -v`：232 passed（新增 11 个测试）。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
+- 已抽查 `runtime draft export --commit` 对 shell-local read_file 写入 `drafts/runtime/.../*.json` 并通过 post validate/inspect；对 schema invalid 和已存在文件均不写且正确报错。

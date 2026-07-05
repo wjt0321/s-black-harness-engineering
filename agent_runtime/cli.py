@@ -22,7 +22,7 @@ from .ledger_consistency import check_ledger_consistency
 from .runtime_gate import RuntimeGateResult, check_runtime_gate
 from .runtime_ledger import RuntimeLedgerResult, check_runtime_ledger
 from .runtime_draft import inspect_runtime_draft, validate_runtime_draft
-from .runtime_draft_export import DraftExportResult, dry_run_export
+from .runtime_draft_export import DraftExportResult, export_draft
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .task_validation import validate_records
@@ -483,15 +483,19 @@ def _cmd_runtime_draft_inspect(args: argparse.Namespace) -> int:
 
 
 def _render_runtime_draft_export_summary(result: DraftExportResult) -> str:
-    """Render a compact human-readable dry-run export summary."""
+    """Render a compact human-readable export summary."""
     lines = [result.status.upper()]
     if result.source is not None:
         lines.append(f"Source: {result.source}")
     if result.output is not None:
         lines.append(f"Output: {result.output}")
-    lines.append(f"Would write: {result.would_write}")
+    lines.append(f"Committed: {result.committed}")
     if result.validation is not None:
         lines.append(f"Validation: {result.validation}")
+    if result.post_validate is not None:
+        lines.append(f"Post validate: {result.post_validate}")
+    if result.post_inspect is not None:
+        lines.append(f"Post inspect: {result.post_inspect}")
     if result.artifact_counts:
         counts = ", ".join(
             f"{kind}={count}" for kind, count in result.artifact_counts.items()
@@ -510,7 +514,7 @@ def _render_runtime_draft_export_summary(result: DraftExportResult) -> str:
 def _emit_runtime_draft_export_result(
     result: DraftExportResult, json_output: bool
 ) -> int:
-    """Print a draft export dry-run result and return the appropriate exit code."""
+    """Print a draft export result and return the appropriate exit code."""
     if json_output:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
@@ -520,26 +524,44 @@ def _emit_runtime_draft_export_result(
 
 def _cmd_runtime_draft_export(args: argparse.Namespace) -> int:
     root = _root_path(args)
-    if not getattr(args, "dry_run", False):
+    dry_run = getattr(args, "dry_run", False)
+    commit = getattr(args, "commit", False)
+    if dry_run and commit:
         result = DraftExportResult(
             status="error",
             findings=[
                 Finding(
-                    rule_id="commit-not-implemented",
+                    rule_id="dry-run-commit-mutually-exclusive",
                     severity="error",
                     action="error",
-                    message="Only --dry-run is supported; --commit is not implemented.",
+                    message="--dry-run and --commit are mutually exclusive.",
                 )
             ],
-            next_action="Add --dry-run to run the export in read-only mode.",
+            next_action="Provide either --dry-run or --commit, not both.",
         )
         return _emit_runtime_draft_export_result(result, json_output=args.json)
 
-    result = dry_run_export(
+    if not dry_run and not commit:
+        result = DraftExportResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="missing-export-mode",
+                    severity="error",
+                    action="error",
+                    message="Provide either --dry-run or --commit.",
+                )
+            ],
+            next_action="Add --dry-run for read-only mode or --commit to persist the draft.",
+        )
+        return _emit_runtime_draft_export_result(result, json_output=args.json)
+
+    result = export_draft(
         root,
         output=args.output,
         file=args.file,
         stdin=args.stdin,
+        commit=commit,
     )
     return _emit_runtime_draft_export_result(result, json_output=args.json)
 
@@ -1124,15 +1146,19 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_draft_inspect_parser.set_defaults(func=_cmd_runtime_draft_inspect)
 
     runtime_draft_export_parser = runtime_draft_subparsers.add_parser(
-        "export", help="Dry-run export a runtime plan envelope draft to a project-local .json file"
+        "export", help="Export a runtime plan envelope draft to a project-local .json file"
     )
     export_source_group = runtime_draft_export_parser.add_mutually_exclusive_group(required=True)
     export_source_group.add_argument("--file", default=None, help="Path to runtime draft JSON file")
     export_source_group.add_argument("--stdin", action="store_true", help="Read runtime draft JSON from stdin")
     runtime_draft_export_parser.add_argument("--output", required=True, help="Project-local .json output path")
     runtime_draft_export_parser.add_argument(
-        "--dry-run", action="store_true", required=True,
-        help="Run in read-only dry-run mode (required)"
+        "--dry-run", action="store_true",
+        help="Run in read-only dry-run mode (provide either --dry-run or --commit)"
+    )
+    runtime_draft_export_parser.add_argument(
+        "--commit", action="store_true",
+        help="Persist the draft to the output path (provide either --dry-run or --commit)"
     )
     _add_global_args(runtime_draft_export_parser)
     runtime_draft_export_parser.set_defaults(func=_cmd_runtime_draft_export)
