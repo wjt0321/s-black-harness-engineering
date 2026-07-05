@@ -26,8 +26,8 @@
 
 - 阶段：只读 CLI POC + Adapter execution envelope 检查链路已可运行
 - 创建日期：2026-07-02
-- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询、ledger 校验，以及 adapter envelope 的 plan / validate / inspect / approval check / response check / gate check，和 task + adapter envelope 的 runtime plan（含 `--draft-json` envelope 草案输出） / runtime draft validate / runtime draft inspect / runtime gate check / runtime check-ledger / runtime report
-- 当前边界：adapter 链路与 runtime plan / runtime draft validate / runtime draft inspect / runtime gate / runtime ledger audit / runtime report 仍只读，不执行真实外部动作
+- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询、ledger 校验，以及 adapter envelope 的 plan / validate / inspect / approval check / response check / gate check，和 task + adapter envelope 的 runtime plan（含 `--draft-json` envelope 草案输出） / runtime draft validate / runtime draft inspect / runtime draft export `--dry-run` / runtime gate check / runtime check-ledger / runtime report
+- 当前边界：adapter 链路与 runtime plan / runtime draft validate / inspect / export `--dry-run` / runtime gate / runtime ledger audit / runtime report 仍只读，不执行真实外部动作；`runtime draft export` 仅支持 `--dry-run`，不实现 `--commit`，不写文件
 
 ## 持续集成
 
@@ -106,6 +106,7 @@ python -m agent_runtime.cli policies list
 - `docs/19-runtime-report.md`
 - `docs/20-release-notes-runtime-report.md`
 - `docs/21-controlled-write-boundaries.md`
+- `docs/22-runtime-draft-export-dry-run.md`
 
 ## 推进原则
 
