@@ -322,3 +322,10 @@
   - 已跑 `python tools/public_scan.py`：OK public scan。
   - 已推送 main：`7aa092f Add read-only runtime report`。
   - 阶段冻结 tag：`v0.4.0-runtime-report`。
+
+- Controlled Write Boundaries 受控写入边界设计完成。
+  - 新增 `docs/21-controlled-write-boundaries.md`：定义从只读 Runtime 进入最小受控写入前的边界。
+  - 明确本阶段不新增真实写入命令，不执行 adapter、不访问网络、不发送消息、不删除文件、不读取 credential。
+  - 定义 `draft export` 与 `event append` 两类最低风险写入的允许路径、写前校验、写后校验、dry-run/commit 语义、overwrite 限制、append-only 规则与回滚恢复策略。
+  - 明确审批语义必须收窄为 this command + this task_id + this request_id + this target path + this input hash，禁止泛化为长期授权。
+  - 更新 `README.md` 与 `README.en.md` 文档索引。

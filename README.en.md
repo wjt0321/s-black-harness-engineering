@@ -105,6 +105,7 @@ The first phase does not:
 - `docs/18-release-notes-runtime-planning-bridge.md`
 - `docs/19-runtime-report.md`
 - `docs/20-release-notes-runtime-report.md`
+- `docs/21-controlled-write-boundaries.md`
 
 ## Development Principle
 
