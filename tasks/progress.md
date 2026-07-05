@@ -396,3 +396,30 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 - 已抽查 `runtime draft export --commit` 对 shell-local read_file 写入 `drafts/runtime/.../*.json` 并通过 post validate/inspect；对 schema invalid 和已存在文件均不写且正确报错。
+
+## 2026-07-05（续）
+
+- 进入下一阶段：最小 Controlled Write POC 第三步 —— `runtime event append --dry-run`。
+- 新增 `agent_runtime/runtime_event_append.py`：实现 `append_event_dry_run()`，读取候选 event（`--file` 安全 `.json` 或 `--stdin`），做 schema 校验、task_id 存在性检查、模拟追加后的 ledger consistency、可选 runtime ledger audit、secret/public scan。
+  - 模拟追加使用项目根目录内的临时 JSONL 文件：复制现有 events 后追加候选 event，再调用现有 `check_ledger_consistency` 与 `check_runtime_ledger`；检查完成后立即删除临时文件。
+  - secret scan 复用 `policy.check_text`，public scan 复用 `tools/public_scan.py` 的 `SCAN_RULES`；命中时只输出规则 id 与行号，不回显完整匹配值。
+  - 返回 `CheckResult`，状态包括 `pass` / `validation_failed` / `blocked` / `error`；输出脱敏，不回显完整 `target` / `input` / `evidence` / `raw_ref` / `decision_ref`。
+- 更新 `agent_runtime/cli.py`：新增 `runtime event append` 子命令，支持 `--file`/`--stdin`、强制 `--dry-run`、`--tasks-file`、`--events-file`、`--envelope`、全局 `--json`。
+  - `--dry-run` 必须显式提供；未提供时返回 `error`。
+- 新增 `tests/test_runtime_event_append_dry_run.py`，覆盖：
+  - 直接调用 `append_event_dry_run` pass / missing task / schema invalid / illegal transition / secret blocked。
+  - CLI file dry-run pass 且不写 events file。
+  - CLI stdin dry-run pass。
+  - 未提供 `--dry-run` 报错。
+  - JSON 输出脱敏。
+  - 带 `--envelope` 的 runtime audit pass。
+- 新增 `docs/26-runtime-event-append-dry-run.md`：说明命令目标、CLI 用法、模拟追加机制、扫描规则、输出格式、退出码与安全边界。
+- 更新 `docs/10-cli-poc-usage.md`：新增 `runtime event append --dry-run` 用法示例。
+- 更新 `README.md` 与 `README.en.md`：文档索引加入 `docs/26-runtime-event-append-dry-run.md`，当前状态补充 event append dry-run 能力。
+- 新增 `tasks/handoff-2026-07-05-event-append-dry-run.md`：记录本阶段上下文、新增命令、验证结果与下一步建议。
+- 保持只读边界：不执行 adapter、不访问网络、不发送消息、不删除文件、不写 `tasks/events.jsonl` 或任何 ledger、不写 envelope、不读取 `.env`/credential。
+- 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest tests -q`：242 passed（新增 10 个测试）。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
+- 已抽查 `runtime event append --dry-run` 对合法 candidate event 返回 PASS 且不写 events file；对非法状态流转返回 VALIDATION_FAILED；对含 GitHub token 的 message 返回 BLOCKED 且不回显 token。

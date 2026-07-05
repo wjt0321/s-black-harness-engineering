@@ -23,6 +23,7 @@ from .runtime_gate import RuntimeGateResult, check_runtime_gate
 from .runtime_ledger import RuntimeLedgerResult, check_runtime_ledger
 from .runtime_draft import inspect_runtime_draft, validate_runtime_draft
 from .runtime_draft_export import DraftExportResult, export_draft
+from .runtime_event_append import EventAppendDryRunResult, append_event_dry_run
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .task_validation import validate_records
@@ -564,6 +565,70 @@ def _cmd_runtime_draft_export(args: argparse.Namespace) -> int:
         commit=commit,
     )
     return _emit_runtime_draft_export_result(result, json_output=args.json)
+
+
+def _render_runtime_event_append_summary(result: CheckResult) -> str:
+    """Render runtime event append dry-run output.
+
+    EventAppendDryRunResult carries only safe identifiers/counts; fallback keeps
+    ordinary CheckResult rendering for errors raised before a candidate is known.
+    """
+    if not isinstance(result, EventAppendDryRunResult):
+        return result.render_human()
+
+    lines = [result.status.upper()]
+    if result.source is not None:
+        lines.append(f"Source: {result.source}")
+    if result.event_id is not None:
+        lines.append(f"event_id={result.event_id}")
+    if result.task_id is not None:
+        lines.append(f"task_id={result.task_id}")
+    if result.event_type is not None:
+        lines.append(f"event_type={result.event_type}")
+    if result.from_status is not None:
+        lines.append(f"from_status={result.from_status}")
+    if result.to_status is not None:
+        lines.append(f"to_status={result.to_status}")
+    lines.append(f"would_append={result.would_append}")
+    if result.ledger_check is not None:
+        lines.append(f"ledger_check={result.ledger_check}")
+    if result.runtime_audit is not None:
+        lines.append(f"runtime_audit={result.runtime_audit}")
+    if result.metadata_keys:
+        lines.append("metadata_keys=" + ",".join(result.metadata_keys))
+    if result.artifact_count is not None:
+        lines.append(f"artifact_count={result.artifact_count}")
+    for finding in result.findings:
+        loc = ""
+        if finding.line is not None:
+            loc = f" at line {finding.line}"
+        lines.append(f"- {finding.rule_id}{loc}: {finding.message}")
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+    return "\n".join(lines)
+
+
+def _emit_runtime_event_append_result(result: CheckResult, json_output: bool, no_color: bool = False) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_runtime_event_append_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_runtime_event_append(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    dry_run = getattr(args, "dry_run", False)
+    result = append_event_dry_run(
+        root,
+        file=args.file,
+        stdin=args.stdin,
+        dry_run=dry_run,
+        tasks_file=args.tasks_file,
+        events_file=args.events_file,
+        envelope_file=args.envelope,
+    )
+    return _emit_runtime_event_append_result(result, json_output=args.json, no_color=args.no_color)
 
 
 def _render_runtime_gate_summary(result: RuntimeGateResult) -> str:
@@ -1162,6 +1227,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(runtime_draft_export_parser)
     runtime_draft_export_parser.set_defaults(func=_cmd_runtime_draft_export)
+
+    # runtime event append
+    runtime_event_parser = runtime_subparsers.add_parser(
+        "event", help="Task event ledger operations"
+    )
+    event_subparsers = runtime_event_parser.add_subparsers(dest="event_command", required=True)
+
+    runtime_event_append_parser = event_subparsers.add_parser(
+        "append", help="Dry-run append a candidate event to the event ledger"
+    )
+    append_source_group = runtime_event_append_parser.add_mutually_exclusive_group(required=True)
+    append_source_group.add_argument("--file", default=None, help="Path to candidate event JSON file")
+    append_source_group.add_argument("--stdin", action="store_true", help="Read candidate event JSON from stdin")
+    runtime_event_append_parser.add_argument("--dry-run", action="store_true", help="Run in read-only dry-run mode (required)")
+    runtime_event_append_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
+    runtime_event_append_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
+    runtime_event_append_parser.add_argument("--envelope", default=None, help="Path to adapter execution envelope JSON file for runtime audit")
+    _add_global_args(runtime_event_append_parser)
+    runtime_event_append_parser.set_defaults(func=_cmd_runtime_event_append)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

@@ -26,8 +26,8 @@ It is not intended to replace QwenPaw immediately. The first phase focuses on do
 
 - Stage: read-only CLI POC plus Adapter execution envelope checks are runnable
 - Created: 2026-07-02
-- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, ledger validation, adapter envelope plan / validate / inspect / approval check / response check / gate check, task + adapter envelope runtime plan (including `--draft-json` envelope draft output), runtime draft validate / inspect / export `--dry-run` / `--commit`, runtime gate check, runtime ledger audit, and runtime report
-- Current boundary: adapter flows, runtime plan, runtime draft validate / inspect / gate / runtime ledger audit / runtime report remain read-only and do not execute real external actions; `runtime draft export --commit` only writes new files under `drafts/runtime/.../*.json`, does not overwrite, rolls back on failure, and does not write task/event ledgers
+- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, ledger validation, adapter envelope plan / validate / inspect / approval check / response check / gate check, task + adapter envelope runtime plan (including `--draft-json` envelope draft output), runtime draft validate / inspect / export `--dry-run` / `--commit`, runtime event append `--dry-run`, runtime gate check, runtime ledger audit, and runtime report
+- Current boundary: adapter flows, runtime plan, runtime draft validate / inspect / gate / runtime ledger audit / runtime report / runtime event append remain read-only and do not execute real external actions; `runtime draft export --commit` only writes new files under `drafts/runtime/.../*.json`, does not overwrite, rolls back on failure, and does not write task/event ledgers
 
 ## Continuous Integration
 
@@ -108,6 +108,7 @@ The first phase does not:
 - `docs/21-controlled-write-boundaries.md`
 - `docs/22-runtime-draft-export-dry-run.md`
 - `docs/24-runtime-draft-export-commit.md`
+- `docs/26-runtime-event-append-dry-run.md`
 
 ## Development Principle
 

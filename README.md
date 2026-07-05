@@ -26,8 +26,8 @@
 
 - 阶段：只读 CLI POC + Adapter execution envelope 检查链路已可运行
 - 创建日期：2026-07-02
-- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询、ledger 校验，以及 adapter envelope 的 plan / validate / inspect / approval check / response check / gate check，和 task + adapter envelope 的 runtime plan（含 `--draft-json` envelope 草案输出） / runtime draft validate / runtime draft inspect / runtime draft export `--dry-run` `--commit` / runtime gate check / runtime check-ledger / runtime report
-- 当前边界：adapter 链路与 runtime plan / runtime draft validate / inspect / gate / runtime ledger audit / runtime report 仍只读，不执行真实外部动作；`runtime draft export --commit` 仅写入新文件到 `drafts/runtime/.../*.json`，不支持 overwrite，写入失败自动回滚，不写 task/event ledger
+- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询、ledger 校验，以及 adapter envelope 的 plan / validate / inspect / approval check / response check / gate check，和 task + adapter envelope 的 runtime plan（含 `--draft-json` envelope 草案输出） / runtime draft validate / runtime draft inspect / runtime draft export `--dry-run` `--commit` / runtime event append `--dry-run` / runtime gate check / runtime check-ledger / runtime report
+- 当前边界：adapter 链路与 runtime plan / runtime draft validate / inspect / gate / runtime ledger audit / runtime report / runtime event append 仍只读，不执行真实外部动作；`runtime draft export --commit` 仅写入新文件到 `drafts/runtime/.../*.json`，不支持 overwrite，写入失败自动回滚，不写 task/event ledger
 
 ## 持续集成
 
@@ -108,6 +108,7 @@ python -m agent_runtime.cli policies list
 - `docs/21-controlled-write-boundaries.md`
 - `docs/22-runtime-draft-export-dry-run.md`
 - `docs/24-runtime-draft-export-commit.md`
+- `docs/26-runtime-event-append-dry-run.md`
 
 ## 推进原则
 
