@@ -47,8 +47,17 @@ python -m agent_runtime.cli runtime event append --file candidate-event.json --d
 
 Human-readable：
 
-```
+```text
 PASS
+Source: candidate.json
+event_id=evt-20260705-003
+task_id=task-20260705-001
+event_type=progress
+from_status=running
+to_status=running
+would_append=False
+ledger_check=pass
+artifact_count=0
 Next: Dry-run passed. Use runtime event append --commit (not yet implemented) to persist.
 ```
 
@@ -57,9 +66,20 @@ JSON：
 ```json
 {
   "status": "pass",
-  "next_action": "Dry-run passed. Use runtime event append --commit (not yet implemented) to persist."
+  "next_action": "Dry-run passed. Use runtime event append --commit (not yet implemented) to persist.",
+  "source": "candidate.json",
+  "event_id": "evt-20260705-003",
+  "task_id": "task-20260705-001",
+  "event_type": "progress",
+  "from_status": "running",
+  "to_status": "running",
+  "would_append": false,
+  "ledger_check": "pass",
+  "artifact_count": 0
 }
 ```
+
+输出只包含安全摘要，不回显完整 message、metadata values、artifact payload、evidence description 或 secret match。
 
 ## 退出码
 

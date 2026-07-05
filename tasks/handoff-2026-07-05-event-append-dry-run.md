@@ -4,7 +4,7 @@
 
 本会话完成 `s-black harness engineering` 最小 Controlled Write POC 的第三步：
 `runtime event append --dry-run`。该命令在把单个候选 event 真正追加到
-`tasks/events.jsonl` 之前跑通所有入门禁，但保持只读、不落盘。
+`tasks/events.jsonl` 之前跑通所有入门禁，但保持只读、不落盘。当前阶段已冻结为 `v0.7.0-runtime-event-append-dry-run`。
 
 ## 新增命令
 
@@ -41,7 +41,7 @@ python -m agent_runtime.cli runtime event append \
 
 ## 验证结果
 
-- `python -m pytest tests -q`：通过（具体数量见 `tasks/progress.md`）。
+- `python -m pytest`：243 passed。
 - `python -m agent_runtime.cli doctor`：PASS。
 - `python tools/public_scan.py`：OK public scan。
 
@@ -62,4 +62,4 @@ python -m agent_runtime.cli runtime event append \
    - 写入后重新跑 ledger consistency。
    - 失败时回滚（删除本命令写入的最后一行）。
 2. 或进入其他 Runtime 增强：task 创建 dry-run、批量 event import dry-run、ledger compaction dry-run 等。
-3. 完善 `runtime event append` 的 JSON 输出摘要，增加 `artifact_count`、`metadata_keys` 等结构化字段。
+3. 当前 JSON 输出摘要已包含 `artifact_count`、`metadata_keys` 等结构化字段；下一步不要直接进入 adapter execution。

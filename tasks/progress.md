@@ -428,3 +428,10 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 - 已抽查 `runtime event append --dry-run` 对合法 candidate event返回 PASS 且不写 events file；对非法状态流转返回 VALIDATION_FAILED；对含 GitHub token 的 message 返回 BLOCKED 且不回显 token。
+
+- Runtime Event Append Dry-run 阶段正式收口。
+  - 新增 `docs/27-release-notes-runtime-event-append-dry-run.md`：记录 v0.7 阶段定位、检查内容、安全摘要、验证结果与后续建议。
+  - 更新 `docs/26-runtime-event-append-dry-run.md`：同步当前安全摘要输出示例。
+  - 更新 `tasks/handoff-2026-07-05-event-append-dry-run.md`：记录 v0.7 tag、验证结果和下一步建议。
+  - 更新 `README.md` 与 `README.en.md` 文档索引。
+  - 阶段冻结 tag：`v0.7.0-runtime-event-append-dry-run`。

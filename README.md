@@ -111,6 +111,7 @@ python -m agent_runtime.cli policies list
 - `docs/24-runtime-draft-export-commit.md`
 - `docs/25-release-notes-runtime-draft-export-commit.md`
 - `docs/26-runtime-event-append-dry-run.md`
+- `docs/27-release-notes-runtime-event-append-dry-run.md`
 
 ## 推进原则
 
