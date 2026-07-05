@@ -308,3 +308,17 @@
   - 已跑 `python -m pytest`：207 passed。
   - 已跑 `python -m agent_runtime.cli doctor`：PASS。
   - 已跑 `python tools/public_scan.py`：OK public scan。
+
+- Runtime Report 只读聚合报告阶段收口。
+  - 新增 `agent_runtime/runtime_report.py`：实现 `check_runtime_report()` 与 `RuntimeReportResult`，聚合 task snapshot、event summary、runtime draft/envelope inspect、runtime gate、runtime ledger audit、blockers 与 next_action。
+  - 更新 `agent_runtime/cli.py`：新增 `runtime report` 子命令，支持 `--task-id`、`--request-id`、`--envelope`、`--tasks-file`、`--events-file` 与全局 `--json`。
+  - 新增 `tests/test_runtime_report.py`：覆盖文本摘要、JSON 脱敏、terminal task blocked、只读不改文件。
+  - 新增 `docs/19-runtime-report.md` 与 `docs/20-release-notes-runtime-report.md`：描述 runtime report 设计与 v0.4 阶段 release 收口。
+  - 新增 `tasks/handoff-2026-07-05.md`：记录 v0.4 Runtime Report 阶段接续上下文、验证结果、安全边界与下一阶段建议。
+  - 更新 `docs/10-cli-poc-usage.md`、`README.md`、`README.en.md`：补充 `runtime report` 用法与当前能力说明。
+  - 保持只读边界：不执行 adapter、不访问网络、不发送消息、不删除文件、不写真实 ledger/envelope、不读取 `.env`/credential；输出不回显完整 target/input/evidence/raw_ref/decision_ref。
+  - 已跑 `python -m pytest`：211 passed。
+  - 已跑 `python -m agent_runtime.cli doctor`：PASS。
+  - 已跑 `python tools/public_scan.py`：OK public scan。
+  - 已推送 main：`7aa092f Add read-only runtime report`。
+  - 阶段冻结 tag：`v0.4.0-runtime-report`。

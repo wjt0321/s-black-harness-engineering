@@ -104,6 +104,7 @@ The first phase does not:
 - `docs/17-runtime-planning-bridge.md`
 - `docs/18-release-notes-runtime-planning-bridge.md`
 - `docs/19-runtime-report.md`
+- `docs/20-release-notes-runtime-report.md`
 
 ## Development Principle
 
