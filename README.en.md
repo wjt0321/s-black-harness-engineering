@@ -112,6 +112,7 @@ The first phase does not:
 - `docs/25-release-notes-runtime-draft-export-commit.md`
 - `docs/26-runtime-event-append-dry-run.md`
 - `docs/27-release-notes-runtime-event-append-dry-run.md`
+- `docs/28-runtime-event-append-commit.md`
 
 ## Development Principle
 

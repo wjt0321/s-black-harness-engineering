@@ -435,3 +435,8 @@
   - 更新 `tasks/handoff-2026-07-05-event-append-dry-run.md`：记录 v0.7 tag、验证结果和下一步建议。
   - 更新 `README.md` 与 `README.en.md` 文档索引。
   - 阶段冻结 tag：`v0.7.0-runtime-event-append-dry-run`。
+
+- 留下下一阶段预备文档：`runtime event append --commit`。
+  - 新增 `docs/28-runtime-event-append-commit.md`：仅作为下次实现前的边界与方案上下文，不实现代码、不修改 Runtime 行为。
+  - 文档明确 append-only、写前 dry-run 全检查、event_id 去重、写后 validate/check-ledger/runtime audit、失败回滚、输出脱敏和 v0.8 建议 tag。
+  - 更新 `README.md` 与 `README.en.md` 文档索引，便于下次从文档入口恢复。
