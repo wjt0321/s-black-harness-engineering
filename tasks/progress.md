@@ -408,3 +408,23 @@
   - 新增 `tasks/handoff-2026-07-05-draft-export-commit.md`：记录 v0.6 接续上下文、当前链路、恢复命令、安全边界和下一阶段建议。
   - 更新 `README.md` 与 `README.en.md` 文档索引。
   - 阶段冻结 tag：`v0.6.0-runtime-draft-export-commit`。
+
+## 2026-07-05（续）
+
+- 进入下一阶段：最小 Controlled Write POC 第三步 —— `runtime event append --dry-run`。
+- 新增 `agent_runtime/runtime_event_append.py`：实现 `append_event_dry_run()`，读取候选 event（`--file` 安全 `.json` 或 `--stdin`），做 schema 校验、task_id 存在性检查、模拟追加后的 ledger consistency、可选 runtime ledger audit、secret/public scan。
+  - 使用临时 JSONL 文件模拟 append，检查后删除临时文件，不触碰真实 `tasks/events.jsonl`。
+  - 输出只包含安全摘要：event_id、task_id、event_type、from/to status、would_append=false、ledger_check、runtime_audit、metadata_keys、artifact_count 等，不回显完整 message/metadata/artifacts/evidence。
+  - secret/public scan 命中时返回 BLOCKED 且不回显完整匹配值。
+- 更新 `agent_runtime/cli.py`：新增 `runtime event append` 子命令，支持 `--file`/`--stdin`、`--dry-run`、`--tasks-file`、`--events-file`、`--envelope` 与全局 `--json`。
+  - 未提供 `--dry-run` 时返回 `error`。
+- 新增 `tests/test_runtime_event_append_dry_run.py`，覆盖：pass、stdin、schema invalid、missing task、illegal transition、secret/public scan blocked、with envelope audit、JSON 脱敏、安全摘要输出、未提供 `--dry-run` 报错。
+- 新增 `docs/26-runtime-event-append-dry-run.md`：说明命令目标、CLI 用法、校验链路、输出格式、安全边界与后续建议。
+- 新增 `tasks/handoff-2026-07-05-event-append-dry-run.md`：记录当前上下文、恢复命令、验证结果和下一步建议。
+- 更新 `docs/10-cli-poc-usage.md`、`README.md`、`README.en.md`、`tasks/progress.md`。
+- 保持只读边界：不执行 adapter、不访问网络、不发送消息、不删除真实文件、不写 task/event ledger、不读取 `.env`/credential。
+- 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest`：243 passed。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
+- 已抽查 `runtime event append --dry-run` 对合法 candidate event返回 PASS 且不写 events file；对非法状态流转返回 VALIDATION_FAILED；对含 GitHub token 的 message 返回 BLOCKED 且不回显 token。

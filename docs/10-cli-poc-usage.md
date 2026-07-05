@@ -1066,6 +1066,45 @@ python -m agent_runtime.cli runtime plan \
 
 详细设计见 `docs/24-runtime-draft-export-commit.md`。
 
+## Runtime Event Append Dry-run
+
+`runtime event append --dry-run` 在把单个候选 event 真正追加到 `tasks/events.jsonl` 之前，跑通所有入门禁：schema 校验、task 存在性检查、模拟追加后的 ledger consistency、可选的 runtime ledger audit、secret/public scan。
+
+从文件模拟追加：
+
+```bash
+python -m agent_runtime.cli runtime event append \
+  --file candidate-event.json \
+  --dry-run
+```
+
+从 stdin 模拟追加：
+
+```bash
+echo '{"event_id":"evt-20260705-001",...}' | \
+  python -m agent_runtime.cli runtime event append --stdin --dry-run
+```
+
+指定 ledger 文件与 envelope 做 audit：
+
+```bash
+python -m agent_runtime.cli runtime event append \
+  --file candidate-event.json \
+  --dry-run \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl \
+  --envelope adapters/execution-envelope.examples.json \
+  --json
+```
+
+约束：
+
+- `--dry-run` 必须显式提供，当前只实现 dry-run。
+- 不写 `tasks/events.jsonl`、不写 task ledger、不写 envelope。
+- 不回显完整 `target` / `input` / `evidence` / `raw_ref` / `decision_ref` / secret match。
+
+详细设计见 `docs/26-runtime-event-append-dry-run.md`。
+
 ## `runtime report`
 
 `runtime report` 把 task snapshot、task event stream 摘要、adapter execution envelope 摘要、runtime gate 状态、runtime ledger audit 状态汇总到一份只读报告中，并给出 blockers 与 next_action 建议。
