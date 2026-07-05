@@ -22,6 +22,7 @@ from .ledger_consistency import check_ledger_consistency
 from .runtime_gate import RuntimeGateResult, check_runtime_gate
 from .runtime_ledger import RuntimeLedgerResult, check_runtime_ledger
 from .runtime_draft import inspect_runtime_draft, validate_runtime_draft
+from .runtime_draft_export import DraftExportResult, dry_run_export
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .task_validation import validate_records
@@ -479,6 +480,68 @@ def _cmd_runtime_draft_inspect(args: argparse.Namespace) -> int:
     else:
         print(_render_runtime_draft_summary(summary))
     return EXIT_PASS
+
+
+def _render_runtime_draft_export_summary(result: DraftExportResult) -> str:
+    """Render a compact human-readable dry-run export summary."""
+    lines = [result.status.upper()]
+    if result.source is not None:
+        lines.append(f"Source: {result.source}")
+    if result.output is not None:
+        lines.append(f"Output: {result.output}")
+    lines.append(f"Would write: {result.would_write}")
+    if result.validation is not None:
+        lines.append(f"Validation: {result.validation}")
+    if result.artifact_counts:
+        counts = ", ".join(
+            f"{kind}={count}" for kind, count in result.artifact_counts.items()
+        )
+        lines.append(f"Artifact counts: {counts}")
+    for finding in result.findings:
+        loc = ""
+        if finding.line is not None:
+            loc = f" at line {finding.line}"
+        lines.append(f"- {finding.rule_id}{loc}: {finding.message}")
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+    return "\n".join(lines)
+
+
+def _emit_runtime_draft_export_result(
+    result: DraftExportResult, json_output: bool
+) -> int:
+    """Print a draft export dry-run result and return the appropriate exit code."""
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_runtime_draft_export_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_runtime_draft_export(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    if not getattr(args, "dry_run", False):
+        result = DraftExportResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="commit-not-implemented",
+                    severity="error",
+                    action="error",
+                    message="Only --dry-run is supported; --commit is not implemented.",
+                )
+            ],
+            next_action="Add --dry-run to run the export in read-only mode.",
+        )
+        return _emit_runtime_draft_export_result(result, json_output=args.json)
+
+    result = dry_run_export(
+        root,
+        output=args.output,
+        file=args.file,
+        stdin=args.stdin,
+    )
+    return _emit_runtime_draft_export_result(result, json_output=args.json)
 
 
 def _render_runtime_gate_summary(result: RuntimeGateResult) -> str:
@@ -1059,6 +1122,20 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_group.add_argument("--stdin", action="store_true", help="Read runtime draft JSON from stdin")
     _add_global_args(runtime_draft_inspect_parser)
     runtime_draft_inspect_parser.set_defaults(func=_cmd_runtime_draft_inspect)
+
+    runtime_draft_export_parser = runtime_draft_subparsers.add_parser(
+        "export", help="Dry-run export a runtime plan envelope draft to a project-local .json file"
+    )
+    export_source_group = runtime_draft_export_parser.add_mutually_exclusive_group(required=True)
+    export_source_group.add_argument("--file", default=None, help="Path to runtime draft JSON file")
+    export_source_group.add_argument("--stdin", action="store_true", help="Read runtime draft JSON from stdin")
+    runtime_draft_export_parser.add_argument("--output", required=True, help="Project-local .json output path")
+    runtime_draft_export_parser.add_argument(
+        "--dry-run", action="store_true", required=True,
+        help="Run in read-only dry-run mode (required)"
+    )
+    _add_global_args(runtime_draft_export_parser)
+    runtime_draft_export_parser.set_defaults(func=_cmd_runtime_draft_export)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

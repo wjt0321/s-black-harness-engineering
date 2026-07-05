@@ -329,3 +329,34 @@
   - 定义 `draft export` 与 `event append` 两类最低风险写入的允许路径、写前校验、写后校验、dry-run/commit 语义、overwrite 限制、append-only 规则与回滚恢复策略。
   - 明确审批语义必须收窄为 this command + this task_id + this request_id + this target path + this input hash，禁止泛化为长期授权。
   - 更新 `README.md` 与 `README.en.md` 文档索引。
+
+## 2026-07-05
+
+- 进入下一阶段：最小 Controlled Write POC 第一步 —— `runtime draft export --dry-run`。
+- 新增 `agent_runtime/runtime_draft_export.py`：实现 `dry_run_export()` 与 `DraftExportResult`。
+  - 复用 `runtime_draft._load_runtime_draft` / `_validate_envelope` / `_build_draft_summary` 加载并校验 direct envelope 与 `runtime plan --draft-json` wrapper。
+  - 实现输出路径守卫：必须在项目根目录内、后缀 `.json`、不能路径逃逸、不能指向 credential/git internals、默认禁止覆盖已存在文件。
+  - 复用 `agent_runtime.policy.check_text` 做 secret pattern 扫描，复用 `tools/public_scan.py` 的 `SCAN_RULES` 做 public-release 风险扫描；命中时只输出规则 id 与行号，不回显完整匹配值。
+  - dry-run 通过时返回 `would_write=false`、校验状态、artifact counts 与 next_action；不写入任何文件。
+- 更新 `agent_runtime/cli.py`：新增 `runtime draft export` 子命令，支持 `--file`/`--stdin`、`--output`、强制 `--dry-run`、全局 `--json`。
+  - 未提供 `--dry-run` 时返回 `error`，提示仅支持 dry-run。
+  - 人类/JSON 输出不回显完整 `target` / `input` / `raw_ref` / `decision_ref` / evidence description。
+- 新增 `tests/test_runtime_draft_export.py`，覆盖：
+  - stdin direct envelope dry-run pass 且不写文件。
+  - file wrapper dry-run pass。
+  - schema invalid / consistency invalid 返回 `validation_failed`。
+  - 路径逃逸（`..`）被 block。
+  - 错误后缀（`.txt`）被 block。
+  - 已存在输出文件被 block 且原文件不被修改。
+  - secret pattern（GitHub token）被 block 且不回显完整 token。
+  - public scan（Windows 绝对路径）被 block 且不回显完整路径。
+  - JSON 输出不含完整 target / input / raw_ref / decision_ref / evidence description。
+- 新增 `docs/22-runtime-draft-export-dry-run.md`：说明命令目标、CLI 用法、路径守卫、扫描规则、输出格式、错误状态与安全边界。
+- 更新 `docs/10-cli-poc-usage.md`：新增 `runtime draft export --dry-run` 用法示例。
+- 更新 `README.md` 与 `README.en.md`：文档索引加入 `docs/22-runtime-draft-export-dry-run.md`，当前状态补充 dry-run 导出能力。
+- 保持只读边界：不执行 adapter、不访问网络、不发送消息、不删除文件、不写真实 ledger/envelope、不读取 `.env`/credential。
+- 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest tests -q`：221 passed（新增 10 个测试）。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
+- 已抽查 `runtime draft export --dry-run` 对 running task + shell-local read_file 输出 PASS 且不创建目标文件；对含 GitHub token 的 draft 返回 BLOCKED 且不回显 token。
