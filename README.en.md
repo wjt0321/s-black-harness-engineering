@@ -116,6 +116,7 @@ The first phase does not:
 - `docs/29-release-notes-runtime-event-append-commit.md`
 - `docs/30-runtime-event-append-smoke.md`
 - `docs/31-runtime-task-create-dry-run.md`
+- `docs/32-release-notes-runtime-task-create-dry-run.md`
 
 ## Development Principle
 
