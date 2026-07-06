@@ -10,7 +10,7 @@
 
 **s-black harness engineering**（仓库内也称 `agent_runtime`）是一个轻量的 Agent Runtime / Harness Orchestrator 长期工程。目标是逐步把 Agent 调度、规则门禁、任务账本、工具适配器和完成验证流程，从单一宿主框架中抽象成一套小型、可审计、可迁移的运行层。
 
-当前阶段：**只读 CLI POC + Adapter execution envelope + Runtime gate POC 已可运行**。当前实现仍只做文档、协议、schema、样例和只读检查链路，不接入真实执行链路，也不会替代 [QwenPaw](https://github.com/agentscope-ai/QwenPaw)。QwenPaw 被视为未来可接入的宿主/适配器之一。
+当前阶段：**只读 CLI POC + Adapter execution envelope + Runtime gate / plan / draft / report POC 已可运行**。当前实现仍只做文档、协议、schema、样例和检查链路，不接入真实执行链路，也不会替代 [QwenPaw](https://github.com/agentscope-ai/QwenPaw)。QwenPaw 被视为未来可接入的宿主/适配器之一。
 
 ### 当前已实现能力
 
@@ -23,10 +23,14 @@
 - `task status` / `task events`：只读查询任务快照与事件流。
 - `task validate`：对 task/event JSONL 逐行做 schema 校验。
 - `task check-ledger`：检查 task 与 event ledger 之间的跨记录一致性。
+- `runtime plan`：为指定 task 生成 adapter action 的只读草案摘要；`--draft-json` 输出完整但脱敏的 envelope 机器草案，已按 `adapters/execution-envelope.schema.json` 校验，不落盘。
+- `runtime draft validate` / `runtime draft inspect`：只读校验和摘要展示 runtime plan envelope draft，支持项目内 JSON 文件或 stdin。
+- `runtime draft export --dry-run` / `--commit`：dry-run 模拟导出 envelope 草案；`--commit` 将校验通过的草案写入 `drafts/runtime/.../*.json`（只允许新文件、禁止覆盖、写入失败自动回滚）。
+- `runtime event append --dry-run` / `--commit`：dry-run 模拟追加单条 event；`--commit` 在 event ledger JSONL 末尾追加一行，追加后做 schema / ledger / runtime audit 校验，失败则按原始 byte size 回滚。
+- `runtime task create --dry-run`：只读模拟创建新 task snapshot 并校验 ledger 一致性；`--commit` 尚未实现。
 - `runtime gate check`：只读聚合 task ledger 与 adapter gate，输出是否可继续推进及建议 event draft（不落盘）。
 - `runtime check-ledger`：只读审计 task/event ledger 与 adapter envelope 的跨系统一致性。
-- `runtime draft validate` / `runtime draft inspect`：只读校验和摘要展示 runtime plan envelope draft，支持项目内 JSON 文件或 stdin。
-- `runtime plan`：为指定 task 生成 adapter action 的只读草案摘要（含可选 approval/event 草案）；`--draft-json` 输出完整但脱敏的 envelope 机器草案，已按 `adapters/execution-envelope.schema.json` 校验，不落盘。
+- `runtime report`：只读聚合 task 快照、事件流摘要、envelope 摘要、runtime gate 与 runtime ledger audit，输出统一报告。
 - `agents list` / `adapters list` / `policies list`：只读列表查询，支持过滤、policy profile 选择和 JSON 输出。
 
 ### 明确不做的（第一阶段）
@@ -34,7 +38,8 @@
 - 不替代 QwenPaw，不做 UI 或桌面壳。
 - 不启动长期后台服务，不接管定时任务。
 - 不做模型代理或计费系统。
-- 不在设计稳定前静默执行真实外部操作（不发消息、不删文件、不 push、不访问网络）。
+- 不静默执行真实外部操作（不发消息、不删文件、不 push、不访问网络）。
+- 受控写操作仅限本项目的 envelope draft 导出与 event ledger 追加，且需要显式 `--commit` 与严格校验/回滚；task create 目前只实现 `--dry-run`。
 
 ---
 
@@ -72,8 +77,14 @@
 - `agent_runtime/adapter_plan.py`：生成 adapter execution envelope 草案。
 - `agent_runtime/adapter_validation.py`：校验 adapter execution envelope JSON 文件。
 - `agent_runtime/adapter_approval.py` / `adapter_response.py` / `adapter_gate.py`：只读检查 adapter approval、response 与 gate 状态。
-- `agent_runtime/runtime_gate.py`：只读聚合 task ledger 与 adapter envelope gate，并生成建议 event draft。
-- `agent_runtime/runtime_plan.py`：为指定 task 生成 adapter action 的只读草案摘要（含可选 approval/event 草案）；`--draft-json` 时返回完整 envelope 草案。
+- `agent_runtime/runtime_plan.py`：为指定 task 生成 adapter action 的只读草案摘要（含可选 approval/event 草案与完整 envelope draft）。
+- `agent_runtime/runtime_draft.py`：只读校验与摘要 runtime plan envelope draft。
+- `agent_runtime/runtime_draft_export.py`：envelope draft 的 dry-run 导出与受控 `--commit` 写入。
+- `agent_runtime/runtime_event_append.py`：单条 event 的 dry-run 模拟与受控 `--commit` 追加。
+- `agent_runtime/runtime_task_create.py`：新 task 的 `--dry-run` 模拟（`--commit` 未实现）。
+- `agent_runtime/runtime_gate.py`：只读聚合 task ledger 与 adapter envelope gate。
+- `agent_runtime/runtime_ledger.py`：只读审计 task/event ledger 与 adapter envelope 的跨系统一致性。
+- `agent_runtime/runtime_report.py`：只读聚合 task、event、envelope、gate、ledger audit 的统一报告。
 - `tools/public_scan.py`：仓库公开发布风险文本扫描，只读、不回显完整命中值。
 
 ### 关键 Schema 与样例
@@ -94,7 +105,7 @@
 ## 技术栈
 
 - **语言**：Python 3.11+（已在 Python 3.11 与 3.12 环境验证）。
-- **标准库**：`argparse`、`json`、`pathlib`、`re`、`sys`、`dataclasses`、`uuid`、`datetime` 等。
+- **标准库**：`argparse`、`json`、`pathlib`、`re`、`sys`、`dataclasses`、`uuid`、`datetime`、`tempfile` 等。
 - **第三方依赖**：
   - `jsonschema>=4.0`：`doctor`、task/event schema 校验、adapter envelope 校验中使用。
   - `pytest>=8.0`：测试框架（开发依赖）。
@@ -135,8 +146,18 @@ python -m agent_runtime.cli check action --adapter github-cli --operation git_pu
 python -m agent_runtime.cli adapter plan --adapter github-cli --operation git_push --target origin/main
 python -m agent_runtime.cli adapter validate --file adapters/execution-envelope.examples.json
 python -m agent_runtime.cli adapter gate check --file adapters/execution-envelope.examples.json --request-id req-20260703-002
+python -m agent_runtime.cli runtime plan --task-id task-20260703-001 --adapter github-cli --operation git_push --target origin/main
+python -m agent_runtime.cli runtime plan --task-id task-20260703-001 --adapter github-cli --operation git_push --target origin/main --draft-json
+python -m agent_runtime.cli runtime draft validate --file <envelope.json>
+python -m agent_runtime.cli runtime draft inspect --file <envelope.json>
+python -m agent_runtime.cli runtime draft export --output drafts/runtime/task-001/req-001.envelope.json --file <envelope.json> --dry-run
+python -m agent_runtime.cli runtime draft export --output drafts/runtime/task-001/req-001.envelope.json --file <envelope.json> --commit
+python -m agent_runtime.cli runtime event append --file <event.json> --dry-run
+python -m agent_runtime.cli runtime event append --file <event.json> --commit
+python -m agent_runtime.cli runtime task create --file <task.json> --dry-run
 python -m agent_runtime.cli runtime gate check --task-id task-20260703-001 --request-id req-20260703-002 --envelope adapters/execution-envelope.examples.json
 python -m agent_runtime.cli runtime check-ledger --tasks-file tasks/tasks.jsonl --events-file tasks/events.jsonl --envelope adapters/execution-envelope.examples.json
+python -m agent_runtime.cli runtime report --task-id task-20260703-001 --request-id req-20260703-002 --envelope adapters/execution-envelope.examples.json
 python -m agent_runtime.cli task status task-20260703-001
 python -m agent_runtime.cli task events task-20260703-001
 python -m agent_runtime.cli task validate --record-file tasks/tasks.jsonl --schema task
@@ -165,9 +186,9 @@ Policy profile 解析优先级：`--policy` > `--policy-profile` > `--agent` / `
 
 | 码 | 含义 |
 |:---:|:---|
-| `0` | 通过或查询成功 |
+| `0` | 通过或查询成功（含 `warn`） |
 | `1` | CLI 使用错误或内部错误 |
-| `2` | policy 阻断 |
+| `2` | policy 阻断 / 路径阻断 |
 | `3` | 需要用户授权 |
 | `4` | 需要更多输入 |
 | `5` | 校验失败 |
@@ -182,7 +203,7 @@ Policy profile 解析优先级：`--policy` > `--policy-profile` > `--agent` / `
 python -m pytest tests -q
 ```
 
-当前测试数量以 `python -m pytest` 输出为准，覆盖：
+当前测试覆盖：
 
 - `tests/test_cli.py`：CLI 入口与主要命令行为。
 - `tests/test_doctor.py`：`doctor` 校验通过/失败场景。
@@ -193,11 +214,16 @@ python -m pytest tests -q
 - `tests/test_task_validation.py`：task/event JSONL schema 校验。
 - `tests/test_ledger_consistency.py`：task 与 event ledger 跨记录一致性。
 - `tests/test_adapter_plan.py`：adapter execution envelope 草案生成。
-- `tests/test_adapter_validate.py`：adapter execution envelope schema 校验。
+- `tests/test_adapter_validate.py` / `test_adapter_inspect.py`：adapter execution envelope schema 校验与摘要。
 - `tests/test_adapter_approval.py` / `test_adapter_response.py` / `test_adapter_gate.py`：adapter envelope 检查链路。
 - `tests/test_runtime_gate.py`：runtime gate 只读聚合、输出脱敏与不写 ledger。
 - `tests/test_runtime_ledger.py`：runtime ledger audit 跨系统一致性、输出脱敏与不写 ledger。
 - `tests/test_runtime_plan.py`：runtime plan 摘要输出、`--draft-json` envelope 草案 schema 校验、终态/缺失 task 不输出 draft、脱敏与不写 ledger。
+- `tests/test_runtime_draft.py`：runtime draft validate / inspect。
+- `tests/test_runtime_draft_export.py` / `test_runtime_draft_export_commit.py`：dry-run 与 commit 导出、路径安全、禁止覆盖、自动回滚。
+- `tests/test_runtime_event_append_dry_run.py` / `test_runtime_event_append_commit.py` / `test_runtime_event_append_report_loop.py`：event dry-run / commit、样本 ledger 保护、回滚、与 report 联动。
+- `tests/test_runtime_task_create_dry_run.py`：task create dry-run 与 ledger 一致性。
+- `tests/test_runtime_report.py`：runtime report 聚合与脱敏。
 - `tests/test_public_scan.py`：仓库公开发布风险扫描。
 
 ### 写测试的约定
@@ -206,6 +232,7 @@ python -m pytest tests -q
 - 测试中的 token/key 应当在内存中动态拼接（如 `"ghp_" + "X" * 36`），避免在源码里写入看起来像真实密钥的字符串。
 - 断言检查状态码、输出中是否包含规则 id、以及敏感值是否**不**出现在输出中。
 - 项目根目录常量：`ROOT = Path(__file__).resolve().parents[1]`。
+- 受控写测试应使用临时目录或项目内 `drafts/` 等隔离路径，并在测试后清理；对 `runtime event append --commit` 的测试优先在临时 JSONL 或副本上执行。
 
 ---
 
@@ -238,12 +265,13 @@ CLI 采用分层设计：
    - `policy.py`：text / path / action 规则检查。
    - `adapter_plan.py` / `adapter_validation.py`：adapter execution envelope 草案与校验。
    - `tasks.py` / `task_validation.py` / `ledger_consistency.py`：task ledger 查询、写入前校验与一致性检查。
+   - `runtime_*.py`：runtime gate、ledger audit、plan、draft、draft export、event append、task create、report 等运行时检查与受控写模块。
 3. **支撑层**：
    - `loader.py`：统一的数据加载、安全读取、policy 发现、路径归一化。
    - `policy_profile.py`：agent -> policy profile 解析。
    - `result.py`：统一的 `Finding`、`CheckResult` 模型与退出码映射。
 
-各模块之间通过 `CheckResult` / `Finding` 传递结果，CLI 顶层统一调用 `emit()` 输出。所有当前实现均保持只读，不执行外部命令、不写 ledger、不访问网络。
+各模块之间通过 `CheckResult` / `Finding` 传递结果，CLI 顶层统一调用 `emit()` 输出。核心检查链路保持只读；写操作集中在 `runtime_draft_export.py`（写新 draft JSON）与 `runtime_event_append.py`（追加 event ledger 单行），均有显式 `--commit` 开关、前置校验与失败回滚。
 
 ---
 
@@ -280,16 +308,15 @@ CLI 采用分层设计：
 - CLI 顶层 `main()` 捕获 `FileNotFoundError` 和通用异常，统一转成 `CheckResult(status="error", ...)` 并返回非零退出码。
 - 校验失败用 `CheckResult(status="validation_failed", ...)` 表达，对应退出码 `5`。
 - 安全检查失败用 `Finding` 表达，而不是抛异常。
+- 受控写操作失败优先回滚已写入内容，再返回 `error` 或 `validation_failed`。
 
 ### 不变的安全边界
-
-第一版 CLI 必须保持只读：
 
 - 不执行外部命令。
 - 不访问网络。
 - 不发送消息。
-- 不删除文件。
-- 不写真实 task ledger。
+- 不删除文件（受控写模块仅回滚自己刚刚写入/追加的内容，不删除用户已有文件）。
+- 不写真实 task ledger（`runtime task create` 仅 `--dry-run`）。
 - 不读取 `.env`、`.env.local`、`.envrc`、`.secret`、`.key`、`.pem`、`.p12`、`.pfx` 等密钥文件。
 - `check text` 命中密钥后，只输出规则 id、位置、提示，不回显完整匹配值。
 
@@ -329,6 +356,12 @@ CLI 采用分层设计：
 - `adapter validate` 只校验 envelope JSON 结构，不回显 artifact 完整内容。
 - envelope 中的 `approval_record` 与 `execution_event` 仅在 preflight 为 `needs_approval` 时生成，状态初始为 `pending`。
 
+### 受控写边界（Controlled Write POC）
+
+- `runtime draft export --commit` 仅写入新文件到 `drafts/runtime/.../*.json`；输出路径必须在项目根目录内、必须位于 `drafts/runtime/` 下、必须是 `.json`、不能覆盖已存在文件；写入前对内容进行 secret scan 与 public scan；写入后重新校验与 inspect，失败则删除文件回滚。
+- `runtime event append --commit` 只追加单行到 event ledger JSONL；目标文件必须是安全 JSONL、必须已存在且以换行结尾、不能是样本 ledger（`tasks/examples.jsonl`、`tasks/events.examples.jsonl`）；追加后做 schema / ledger / runtime audit 校验，失败则按原始 byte size truncate 回滚。
+- `runtime task create` 仅实现 `--dry-run`，不实现 `--commit`。
+
 ---
 
 ## 设计文档索引
@@ -347,11 +380,32 @@ CLI 采用分层设计：
 10. `docs/10-cli-poc-usage.md`：CLI POC 使用说明。
 11. `docs/11-release-notes-v0.1.md`：v0.1 Release Notes。
 12. `docs/12-adapter-execution-envelope.md`：Adapter Execution Envelope 设计。
+13. `docs/13-release-notes-adapter-envelope.md`
+14. `docs/14-task-runtime-bridge.md`
+15. `docs/15-runtime-ledger-audit.md`
+16. `docs/16-runtime-plan.md`
+17. `docs/17-runtime-planning-bridge.md`
+18. `docs/18-release-notes-runtime-planning-bridge.md`
+19. `docs/19-runtime-report.md`
+20. `docs/20-release-notes-runtime-report.md`
+21. `docs/21-controlled-write-boundaries.md`
+22. `docs/22-runtime-draft-export-dry-run.md`
+23. `docs/23-release-notes-runtime-draft-export-dry-run.md`
+24. `docs/24-runtime-draft-export-commit.md`
+25. `docs/25-release-notes-runtime-draft-export-commit.md`
+26. `docs/26-runtime-event-append-dry-run.md`
+27. `docs/27-release-notes-runtime-event-append-dry-run.md`
+28. `docs/28-runtime-event-append-commit.md`
+29. `docs/29-release-notes-runtime-event-append-commit.md`
+30. `docs/30-runtime-event-append-smoke.md`
+31. `docs/31-runtime-task-create-dry-run.md`
+32. `docs/32-release-notes-runtime-task-create-dry-run.md`
+33. `docs/33-runtime-task-create-commit.md`
 
 进度与交接：
 
 - `tasks/progress.md`：每日推进记录。
-- `tasks/handoff-2026-07-02.md`、`tasks/handoff-2026-07-03.md`、`tasks/handoff-2026-07-04.md`：会话交接上下文。
+- `tasks/handoff-2026-07-02.md` 至 `tasks/handoff-2026-07-06-task-create-dry-run.md`：会话交接上下文。
 
 架构决策：
 
@@ -364,8 +418,9 @@ CLI 采用分层设计：
 1. **先跑 doctor**：做任何改动后，先执行 `python -m agent_runtime.cli doctor`，确认结构、schema 和公开扫描都通过。
 2. **再跑测试**：执行 `python -m pytest tests -q`，确保没有回归。
 3. **跑公开扫描**：执行 `python tools/public_scan.py`，确保没有发布风险。
-4. **不改只读边界**：除非任务明确要求并已有设计文档，否则不要让 CLI 执行外部命令、写 ledger、删文件或访问网络。
-5. **敏感信息不进源码**：不要在代码、测试、样例 JSON 中硬编码真实密钥；测试用动态拼接的假 token。
-6. **保持 schema 与实现同步**：修改 `policies/`、`agents/`、`adapters/`、`tasks/` 下的 schema 或样例后，检查对应 Python 代码是否需要调整。
-7. **文档优先中文**：新增 README、docs、notes、handoff 等文档时优先使用中文。
-8. **小步可审查**：每次变更保持聚焦，方便 Orchestrator 做安全与质量验收。
+4. **不改只读边界**：除非任务明确要求并已有设计文档，否则不要让 CLI 执行外部命令、访问网络、发送消息或删除文件。
+5. **受控写需显式 `--commit`**：`runtime draft export` 与 `runtime event append` 默认 dry-run；只有加 `--commit` 才会写文件，且写前会校验、写后会再次校验并回滚。
+6. **敏感信息不进源码**：不要在代码、测试、样例 JSON 中硬编码真实密钥；测试用动态拼接的假 token。
+7. **保持 schema 与实现同步**：修改 `policies/`、`agents/`、`adapters/`、`tasks/` 下的 schema 或样例后，检查对应 Python 代码是否需要调整。
+8. **文档优先中文**：新增 README、docs、notes、handoff 等文档时优先使用中文。
+9. **小步可审查**：每次变更保持聚焦，方便 Orchestrator 做安全与质量验收。
