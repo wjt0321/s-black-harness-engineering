@@ -1148,6 +1148,49 @@ python -m agent_runtime.cli runtime event append \
 
 详细设计见 `docs/28-runtime-event-append-commit.md`。
 
+## Runtime Event Append Smoke / Report Loop
+
+`runtime event append` 写入 event ledger 后，通常需要再跑一遍只读检查与聚合报告来确认状态。完整的 smoke loop 应在**临时项目副本**中进行：
+
+```text
+dry-run -> commit -> task validate/check-ledger -> runtime check-ledger/report
+```
+
+示例（假设已在临时目录 `$SMOKE` 中准备好 schema、policy、ledger、envelope、candidate）：
+
+```bash
+# 1. dry-run
+python -m agent_runtime.cli --root "$SMOKE" runtime event append \
+  --file candidate.json --dry-run \
+  --tasks-file tasks.jsonl --events-file events.jsonl --envelope envelope.json
+
+# 2. commit
+python -m agent_runtime.cli --root "$SMOKE" runtime event append \
+  --file candidate.json --commit \
+  --tasks-file tasks.jsonl --events-file events.jsonl --envelope envelope.json
+
+# 3. post-commit read-only checks
+python -m agent_runtime.cli --root "$SMOKE" task validate \
+  --record-file events.jsonl --schema event
+python -m agent_runtime.cli --root "$SMOKE" task check-ledger \
+  --tasks-file tasks.jsonl --events-file events.jsonl
+python -m agent_runtime.cli --root "$SMOKE" runtime check-ledger \
+  --tasks-file tasks.jsonl --events-file events.jsonl --envelope envelope.json
+
+# 4. runtime report
+python -m agent_runtime.cli --root "$SMOKE" runtime report \
+  --task-id task-20260706-001 --request-id req-20260706-001 \
+  --envelope envelope.json --tasks-file tasks.jsonl --events-file events.jsonl
+```
+
+约束：
+
+- 不要在仓库真实 `tasks/events.jsonl` 样例 ledger 上直接 `commit`。
+- 所有写入应限制在可丢弃的临时目录或显式隔离的 `--events-file` 路径。
+- loop 中各命令输出不回显完整 `message` / `target` / `input` / `evidence` / `raw_ref` / `decision_ref` / secret match。
+
+详细步骤与临时目录构造见 `docs/30-runtime-event-append-smoke.md`。
+
 ## `runtime report`
 
 `runtime report` 把 task snapshot、task event stream 摘要、adapter execution envelope 摘要、runtime gate 状态、runtime ledger audit 状态汇总到一份只读报告中，并给出 blockers 与 next_action 建议。
