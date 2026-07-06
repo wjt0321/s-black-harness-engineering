@@ -132,7 +132,7 @@ python tools/public_scan.py -> OK public scan
 
 下一阶段继续保持低风险，建议优先做：
 
-1. `runtime task create --commit` 预备设计文档，先定义 append-only、写后 validate/check-ledger、回滚策略，再决定是否实现。
+1. 从 `docs/33-runtime-task-create-commit.md` 出发实现或继续审查 `runtime task create --commit`。先保持唯一写入目标为 task ledger，禁止自动写 event ledger。
 2. `runtime event import --dry-run`，但需先定义批量排序、重复、部分失败与事务语义。
 3. `ledger compaction --dry-run`，只读分析压缩候选，不执行重写。
 
