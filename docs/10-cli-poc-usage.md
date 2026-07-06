@@ -1148,6 +1148,46 @@ python -m agent_runtime.cli runtime event append \
 
 详细设计见 `docs/28-runtime-event-append-commit.md`。
 
+## Runtime Task Create Dry-run
+
+`runtime task create --dry-run` 在把单个候选 task snapshot 真正写入 task ledger 之前，跑通所有入门禁：schema 校验、`task.id` 去重、secret/public scan、模拟追加后的 ledger consistency。本版本只实现 dry-run，`--commit` 未实现。
+
+从文件模拟创建：
+
+```bash
+python -m agent_runtime.cli runtime task create \
+  --file candidate-task.json \
+  --dry-run
+```
+
+从 stdin 模拟创建：
+
+```bash
+echo '{"id":"task-20260706-001",...}' | \
+  python -m agent_runtime.cli runtime task create --stdin --dry-run
+```
+
+指定 ledger 文件：
+
+```bash
+python -m agent_runtime.cli runtime task create \
+  --file candidate-task.json \
+  --dry-run \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl \
+  --json
+```
+
+约束：
+
+- `--dry-run` 必须显式提供；`--commit` 未实现。
+- 不写 `tasks/tasks.jsonl`、不写 `tasks/events.jsonl`、不写 envelope。
+- 目标 task ledger 必须位于项目根目录内、后缀 `.jsonl`。
+- 新创建的 task 可以暂时没有对应 event；ledger consistency 只检查是否破坏现有 ledger。
+- 不回显完整 title / summary / evidence description / secret match。
+
+详细设计见 `docs/31-runtime-task-create-dry-run.md`。
+
 ## Runtime Event Append Smoke / Report Loop
 
 `runtime event append` 写入 event ledger 后，通常需要再跑一遍只读检查与聚合报告来确认状态。完整的 smoke loop 应在**临时项目副本**中进行：

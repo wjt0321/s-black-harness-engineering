@@ -481,3 +481,29 @@
 - 已跑 `python -m pytest tests -q`：通过。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+- 进入下一阶段：为未来 task snapshot 受控写入做预检门禁 —— `runtime task create --dry-run`。
+- 新增 `agent_runtime/runtime_task_create.py`：实现 `create_task_dry_run()`，只读模拟创建 task snapshot。
+  - 候选 task 必须是单个 JSON object，通过 `tasks/task.schema.json`。
+  - 检查 `task.id` 在目标 task ledger 中不得重复。
+  - 目标 task ledger 路径必须位于项目根目录内、后缀 `.jsonl`、不能指向 credential/git internals。
+  - secret/public scan 命中时 blocked 且不回显完整匹配值。
+  - 用临时 task ledger 追加 candidate，配合现有 events ledger 跑 `task check-ledger`；events ledger 不存在时使用空临时文件，允许新 task 暂时无对应事件。
+  - 输出安全摘要：source、task_id、task_status、title_present、assignee_present、tag_count、artifact_count、evidence_count、would_create=False、ledger_check；不回显 title 内容、summary、evidence description 等自由文本。
+- 更新 `agent_runtime/cli.py`：新增 `runtime task create` 子命令，支持 `--file`/`--stdin`、`--dry-run`、`--tasks-file`、`--events-file` 与全局 `--json`。
+  - `--dry-run` 必须显式提供；`--commit` 虽预留参数但返回 `commit-not-implemented` 错误。
+- 新增 `tests/test_runtime_task_create_dry_run.py`，覆盖：
+  - dry-run pass（含无现有 events ledger 的情况）。
+  - stdin 输入。
+  - schema invalid / candidate 非 object。
+  - 重复 task id。
+  - secret scan / public scan blocked 且不回显（public scan 测试值在内存中动态拼接）。
+  - task ledger 路径在项目根目录外 / 后缀不安全。
+  - dry-run 不写真实 task ledger。
+  - JSON 输出脱敏。
+  - 未提供 `--dry-run` / 传入 `--commit` 报错。
+- 新增 `docs/31-runtime-task-create-dry-run.md`：说明命令目标、CLI 用法、校验链路、输出格式、无对应 event 的处理、安全边界与测试覆盖。
+- 更新 `docs/10-cli-poc-usage.md`：新增 `runtime task create --dry-run` 用法与约束。
+- 更新 `README.md` 与 `README.en.md`：文档索引加入 `docs/31-runtime-task-create-dry-run.md`，当前状态补充 `runtime task create --dry-run` 能力与边界。
+- 保持安全边界：不实现 `--commit`、不写 `tasks/tasks.jsonl`、不写 `tasks/events.jsonl`、不执行 adapter、不访问网络、不发送消息、不读取 `.env`/credential、不回显完整 secret match / evidence description / summary。
+- 不生成 `docs/superpowers/...`，不改 `AGENTS.md`。

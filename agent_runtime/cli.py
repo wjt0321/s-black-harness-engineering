@@ -25,6 +25,7 @@ from .runtime_draft import inspect_runtime_draft, validate_runtime_draft
 from .runtime_draft_export import DraftExportResult, export_draft
 from .runtime_event_append import EventAppendDryRunResult, append_event
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
+from .runtime_task_create import TaskCreateDryRunResult, create_task_dry_run
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
@@ -625,6 +626,96 @@ def _emit_runtime_event_append_result(result: CheckResult, json_output: bool, no
     else:
         print(_render_runtime_event_append_summary(result))
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _render_runtime_task_create_summary(result: CheckResult) -> str:
+    """Render runtime task create dry-run output.
+
+    TaskCreateDryRunResult carries only safe identifiers/counts; fallback keeps
+    ordinary CheckResult rendering for errors raised before a candidate is known.
+    """
+    if not isinstance(result, TaskCreateDryRunResult):
+        return result.render_human()
+
+    lines = [result.status.upper()]
+    if result.source is not None:
+        lines.append(f"Source: {result.source}")
+    if result.task_id is not None:
+        lines.append(f"task_id={result.task_id}")
+    if result.task_status is not None:
+        lines.append(f"status={result.task_status}")
+    lines.append(f"title_present={result.title_present}")
+    lines.append(f"assignee_present={result.assignee_present}")
+    if result.tag_count is not None:
+        lines.append(f"tag_count={result.tag_count}")
+    if result.artifact_count is not None:
+        lines.append(f"artifact_count={result.artifact_count}")
+    if result.evidence_count is not None:
+        lines.append(f"evidence_count={result.evidence_count}")
+    lines.append(f"would_create={result.would_create}")
+    if result.ledger_check is not None:
+        lines.append(f"ledger_check={result.ledger_check}")
+    if result.metadata_keys:
+        lines.append("metadata_keys=" + ",".join(result.metadata_keys))
+    for finding in result.findings:
+        loc = ""
+        if finding.line is not None:
+            loc = f" at line {finding.line}"
+        lines.append(f"- {finding.rule_id}{loc}: {finding.message}")
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+    return "\n".join(lines)
+
+
+def _emit_runtime_task_create_result(result: CheckResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_runtime_task_create_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_runtime_task_create(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    dry_run = getattr(args, "dry_run", False)
+    commit = getattr(args, "commit", False)
+    if commit:
+        result = CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="commit-not-implemented",
+                    severity="error",
+                    action="error",
+                    message="runtime task create --commit is not implemented.",
+                )
+            ],
+            next_action="Use --dry-run for now; commit will be added in a future version.",
+        )
+        return _emit_runtime_task_create_result(result, json_output=args.json)
+    if not dry_run:
+        result = CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="missing-dry-run",
+                    severity="error",
+                    action="error",
+                    message="--dry-run is required for runtime task create.",
+                )
+            ],
+            next_action="Add --dry-run to simulate the task create without writing.",
+        )
+        return _emit_runtime_task_create_result(result, json_output=args.json)
+    result = create_task_dry_run(
+        root,
+        file=args.file,
+        stdin=args.stdin,
+        dry_run=True,
+        tasks_file=args.tasks_file,
+        events_file=args.events_file,
+    )
+    return _emit_runtime_task_create_result(result, json_output=args.json)
 
 
 def _cmd_runtime_event_append(args: argparse.Namespace) -> int:
@@ -1287,6 +1378,25 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_event_append_parser.add_argument("--envelope", default=None, help="Path to adapter execution envelope JSON file for runtime audit")
     _add_global_args(runtime_event_append_parser)
     runtime_event_append_parser.set_defaults(func=_cmd_runtime_event_append)
+
+    # runtime task create (dry-run only)
+    runtime_task_parser = runtime_subparsers.add_parser(
+        "task", help="Task snapshot ledger operations"
+    )
+    runtime_task_subparsers = runtime_task_parser.add_subparsers(dest="task_command", required=True)
+
+    runtime_task_create_parser = runtime_task_subparsers.add_parser(
+        "create", help="Dry-run preflight for creating a task snapshot"
+    )
+    create_source_group = runtime_task_create_parser.add_mutually_exclusive_group(required=True)
+    create_source_group.add_argument("--file", default=None, help="Path to candidate task JSON file")
+    create_source_group.add_argument("--stdin", action="store_true", help="Read candidate task JSON from stdin")
+    runtime_task_create_parser.add_argument("--dry-run", action="store_true", help="Run in read-only dry-run mode")
+    runtime_task_create_parser.add_argument("--commit", action="store_true", help="Persist the task to the ledger (not yet implemented)")
+    runtime_task_create_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
+    runtime_task_create_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
+    _add_global_args(runtime_task_create_parser)
+    runtime_task_create_parser.set_defaults(func=_cmd_runtime_task_create)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")
