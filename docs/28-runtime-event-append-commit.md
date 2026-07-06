@@ -1,8 +1,8 @@
-# 28 — Runtime Event Append Commit 预备设计
+# 28 — Runtime Event Append Commit
 
 ## 阶段定位
 
-本文为下一阶段 `runtime event append --commit` 预留实现上下文。当前只写设计，不实现命令，不修改 Runtime 行为。
+本文记录 `runtime event append --commit` 的实现设计与行为约束。
 
 上一阶段 `runtime event append --dry-run` 已冻结为：
 
@@ -12,7 +12,7 @@ v0.7.0-runtime-event-append-dry-run
 
 它已经跑通 event 写入前门禁：候选 event 读取、schema 校验、task 存在性检查、secret/public scan、模拟 append 后 ledger consistency，以及可选 runtime ledger audit。
 
-下一阶段若继续推进，目标是在严格边界内允许 Runtime 把一个候选 event 追加到 event ledger。
+本阶段在严格边界内允许 Runtime 把一个候选 event 追加到 event ledger。
 
 ## 非目标
 
@@ -56,7 +56,7 @@ tasks/events.jsonl
 - 不通过 `..` 或符号链接逃逸项目根目录。
 - 不写 `tasks/examples.jsonl` 或 `tasks/events.examples.jsonl`，除非后续单独设计样例更新流程。
 
-## CLI 形态建议
+## CLI 形态
 
 ```bash
 python -m agent_runtime.cli runtime event append \
@@ -84,7 +84,7 @@ type candidate-event.json | python -m agent_runtime.cli runtime event append \
 - `--dry-run` 与 `--commit` 互斥。
 - 必须显式提供其中一个。
 - `--dry-run` 继续保持完全只读。
-- `--commit` 写入前必须复用 dry-run 全部检查。
+- `--commit` 写入前复用 dry-run 全部检查。
 
 ## 写入前检查
 
@@ -172,10 +172,14 @@ task_id=task-...
 event_type=progress
 from_status=running
 to_status=running
-committed=True
+would_append=True
 ledger_check=pass
 runtime_audit=pass
-Next: Event appended; review runtime report before further actions.
+committed=True
+post_validate=pass
+post_ledger_check=pass
+post_runtime_audit=pass
+Next: Event appended. Review runtime report before further actions.
 ```
 
 JSON 输出也只包含：
@@ -187,9 +191,15 @@ JSON 输出也只包含：
 - `event_type`
 - `from_status`
 - `to_status`
-- `committed`
+- `would_append`
 - `ledger_check`
 - `runtime_audit`
+- `committed`
+- `post_validate`
+- `post_ledger_check`
+- `post_runtime_audit`
+- `rolled_back`
+- `rollback_error`
 - `metadata_keys`
 - `artifact_count`
 - `findings`
@@ -207,15 +217,16 @@ JSON 输出也只包含：
 - decision_ref
 - secret match
 
-## 建议实现文件
+## 实现文件
 
-可在现有模块上扩展：
+在现有模块上扩展：
 
 ```text
 agent_runtime/runtime_event_append.py
+agent_runtime/cli.py
 ```
 
-建议新增结果模型字段：
+`EventAppendDryRunResult` 已新增字段：
 
 ```text
 committed: bool
@@ -226,7 +237,7 @@ rolled_back: bool
 rollback_error: str | None
 ```
 
-建议测试文件：
+新增测试文件：
 
 ```text
 tests/test_runtime_event_append_commit.py
@@ -255,7 +266,7 @@ tests/test_runtime_event_append_commit.py
 
 ## 完成条件
 
-下一阶段完成前必须满足：
+本阶段满足：
 
 - `runtime event append --commit` 只追加单行。
 - 没有任何 adapter execution。

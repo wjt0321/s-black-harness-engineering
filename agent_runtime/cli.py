@@ -23,7 +23,7 @@ from .runtime_gate import RuntimeGateResult, check_runtime_gate
 from .runtime_ledger import RuntimeLedgerResult, check_runtime_ledger
 from .runtime_draft import inspect_runtime_draft, validate_runtime_draft
 from .runtime_draft_export import DraftExportResult, export_draft
-from .runtime_event_append import EventAppendDryRunResult, append_event_dry_run
+from .runtime_event_append import EventAppendDryRunResult, append_event
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .task_validation import validate_records
@@ -594,6 +594,17 @@ def _render_runtime_event_append_summary(result: CheckResult) -> str:
         lines.append(f"ledger_check={result.ledger_check}")
     if result.runtime_audit is not None:
         lines.append(f"runtime_audit={result.runtime_audit}")
+    lines.append(f"committed={result.committed}")
+    if result.post_validate is not None:
+        lines.append(f"post_validate={result.post_validate}")
+    if result.post_ledger_check is not None:
+        lines.append(f"post_ledger_check={result.post_ledger_check}")
+    if result.post_runtime_audit is not None:
+        lines.append(f"post_runtime_audit={result.post_runtime_audit}")
+    if result.rolled_back:
+        lines.append(f"rolled_back={result.rolled_back}")
+    if result.rollback_error is not None:
+        lines.append(f"rollback_error={result.rollback_error}")
     if result.metadata_keys:
         lines.append("metadata_keys=" + ",".join(result.metadata_keys))
     if result.artifact_count is not None:
@@ -619,11 +630,40 @@ def _emit_runtime_event_append_result(result: CheckResult, json_output: bool, no
 def _cmd_runtime_event_append(args: argparse.Namespace) -> int:
     root = _root_path(args)
     dry_run = getattr(args, "dry_run", False)
-    result = append_event_dry_run(
+    commit = getattr(args, "commit", False)
+    if dry_run and commit:
+        result = CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="dry-run-commit-mutually-exclusive",
+                    severity="error",
+                    action="error",
+                    message="--dry-run and --commit are mutually exclusive.",
+                )
+            ],
+            next_action="Provide either --dry-run or --commit, not both.",
+        )
+        return _emit_runtime_event_append_result(result, json_output=args.json, no_color=args.no_color)
+    if not dry_run and not commit:
+        result = CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="missing-append-mode",
+                    severity="error",
+                    action="error",
+                    message="Provide either --dry-run or --commit.",
+                )
+            ],
+            next_action="Add --dry-run for read-only mode or --commit to persist the event.",
+        )
+        return _emit_runtime_event_append_result(result, json_output=args.json, no_color=args.no_color)
+    result = append_event(
         root,
         file=args.file,
         stdin=args.stdin,
-        dry_run=dry_run,
+        commit=commit,
         tasks_file=args.tasks_file,
         events_file=args.events_file,
         envelope_file=args.envelope,
@@ -1235,12 +1275,13 @@ def build_parser() -> argparse.ArgumentParser:
     event_subparsers = runtime_event_parser.add_subparsers(dest="event_command", required=True)
 
     runtime_event_append_parser = event_subparsers.add_parser(
-        "append", help="Dry-run append a candidate event to the event ledger"
+        "append", help="Dry-run or commit append a candidate event to the event ledger"
     )
     append_source_group = runtime_event_append_parser.add_mutually_exclusive_group(required=True)
     append_source_group.add_argument("--file", default=None, help="Path to candidate event JSON file")
     append_source_group.add_argument("--stdin", action="store_true", help="Read candidate event JSON from stdin")
-    runtime_event_append_parser.add_argument("--dry-run", action="store_true", help="Run in read-only dry-run mode (required)")
+    runtime_event_append_parser.add_argument("--dry-run", action="store_true", help="Run in read-only dry-run mode")
+    runtime_event_append_parser.add_argument("--commit", action="store_true", help="Persist the event to the ledger")
     runtime_event_append_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
     runtime_event_append_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
     runtime_event_append_parser.add_argument("--envelope", default=None, help="Path to adapter execution envelope JSON file for runtime audit")

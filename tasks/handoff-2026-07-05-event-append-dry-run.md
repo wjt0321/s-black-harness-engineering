@@ -79,11 +79,6 @@ docs/28-runtime-event-append-commit.md
 
 ## 下一步建议
 
-1. 如需继续 Controlled Write，可实现 `runtime event append --commit`：
-   - 复用 dry-run 所有预检。
-   - 只允许追加到 `tasks/events.jsonl`（或显式 `--events-file`）。
-   - 写入前检查 event_id 不重复、状态流转合法。
-   - 写入后重新跑 ledger consistency。
-   - 失败时回滚（删除本命令写入的最后一行）。
+1. `runtime event append --commit` 已在 2026-07-06 实现，见 `tasks/progress.md` 与 `docs/28-runtime-event-append-commit.md`。
 2. 或进入其他 Runtime 增强：task 创建 dry-run、批量 event import dry-run、ledger compaction dry-run 等。
 3. 当前 JSON 输出摘要已包含 `artifact_count`、`metadata_keys` 等结构化字段；下一步不要直接进入 adapter execution。

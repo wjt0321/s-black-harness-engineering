@@ -1,8 +1,15 @@
-"""Dry-run append for task events.
+"""Dry-run and commit append for task events.
 
-This module is read-only: it simulates appending a candidate event to the
-event ledger and reports whether the append would be safe. No ledger files
-are modified.
+This module implements a narrow controlled-write boundary:
+
+* ``runtime event append --dry-run`` simulates appending a candidate event and
+  reports whether the append would be safe. No ledger files are modified.
+* ``runtime event append --commit`` appends exactly one JSON object as the last
+  line of an event ledger JSONL file, then validates the resulting ledger and
+  rolls back this command's append if a post-check fails.
+
+No adapter execution, network access, messaging, or credential files are
+involved.
 """
 
 from __future__ import annotations
@@ -23,6 +30,7 @@ from .loader import is_safe_to_read, load_schema, normalize_path
 from .policy import check_text
 from .result import CheckResult, Finding
 from .runtime_ledger import check_runtime_ledger
+from .task_validation import validate_records
 from .tasks import find_task
 
 _TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
@@ -55,6 +63,12 @@ class EventAppendDryRunResult(CheckResult):
     runtime_audit: str | None = None
     metadata_keys: list[str] = field(default_factory=list)
     artifact_count: int | None = None
+    committed: bool = False
+    post_validate: str | None = None
+    post_ledger_check: str | None = None
+    post_runtime_audit: str | None = None
+    rolled_back: bool = False
+    rollback_error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
@@ -79,6 +93,16 @@ class EventAppendDryRunResult(CheckResult):
             d["metadata_keys"] = self.metadata_keys
         if self.artifact_count is not None:
             d["artifact_count"] = self.artifact_count
+        d["committed"] = self.committed
+        if self.post_validate is not None:
+            d["post_validate"] = self.post_validate
+        if self.post_ledger_check is not None:
+            d["post_ledger_check"] = self.post_ledger_check
+        if self.post_runtime_audit is not None:
+            d["post_runtime_audit"] = self.post_runtime_audit
+        d["rolled_back"] = self.rolled_back
+        if self.rollback_error is not None:
+            d["rollback_error"] = self.rollback_error
         return d
 
 
@@ -300,6 +324,28 @@ def _load_candidate_event(
     )
 
 
+def _load_existing_event_ids(root: Path, events_file: str | None) -> set[str]:
+    """Collect event_id values already present in the target events ledger."""
+    events_path = (root / (events_file or "tasks/events.jsonl")).resolve()
+    event_ids: set[str] = set()
+    if not events_path.is_file() or not is_safe_to_read(events_path):
+        return event_ids
+    with open(events_path, "r", encoding="utf-8") as fh:
+        for raw_line in fh:
+            stripped = raw_line.strip()
+            if not stripped:
+                continue
+            try:
+                record = json.loads(stripped)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(record, dict):
+                event_id = record.get("event_id")
+                if event_id:
+                    event_ids.add(event_id)
+    return event_ids
+
+
 def _simulate_append_and_check(
     root: Path,
     candidate: dict[str, Any],
@@ -343,36 +389,50 @@ def _simulate_append_and_check(
         Path(tmp_name).unlink(missing_ok=True)
 
 
-def append_event_dry_run(
+def _candidate_summary(
+    *,
+    status: str,
+    source: str,
+    candidate: dict[str, Any],
+    task_id: str,
+    ledger_check: str | None,
+    runtime_audit: str | None,
+    would_append: bool,
+    committed: bool,
+    next_action: str,
+    findings: list[Finding] | None = None,
+) -> EventAppendDryRunResult:
+    metadata = candidate.get("metadata")
+    artifacts = candidate.get("artifacts")
+    return EventAppendDryRunResult(
+        status=status,
+        findings=findings or [],
+        source=source,
+        event_id=candidate.get("event_id"),
+        task_id=task_id,
+        event_type=candidate.get("event_type"),
+        from_status=candidate.get("from_status"),
+        to_status=candidate.get("to_status"),
+        would_append=would_append,
+        ledger_check=ledger_check,
+        runtime_audit=runtime_audit,
+        metadata_keys=sorted(metadata.keys()) if isinstance(metadata, dict) else [],
+        artifact_count=len(artifacts) if isinstance(artifacts, list) else None,
+        committed=committed,
+        next_action=next_action,
+    )
+
+
+def _prepare_append(
     root: Path,
-    file: str | None = None,
-    stdin: bool = False,
-    dry_run: bool = False,
-    tasks_file: str | None = None,
-    events_file: str | None = None,
-    envelope_file: str | None = None,
-    candidate: dict[str, Any] | None = None,
-) -> CheckResult:
-    """Dry-run append a candidate event to the event ledger.
-
-    Read-only: no ledger files are modified. The optional ``candidate``
-    argument is provided for unit tests; when omitted, the event is read
-    from ``file`` or ``stdin``.
-    """
-    if not dry_run:
-        return CheckResult(
-            status="error",
-            findings=[
-                Finding(
-                    rule_id="missing-dry-run",
-                    severity="error",
-                    action="error",
-                    message="--dry-run is required for runtime event append.",
-                )
-            ],
-            next_action="Add --dry-run to simulate the append without writing.",
-        )
-
+    file: str | None,
+    stdin: bool,
+    tasks_file: str | None,
+    events_file: str | None,
+    envelope_file: str | None,
+    candidate: dict[str, Any] | None,
+) -> CheckResult | tuple[dict[str, Any], str, str, str | None, str | None]:
+    """Run all write-before checks and return the safe candidate summary state."""
     if candidate is not None:
         source = "candidate"
     else:
@@ -398,6 +458,22 @@ def append_event_dry_run(
                 )
             ],
             next_action="Add a task_id to the candidate event.",
+        )
+
+    candidate_event_id = candidate.get("event_id")
+    existing_event_ids = _load_existing_event_ids(root, events_file)
+    if candidate_event_id in existing_event_ids:
+        return CheckResult(
+            status="validation_failed",
+            findings=[
+                Finding(
+                    rule_id="duplicate-event-id",
+                    severity="error",
+                    action="error",
+                    message="event_id already exists in the target events ledger.",
+                )
+            ],
+            next_action="Use a unique event_id for the candidate event.",
         )
 
     task = find_task(root, task_id, explicit_file=tasks_file)
@@ -457,22 +533,241 @@ def append_event_dry_run(
             next_action="Fix the reported issues before appending the event.",
         )
 
-    metadata = candidate.get("metadata")
-    artifacts = candidate.get("artifacts")
+    return candidate, source, task_id, ledger_check, runtime_audit
 
-    return EventAppendDryRunResult(
+
+def _resolve_commit_events_path(root: Path, events_file: str | None) -> CheckResult | Path:
+    events_path = (root / (events_file or "tasks/events.jsonl")).resolve()
+    if events_path != root and root not in events_path.parents:
+        return CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="events-file-outside-root",
+                    severity="error",
+                    action="error",
+                    message="Events file must be inside the project root.",
+                )
+            ],
+            next_action="Choose a project-local JSONL event ledger.",
+        )
+    if not is_safe_to_read(events_path) or events_path.suffix.lower() != ".jsonl":
+        return CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="unsafe-events-file",
+                    severity="error",
+                    action="error",
+                    message="Events file must be a safe JSONL file.",
+                )
+            ],
+            next_action="Choose a safe .jsonl event ledger path.",
+        )
+    rel = normalize_path(events_path.relative_to(root))
+    if rel in {"tasks/examples.jsonl", "tasks/events.examples.jsonl"}:
+        return CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="sample-ledger-write-blocked",
+                    severity="error",
+                    action="error",
+                    message="Sample event ledgers are not valid commit targets.",
+                )
+            ],
+            next_action="Use tasks/events.jsonl or another project-local runtime ledger.",
+        )
+    return events_path
+
+
+def _has_trailing_newline(path: Path) -> bool:
+    if not path.is_file() or path.stat().st_size == 0:
+        return True
+    with open(path, "rb") as fh:
+        fh.seek(-1, 2)
+        return fh.read(1) == b"\n"
+
+
+def _rel_to_root(root: Path, path: Path) -> str:
+    return normalize_path(path.resolve().relative_to(root.resolve()))
+
+
+def _rollback_events_file(path: Path, original_size: int, created: bool) -> tuple[bool, str | None]:
+    try:
+        if created:
+            path.unlink(missing_ok=True)
+        else:
+            with open(path, "r+b") as fh:
+                fh.truncate(original_size)
+        return True, None
+    except OSError as exc:
+        return False, str(exc)
+
+
+def append_event(
+    root: Path,
+    file: str | None = None,
+    stdin: bool = False,
+    commit: bool = False,
+    tasks_file: str | None = None,
+    events_file: str | None = None,
+    envelope_file: str | None = None,
+    candidate: dict[str, Any] | None = None,
+) -> CheckResult:
+    """Append or dry-run append a candidate event to the event ledger."""
+    root = root.resolve()
+    prepared = _prepare_append(
+        root, file, stdin, tasks_file, events_file, envelope_file, candidate
+    )
+    if isinstance(prepared, CheckResult):
+        return prepared
+    candidate, source, task_id, ledger_check, runtime_audit = prepared
+
+    if not commit:
+        return _candidate_summary(
+            status="pass",
+            source=source,
+            candidate=candidate,
+            task_id=task_id,
+            ledger_check=ledger_check,
+            runtime_audit=runtime_audit,
+            would_append=False,
+            committed=False,
+            next_action="Dry-run passed. Re-run with --commit to persist exactly one event ledger line.",
+        )
+
+    resolved_events = _resolve_commit_events_path(root, events_file)
+    if isinstance(resolved_events, CheckResult):
+        return resolved_events
+    events_path = resolved_events
+    if not _has_trailing_newline(events_path):
+        return CheckResult(
+            status="blocked",
+            findings=[
+                Finding(
+                    rule_id="events-file-missing-trailing-newline",
+                    severity="block",
+                    action="deny",
+                    message="Events file must end with a newline before append.",
+                )
+            ],
+            next_action="Fix the ledger newline explicitly, then retry the append.",
+        )
+
+    if not events_path.parent.is_dir():
+        return CheckResult(
+            status="blocked",
+            findings=[
+                Finding(
+                    rule_id="events-parent-missing",
+                    severity="block",
+                    action="deny",
+                    message="Events file parent directory must already exist.",
+                )
+            ],
+            next_action="Create the ledger directory explicitly before committing an event append.",
+        )
+
+    existed = events_path.exists()
+    original_size = events_path.stat().st_size if existed else 0
+    line = json.dumps(candidate, ensure_ascii=False) + "\n"
+    with open(events_path, "a", encoding="utf-8", newline="") as fh:
+        fh.write(line)
+
+    post_validate = validate_records(root, _rel_to_root(root, events_path), "event")
+    post_ledger = check_ledger_consistency(
+        root,
+        tasks_file=tasks_file or "tasks/tasks.jsonl",
+        events_file=_rel_to_root(root, events_path),
+    )
+    post_runtime = None
+    if envelope_file:
+        post_runtime = check_runtime_ledger(
+            root,
+            tasks_file=tasks_file or "tasks/tasks.jsonl",
+            events_file=_rel_to_root(root, events_path),
+            envelope_file=envelope_file,
+        )
+
+    failures: list[Finding] = []
+    if post_validate.status != "pass":
+        failures.extend(post_validate.findings)
+    if post_ledger.status != "pass":
+        failures.extend(post_ledger.findings)
+    if post_runtime is not None and post_runtime.status not in {"pass", "warn"}:
+        failures.extend(post_runtime.findings)
+
+    result = _candidate_summary(
         status="pass",
-        findings=[],
         source=source,
-        event_id=candidate.get("event_id"),
+        candidate=candidate,
         task_id=task_id,
-        event_type=candidate.get("event_type"),
-        from_status=candidate.get("from_status"),
-        to_status=candidate.get("to_status"),
-        would_append=False,
         ledger_check=ledger_check,
         runtime_audit=runtime_audit,
-        metadata_keys=sorted(metadata.keys()) if isinstance(metadata, dict) else [],
-        artifact_count=len(artifacts) if isinstance(artifacts, list) else None,
-        next_action="Dry-run passed. Use runtime event append --commit (not yet implemented) to persist.",
+        would_append=True,
+        committed=True,
+        next_action="Event appended. Review runtime report before further actions.",
+    )
+    result.post_validate = post_validate.status
+    result.post_ledger_check = post_ledger.status
+    result.post_runtime_audit = post_runtime.status if post_runtime is not None else None
+
+    if not failures:
+        return result
+
+    rollback_ok, rollback_error = _rollback_events_file(
+        events_path, original_size, created=not existed
+    )
+    result.status = "error" if not rollback_ok else "validation_failed"
+    result.findings = failures
+    result.committed = False
+    result.rolled_back = rollback_ok
+    result.rollback_error = rollback_error
+    result.next_action = (
+        "Post-append checks failed and rollback succeeded. Fix the event or ledger before retrying."
+        if rollback_ok
+        else "Post-append checks failed and rollback failed. Restore the event ledger manually."
+    )
+    return result
+
+
+def append_event_dry_run(
+    root: Path,
+    file: str | None = None,
+    stdin: bool = False,
+    dry_run: bool = False,
+    tasks_file: str | None = None,
+    events_file: str | None = None,
+    envelope_file: str | None = None,
+    candidate: dict[str, Any] | None = None,
+) -> CheckResult:
+    """Dry-run append a candidate event to the event ledger.
+
+    Read-only: no ledger files are modified. The optional ``candidate``
+    argument is provided for unit tests; when omitted, the event is read
+    from ``file`` or ``stdin``.
+    """
+    if not dry_run:
+        return CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="missing-dry-run",
+                    severity="error",
+                    action="error",
+                    message="--dry-run is required for runtime event append.",
+                )
+            ],
+            next_action="Add --dry-run to simulate the append without writing.",
+        )
+    return append_event(
+        root,
+        file=file,
+        stdin=stdin,
+        commit=False,
+        tasks_file=tasks_file,
+        events_file=events_file,
+        envelope_file=envelope_file,
+        candidate=candidate,
     )

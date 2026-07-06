@@ -440,3 +440,44 @@
   - 新增 `docs/28-runtime-event-append-commit.md`：仅作为下次实现前的边界与方案上下文，不实现代码、不修改 Runtime 行为。
   - 文档明确 append-only、写前 dry-run 全检查、event_id 去重、写后 validate/check-ledger/runtime audit、失败回滚、输出脱敏和 v0.8 建议 tag。
   - 更新 `README.md` 与 `README.en.md` 文档索引，便于下次从文档入口恢复。
+
+## 2026-07-06
+
+- 实现下一阶段：最小 Controlled Write POC 第四步 —— `runtime event append --commit`。
+- 扩展 `agent_runtime/runtime_event_append.py`：
+  - 保留 `append_event_dry_run()` 兼容已有调用；新增 `append_event(..., commit=False)` 统一入口。
+  - commit 路径复用 dry-run 全部预检（候选 event 读取、schema 校验、task_id 存在性、event_id 去重、secret/public scan、模拟 append 后 ledger consistency、可选 runtime ledger audit）。
+  - 新增 `_resolve_commit_events_path()` 与 `_has_trailing_newline()`：目标 events file 必须位于项目根目录内、后缀 `.jsonl`、不是 sample/credential/git internals；非空文件缺少末尾换行时直接 blocked。
+  - 写入格式：`json.dumps(candidate, ensure_ascii=False) + "\n"`，只追加单行，不修改历史内容。
+  - 写入后调用 `validate_records()`、`check_ledger_consistency()`，如有 envelope 再调用 `check_runtime_ledger()`。
+  - 失败回滚：记录写入前原始 byte size 与是否新建文件；post-check 失败时截断回原大小或删除新文件；回滚成功后返回 `validation_failed`，回滚失败时返回 `error`。
+  - 修复 post runtime audit 的 warn 状态判断（原 WIP 误用 `"warning"`，实际状态为 `"warn"`）。
+- 更新 `agent_runtime/cli.py`：
+  - `runtime event append` 新增 `--commit` 标志，与 `--dry-run` 由命令逻辑保证互斥且必选一个。
+  - 渲染函数输出 `committed`、`post_validate`、`post_ledger_check`、`post_runtime_audit`、`rolled_back`、`rollback_error`。
+- 新增 `tests/test_runtime_event_append_commit.py`，覆盖：
+  - commit pass 追加一行且写后检查通过。
+  - commit with envelope 写后 runtime audit 执行。
+  - `--dry-run` 不写文件。
+  - `--dry-run`/`--commit` 互斥报错。
+  - 二者都不提供报错。
+  - schema invalid 不写文件。
+  - missing task 不写文件。
+  - duplicate event_id 不写文件。
+  - illegal transition 不写文件。
+  - secret/public scan blocked 不写文件且不回显匹配值。
+  - events file 不在项目内 blocked。
+  - events file 后缀非 `.jsonl` blocked。
+  - 无末尾换行 blocked。
+  - post-check 失败触发回滚。
+  - stdin commit pass。
+  - JSON 输出脱敏。
+- 更新 `docs/28-runtime-event-append-commit.md`：从预备设计改为实现文档，补充 CLI 形态、输出字段、实现文件与测试文件说明。
+- 更新 `docs/10-cli-poc-usage.md`：新增 `runtime event append --commit` 用法、约束与回滚说明。
+- 更新 `README.md` 与 `README.en.md`：当前状态中补充 `runtime event append --commit` 能力与边界。
+- 更新 `tasks/handoff-2026-07-05-event-append-dry-run.md`：说明 `--commit` 已实现，指向本日进度。
+- 保持安全边界：不执行 adapter、不访问网络、不发送消息、不删除非本命令追加的内容、不写 task ledger / envelope、不读取 `.env`/credential。
+- 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest tests -q`：通过。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。

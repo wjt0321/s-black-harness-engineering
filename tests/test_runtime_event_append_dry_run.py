@@ -278,7 +278,7 @@ def test_cli_missing_dry_run(tmp_path, monkeypatch, capsys):
     )
     assert main() == 1
     captured = capsys.readouterr()
-    assert "missing-dry-run" in captured.out
+    assert "missing-append-mode" in captured.out
 
 
 def test_cli_json_output_sanitized(tmp_path, monkeypatch, capsys):

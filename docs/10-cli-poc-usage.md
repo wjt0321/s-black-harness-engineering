@@ -1099,11 +1099,54 @@ python -m agent_runtime.cli runtime event append \
 
 约束：
 
-- `--dry-run` 必须显式提供，当前只实现 dry-run。
+- `--dry-run` 必须显式提供。
 - 不写 `tasks/events.jsonl`、不写 task ledger、不写 envelope。
 - 不回显完整 `target` / `input` / `evidence` / `raw_ref` / `decision_ref` / secret match。
 
 详细设计见 `docs/26-runtime-event-append-dry-run.md`。
+
+## Runtime Event Append Commit
+
+`runtime event append --commit` 在复用 dry-run 全部检查后，把单个候选 event 追加到 event ledger JSONL 文件（默认 `tasks/events.jsonl`）。写入后自动运行 `task validate --schema event`、`task check-ledger`，如有 `--envelope` 还会运行 `runtime check-ledger`；若任一写后检查失败，则按原始 byte size 回滚本次追加。
+
+从文件提交：
+
+```bash
+python -m agent_runtime.cli runtime event append \
+  --file candidate-event.json \
+  --commit
+```
+
+从 stdin 提交：
+
+```bash
+echo '{"event_id":"evt-20260705-001",...}' | \
+  python -m agent_runtime.cli runtime event append --stdin --commit
+```
+
+带 ledger 与 envelope audit：
+
+```bash
+python -m agent_runtime.cli runtime event append \
+  --file candidate-event.json \
+  --commit \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl \
+  --envelope adapters/execution-envelope.examples.json \
+  --json
+```
+
+约束：
+
+- `--dry-run` 与 `--commit` 互斥，必须显式提供其中一个。
+- 只追加 exactly one JSON object as last line，不覆盖、不删除、不重排、不格式化历史 ledger。
+- 默认目标 `tasks/events.jsonl`；显式 `--events-file` 必须位于项目根目录内、后缀 `.jsonl`、且不是 sample/credential/git internals。
+- 现有 events file 非空且没有末尾换行时直接 blocked，不自动修复。
+- 写入前检查：候选 JSON object、event schema、`task_id` 存在、event_id 不重复、secret/public scan、模拟 append 后 ledger consistency、可选 runtime ledger audit。
+- 写入后检查失败时回滚；回滚成功后返回失败状态并说明已回滚，回滚失败时返回 `error`。
+- 不回显完整 `message` / metadata values / artifacts payload / evidence description / `target` / `input` / `raw_ref` / `decision_ref` / secret match。
+
+详细设计见 `docs/28-runtime-event-append-commit.md`。
 
 ## `runtime report`
 
