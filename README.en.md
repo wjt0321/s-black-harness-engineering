@@ -12,26 +12,48 @@
 
 ## What This Project Is
 
-`s-black harness engineering` is a long-term engineering project for extracting agent orchestration, policy checks, task tracking, tool adapters, and delivery verification out of a single host framework and into a small, auditable runtime layer.
+`s-black harness engineering` is an agent engineering infrastructure project.
 
-It is not intended to replace QwenPaw immediately. The first phase focuses on documents, schemas, examples, and boundaries before any real runtime execution code is introduced.
+Its goal is not to replace the chat host or start with a UI. Instead, it extracts the parts of agent work that most need hard boundaries:
 
-## Relationship With QwenPaw
+- policy checks
+- task ledgers
+- agent registries
+- adapter boundaries
+- completion verification
+- controlled write flows
 
-[QwenPaw](https://github.com/agentscope-ai/QwenPaw) is a public multi-agent desktop/runtime framework and an important host environment used during the early practice that shaped this project.
+The long-term goal is a **small, auditable, portable runtime layer**, where QwenPaw is only one future host/adapter target rather than the only boundary.
 
-`s-black harness engineering` treats QwenPaw as one future host/adapter target, not as something to replace. This repository currently focuses on independent policies, ledgers, registries, and adapter-boundary design.
+## Where The Project Is Now
 
-## Current Status
+The repository has already moved from a read-only checking CLI to a minimal controlled-write runtime.
 
-- Stage: read-only CLI POC plus Adapter execution envelope checks are runnable
-- Created: 2026-07-02
-- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, ledger validation, adapter envelope plan / validate / inspect / approval check / response check / gate check, task + adapter envelope runtime plan (including `--draft-json` envelope draft output), runtime draft validate / inspect / export `--dry-run` / `--commit`, runtime event append `--dry-run` / `--commit`, runtime event import `--dry-run` / `--commit` (with `--expected-plan-hash` consistency freeze and `--require-dry-run` strict freeze mode), runtime task create `--dry-run` / `--commit`, runtime gate check, runtime ledger audit, and runtime report
-- Current boundary: adapter flows, runtime plan, runtime draft validate / inspect / gate / runtime ledger audit, runtime report, and runtime task create `--dry-run` remain read-only by default and do not execute real external actions; `runtime draft export --commit` only writes new files under `drafts/runtime/.../*.json`, does not overwrite, and rolls back on failure; `runtime event append --commit` appends exactly one line to an event ledger JSONL and rolls back to the original byte size on failure; `runtime event import --commit` appends a continuous block of candidate events to an existing event ledger JSONL and rolls back to the original byte size on post-check failure; `runtime task create --commit` appends exactly one line to a task ledger JSONL, rolls back to the original byte size on post-check failure, and does not write the event ledger
+Implemented capability highlights:
 
-## Continuous Integration
+- structure validation, secret scan, path checks, action preflight
+- registry / policy / ledger queries and validation
+- adapter execution envelope plan / validate / inspect / gate check
+- `runtime draft export --dry-run / --commit`
+- `runtime event append --dry-run / --commit`
+- `runtime task create --dry-run / --commit`
+- `runtime event import --dry-run / --commit`
+- `runtime event import --expected-plan-hash` consistency freeze
+- `runtime event import --require-dry-run` strict freeze mode
+- controlled write regression coverage
 
-On push and pull_request to `main`, GitHub Actions runs `pytest`, `doctor`, ledger CLI smoke checks, and `public_scan` against Python 3.11 and 3.12. See `.github/workflows/ci.yml`.
+## Current Boundaries
+
+The runtime still keeps conservative boundaries:
+
+- no real adapter execution
+- no network access
+- no message sending
+- no reading `.env` / credential / token / keyring files
+- no UI or background service
+- no silent write-scope expansion
+
+The implemented writes are all **controlled writes**: project-local safe paths only, explicit command trigger, pre-write validation, post-write validation, and rollback on failure.
 
 ## Quick Start
 
@@ -44,94 +66,50 @@ python -m agent_runtime.cli adapters list
 python -m agent_runtime.cli policies list
 ```
 
-See `docs/10-cli-poc-usage.md` for more usage details.
+For more CLI usage, see `docs/10-cli-poc-usage.md`.
 
-## Initial Scope
+## Recommended Reading
 
-The runtime is expected to cover these areas over time:
+If this is your first time in the repository, read in this order:
 
-1. **Agent registry**: track agents, capabilities, boundaries, workspaces, and handoff rules.
-2. **Task routing**: decide which agent or tool should handle a task.
-3. **Policy guardrails**: check risky actions before external publishing, deletion, configuration changes, or pushes.
-4. **Tool adapters**: wrap QwenPaw, Kimi, Claude, OMP, Shell, Lark, GitHub, and WebBridge behind consistent interfaces.
-5. **Task ledger**: record task state from planning through execution, blocking, failure, or completion.
-6. **Completion verification**: require evidence before a task is marked finished.
-7. **Memory and documentation handoff**: preserve important context in the right place instead of only in chat.
+1. `docs/00-index.md`
+2. `docs/01-vision-and-boundaries.md`
+3. `docs/10-cli-poc-usage.md`
+4. `docs/21-controlled-write-boundaries.md`
+5. `docs/45-runtime-event-import-strict-freeze-mode.md`
+6. `docs/46-release-notes-runtime-event-import-strict-freeze.md`
 
-## Non-Goals For The First Phase
+If you only want the full progress ledger:
 
-The first phase does not:
-
-- Replace QwenPaw
-- Provide a UI or desktop shell
-- Start a long-running background service
-- Take over existing scheduled jobs
-- Implement a model proxy or billing system
-- Silently execute real external operations before the design is stable
+- `tasks/progress.md`
 
 ## Repository Layout
 
 | Path | Purpose |
 |:---|:---|
-| `docs/` | Architecture, roadmap, protocol notes |
-| `policies/` | Policy schema and sample policies |
-| `agents/` | Agent registry schema and sample registry |
-| `adapters/` | Future adapter designs or code |
-| `tasks/` | Task ledger schemas, examples, progress, handoff notes |
-| `logs/` | Future runtime logs |
-| `decisions/` | Architecture decision records |
-| `notes/` | Daily project notes |
-| `assets/` | Project visual assets |
+| `docs/` | architecture, roadmap, protocol notes, stage docs |
+| `policies/` | policy schema and sample policies |
+| `agents/` | agent registry schema and sample registry |
+| `adapters/` | adapter design and related schemas |
+| `tasks/` | task ledger schemas, samples, progress, handoff notes |
+| `logs/` | future runtime logs |
+| `decisions/` | architecture decision records |
+| `notes/` | daily project notes |
+| `assets/` | project visual assets |
 
-## Current Documents
+## Continuous Integration
 
-- `docs/01-vision-and-boundaries.md`
-- `docs/02-roadmap.md`
-- `docs/03-policy-schema.md`
-- `docs/04-task-state-model.md`
-- `docs/05-agent-registry.md`
-- `docs/06-adapter-layer.md`
-- `docs/07-policy-task-bridge.md`
-- `docs/08-minimal-cli-design.md`
-- `docs/09-policy-checker-poc-plan.md`
-- `docs/10-cli-poc-usage.md`
-- `docs/11-release-notes-v0.1.md`
-- `docs/12-adapter-execution-envelope.md`
-- `docs/13-release-notes-adapter-envelope.md`
-- `docs/14-task-runtime-bridge.md`
-- `docs/15-runtime-ledger-audit.md`
-- `docs/16-runtime-plan.md`
-- `docs/17-runtime-planning-bridge.md`
-- `docs/18-release-notes-runtime-planning-bridge.md`
-- `docs/19-runtime-report.md`
-- `docs/20-release-notes-runtime-report.md`
-- `docs/21-controlled-write-boundaries.md`
-- `docs/22-runtime-draft-export-dry-run.md`
-- `docs/23-release-notes-runtime-draft-export-dry-run.md`
-- `docs/24-runtime-draft-export-commit.md`
-- `docs/25-release-notes-runtime-draft-export-commit.md`
-- `docs/26-runtime-event-append-dry-run.md`
-- `docs/27-release-notes-runtime-event-append-dry-run.md`
-- `docs/28-runtime-event-append-commit.md`
-- `docs/29-release-notes-runtime-event-append-commit.md`
-- `docs/30-runtime-event-append-smoke.md`
-- `docs/31-runtime-task-create-dry-run.md`
-- `docs/32-release-notes-runtime-task-create-dry-run.md`
-- `docs/33-runtime-task-create-commit.md`
-- `docs/34-release-notes-runtime-task-create-commit.md`
-- `docs/35-runtime-task-create-smoke.md`
-- `docs/36-controlled-write-regression.md`
-- `docs/37-runtime-event-import-dry-run.md`
-- `docs/38-release-notes-runtime-event-import-dry-run.md`
-- `docs/39-runtime-event-import-commit-design.md`
-- `docs/40-release-notes-runtime-event-import-commit.md`
-- `docs/41-runtime-event-import-consistency-freeze.md`
-- `docs/42-release-notes-runtime-event-import-consistency-freeze.md`
-- `docs/43-controlled-write-regression-event-import.md`
-- `docs/44-release-notes-v0.11-runtime-event-import.md`
-- `docs/45-runtime-event-import-strict-freeze-mode.md`
-- `docs/46-release-notes-runtime-event-import-strict-freeze.md`
+On push and pull request to `main`, GitHub Actions runs:
+
+- `pytest`
+- `doctor`
+- ledger CLI smoke checks
+- `public_scan`
+
+See `.github/workflows/ci.yml` for details.
 
 ## Development Principle
 
-Move in small, reviewable steps. Define the rules, task model, agent registry, adapter boundaries, and completion checks before implementing executable runtime code.
+Move in small, reviewable, reversible steps.
+
+Define the rules, task model, agent registry, adapter boundaries, and completion checks first, then gradually expand executable runtime capability.
