@@ -1,6 +1,6 @@
 # 2026-07-07 下一阶段接续上下文 — Strict Freeze Mode 实现
 
-> 本文件供下次新窗口恢复 `D:\agent-runtime` / `s-black harness engineering` 使用。GitHub 仓库：`https://github.com/wjt0321/s-black-harness-engineering`。
+> 本文件供下次新窗口恢复 `s-black harness engineering` 项目使用。当前项目根目录：仓库 checkout 根目录。GitHub 仓库：`https://github.com/wjt0321/s-black-harness-engineering`。
 
 ## 当前仓库状态
 
@@ -161,11 +161,11 @@ git diff --check
 
 今天多次 push 到 GitHub 时直连出现 `Recv failure: Connection was reset`，需要：
 
-1. `python D:\Qwenclaw\s-black\tools\open_v2ray.py`
+1. 启动工作区内的 `tools/open_v2ray.py`
 2. 显式注入：
    - `HTTP_PROXY=http://127.0.0.1:10808`
    - `HTTPS_PROXY=http://127.0.0.1:10808`
 3. push 成功后必须关闭：
-   - `D:\Qwenclaw\s-black\tools\close_v2ray.bat`
+   - 工作区内的 `tools/close_v2ray.bat`
 
 收尾前务必确认 V2Ray 已关闭、系统代理已恢复。
