@@ -954,7 +954,7 @@ def _render_runtime_report_summary(result: RuntimeReportResult) -> str:
     lines = [result.status.upper()]
     lines.append(
         f"Task: {result.task_id} "
-        f"({result.task_status or '-'}): {result.task_snapshot.get('title', '-')}"
+        f"({result.task_status or '-'}): title_present={result.task_snapshot.get('title_present', False)}"
     )
 
     event_summary = result.event_summary

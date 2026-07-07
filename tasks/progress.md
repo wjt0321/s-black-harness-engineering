@@ -523,3 +523,14 @@
 - 新增 `tests/test_runtime_task_create_commit.py`，覆盖 commit pass、新建 ledger、dry-run 不写、互斥/缺失模式、schema invalid、duplicate、secret/public scan、路径逃逸、后缀不安全、sample ledger、git internals、尾部无换行、post-check 回滚、stdin commit、JSON 输出脱敏。
 - 更新 `docs/10-cli-poc-usage.md`、`docs/34-release-notes-runtime-task-create-commit.md`、README/README.en、AGENTS.md。
 - 验证：`python -m pytest -q` 通过；`python -m agent_runtime.cli doctor` PASS；`python tools/public_scan.py` OK；`git diff --check` PASS。
+
+## 2026-07-07（续）— Runtime Task Create Smoke / Report Loop
+
+- 补 `runtime task create --commit` 端到端 smoke loop，覆盖：task create dry-run -> task create commit -> event append dry-run -> event append commit -> task validate / task check-ledger -> runtime report。
+- 新增 `tests/test_runtime_task_create_smoke_loop.py`：在 `tmp_path` 构造临时项目根、空 ledger、candidate task/event、envelope，断言每一步状态与 ledger 行数，且输出不泄露 `title` / `summary` / `evidence description` / `artifact payload`。
+- 修复 `runtime report` 人类输出泄露 task title 的问题：`agent_runtime/runtime_report.py` 的 `_sanitize_task_snapshot` 不再保留 `title`，改为 `title_present`；`agent_runtime/cli.py` 的 report 渲染不再打印完整 title。
+- 新增 `docs/35-runtime-task-create-smoke.md`：说明 smoke loop 目标、步骤、安全边界、输出示例与验证结果。
+- 更新 `docs/10-cli-poc-usage.md`：新增 "Runtime Task Create Smoke / Report Loop" 小节，并同步 `runtime report` 文本输出示例。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/35-runtime-task-create-smoke.md`。
+- 验证：`python -m pytest tests/test_runtime_task_create_smoke_loop.py tests/test_runtime_report.py -q` 通过；`python -m agent_runtime.cli doctor` PASS；`python tools/public_scan.py` OK；`git diff --check` PASS。
+- 不新增真实写入权限，不打 tag，不提交。

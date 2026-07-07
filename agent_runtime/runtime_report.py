@@ -67,23 +67,19 @@ class RuntimeReportResult:
 def _sanitize_task_snapshot(task: dict[str, Any]) -> dict[str, Any]:
     """Return a value-safe task snapshot.
 
-    Keeps ids, status, title, assignee, timestamps, and high-level counts.
-    Omits full evidence descriptions/refs and artifact lists.
+    Keeps ids, status, assignee, timestamps, and high-level counts.
+    Omits title, summary, current_step, blocked_reason, failure_reason,
+    full evidence descriptions/refs and artifact lists.
     """
+    title = task.get("title")
     safe: dict[str, Any] = {
         "id": task.get("id"),
-        "title": task.get("title"),
         "status": task.get("status"),
         "assignee": task.get("assignee"),
         "created_at": task.get("created_at"),
         "updated_at": task.get("updated_at"),
+        "title_present": isinstance(title, str) and len(title) > 0,
     }
-    if task.get("current_step"):
-        safe["current_step"] = task["current_step"]
-    if task.get("blocked_reason"):
-        safe["blocked_reason"] = task["blocked_reason"]
-    if task.get("failure_reason"):
-        safe["failure_reason"] = task["failure_reason"]
     evidence = task.get("evidence")
     if isinstance(evidence, list):
         safe["evidence_count"] = len(evidence)
