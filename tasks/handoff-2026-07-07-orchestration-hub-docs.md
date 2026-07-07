@@ -65,19 +65,21 @@
 
 ## 建议下一步
 
-优先建议进入：
+当前**不急着进入实现或深挖**：
 
 ```text
 51 — Backend-first API Boundary
 ```
 
-建议目标：
+但需要把它作为明确的后续节点保留下来。
+
+建议目标（暂存上下文，不立刻展开）：
 
 - 定义未来 UI / CLI / automation 共同依赖的后端接口边界
 - 不急着选 HTTP / RPC / 本地进程协议
 - 先定义资源模型和操作模型
 
-建议至少覆盖：
+后续至少应覆盖：
 
 - task list / task detail
 - run list / run detail
@@ -86,6 +88,20 @@
 - report list / inspect
 - dry-run / commit action boundary
 - routing preview / adapter selection preview
+
+## Guardrail / 门禁主线说明
+
+门禁内核仍然重要，而且允许继续补完；但它不再作为当前阶段的唯一主线，也不作为“做完才能继续”的阻塞项。
+
+后续策略：
+
+- 可以在每一阶段结束后回看一次：本阶段暴露了哪些新的 guardrail 缺口。
+- 也可以在中途边做边发现，再把缺口回写到 roadmap / handoff / docs。
+- 如果某个新 adapter / capability / state model 需要额外 guardrail 支撑，可以立即补一个局部节点，而不是等全盘门禁一次性完工。
+
+换句话说：
+
+> guardrail 是长期内核，跟着中枢台一起长；不是现在必须一次性收尾的前置阻塞项。
 
 ## 与前文衔接
 

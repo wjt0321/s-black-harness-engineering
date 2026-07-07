@@ -15,6 +15,22 @@
 
 因此中枢台内部不应直接面向“某个脚本”或“某个 ACP runner”，而应面向一组统一的 adapter 接口。
 
+## 积木式接入原则
+
+中枢台后续接工具时，必须优先采用**积木式可插拔接入**，而不是为每个新工具都扩出一条专用主干。
+
+具体要求：
+
+- 新接入对象应尽量作为一个新的 adapter 积木插入现有结构。
+- 新增工具时，应优先复用现有 request / response / artifact / evidence / approval / report 语义。
+- 如果某个工具需要特殊逻辑，优先在 adapter 内部封装，而不是把特殊分支蔓延到 routing、state、UI 和所有上层 workflow。
+- capability 应保持稳定；未来替换底层实现时，上层不应大面积改写。
+- 插件式扩展应允许“先接入、后增强”，即先接成一个最小可用积木，再逐步补 timeout、background、approval、artifact 等能力。
+
+这一原则的目标是：
+
+> 未来每增加一个 Agent、工具、服务，尽量是在现有中枢台上再插一个积木，而不是把整个中枢台改造成另一套系统。
+
 ## Adapter 的定位
 
 Adapter 是中枢台与外部执行能力之间的边界层。

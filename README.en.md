@@ -24,7 +24,7 @@ Its goal is not to replace the chat host or start with a UI. The first priority 
 - controlled write flows
 - capability routing and orchestration foundations
 
-The long-term goal is a **small, auditable, portable runtime / control plane**, where QwenPaw is only one future host/adapter target rather than the only boundary.
+The long-term goal is a **small, auditable, portable, pluggable runtime / control plane**, where QwenPaw is only one future host/adapter target rather than the only boundary.
 
 ## Big Picture
 
