@@ -126,6 +126,7 @@ The first phase does not:
 - `docs/39-runtime-event-import-commit-design.md`
 - `docs/41-runtime-event-import-consistency-freeze.md`
 - `docs/42-release-notes-runtime-event-import-consistency-freeze.md`
+- `docs/43-controlled-write-regression-event-import.md`
 - `docs/40-release-notes-runtime-event-import-commit.md`
 
 ## Development Principle

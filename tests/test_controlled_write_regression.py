@@ -190,3 +190,210 @@ def test_controlled_write_regression_does_not_touch_real_ledgers(tmp_path, monke
     # Repository real ledgers must be unchanged.
     assert real_tasks.read_bytes() == real_tasks_before
     assert real_events.read_bytes() == real_events_before
+
+
+def test_controlled_write_regression_event_import_does_not_touch_real_ledgers(
+    tmp_path, monkeypatch, capsys
+):
+    """Run the controlled-write chain with runtime event import batch commit."""
+    real_tasks = ROOT / "tasks" / "tasks.jsonl"
+    real_events = ROOT / "tasks" / "events.jsonl"
+    real_tasks_before = real_tasks.read_bytes() if real_tasks.is_file() else b""
+    real_events_before = real_events.read_bytes() if real_events.is_file() else b""
+
+    root = _setup_fake_root(tmp_path)
+    task_id = "task-20260707-998"
+    request_id = "req-20260707-998"
+
+    tasks_dir = root / "tasks"
+    tasks_dir.mkdir(exist_ok=True)
+    tasks_file = tasks_dir / "tasks.jsonl"
+    events_file = tasks_dir / "events.jsonl"
+    tasks_file.write_text("", encoding="utf-8")
+    events_file.write_text("", encoding="utf-8")
+
+    _write_json(root / "candidate-task.json", _task(task_id))
+    _write_json(root / "seed-event.json", _event("evt-20260707-998001", task_id))
+    _write_json(root / "envelope.json", _envelope(request_id, task_id))
+
+    def _run(argv: list[str]) -> tuple[str, int]:
+        monkeypatch.setattr("sys.argv", ["agent-runtime", "--root", str(root), *argv])
+        code = main()
+        captured = capsys.readouterr()
+        return captured.out, code
+
+    # Seed task and one event so the ledger is non-empty for import dry-run.
+    out, code = _run(["runtime", "task", "create", "--file", "candidate-task.json", "--commit"])
+    assert code == 0, out
+    out, code = _run(["runtime", "event", "append", "--file", "seed-event.json", "--commit"])
+    assert code == 0, out
+    assert tasks_file.read_text(encoding="utf-8").count("\n") == 1
+    assert events_file.read_text(encoding="utf-8").count("\n") == 1
+
+    # Update task snapshot to running so the upcoming status_changed event is consistent.
+    task_record = json.loads(tasks_file.read_text(encoding="utf-8").strip())
+    task_record["status"] = "running"
+    tasks_file.write_text(json.dumps(task_record, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    # Build a two-event candidate batch.
+    batch = [
+        _event("evt-20260707-998002", task_id),
+        _event("evt-20260707-998003", task_id),
+    ]
+    batch[0]["timestamp"] = "2026-07-07T10:01:00+08:00"
+    batch[0]["event_type"] = "status_changed"
+    batch[0]["from_status"] = "planned"
+    batch[0]["to_status"] = "running"
+    batch[1]["timestamp"] = "2026-07-07T10:02:00+08:00"
+    batch[1]["event_type"] = "progress"
+    batch[1]["from_status"] = "running"
+    batch[1]["to_status"] = "running"
+
+    candidate_import = root / "candidate-import-events.jsonl"
+    candidate_import.write_text(
+        "\n".join(json.dumps(e, ensure_ascii=False) for e in batch) + "\n",
+        encoding="utf-8",
+    )
+
+    # 1) event import dry-run should pass and expose a plan_hash.
+    out, code = _run(
+        ["runtime", "event", "import", "--file", "candidate-import-events.jsonl", "--dry-run"]
+    )
+    assert code == 0, out
+    assert "would_import=True" in out
+    assert "plan_hash=sha256:" in out
+    assert events_file.read_text(encoding="utf-8").count("\n") == 1
+
+    # Capture the actual plan hash via JSON output.
+    out_json, code = _run(
+        [
+            "runtime",
+            "event",
+            "import",
+            "--file",
+            "candidate-import-events.jsonl",
+            "--dry-run",
+            "--json",
+        ]
+    )
+    assert code == 0
+    dry_run_result = json.loads(out_json)
+    plan_hash = dry_run_result["plan_hash"]
+    assert plan_hash.startswith("sha256:")
+
+    # 2) commit with the correct expected plan hash should append the batch.
+    out, code = _run(
+        [
+            "runtime",
+            "event",
+            "import",
+            "--file",
+            "candidate-import-events.jsonl",
+            "--commit",
+            "--expected-plan-hash",
+            plan_hash,
+        ]
+    )
+    assert code == 0
+    assert "committed=True" in out
+    assert "freeze_check=pass" in out
+    assert events_file.read_text(encoding="utf-8").count("\n") == 3
+
+    # 3) Build a second candidate and capture its plan hash.
+    batch2 = [_event("evt-20260707-998004", task_id)]
+    batch2[0]["timestamp"] = "2026-07-07T10:03:00+08:00"
+    batch2[0]["event_type"] = "progress"
+    batch2[0]["from_status"] = "running"
+    batch2[0]["to_status"] = "running"
+    candidate_import2 = root / "candidate-import-events2.jsonl"
+    candidate_import2.write_text(
+        json.dumps(batch2[0], ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+
+    out_json2, code = _run(
+        [
+            "runtime",
+            "event",
+            "import",
+            "--file",
+            "candidate-import-events2.jsonl",
+            "--dry-run",
+            "--json",
+        ]
+    )
+    assert code == 0
+    plan_hash2 = json.loads(out_json2)["plan_hash"]
+
+    # Mutate the events ledger so plan_hash2 is now stale.
+    events_file.write_text(
+        events_file.read_text(encoding="utf-8")
+        + json.dumps(_event("evt-20260707-998005", task_id), ensure_ascii=False)
+        + "\n",
+        encoding="utf-8",
+    )
+    events_after_mutation = events_file.read_bytes()
+
+    # Commit with the stale plan hash must be blocked and must not modify the ledger.
+    out, code = _run(
+        [
+            "runtime",
+            "event",
+            "import",
+            "--file",
+            "candidate-import-events2.jsonl",
+            "--commit",
+            "--expected-plan-hash",
+            plan_hash2,
+        ]
+    )
+    assert code == 2
+    assert "plan-hash-mismatch" in out
+    assert "freeze_check=failed" in out
+    assert events_file.read_bytes() == events_after_mutation
+
+    # 4) Post-commit read-only checks should still pass.
+    out, code = _run(
+        ["task", "validate", "--record-file", "tasks/events.jsonl", "--schema", "event"]
+    )
+    assert code == 0
+    out, code = _run(
+        [
+            "task",
+            "check-ledger",
+            "--tasks-file",
+            "tasks/tasks.jsonl",
+            "--events-file",
+            "tasks/events.jsonl",
+        ]
+    )
+    assert code == 0
+    assert "PASS" in out
+
+    # 5) runtime report should succeed and stay sanitized.
+    out, code = _run(
+        [
+            "runtime",
+            "report",
+            "--task-id",
+            task_id,
+            "--request-id",
+            request_id,
+            "--envelope",
+            "envelope.json",
+            "--tasks-file",
+            "tasks/tasks.jsonl",
+            "--events-file",
+            "tasks/events.jsonl",
+        ]
+    )
+    assert code in {0, 3, 4}
+    assert task_id in out
+    assert "controlled write regression task title" not in out
+    assert "controlled write regression event message" not in out
+
+    # 6) Task ledger must not be touched by event import commit.
+    assert tasks_file.read_text(encoding="utf-8").count("\n") == 1
+
+    # Repository real ledgers must be unchanged.
+    assert real_tasks.read_bytes() == real_tasks_before
+    assert real_events.read_bytes() == real_events_before

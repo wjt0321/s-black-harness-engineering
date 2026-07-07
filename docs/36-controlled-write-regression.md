@@ -30,6 +30,16 @@
 - **Rollback**：post-check 失败时按写入前 byte size 截断；若本命令新建文件则删除。
 - **输出脱敏**：不回显完整 `title` / `summary` / `current_step` / `blocked_message` / `failure_reason` / evidence description / artifacts payload / secret match。
 
+### 4. `runtime event import --commit`
+
+- **唯一写入目标**：项目根内已存在的 event ledger JSONL 文件（默认 `tasks/events.jsonl`）。
+- **Path guard**：必须在项目根目录内、后缀 `.jsonl`、禁止 sample ledger（`tasks/examples.jsonl`、`tasks/events.examples.jsonl`）、禁止 `.git`/credential/secret 路径。
+- **Preflight**：重跑完整 preflight（JSON 语法、schema、secret/public scan、candidate 内部去重、与现有 ledger 去重、unknown task、状态迁移合法性、模拟 check-ledger）。
+- **Consistency freeze**：可选 `--expected-plan-hash`；提供时会在 preflight 前比对当前 plan hash，不一致直接 `blocked`。
+- **Post-check**：写后执行 `task validate --schema event`、`task check-ledger`。
+- **Rollback**：post-check 失败或写入异常时按写入前 byte size 截断；不允许部分成功。
+- **输出脱敏**：不回显完整 `message` / metadata values / artifacts payload / evidence description / `target` / `input` / `raw_ref` / `decision_ref` / secret match；freeze 字段只暴露 hash、size、line count。
+
 ## 必须保持只读的命令
 
 以下命令只读，不写入、不执行 adapter、不访问网络、不发送消息、不读取 `.env`/credential：
@@ -62,15 +72,20 @@
 2. `runtime task create --commit`
 3. `runtime event append --dry-run`
 4. `runtime event append --commit`
-5. `task validate` + `task check-ledger`
-6. `runtime report`
+5. `runtime event import --dry-run`（验证输出包含 `plan_hash`）
+6. `runtime event import --commit --expected-plan-hash <hash>`（验证批量追加）
+7. `runtime event import --commit --expected-plan-hash <stale-hash>`（验证 freeze mismatch 被 blocked）
+8. `task validate` + `task check-ledger`
+9. `runtime report`
 
 断言：
 
 - 每一步返回预期状态码。
 - task/event ledger 只追加预期行数。
+- `--expected-plan-hash` mismatch 时 events ledger 不被修改。
 - `runtime report` 不泄露 `title` / event `message`。
 - 仓库真实 `tasks/tasks.jsonl` 与 `tasks/events.jsonl` 不被修改。
+- 新加入的 `runtime event import --commit` 与 consistency freeze 链路不会污染现有受控写入点。
 
 ## 建议本地 / CI 命令
 
@@ -94,6 +109,7 @@ python tools/public_scan.py
 ## 实现文件
 
 - `docs/36-controlled-write-regression.md`：本文档。
+- `docs/43-controlled-write-regression-event-import.md`：event import 纳入回归保护的扩展说明。
 - `tests/test_controlled_write_regression.py`：受控写入回归测试。
 - `.github/workflows/ci.yml`：新增 controlled write smoke test 步骤。
 

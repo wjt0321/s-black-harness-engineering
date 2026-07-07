@@ -1177,3 +1177,26 @@
 - 已跑 `python -m pytest -q`：通过。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+
+## 2026-07-07（九续）— Controlled Write Regression 扩展：Event Import
+
+- 把 `runtime event import --commit` 与 consistency freeze 纳入 controlled write regression 保护。
+- 不新增写入能力，只补测试与文档。
+- 修改 `tests/test_controlled_write_regression.py`：
+  - 新增 `test_controlled_write_regression_event_import_does_not_touch_real_ledgers`。
+  - 在临时项目根中完成：task create commit -> event append commit -> event import dry-run -> event import commit with `--expected-plan-hash` -> freeze mismatch blocked -> post-commit validate/check-ledger -> runtime report。
+  - 断言 dry-run 输出 `plan_hash`；commit 成功批量追加；mismatch 返回 blocked 且不修改 events ledger；`task check-ledger` 与 `runtime report` 通过且脱敏；task ledger 不被 event import 修改；真实仓库 ledger 不变。
+- 更新 `docs/36-controlled-write-regression.md`：
+  - 在受控写入点列表新增 `runtime event import --commit`。
+  - 更新回归测试链路说明，加入 event import dry-run / commit / freeze mismatch 场景。
+- 新增 `docs/43-controlled-write-regression-event-import.md`：说明本次扩展的背景、纳入回归的写入点、测试链路、关键断言、CI 关系与安全边界。
+- 更新 `README.md` 与 `README.en.md`：文档索引加入 `docs/43-controlled-write-regression-event-import.md`。
+- 检查 `.github/workflows/ci.yml`：已包含 `python -m pytest tests/test_controlled_write_regression.py -q`，无需修改。
+- 保持安全边界：所有写入在 `tmp_path` 临时项目根中完成；不修改真实 `tasks/tasks.jsonl` / `tasks/events.jsonl`；不访问网络、不读取 `.env`/credential、不删除文件。
+- 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest tests/test_controlled_write_regression.py -q`：通过。
+- 已跑 `python -m pytest tests/test_runtime_event_import_dry_run.py tests/test_runtime_event_import_commit.py tests/test_runtime_event_import_freeze.py -q`：通过。
+- 已跑 `python -m pytest -q`：通过。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
