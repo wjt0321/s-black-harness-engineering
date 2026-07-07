@@ -1291,21 +1291,53 @@ python -m pytest tests/test_controlled_write_regression.py -q
 详细边界与写入点梳理见 `docs/36-controlled-write-regression.md`。
 
 
-## Runtime Event Import Dry-run 预备设计
+## Runtime Event Import Dry-run
 
-`runtime event import --dry-run` 尚未实现。当前只保留设计文档，用于定义未来批量 event 导入预检的安全边界。
+`runtime event import --dry-run` 对批量候选 event 做只读预检，在真正追加到 event ledger 之前跑通所有入门禁：JSON 语法、object 形状、event schema、secret/public scan、candidate 内部 event_id 去重、与现有 ledger 的 event_id 去重、task_id 存在性、模拟追加后的 ledger consistency。
 
-设计原则：
+从文件批量预检：
 
-- 第一版只做 dry-run，不写 event ledger。
-- 输入建议为 JSONL，每行一个 event object。
-- 批量语义采用 all-or-nothing preflight；不允许部分成功。
+```bash
+python -m agent_runtime.cli runtime event import \
+  --file candidate-events.jsonl \
+  --dry-run
+```
+
+指定 ledger：
+
+```bash
+python -m agent_runtime.cli runtime event import \
+  --file candidate-events.jsonl \
+  --dry-run \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl \
+  --json
+```
+
+dry-run 通过时的人类输出示例：
+
+```text
+PASS
+Source: candidate-events.jsonl
+event_count=3
+blank_line_count=0
+task_count=2
+event_type_counts=created:1,status_changed:2
+would_import=True
+ledger_check=pass
+Next: Dry-run passed. Review the event batch before any future commit command.
+```
+
+约束：
+
+- `--dry-run` 必须显式提供；本命令不实现 `--commit`。
+- 输入文件必须是项目根目录内的安全 `.jsonl` 文件，不能指向 `.git` / credential / secret 路径。
+- 批量语义为 all-or-nothing preflight；任意一行失败，整批返回失败。
 - 输入顺序即模拟导入顺序；不自动按 timestamp 排序。
-- 必须检测 candidate 内部重复 event_id、与现有 ledger 重复 event_id、引用不存在 task、非法状态迁移。
-- secret/public scan 命中时 blocked，且不回显完整 message / metadata / artifact payload / secret match。
-- 未来如需 commit，必须另写设计，不从 dry-run 直接推导。
+- 不写 `tasks/events.jsonl`、不写 task ledger、不写 envelope。
+- 不回显完整 `message` / metadata values / artifacts payload / evidence description / `target` / `input` / `raw_ref` / `decision_ref` / secret match。
 
-详细设计见 `docs/37-runtime-event-import-dry-run.md`。
+详细设计见 `docs/37-runtime-event-import-dry-run.md`，阶段收口说明见 `docs/38-release-notes-runtime-event-import-dry-run.md`。
 
 ## Runtime Event Append Smoke / Report Loop
 

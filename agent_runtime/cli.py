@@ -24,6 +24,7 @@ from .runtime_ledger import RuntimeLedgerResult, check_runtime_ledger
 from .runtime_draft import inspect_runtime_draft, validate_runtime_draft
 from .runtime_draft_export import DraftExportResult, export_draft
 from .runtime_event_append import EventAppendDryRunResult, append_event
+from .runtime_event_import import EventImportDryRunResult, import_events_dry_run
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_task_create import TaskCreateDryRunResult, create_task, create_task_dry_run
 from .runtime_report import RuntimeReportResult, check_runtime_report
@@ -626,6 +627,73 @@ def _emit_runtime_event_append_result(result: CheckResult, json_output: bool, no
     else:
         print(_render_runtime_event_append_summary(result))
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _render_runtime_event_import_summary(result: CheckResult) -> str:
+    """Render runtime event import dry-run output.
+
+    EventImportDryRunResult carries only safe counts and identifiers; fallback
+    keeps ordinary CheckResult rendering for errors raised before parsing.
+    """
+    if not isinstance(result, EventImportDryRunResult):
+        return result.render_human()
+
+    lines = [result.status.upper()]
+    if result.source is not None:
+        lines.append(f"Source: {result.source}")
+    lines.append(f"event_count={result.event_count}")
+    lines.append(f"blank_line_count={result.blank_line_count}")
+    lines.append(f"task_count={result.task_count}")
+    if result.event_type_counts:
+        counts = ", ".join(f"{k}:{v}" for k, v in result.event_type_counts.items())
+        lines.append(f"event_type_counts={counts}")
+    else:
+        lines.append("event_type_counts=")
+    lines.append(f"would_import={result.would_import}")
+    if result.ledger_check is not None:
+        lines.append(f"ledger_check={result.ledger_check}")
+    for finding in result.findings:
+        loc = ""
+        if finding.line is not None:
+            loc = f" at line {finding.line}"
+        lines.append(f"- {finding.rule_id}{loc}: {finding.message}")
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+    return "\n".join(lines)
+
+
+def _emit_runtime_event_import_result(result: CheckResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_runtime_event_import_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_runtime_event_import(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    dry_run = getattr(args, "dry_run", False)
+    if not dry_run:
+        result = CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="missing-dry-run",
+                    severity="error",
+                    action="error",
+                    message="--dry-run is required for runtime event import.",
+                )
+            ],
+            next_action="Add --dry-run to simulate the import without writing.",
+        )
+        return _emit_runtime_event_import_result(result, json_output=args.json)
+    result = import_events_dry_run(
+        root,
+        file=args.file,
+        tasks_file=args.tasks_file,
+        events_file=args.events_file,
+    )
+    return _emit_runtime_event_import_result(result, json_output=args.json)
 
 
 def _render_runtime_task_create_summary(result: CheckResult) -> str:
@@ -1387,6 +1455,16 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_event_append_parser.add_argument("--envelope", default=None, help="Path to adapter execution envelope JSON file for runtime audit")
     _add_global_args(runtime_event_append_parser)
     runtime_event_append_parser.set_defaults(func=_cmd_runtime_event_append)
+
+    runtime_event_import_parser = event_subparsers.add_parser(
+        "import", help="Dry-run batch import candidate events from a JSONL file"
+    )
+    runtime_event_import_parser.add_argument("--file", required=True, help="Path to candidate events JSONL file")
+    runtime_event_import_parser.add_argument("--dry-run", action="store_true", help="Run in read-only dry-run mode")
+    runtime_event_import_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
+    runtime_event_import_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
+    _add_global_args(runtime_event_import_parser)
+    runtime_event_import_parser.set_defaults(func=_cmd_runtime_event_import)
 
     # runtime task create (dry-run only)
     runtime_task_parser = runtime_subparsers.add_parser(

@@ -554,3 +554,35 @@
 - 明确未来 commit 阶段必须另写设计，不能直接从 dry-run 推导。
 - 更新 README / README.en 文档索引与 `docs/10-cli-poc-usage.md` 用法说明。
 - 不实现 `runtime event import` CLI，不写 ledger，不新增任何写权限。
+
+## 2026-07-07（五续）— Runtime Event Import Dry-run 实现
+
+- 实现 `runtime event import --dry-run` 批量 event 预检命令。
+- 新增 `agent_runtime/runtime_event_import.py`：
+  - 读取候选 `.jsonl` 文件，逐行解析并校验 JSON 语法、object 形状、`tasks/event.schema.json`。
+  - 对每行 candidate 执行 secret scan 与 public scan，命中时 blocked 且不回显完整匹配值。
+  - 检测 candidate 内部重复 `event_id`、与现有 event ledger 重复 `event_id`、引用不存在 task。
+  - 在临时文件中模拟 `existing events + candidate events in input order`，运行 `task validate --schema event` 与 `task check-ledger` 等价检查；检查后删除临时文件。
+  - 批量语义为 all-or-nothing preflight；输入顺序即模拟顺序；不自动排序。
+  - 输出安全摘要：`event_count`、`blank_line_count`、`task_count`、`event_type_counts`、`candidate_event_ids_present`、`would_import`、`ledger_check` 等，不回显 `message` / metadata / artifacts / evidence / target / input / raw_ref / decision_ref / secret match。
+- 更新 `agent_runtime/cli.py`：新增 `runtime event import` 子命令，支持 `--file`（必填）、`--dry-run`（必填）、`--tasks-file`、`--events-file` 与全局 `--json`；不实现 `--commit`。
+- 新增 `tests/test_runtime_event_import_dry_run.py`，覆盖：
+  - dry-run pass（单 event / 多 event / 多 task）。
+  - 输入文件不存在、项目根外、后缀非 `.jsonl`、位于 `.git` 路径下。
+  - invalid JSON、非 object 行、schema invalid。
+  - candidate 内部重复 event_id、与现有 ledger 重复 event_id。
+  - 引用不存在 task、非法状态迁移。
+  - secret scan / public scan blocked 且输出脱敏。
+  - 空行计数与忽略行为。
+  - dry-run 不修改真实 events/tasks ledger。
+  - JSON 输出脱敏。
+  - 未提供 `--dry-run` 报错。
+- 新增 `docs/38-release-notes-runtime-event-import-dry-run.md`：阶段收口说明，含能力、批量语义、检查内容、输出摘要、安全边界、验证结果与后续建议。
+- 更新 `docs/10-cli-poc-usage.md`：将 "Runtime Event Import Dry-run 预备设计" 改为实现说明与 CLI 示例。
+- 更新 `README.md` 与 `README.en.md`：文档索引加入 `docs/38-release-notes-runtime-event-import-dry-run.md`，当前状态补充 `runtime event import --dry-run`。
+- 保持安全边界：不实现 `--commit`、不写真实 ledger、不执行 adapter、不访问网络、不发送消息、不读取 `.env`/credential、不删除文件。
+- 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest tests/test_runtime_event_import_dry_run.py -q`：通过。
+- 已跑 `python -m pytest -q`：通过。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
