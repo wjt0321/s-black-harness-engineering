@@ -26,8 +26,8 @@ It is not intended to replace QwenPaw immediately. The first phase focuses on do
 
 - Stage: read-only CLI POC plus Adapter execution envelope checks are runnable
 - Created: 2026-07-02
-- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, ledger validation, adapter envelope plan / validate / inspect / approval check / response check / gate check, task + adapter envelope runtime plan (including `--draft-json` envelope draft output), runtime draft validate / inspect / export `--dry-run` / `--commit`, runtime event append `--dry-run` / `--commit`, runtime task create `--dry-run`, runtime gate check, runtime ledger audit, and runtime report
-- Current boundary: adapter flows, runtime plan, runtime draft validate / inspect / gate / runtime ledger audit, runtime report, and runtime task create `--dry-run` remain read-only by default and do not execute real external actions; `runtime draft export --commit` only writes new files under `drafts/runtime/.../*.json`, does not overwrite, and rolls back on failure; `runtime event append --commit` appends exactly one line to an event ledger JSONL and rolls back to the original byte size on failure; `runtime task create` only implements `--dry-run`, not `--commit`
+- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, ledger validation, adapter envelope plan / validate / inspect / approval check / response check / gate check, task + adapter envelope runtime plan (including `--draft-json` envelope draft output), runtime draft validate / inspect / export `--dry-run` / `--commit`, runtime event append `--dry-run` / `--commit`, runtime task create `--dry-run` / `--commit`, runtime gate check, runtime ledger audit, and runtime report
+- Current boundary: adapter flows, runtime plan, runtime draft validate / inspect / gate / runtime ledger audit, runtime report, and runtime task create `--dry-run` remain read-only by default and do not execute real external actions; `runtime draft export --commit` only writes new files under `drafts/runtime/.../*.json`, does not overwrite, and rolls back on failure; `runtime event append --commit` appends exactly one line to an event ledger JSONL and rolls back to the original byte size on failure; `runtime task create --commit` appends exactly one line to a task ledger JSONL, rolls back to the original byte size on post-check failure, and does not write the event ledger
 
 ## Continuous Integration
 
@@ -118,6 +118,7 @@ The first phase does not:
 - `docs/31-runtime-task-create-dry-run.md`
 - `docs/32-release-notes-runtime-task-create-dry-run.md`
 - `docs/33-runtime-task-create-commit.md`
+- `docs/34-release-notes-runtime-task-create-commit.md`
 
 ## Development Principle
 

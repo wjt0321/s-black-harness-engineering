@@ -137,3 +137,8 @@ python tools/public_scan.py -> OK public scan
 3. `ledger compaction --dry-run`，只读分析压缩候选，不执行重写。
 
 不要直接进入真实 adapter execution。
+
+
+## 后续补充
+
+`runtime task create --commit` 已实现，见 `docs/34-release-notes-runtime-task-create-commit.md`。

@@ -264,7 +264,7 @@ def test_cli_stdin_dry_run_pass(tmp_path, monkeypatch, capsys):
     assert tasks_file.read_text(encoding="utf-8").count("\n") == 1
 
 
-def test_cli_missing_dry_run(tmp_path, monkeypatch, capsys):
+def test_cli_missing_mode(tmp_path, monkeypatch, capsys):
     root = _setup_fake_root(tmp_path)
     _write_tasks(root)
     candidate_file = root / "candidate.json"
@@ -276,22 +276,7 @@ def test_cli_missing_dry_run(tmp_path, monkeypatch, capsys):
     )
     assert main() == 1
     captured = capsys.readouterr()
-    assert "missing-dry-run" in captured.out
-
-
-def test_cli_commit_not_implemented(tmp_path, monkeypatch, capsys):
-    root = _setup_fake_root(tmp_path)
-    _write_tasks(root)
-    candidate_file = root / "candidate.json"
-    candidate_file.write_text(json.dumps(_task("task-20260706-001"), ensure_ascii=False), encoding="utf-8")
-
-    monkeypatch.setattr(
-        "sys.argv",
-        ["agent-runtime", "--root", str(root), "runtime", "task", "create", "--file", str(candidate_file), "--commit"],
-    )
-    assert main() == 1
-    captured = capsys.readouterr()
-    assert "commit-not-implemented" in captured.out
+    assert "missing-create-mode" in captured.out
 
 
 def test_cli_json_output_sanitized(tmp_path, monkeypatch, capsys):

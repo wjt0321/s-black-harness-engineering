@@ -507,3 +507,19 @@
 - 更新 `README.md` 与 `README.en.md`：文档索引加入 `docs/31-runtime-task-create-dry-run.md`，当前状态补充 `runtime task create --dry-run` 能力与边界。
 - 保持安全边界：不实现 `--commit`、不写 `tasks/tasks.jsonl`、不写 `tasks/events.jsonl`、不执行 adapter、不访问网络、不发送消息、不读取 `.env`/credential、不回显完整 secret match / evidence description / summary。
 - 不生成 `docs/superpowers/...`，不改 `AGENTS.md`。
+
+
+## 2026-07-07 — Runtime Task Create Commit
+
+- 实现 `runtime task create --commit`，把 task create dry-run 门禁扩展为受控写入。
+  - 复用 candidate 读取、schema validation、task id 去重、secret/public scan、临时 ledger 模拟 append 与 ledger consistency。
+  - 唯一写入动作：向 task ledger JSONL 末尾追加 exactly one JSON object。
+  - 不自动写 event ledger；如需 created event，需后续显式执行 `runtime event append --commit`。
+  - commit target guard：项目根内、安全 `.jsonl`、禁止 sample ledger（`tasks/examples.jsonl` 与 `*.examples.jsonl`）、禁止 `.git` / credential / secret 路径。
+  - 现有非空 tasks file 无末尾换行时 blocked；父目录不存在时 blocked；不自动修复历史 ledger。
+  - 写前记录原始 byte size；写后运行 task schema validate 与 ledger consistency；失败时 truncate 回原 byte size，若本命令新建文件则删除。
+  - 输出安全摘要：task_id、task_status、title_present、assignee_present、tag_count、artifact_count、evidence_count、would_create、ledger_check、committed、post_validate、post_ledger_check、rolled_back；不回显 title / summary / evidence description / secret match。
+- 更新 `agent_runtime/cli.py`：`runtime task create` 支持 `--dry-run` / `--commit` 显式互斥二选一，移除 `commit-not-implemented` 分支。
+- 新增 `tests/test_runtime_task_create_commit.py`，覆盖 commit pass、新建 ledger、dry-run 不写、互斥/缺失模式、schema invalid、duplicate、secret/public scan、路径逃逸、后缀不安全、sample ledger、git internals、尾部无换行、post-check 回滚、stdin commit、JSON 输出脱敏。
+- 更新 `docs/10-cli-poc-usage.md`、`docs/34-release-notes-runtime-task-create-commit.md`、README/README.en、AGENTS.md。
+- 验证：`python -m pytest -q` 通过；`python -m agent_runtime.cli doctor` PASS；`python tools/public_scan.py` OK；`git diff --check` PASS。

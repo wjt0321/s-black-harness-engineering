@@ -27,7 +27,7 @@
 - `runtime draft validate` / `runtime draft inspect`：只读校验和摘要展示 runtime plan envelope draft，支持项目内 JSON 文件或 stdin。
 - `runtime draft export --dry-run` / `--commit`：dry-run 模拟导出 envelope 草案；`--commit` 将校验通过的草案写入 `drafts/runtime/.../*.json`（只允许新文件、禁止覆盖、写入失败自动回滚）。
 - `runtime event append --dry-run` / `--commit`：dry-run 模拟追加单条 event；`--commit` 在 event ledger JSONL 末尾追加一行，追加后做 schema / ledger / runtime audit 校验，失败则按原始 byte size 回滚。
-- `runtime task create --dry-run`：只读模拟创建新 task snapshot 并校验 ledger 一致性；`--commit` 尚未实现。
+- `runtime task create --dry-run` / `--commit`：dry-run 只读模拟创建新 task snapshot；`--commit` 只向 task ledger JSONL 追加一行，写后做 schema / ledger 校验，失败则按原始 byte size 回滚，不自动写 event ledger。
 - `runtime gate check`：只读聚合 task ledger 与 adapter gate，输出是否可继续推进及建议 event draft（不落盘）。
 - `runtime check-ledger`：只读审计 task/event ledger 与 adapter envelope 的跨系统一致性。
 - `runtime report`：只读聚合 task 快照、事件流摘要、envelope 摘要、runtime gate 与 runtime ledger audit，输出统一报告。
@@ -39,7 +39,7 @@
 - 不启动长期后台服务，不接管定时任务。
 - 不做模型代理或计费系统。
 - 不静默执行真实外部操作（不发消息、不删文件、不 push、不访问网络）。
-- 受控写操作仅限本项目的 envelope draft 导出与 event ledger 追加，且需要显式 `--commit` 与严格校验/回滚；task create 目前只实现 `--dry-run`。
+- 受控写操作仅限本项目的 envelope draft 导出、event ledger 追加与 task ledger 追加，且需要显式 `--commit` 与严格校验/回滚；task create commit 不自动写 event ledger。
 
 ---
 
@@ -81,7 +81,7 @@
 - `agent_runtime/runtime_draft.py`：只读校验与摘要 runtime plan envelope draft。
 - `agent_runtime/runtime_draft_export.py`：envelope draft 的 dry-run 导出与受控 `--commit` 写入。
 - `agent_runtime/runtime_event_append.py`：单条 event 的 dry-run 模拟与受控 `--commit` 追加。
-- `agent_runtime/runtime_task_create.py`：新 task 的 `--dry-run` 模拟（`--commit` 未实现）。
+- `agent_runtime/runtime_task_create.py`：新 task 的 `--dry-run` 模拟与受控 `--commit` 追加。
 - `agent_runtime/runtime_gate.py`：只读聚合 task ledger 与 adapter envelope gate。
 - `agent_runtime/runtime_ledger.py`：只读审计 task/event ledger 与 adapter envelope 的跨系统一致性。
 - `agent_runtime/runtime_report.py`：只读聚合 task、event、envelope、gate、ledger audit 的统一报告。
@@ -155,6 +155,7 @@ python -m agent_runtime.cli runtime draft export --output drafts/runtime/task-00
 python -m agent_runtime.cli runtime event append --file <event.json> --dry-run
 python -m agent_runtime.cli runtime event append --file <event.json> --commit
 python -m agent_runtime.cli runtime task create --file <task.json> --dry-run
+python -m agent_runtime.cli runtime task create --file <task.json> --commit
 python -m agent_runtime.cli runtime gate check --task-id task-20260703-001 --request-id req-20260703-002 --envelope adapters/execution-envelope.examples.json
 python -m agent_runtime.cli runtime check-ledger --tasks-file tasks/tasks.jsonl --events-file tasks/events.jsonl --envelope adapters/execution-envelope.examples.json
 python -m agent_runtime.cli runtime report --task-id task-20260703-001 --request-id req-20260703-002 --envelope adapters/execution-envelope.examples.json
@@ -316,7 +317,7 @@ CLI 采用分层设计：
 - 不访问网络。
 - 不发送消息。
 - 不删除文件（受控写模块仅回滚自己刚刚写入/追加的内容，不删除用户已有文件）。
-- 不写真实 task ledger（`runtime task create` 仅 `--dry-run`）。
+- 不重写真实 task ledger；`runtime task create --commit` 只允许向 task ledger JSONL 末尾追加一行，并在写后检查失败时回滚自己刚刚追加的内容。
 - 不读取 `.env`、`.env.local`、`.envrc`、`.secret`、`.key`、`.pem`、`.p12`、`.pfx` 等密钥文件。
 - `check text` 命中密钥后，只输出规则 id、位置、提示，不回显完整匹配值。
 
@@ -360,7 +361,7 @@ CLI 采用分层设计：
 
 - `runtime draft export --commit` 仅写入新文件到 `drafts/runtime/.../*.json`；输出路径必须在项目根目录内、必须位于 `drafts/runtime/` 下、必须是 `.json`、不能覆盖已存在文件；写入前对内容进行 secret scan 与 public scan；写入后重新校验与 inspect，失败则删除文件回滚。
 - `runtime event append --commit` 只追加单行到 event ledger JSONL；目标文件必须是安全 JSONL、必须已存在且以换行结尾、不能是样本 ledger（`tasks/examples.jsonl`、`tasks/events.examples.jsonl`）；追加后做 schema / ledger / runtime audit 校验，失败则按原始 byte size truncate 回滚。
-- `runtime task create` 仅实现 `--dry-run`，不实现 `--commit`。
+- `runtime task create --commit` 只追加单行到 task ledger JSONL；目标文件必须是安全 JSONL、父目录必须已存在、现有非空文件必须以换行结尾、不能是样本 ledger 或 git/credential 路径；追加后做 schema / ledger 校验，失败则按原始 byte size truncate 回滚；不会自动追加 event ledger。
 
 ---
 

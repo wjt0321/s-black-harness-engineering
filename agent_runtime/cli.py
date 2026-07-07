@@ -25,7 +25,7 @@ from .runtime_draft import inspect_runtime_draft, validate_runtime_draft
 from .runtime_draft_export import DraftExportResult, export_draft
 from .runtime_event_append import EventAppendDryRunResult, append_event
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
-from .runtime_task_create import TaskCreateDryRunResult, create_task_dry_run
+from .runtime_task_create import TaskCreateDryRunResult, create_task, create_task_dry_run
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
@@ -655,6 +655,15 @@ def _render_runtime_task_create_summary(result: CheckResult) -> str:
     lines.append(f"would_create={result.would_create}")
     if result.ledger_check is not None:
         lines.append(f"ledger_check={result.ledger_check}")
+    lines.append(f"committed={result.committed}")
+    if result.post_validate is not None:
+        lines.append(f"post_validate={result.post_validate}")
+    if result.post_ledger_check is not None:
+        lines.append(f"post_ledger_check={result.post_ledger_check}")
+    if result.rolled_back:
+        lines.append(f"rolled_back={result.rolled_back}")
+    if result.rollback_error is not None:
+        lines.append(f"rollback_error={result.rollback_error}")
     if result.metadata_keys:
         lines.append("metadata_keys=" + ",".join(result.metadata_keys))
     for finding in result.findings:
@@ -679,39 +688,39 @@ def _cmd_runtime_task_create(args: argparse.Namespace) -> int:
     root = _root_path(args)
     dry_run = getattr(args, "dry_run", False)
     commit = getattr(args, "commit", False)
-    if commit:
+    if dry_run and commit:
         result = CheckResult(
             status="error",
             findings=[
                 Finding(
-                    rule_id="commit-not-implemented",
+                    rule_id="dry-run-commit-mutually-exclusive",
                     severity="error",
                     action="error",
-                    message="runtime task create --commit is not implemented.",
+                    message="--dry-run and --commit are mutually exclusive.",
                 )
             ],
-            next_action="Use --dry-run for now; commit will be added in a future version.",
+            next_action="Provide either --dry-run or --commit, not both.",
         )
         return _emit_runtime_task_create_result(result, json_output=args.json)
-    if not dry_run:
+    if not dry_run and not commit:
         result = CheckResult(
             status="error",
             findings=[
                 Finding(
-                    rule_id="missing-dry-run",
+                    rule_id="missing-create-mode",
                     severity="error",
                     action="error",
-                    message="--dry-run is required for runtime task create.",
+                    message="Provide either --dry-run or --commit.",
                 )
             ],
-            next_action="Add --dry-run to simulate the task create without writing.",
+            next_action="Add --dry-run for read-only mode or --commit to persist the task.",
         )
         return _emit_runtime_task_create_result(result, json_output=args.json)
-    result = create_task_dry_run(
+    result = create_task(
         root,
         file=args.file,
         stdin=args.stdin,
-        dry_run=True,
+        commit=commit,
         tasks_file=args.tasks_file,
         events_file=args.events_file,
     )
@@ -1386,13 +1395,13 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_task_subparsers = runtime_task_parser.add_subparsers(dest="task_command", required=True)
 
     runtime_task_create_parser = runtime_task_subparsers.add_parser(
-        "create", help="Dry-run preflight for creating a task snapshot"
+        "create", help="Dry-run or commit create a task snapshot"
     )
     create_source_group = runtime_task_create_parser.add_mutually_exclusive_group(required=True)
     create_source_group.add_argument("--file", default=None, help="Path to candidate task JSON file")
     create_source_group.add_argument("--stdin", action="store_true", help="Read candidate task JSON from stdin")
     runtime_task_create_parser.add_argument("--dry-run", action="store_true", help="Run in read-only dry-run mode")
-    runtime_task_create_parser.add_argument("--commit", action="store_true", help="Persist the task to the ledger (not yet implemented)")
+    runtime_task_create_parser.add_argument("--commit", action="store_true", help="Persist the task to the ledger")
     runtime_task_create_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
     runtime_task_create_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
     _add_global_args(runtime_task_create_parser)

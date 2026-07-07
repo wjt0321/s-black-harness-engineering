@@ -98,7 +98,7 @@ key pattern scan -> OK key scan
 ## 当前限制
 
 - 仅支持 `--dry-run`。
-- `--commit` 未实现；显式传入会返回 `commit-not-implemented`。
+- 本阶段未实现 `--commit`；后续实现见 `docs/34-release-notes-runtime-task-create-commit.md`。
 - 不写 `tasks/tasks.jsonl`。
 - 不写 `tasks/events.jsonl`。
 - 不执行 adapter。
@@ -112,4 +112,4 @@ key pattern scan -> OK key scan
 
 - `runtime event import --dry-run`：批量 event 导入预检。
 - `ledger compaction --dry-run`：只读分析 ledger 压缩候选。
-- 或为 `runtime task create --commit` 写预备设计文档，但不要直接实现 commit。
+- 补 task create smoke/report loop 文档与测试，验证 task create commit 后接 event append commit 与 runtime report 的闭环。

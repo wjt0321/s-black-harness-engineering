@@ -1148,9 +1148,11 @@ python -m agent_runtime.cli runtime event append \
 
 详细设计见 `docs/28-runtime-event-append-commit.md`。
 
-## Runtime Task Create Dry-run
+## Runtime Task Create Dry-run / Commit
 
-`runtime task create --dry-run` 在把单个候选 task snapshot 真正写入 task ledger 之前，跑通所有入门禁：schema 校验、`task.id` 去重、secret/public scan、模拟追加后的 ledger consistency。本版本只实现 dry-run，`--commit` 未实现。
+`runtime task create --dry-run` 在把单个候选 task snapshot 真正写入 task ledger 之前，跑通所有入门禁：schema 校验、`task.id` 去重、secret/public scan、模拟追加后的 ledger consistency。
+
+`runtime task create --commit` 复用 dry-run 写前门禁，只向 task ledger JSONL 末尾追加一行，写后运行 task schema validation 与 ledger consistency；失败会按写入前 byte size 回滚。它不会自动写 event ledger。
 
 从文件模拟创建：
 
@@ -1178,15 +1180,34 @@ python -m agent_runtime.cli runtime task create \
   --json
 ```
 
+提交创建 task snapshot：
+
+```bash
+python -m agent_runtime.cli runtime task create \
+  --file candidate-task.json \
+  --commit \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl
+```
+
+Commit 边界：
+
+- 只允许追加 exactly one JSON object as the last line of task ledger JSONL。
+- 不自动写 event ledger；如需 created event，后续显式使用 `runtime event append --commit`。
+- 目标 task ledger 必须位于项目根内、后缀为 `.jsonl`、不是样本 ledger、不是 git/credential 路径。
+- 父目录必须已存在；现有非空文件必须以换行结尾。
+- 输出只包含 task id、状态、计数和检查状态，不回显 title / summary / evidence description / secret match。
+
 约束：
 
-- `--dry-run` 必须显式提供；`--commit` 未实现。
-- 不写 `tasks/tasks.jsonl`、不写 `tasks/events.jsonl`、不写 envelope。
+- `--dry-run` 与 `--commit` 必须显式二选一。
+- `--dry-run` 不写 `tasks/tasks.jsonl`、不写 `tasks/events.jsonl`、不写 envelope。
+- `--commit` 只写 task ledger，不写 `tasks/events.jsonl`、不写 envelope。
 - 目标 task ledger 必须位于项目根目录内、后缀 `.jsonl`。
 - 新创建的 task 可以暂时没有对应 event；ledger consistency 只检查是否破坏现有 ledger。
 - 不回显完整 title / summary / evidence description / secret match。
 
-详细设计见 `docs/31-runtime-task-create-dry-run.md`。
+详细设计见 `docs/31-runtime-task-create-dry-run.md` 与 `docs/34-release-notes-runtime-task-create-commit.md`。
 
 ## Runtime Event Append Smoke / Report Loop
 

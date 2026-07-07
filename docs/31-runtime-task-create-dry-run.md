@@ -16,7 +16,7 @@
 - **只读**：不写 `tasks/tasks.jsonl`、不写 `tasks/events.jsonl`、不写 envelope。
 - 不执行 adapter、不访问网络、不发送消息、不删除文件、不读取 `.env`/credential。
 - `--dry-run` 必须显式提供；未提供时报错。
-- `--commit` 未实现；显式传入会返回 `commit-not-implemented` 错误。
+- 本文冻结的是 dry-run 阶段；后续 `--commit` 已在 `docs/34-release-notes-runtime-task-create-commit.md` 实现并说明。
 - 输出不回显完整 title / summary / evidence description / secret match / 自由文本 payload。
 
 ## CLI
@@ -122,4 +122,4 @@ JSON：
 
 ## 下一步
 
-- 如项目进入持久化写入阶段，可实现 `runtime task create --commit`，但需保持相同的门禁顺序与脱敏输出。
+- 持久化写入阶段已见 `docs/34-release-notes-runtime-task-create-commit.md`；后续可补 task create smoke/report loop。
