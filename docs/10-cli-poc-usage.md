@@ -1291,11 +1291,13 @@ python -m pytest tests/test_controlled_write_regression.py -q
 详细边界与写入点梳理见 `docs/36-controlled-write-regression.md`。
 
 
-## Runtime Event Import Dry-run
+## Runtime Event Import
 
-`runtime event import --dry-run` 对批量候选 event 做只读预检，在真正追加到 event ledger 之前跑通所有入门禁：JSON 语法、object 形状、event schema、secret/public scan、candidate 内部 event_id 去重、与现有 ledger 的 event_id 去重、task_id 存在性、模拟追加后的 ledger consistency。
+`runtime event import` 对批量候选 event 做只读预检或受控追加。它分两种模式：`--dry-run` 只读模拟；`--commit` 把整批 event 作为一个连续 JSONL block 追加到现有 event ledger 尾部。
 
-从文件批量预检：
+### Dry-run
+
+`--dry-run` 在真正追加前跑通所有入门禁：JSON 语法、object 形状、event schema、secret/public scan、candidate 内部 event_id 去重、与现有 ledger 的 event_id 去重、task_id 存在性、模拟追加后的 ledger consistency。
 
 ```bash
 python -m agent_runtime.cli runtime event import \
@@ -1328,16 +1330,46 @@ ledger_check=pass
 Next: Dry-run passed. Review the event batch before any future commit command.
 ```
 
+### Commit
+
+`--commit` 会把候选 JSONL 中的 event 追加到 `--events-file` 指定的 ledger。第一版要求目标 ledger 必须已存在；非空 ledger 末尾必须已有换行符；否则 blocked。
+
+```bash
+python -m agent_runtime.cli runtime event import \
+  --file candidate-events.jsonl \
+  --commit \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl
+```
+
+commit 成功时的人类输出示例：
+
+```text
+PASS
+Source: candidate-events.jsonl
+event_count=3
+blank_line_count=0
+task_count=2
+event_type_counts=created:1,status_changed:2
+target_events_file=tasks/events.jsonl
+committed=True
+appended_line_count=3
+post_validate=pass
+post_ledger_check=pass
+rolled_back=False
+Next: Event batch committed successfully.
+```
+
 约束：
 
-- `--dry-run` 必须显式提供；本命令不实现 `--commit`。
+- `--dry-run` 与 `--commit` 互斥；两者都不提供时报错。
 - 输入文件必须是项目根目录内的安全 `.jsonl` 文件，不能指向 `.git` / credential / secret 路径。
-- 批量语义为 all-or-nothing preflight；任意一行失败，整批返回失败。
-- 输入顺序即模拟导入顺序；不自动按 timestamp 排序。
-- 不写 `tasks/events.jsonl`、不写 task ledger、不写 envelope。
+- 批量语义为 all-or-nothing：任意一行失败或 post-check 失败，整批不保留。
+- 输入顺序即模拟/写入顺序；不自动按 timestamp 排序。
+- `--commit` 只追加 event ledger，不写入 task ledger、不写 envelope。
 - 不回显完整 `message` / metadata values / artifacts payload / evidence description / `target` / `input` / `raw_ref` / `decision_ref` / secret match。
 
-详细设计见 `docs/37-runtime-event-import-dry-run.md`，阶段收口说明见 `docs/38-release-notes-runtime-event-import-dry-run.md`。
+详细设计见 `docs/37-runtime-event-import-dry-run.md` 与 `docs/39-runtime-event-import-commit-design.md`，阶段收口说明见 `docs/38-release-notes-runtime-event-import-dry-run.md` 与 `docs/40-release-notes-runtime-event-import-commit.md`。
 
 ## Runtime Event Append Smoke / Report Loop
 

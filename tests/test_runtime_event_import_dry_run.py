@@ -434,7 +434,7 @@ def test_cli_import_event_dry_run_pass(tmp_path, monkeypatch, capsys):
     assert events_file.read_text(encoding="utf-8").count("\n") == 1
 
 
-def test_cli_import_event_dry_run_missing_dry_run(tmp_path, monkeypatch, capsys):
+def test_cli_import_event_dry_run_missing_mode(tmp_path, monkeypatch, capsys):
     root = _setup_fake_root(tmp_path)
     task_id = "task-20260707-001"
     _write_task(root, task_id)
@@ -459,7 +459,7 @@ def test_cli_import_event_dry_run_missing_dry_run(tmp_path, monkeypatch, capsys)
     )
     assert main() == 1
     captured = capsys.readouterr()
-    assert "missing-dry-run" in captured.out
+    assert "missing-import-mode" in captured.out
 
 
 def test_cli_import_event_dry_run_json_output_sanitized(tmp_path, monkeypatch, capsys):

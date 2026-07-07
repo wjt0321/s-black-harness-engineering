@@ -24,7 +24,12 @@ from .runtime_ledger import RuntimeLedgerResult, check_runtime_ledger
 from .runtime_draft import inspect_runtime_draft, validate_runtime_draft
 from .runtime_draft_export import DraftExportResult, export_draft
 from .runtime_event_append import EventAppendDryRunResult, append_event
-from .runtime_event_import import EventImportDryRunResult, import_events_dry_run
+from .runtime_event_import import (
+    EventImportCommitResult,
+    EventImportDryRunResult,
+    import_events_commit,
+    import_events_dry_run,
+)
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_task_create import TaskCreateDryRunResult, create_task, create_task_dry_run
 from .runtime_report import RuntimeReportResult, check_runtime_report
@@ -630,36 +635,69 @@ def _emit_runtime_event_append_result(result: CheckResult, json_output: bool, no
 
 
 def _render_runtime_event_import_summary(result: CheckResult) -> str:
-    """Render runtime event import dry-run output.
+    """Render runtime event import dry-run or commit output.
 
-    EventImportDryRunResult carries only safe counts and identifiers; fallback
-    keeps ordinary CheckResult rendering for errors raised before parsing.
+    Both result types carry only safe counts and identifiers; fallback keeps
+    ordinary CheckResult rendering for errors raised before parsing.
     """
-    if not isinstance(result, EventImportDryRunResult):
-        return result.render_human()
+    if isinstance(result, EventImportDryRunResult):
+        lines = [result.status.upper()]
+        if result.source is not None:
+            lines.append(f"Source: {result.source}")
+        lines.append(f"event_count={result.event_count}")
+        lines.append(f"blank_line_count={result.blank_line_count}")
+        lines.append(f"task_count={result.task_count}")
+        if result.event_type_counts:
+            counts = ", ".join(f"{k}:{v}" for k, v in result.event_type_counts.items())
+            lines.append(f"event_type_counts={counts}")
+        else:
+            lines.append("event_type_counts=")
+        lines.append(f"would_import={result.would_import}")
+        if result.ledger_check is not None:
+            lines.append(f"ledger_check={result.ledger_check}")
+        for finding in result.findings:
+            loc = ""
+            if finding.line is not None:
+                loc = f" at line {finding.line}"
+            lines.append(f"- {finding.rule_id}{loc}: {finding.message}")
+        if result.next_action:
+            lines.append(f"Next: {result.next_action}")
+        return "\n".join(lines)
 
-    lines = [result.status.upper()]
-    if result.source is not None:
-        lines.append(f"Source: {result.source}")
-    lines.append(f"event_count={result.event_count}")
-    lines.append(f"blank_line_count={result.blank_line_count}")
-    lines.append(f"task_count={result.task_count}")
-    if result.event_type_counts:
-        counts = ", ".join(f"{k}:{v}" for k, v in result.event_type_counts.items())
-        lines.append(f"event_type_counts={counts}")
-    else:
-        lines.append("event_type_counts=")
-    lines.append(f"would_import={result.would_import}")
-    if result.ledger_check is not None:
-        lines.append(f"ledger_check={result.ledger_check}")
-    for finding in result.findings:
-        loc = ""
-        if finding.line is not None:
-            loc = f" at line {finding.line}"
-        lines.append(f"- {finding.rule_id}{loc}: {finding.message}")
-    if result.next_action:
-        lines.append(f"Next: {result.next_action}")
-    return "\n".join(lines)
+    if isinstance(result, EventImportCommitResult):
+        lines = [result.status.upper()]
+        if result.source is not None:
+            lines.append(f"Source: {result.source}")
+        lines.append(f"event_count={result.event_count}")
+        lines.append(f"blank_line_count={result.blank_line_count}")
+        lines.append(f"task_count={result.task_count}")
+        if result.event_type_counts:
+            counts = ", ".join(f"{k}:{v}" for k, v in result.event_type_counts.items())
+            lines.append(f"event_type_counts={counts}")
+        else:
+            lines.append("event_type_counts=")
+        if result.target_events_file is not None:
+            lines.append(f"target_events_file={result.target_events_file}")
+        lines.append(f"committed={result.committed}")
+        lines.append(f"appended_line_count={result.appended_line_count}")
+        if result.post_validate is not None:
+            lines.append(f"post_validate={result.post_validate}")
+        if result.post_ledger_check is not None:
+            lines.append(f"post_ledger_check={result.post_ledger_check}")
+        if result.rolled_back:
+            lines.append(f"rolled_back={result.rolled_back}")
+        if result.rollback_error is not None:
+            lines.append(f"rollback_error={result.rollback_error}")
+        for finding in result.findings:
+            loc = ""
+            if finding.line is not None:
+                loc = f" at line {finding.line}"
+            lines.append(f"- {finding.rule_id}{loc}: {finding.message}")
+        if result.next_action:
+            lines.append(f"Next: {result.next_action}")
+        return "\n".join(lines)
+
+    return result.render_human()
 
 
 def _emit_runtime_event_import_result(result: CheckResult, json_output: bool) -> int:
@@ -673,26 +711,49 @@ def _emit_runtime_event_import_result(result: CheckResult, json_output: bool) ->
 def _cmd_runtime_event_import(args: argparse.Namespace) -> int:
     root = _root_path(args)
     dry_run = getattr(args, "dry_run", False)
-    if not dry_run:
+    commit = getattr(args, "commit", False)
+    if dry_run and commit:
         result = CheckResult(
             status="error",
             findings=[
                 Finding(
-                    rule_id="missing-dry-run",
+                    rule_id="dry-run-commit-mutually-exclusive",
                     severity="error",
                     action="error",
-                    message="--dry-run is required for runtime event import.",
+                    message="--dry-run and --commit are mutually exclusive.",
                 )
             ],
-            next_action="Add --dry-run to simulate the import without writing.",
+            next_action="Provide either --dry-run or --commit, not both.",
         )
         return _emit_runtime_event_import_result(result, json_output=args.json)
-    result = import_events_dry_run(
-        root,
-        file=args.file,
-        tasks_file=args.tasks_file,
-        events_file=args.events_file,
-    )
+    if not dry_run and not commit:
+        result = CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="missing-import-mode",
+                    severity="error",
+                    action="error",
+                    message="Provide either --dry-run or --commit.",
+                )
+            ],
+            next_action="Add --dry-run to simulate the import or --commit to persist the batch.",
+        )
+        return _emit_runtime_event_import_result(result, json_output=args.json)
+    if dry_run:
+        result = import_events_dry_run(
+            root,
+            file=args.file,
+            tasks_file=args.tasks_file,
+            events_file=args.events_file,
+        )
+    else:
+        result = import_events_commit(
+            root,
+            file=args.file,
+            tasks_file=args.tasks_file,
+            events_file=args.events_file,
+        )
     return _emit_runtime_event_import_result(result, json_output=args.json)
 
 
@@ -1457,10 +1518,11 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_event_append_parser.set_defaults(func=_cmd_runtime_event_append)
 
     runtime_event_import_parser = event_subparsers.add_parser(
-        "import", help="Dry-run batch import candidate events from a JSONL file"
+        "import", help="Dry-run or commit batch import candidate events from a JSONL file"
     )
     runtime_event_import_parser.add_argument("--file", required=True, help="Path to candidate events JSONL file")
     runtime_event_import_parser.add_argument("--dry-run", action="store_true", help="Run in read-only dry-run mode")
+    runtime_event_import_parser.add_argument("--commit", action="store_true", help="Persist the batch to the event ledger")
     runtime_event_import_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
     runtime_event_import_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
     _add_global_args(runtime_event_import_parser)

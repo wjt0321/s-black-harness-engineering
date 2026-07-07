@@ -108,6 +108,20 @@
 - 已跑 `python -m pytest`：55 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 新增 ledger 跨记录一致性校验层 `agent_runtime/ledger_consistency.py`。
 - 新增 CLI 命令 `python -m agent_runtime.cli task check-ledger --tasks-file <file> --events-file <file>`。
 - 校验内容：event.task_id 存在性、状态流转连续性、created from_status 为 null、终态不可回退、snapshot status 与最新 event to_status 一致。
@@ -118,6 +132,20 @@
 - 已跑 `python -m pytest`：66 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 新增 `agent_runtime/policy_profile.py`，实现 agent -> policy profile 自动映射。
 - 新增 `--agent <agent-id>` 与 `--assignee <agent-id>` 全局参数，供 `check text`、`check path`、`check action`、`policies list` 自动选择 policy profile。
 - 解析优先级：`--policy` > `--policy-profile` > `--agent`/`--assignee` > 默认 `all`。
@@ -128,6 +156,20 @@
 - 已跑 `python -m pytest`：84 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 将 agent -> policy profile 映射从 `agent_runtime/policy_profile.py` 硬编码迁移到 `agents/agents.sample.json` 的 `policy_profile` 字段。
 - 更新 `agents/agents.schema.json`：新增可选字段 `policy_profile`，类型 string，minLength 1，给出常见示例。
 - 更新 `agents/agents.sample.json`：orchestrator/kimi-code/claude-code/omp -> s-black，media-agent -> wangcai，memory-agent -> dabai。
@@ -138,6 +180,20 @@
 - 已跑 `python -m pytest`：84 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 ## 下一步小任务
 
@@ -163,6 +219,20 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
 - 新增只读 `adapter validate` CLI 命令，用于校验 Adapter execution envelope JSON 文件。
 - 新增 `agent_runtime/adapter_validation.py`：检查文件位于项目根目录内且为安全 `.json` 文件，使用 `jsonschema` 校验整个 envelope，失败时只输出相对路径、schema 错误路径/规则和简短摘要，不回显整条 artifact 或敏感值。
 - 更新 `agent_runtime/cli.py`：在 `adapter` 子命令下新增 `validate`，支持 `--file` 与 `--json`。
@@ -172,6 +242,20 @@
 - 已跑 `python -m pytest`：99 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增明日接续文档 `tasks/handoff-2026-07-04.md`，记录当前远端状态、Adapter execution envelope 阶段成果、只读 `adapter plan` / `adapter validate` 能力、验证结果、推送与代理记录，以及明日建议路线。
 
@@ -193,6 +277,20 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
 - 新增只读 `adapter inspect` CLI 命令，用于读取 Adapter execution envelope JSON 文件并输出紧凑摘要。
 - 新增 `agent_runtime/adapter_validation.py` 中 `_load_envelope` / `_build_envelope_summary` / `inspect_envelope_file` 逻辑：先调用 `validate_envelope_file` 做 schema + consistency 校验，校验通过后再解析并汇总 artifact 信息。
 - 复用现有安全读取逻辑：文件必须在项目根目录内、为安全 `.json` 文件、拒绝 `.env`/credential 类文件。
@@ -204,6 +302,20 @@
 - 已跑 `python -m pytest`：113 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增只读 `adapter approval check` CLI 命令，用于检查某个 `adapter_request` 是否存在可继续执行的 `approval_record`。
 - 新增 `agent_runtime/adapter_approval.py`：复用 `adapter_validation.validate_envelope_file` 做 schema + consistency 校验，再按 `request_id` 定位请求与授权记录，返回 `pass` / `blocked` / `needs_approval` / `needs_input` / `validation_failed`。
@@ -217,6 +329,20 @@
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
 
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
 - 新增只读 `adapter response check` CLI 命令，用于检查某个 `adapter_request` 是否已有 `adapter_response` 以及 response/evidence 状态。
 - 新增 `agent_runtime/adapter_response.py`：复用 `adapter_validation.validate_envelope_file` 做 schema + consistency 校验，再按 `request_id` 定位请求与 response，返回 `pass` / `blocked` / `needs_approval` / `needs_input` / `validation_failed`。
 - 状态映射：`succeeded` 且 `evidence_count > 0` -> `pass`（返回码 0）；`succeeded` 但 `evidence_count == 0` -> `blocked`（返回码 2）；`blocked` -> `blocked`；`failed` -> `blocked`；`needs_approval` -> `needs_approval`（返回码 3）；`needs_input` -> `needs_input`（返回码 4）；`skipped` -> `blocked`；无 response -> `needs_input`（返回码 4）；请求不存在 -> `needs_input`（返回码 4）；校验失败 -> `validation_failed`（返回码 5）。
@@ -228,6 +354,20 @@
 - 已跑 `python -m pytest`：140 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增只读 `adapter gate check` CLI 命令，用于聚合 `adapter approval check` 与 `adapter response check`，给出某个 request 当前是否可继续的单一判断。
 - 新增 `agent_runtime/adapter_gate.py`：复用 `check_adapter_approval` 与 `check_adapter_response`，先跑 approval check；若未通过则 stage 为 `approval` 并直接返回 approval 状态；若通过则 stage 为 `response` 并以 response 状态为最终状态；`can_proceed` 仅在最终状态为 `pass` 时为 `true`。
@@ -253,6 +393,20 @@
 - 已跑 `python -m pytest`：167 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime gate check` 对 task-20260703-001 + req-20260703-002 返回 BLOCKED（task 已 finished），对缺失 task 返回 ERROR，对缺失 request 返回 NEEDS_INPUT，JSON 输出脱敏。
 
 - 继续下一阶段：Runtime Ledger Audit。
@@ -268,6 +422,20 @@
 - 已跑 `python -m pytest`：177 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime check-ledger` 对仓库样例文件返回 WARN，正确报告 `request-id-no-event-metadata` 与 `task-terminal-but-request-pending`，JSON 输出脱敏。
 
 - 进入下一阶段：Runtime Plan POC。
@@ -282,6 +450,20 @@
 - 已跑 `python -m pytest`：189 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime plan` 对 task-20260703-001 + shell-local read_file 因 task 已 finished 返回 BLOCKED；对 running task 返回 PASS 或 NEEDS_APPROVAL，JSON 输出脱敏。
 
 - 扩展 `runtime plan` 支持 `--draft-json`，输出完整但脱敏的 envelope 机器草案。
@@ -297,6 +479,20 @@
 - 已跑 `python -m pytest`：195 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime plan --draft-json` 对 running task + shell-local read_file 输出 schema 合法 envelope；对 github-cli git_push 输出含 approval_record 与 approval_requested event；对 finished task 输出 `envelope_draft: null`。
 
 
@@ -359,6 +555,20 @@
 - 已跑 `python -m pytest tests -q`：221 passed（新增 10 个测试）。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime draft export --dry-run` 对 running task + shell-local read_file 输出 PASS 且不创建目标文件；对含 GitHub token 的 draft 返回 BLOCKED 且不回显 token。
 
 - Runtime Draft Export Dry-run 阶段正式收口。
@@ -401,6 +611,20 @@
 - 已跑 `python -m pytest tests -v`：232 passed（新增 11 个测试）。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime draft export --commit` 对 shell-local read_file 写入 `drafts/runtime/.../*.json` 并通过 post validate/inspect；对 schema invalid 和已存在文件均不写且正确报错。
 
 - Runtime Draft Export Commit 阶段正式收口。
@@ -427,6 +651,20 @@
 - 已跑 `python -m pytest`：243 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime event append --dry-run` 对合法 candidate event返回 PASS 且不写 events file；对非法状态流转返回 VALIDATION_FAILED；对含 GitHub token 的 message 返回 BLOCKED 且不回显 token。
 
 - Runtime Event Append Dry-run 阶段正式收口。
@@ -481,6 +719,20 @@
 - 已跑 `python -m pytest tests -q`：通过。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 进入下一阶段：为未来 task snapshot 受控写入做预检门禁 —— `runtime task create --dry-run`。
 - 新增 `agent_runtime/runtime_task_create.py`：实现 `create_task_dry_run()`，只读模拟创建 task snapshot。
@@ -582,6 +834,61 @@
 - 更新 `README.md` 与 `README.en.md`：文档索引加入 `docs/38-release-notes-runtime-event-import-dry-run.md`，当前状态补充 `runtime event import --dry-run`。
 - 保持安全边界：不实现 `--commit`、不写真实 ledger、不执行 adapter、不访问网络、不发送消息、不读取 `.env`/credential、不删除文件。
 - 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest tests/test_runtime_event_import_dry_run.py -q`：通过。
+- 已跑 `python -m pytest -q`：通过。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（六续）— Runtime Event Import Commit 设计
+
+- 新增 `docs/39-runtime-event-import-commit-design.md`：为未来 `runtime event import --commit` 独立定义事务边界，不从 dry-run 直接推导实现。
+- 设计重点：
+  - commit 必须采用 all-or-nothing append transaction，不允许部分成功。
+  - commit 内部必须重跑 preflight，不信任“之前 dry-run 通过过”。
+  - 明确 dry-run / commit 一致性问题：candidate 内容变化、目标 ledger 在两次调用间变化、plan hash / ledger fingerprint 的必要性。
+  - 明确推荐的 commit 流程：preflight reload -> write preparation -> append block -> post-check -> success summary。
+  - 明确 rollback 策略：第一版建议继续采用 byte-size truncate rollback。
+  - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
+  - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+
+## 2026-07-07（七续）— Runtime Event Import Commit 实现
+
+- 实现 `runtime event import --commit` 批量 event 受控追加命令。
+- 修改 `agent_runtime/runtime_event_import.py`：
+  - 新增 `EventImportCommitResult` 数据类，输出安全摘要。
+  - 抽公共 preflight 为 `_run_preflight`，dry-run 与 commit 共用；commit 调用时通过 `require_events_file_exists=True` 要求目标 events ledger 必须已存在。
+  - `import_events_commit` 按 `preflight -> target guard -> write preparation -> append block -> post-check -> rollback` 顺序执行。
+  - 写入前记录 `original_size_bytes`；写入失败或 post-check 失败时按原始 byte size truncate 回滚。
+  - rollback 失败时返回 `rollback_error`。
+- 修改 `agent_runtime/cli.py`：
+  - `runtime event import` 新增 `--commit` 参数。
+  - `--dry-run` / `--commit` 互斥；都不传时报错 `missing-import-mode`。
+  - 渲染函数同时处理 dry-run 与 commit 结果，输出保持脱敏。
+- 新增 `tests/test_runtime_event_import_commit.py`，覆盖：
+  - commit pass（多个 event 作为连续 block 成功追加）。
+  - `--dry-run` / `--commit` 互斥。
+  - 两者都不传时报错。
+  - candidate 文件不存在 / 根外 / 后缀非 `.jsonl` / 位于 `.git` 路径下。
+  - invalid JSON / 非 object / schema invalid。
+  - candidate 内部重复 `event_id`、与现有 ledger 重复 `event_id`。
+  - unknown task、非法状态迁移。
+  - secret scan / public scan blocked 且输出脱敏。
+  - events ledger 不存在 -> blocked。
+  - events ledger 非空但末尾无换行 -> blocked。
+  - post-check `task validate` / `task check-ledger` 失败触发回滚。
+  - 写入中途 OSError 触发回滚。
+  - rollback 失败时正确报告 `rollback_error`。
+  - commit 不修改 task ledger。
+  - JSON 输出脱敏。
+- 新增 `docs/40-release-notes-runtime-event-import-commit.md`：阶段收口说明，含能力、事务语义、commit 流程、输出摘要、安全边界、测试覆盖、验证结果与已知限制。
+- 更新 `docs/10-cli-poc-usage.md`：将 "Runtime Event Import Dry-run" 扩展为 "Runtime Event Import"，补充 `--commit` 用法、成功示例与互斥约束。
+- 更新 `README.md` 与 `README.en.md`：文档索引加入 `docs/40-release-notes-runtime-event-import-commit.md`，当前状态与边界补充 `runtime event import --dry-run` / `--commit`。
+- 保持安全边界：不执行 adapter、不访问网络、不发送消息、不读取 `.env`/credential、不删除文件；`--commit` 仅向已存在的 event ledger 追加连续 block，失败则回滚。
+- 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest tests/test_runtime_event_import_commit.py -q`：通过。
 - 已跑 `python -m pytest tests/test_runtime_event_import_dry_run.py -q`：通过。
 - 已跑 `python -m pytest -q`：通过。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。

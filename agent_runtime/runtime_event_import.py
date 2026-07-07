@@ -1,17 +1,16 @@
-"""Dry-run batch import for task events.
+"""Dry-run and commit batch import for task events.
 
-This module implements a read-only preflight for ``runtime event import --dry-run``:
+This module implements controlled-write boundaries for ``runtime event import``:
 
-* Loads a candidate JSONL file containing one event object per line.
-* Validates each candidate line for JSON syntax, object shape, schema validity,
-  secret/public scan clearance, and duplicate event ids.
-* Simulates appending the whole batch to the existing events ledger in a
-  temporary file, then runs the same schema and ledger-consistency checks that
-  would apply to the real ledger.
-* Reports a safe summary and deletes the temporary file.
+* ``runtime event import --dry-run`` simulates importing a batch of candidate
+  events and reports whether the import would be safe. No ledger files are
+  modified.
+* ``runtime event import --commit`` appends a batch of candidate events as one
+  continuous JSONL block to an existing event ledger, then validates the
+  resulting ledger and rolls back the appended bytes if a post-check fails.
 
-No ledger files are modified, no adapter is executed, no network access is
-performed, and no credential files are read.
+No adapter execution, network access, messaging, or credential files are
+involved.
 """
 
 from __future__ import annotations
@@ -74,6 +73,72 @@ class EventImportDryRunResult(CheckResult):
         if self.ledger_check is not None:
             d["ledger_check"] = self.ledger_check
         return d
+
+
+@dataclass
+class EventImportCommitResult(CheckResult):
+    """Result of committing a batch event import.
+
+    The summary only exposes safe identifiers, counts, and post-check status.
+    It never includes event messages, metadata values, artifact payloads,
+    evidence descriptions, targets, inputs, or raw/decision refs.
+    """
+
+    source: str | None = None
+    event_count: int = 0
+    blank_line_count: int = 0
+    task_count: int = 0
+    event_type_counts: dict[str, int] = field(default_factory=dict)
+    candidate_event_ids_present: list[str] = field(default_factory=list)
+    target_events_file: str | None = None
+    committed: bool = False
+    appended_line_count: int = 0
+    post_validate: str | None = None
+    post_ledger_check: str | None = None
+    rolled_back: bool = False
+    rollback_error: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        d = super().to_dict()
+        if self.source is not None:
+            d["source"] = self.source
+        d["event_count"] = self.event_count
+        d["blank_line_count"] = self.blank_line_count
+        d["task_count"] = self.task_count
+        if self.event_type_counts:
+            d["event_type_counts"] = dict(self.event_type_counts)
+        if self.candidate_event_ids_present:
+            d["candidate_event_ids_present"] = list(self.candidate_event_ids_present)
+        if self.target_events_file is not None:
+            d["target_events_file"] = self.target_events_file
+        d["committed"] = self.committed
+        d["appended_line_count"] = self.appended_line_count
+        if self.post_validate is not None:
+            d["post_validate"] = self.post_validate
+        if self.post_ledger_check is not None:
+            d["post_ledger_check"] = self.post_ledger_check
+        d["rolled_back"] = self.rolled_back
+        if self.rollback_error is not None:
+            d["rollback_error"] = self.rollback_error
+        return d
+
+
+@dataclass
+class _PreflightState:
+    """Internal preflight state shared by dry-run and commit.
+
+    Each candidate is paired with its 1-based source line number so that all
+    downstream findings map back to the exact input line, even when preceding
+    lines were blank, invalid, or filtered out.
+    """
+
+    source: str
+    candidates: list[tuple[int, dict[str, Any]]]
+    blank_line_count: int
+    event_type_counts: dict[str, int]
+    ledger_check: str | None
+    findings: list[Finding]
+    status: str = "pass"
 
 
 def _line_number(text: str, pos: int) -> int:
@@ -280,9 +345,7 @@ def _simulate_import_and_check(
 ) -> tuple[CheckResult, CheckResult]:
     """Write a temp JSONL with existing events + candidates and run checks.
 
-    Each candidate is paired with its 1-based source line number so that any
-    post-check findings can be mapped back to the original input line. Returns
-    the schema validation result and the ledger consistency result.
+    Returns the schema validation result and the ledger consistency result.
     """
     events_path = (root / (events_file or "tasks/events.jsonl")).resolve()
     tasks_path = (root / (tasks_file or "tasks/tasks.jsonl")).resolve()
@@ -328,27 +391,53 @@ def _coalesce_findings_status(findings: list[Finding]) -> str:
     return "pass"
 
 
-def import_events_dry_run(
+def _run_preflight(
     root: Path,
     file: str,
-    tasks_file: str | None = None,
-    events_file: str | None = None,
-) -> CheckResult:
-    """Dry-run batch import candidate events from a JSONL file.
+    tasks_file: str | None,
+    events_file: str | None,
+    require_events_file_exists: bool = False,
+) -> _PreflightState:
+    """Run all read-only preflight checks for a batch event import.
 
-    Read-only: no ledger files are modified. The candidate file is parsed line
-    by line, each line is validated and scanned, and the whole batch is checked
-    against the existing task/events ledgers via a temporary file.
+    Returns a ``_PreflightState`` containing the retained candidates, counts,
+    and any findings. If ``findings`` is non-empty, the import must not proceed.
 
-    Each retained candidate is stored as ``(source_line_no, event_dict)`` so
-    that all downstream findings map back to the exact input line, even when
-    preceding lines were blank, invalid, or filtered out.
+    When ``require_events_file_exists`` is True (used by commit), a missing
+    target events ledger is reported as a blocked finding so that the commit
+    target guard is enforced inside the preflight phase.
     """
-    root = root.resolve()
-
     resolved_path = _resolve_candidate_file(root, file)
     if isinstance(resolved_path, CheckResult):
-        return resolved_path
+        return _PreflightState(
+            source=file,
+            candidates=[],
+            blank_line_count=0,
+            event_type_counts={},
+            ledger_check=None,
+            findings=list(resolved_path.findings),
+            status=resolved_path.status,
+        )
+
+    if require_events_file_exists:
+        events_path = (root / (events_file or "tasks/events.jsonl")).resolve()
+        if not events_path.is_file():
+            return _PreflightState(
+                source=normalize_path(resolved_path.relative_to(root)),
+                candidates=[],
+                blank_line_count=0,
+                event_type_counts={},
+                ledger_check=None,
+                findings=[
+                    Finding(
+                        rule_id="events-file-not-found",
+                        severity="block",
+                        action="deny",
+                        message="Events file must already exist for import commit.",
+                    )
+                ],
+                status="blocked",
+            )
 
     source = normalize_path(resolved_path.relative_to(root))
 
@@ -422,8 +511,12 @@ def import_events_dry_run(
 
                 candidates.append((line_no, record))
     except OSError as exc:
-        return CheckResult(
-            status="error",
+        return _PreflightState(
+            source=source,
+            candidates=[],
+            blank_line_count=blank_line_count,
+            event_type_counts={},
+            ledger_check=None,
             findings=[
                 Finding(
                     rule_id="read-error",
@@ -432,7 +525,7 @@ def import_events_dry_run(
                     message=f"Could not read candidate file: {exc}",
                 )
             ],
-            next_action="Check the candidate file path and permissions.",
+            status="error",
         )
 
     existing_event_ids = _load_existing_event_ids(root, events_file)
@@ -464,19 +557,14 @@ def import_events_dry_run(
             )
 
     if findings:
-        status = _coalesce_findings_status(findings)
-        return EventImportDryRunResult(
-            status=status,
-            findings=findings,
+        return _PreflightState(
             source=source,
-            event_count=len(candidates),
+            candidates=candidates,
             blank_line_count=blank_line_count,
-            task_count=len({c[1].get("task_id") for c in candidates if c[1].get("task_id")}),
             event_type_counts={},
-            candidate_event_ids_present=[c[1].get("event_id") for c in candidates if c[1].get("event_id")],
-            would_import=False,
             ledger_check=None,
-            next_action="Fix the reported issues before importing the event batch.",
+            findings=findings,
+            status=_coalesce_findings_status(findings),
         )
 
     validate_result, ledger_result = _simulate_import_and_check(
@@ -491,8 +579,6 @@ def import_events_dry_run(
             findings.append(finding)
 
     if ledger_result.status == "validation_failed":
-        # Ledger consistency findings reference lines inside the temporary file.
-        # Map them back to the original candidate source lines when possible.
         existing_event_line_count = _load_existing_event_lines(root, events_file)
         for finding in ledger_result.findings:
             tmp_line = finding.line
@@ -503,11 +589,12 @@ def import_events_dry_run(
             finding.message = f"Ledger consistency: {finding.message}"
             findings.append(finding)
     elif ledger_result.status == "error":
-        return CheckResult(
-            status="error",
-            findings=list(ledger_result.findings),
-            next_action="Fix ledger file paths before retrying.",
-        )
+        findings.extend(ledger_result.findings)
+        ledger_check = None
+
+    status = _coalesce_findings_status(findings)
+    if ledger_result.status == "error":
+        status = "error"
 
     event_type_counts: dict[str, int] = {}
     for _line_no, candidate in candidates:
@@ -515,32 +602,377 @@ def import_events_dry_run(
         if event_type:
             event_type_counts[event_type] = event_type_counts.get(event_type, 0) + 1
 
-    if findings:
-        status = _coalesce_findings_status(findings)
+    return _PreflightState(
+        source=source,
+        candidates=candidates,
+        blank_line_count=blank_line_count,
+        event_type_counts=event_type_counts,
+        ledger_check=ledger_check,
+        findings=findings,
+        status=status,
+    )
+
+
+def _resolve_commit_events_path(root: Path, events_file: str | None) -> CheckResult | Path:
+    """Validate the commit target events ledger path.
+
+    The first version requires the target ledger to already exist.
+    """
+    events_path = (root / (events_file or "tasks/events.jsonl")).resolve()
+    if events_path != root and root not in events_path.parents:
+        return CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="events-file-outside-root",
+                    severity="error",
+                    action="error",
+                    message="Events file must be inside the project root.",
+                )
+            ],
+            next_action="Choose a project-local JSONL event ledger.",
+        )
+    lowered_parts = {part.lower() for part in events_path.parts}
+    if lowered_parts & {".git", "credential", "credentials", "secret", "secrets"}:
+        return CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="unsafe-events-file",
+                    severity="error",
+                    action="error",
+                    message="Events file must not point to git internals or credential paths.",
+                )
+            ],
+            next_action="Choose a safe project-local .jsonl event ledger.",
+        )
+    if not is_safe_to_read(events_path) or events_path.suffix.lower() != ".jsonl":
+        return CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="unsafe-events-file",
+                    severity="error",
+                    action="error",
+                    message="Events file must be a safe JSONL file.",
+                )
+            ],
+            next_action="Choose a safe .jsonl event ledger path.",
+        )
+    rel = normalize_path(events_path.relative_to(root))
+    if rel in {"tasks/examples.jsonl", "tasks/events.examples.jsonl"}:
+        return CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="sample-ledger-write-blocked",
+                    severity="error",
+                    action="error",
+                    message="Sample event ledgers are not valid commit targets.",
+                )
+            ],
+            next_action="Use tasks/events.jsonl or another project-local runtime ledger.",
+        )
+    if not events_path.is_file():
+        return CheckResult(
+            status="blocked",
+            findings=[
+                Finding(
+                    rule_id="events-file-not-found",
+                    severity="block",
+                    action="deny",
+                    message="Events file must already exist for import commit.",
+                )
+            ],
+            next_action="Create the event ledger explicitly before importing events.",
+        )
+    return events_path
+
+
+def _has_trailing_newline(path: Path) -> bool:
+    if not path.is_file() or path.stat().st_size == 0:
+        return True
+    with open(path, "rb") as fh:
+        fh.seek(-1, 2)
+        return fh.read(1) == b"\n"
+
+
+def _rel_to_root(root: Path, path: Path) -> str:
+    return normalize_path(path.resolve().relative_to(root.resolve()))
+
+
+def _rollback_events_file(path: Path, original_size: int) -> tuple[bool, str | None]:
+    """Rollback an event ledger to its original byte size.
+
+    The first version never creates new ledger files, so rollback is always a
+    truncate operation.
+    """
+    try:
+        with open(path, "r+b") as fh:
+            fh.truncate(original_size)
+        return True, None
+    except OSError as exc:
+        return False, str(exc)
+
+
+def import_events_dry_run(
+    root: Path,
+    file: str,
+    tasks_file: str | None = None,
+    events_file: str | None = None,
+) -> CheckResult:
+    """Dry-run batch import candidate events from a JSONL file.
+
+    Read-only: no ledger files are modified.
+    """
+    root = root.resolve()
+    state = _run_preflight(root, file, tasks_file, events_file)
+
+    task_count = len({c[1].get("task_id") for c in state.candidates if c[1].get("task_id")})
+    candidate_event_ids = [c[1].get("event_id") for c in state.candidates if c[1].get("event_id")]
+
+    if state.findings:
         return EventImportDryRunResult(
-            status=status,
-            findings=findings,
-            source=source,
-            event_count=len(candidates),
-            blank_line_count=blank_line_count,
-            task_count=len({c[1].get("task_id") for c in candidates if c[1].get("task_id")}),
-            event_type_counts=event_type_counts,
-            candidate_event_ids_present=[c[1].get("event_id") for c in candidates if c[1].get("event_id")],
+            status=state.status,
+            findings=state.findings,
+            source=state.source,
+            event_count=len(state.candidates),
+            blank_line_count=state.blank_line_count,
+            task_count=task_count,
+            event_type_counts={},
+            candidate_event_ids_present=candidate_event_ids,
             would_import=False,
-            ledger_check=ledger_check,
-            next_action="Fix the reported ledger issues before importing the event batch.",
+            ledger_check=state.ledger_check,
+            next_action="Fix the reported issues before importing the event batch.",
         )
 
     return EventImportDryRunResult(
         status="pass",
         findings=[],
-        source=source,
-        event_count=len(candidates),
-        blank_line_count=blank_line_count,
-        task_count=len({c[1].get("task_id") for c in candidates if c[1].get("task_id")}),
-        event_type_counts=event_type_counts,
-        candidate_event_ids_present=[c[1].get("event_id") for c in candidates if c[1].get("event_id")],
+        source=state.source,
+        event_count=len(state.candidates),
+        blank_line_count=state.blank_line_count,
+        task_count=task_count,
+        event_type_counts=state.event_type_counts,
+        candidate_event_ids_present=candidate_event_ids,
         would_import=True,
         ledger_check="pass",
         next_action="Dry-run passed. Review the event batch before any future commit command.",
     )
+
+
+def import_events_commit(
+    root: Path,
+    file: str,
+    tasks_file: str | None = None,
+    events_file: str | None = None,
+) -> CheckResult:
+    """Commit a batch import of candidate events to an existing event ledger.
+
+    The command re-runs the full preflight internally, appends the whole batch
+    as one continuous JSONL block, then validates the ledger and rolls back to
+    the original byte size if any post-check fails.
+    """
+    root = root.resolve()
+
+    # Phase 1: preflight reload. Commit never trusts an earlier dry-run.
+    state = _run_preflight(
+        root, file, tasks_file, events_file, require_events_file_exists=True
+    )
+
+    task_count = len({c[1].get("task_id") for c in state.candidates if c[1].get("task_id")})
+    candidate_event_ids = [c[1].get("event_id") for c in state.candidates if c[1].get("event_id")]
+
+    if state.findings:
+        return EventImportCommitResult(
+            status=state.status,
+            findings=state.findings,
+            source=state.source,
+            event_count=len(state.candidates),
+            blank_line_count=state.blank_line_count,
+            task_count=task_count,
+            event_type_counts={},
+            candidate_event_ids_present=candidate_event_ids,
+            target_events_file=events_file or "tasks/events.jsonl",
+            committed=False,
+            appended_line_count=0,
+            post_validate=None,
+            post_ledger_check=None,
+            rolled_back=False,
+            rollback_error=None,
+            next_action="Fix the reported issues before committing the event batch.",
+        )
+
+    # Phase 2: write preparation (commit-specific target guard). The first
+    # version requires the target events ledger to already exist.
+    resolved_events = _resolve_commit_events_path(root, events_file)
+    if isinstance(resolved_events, CheckResult):
+        return EventImportCommitResult(
+            status=resolved_events.status,
+            findings=list(resolved_events.findings),
+            source=state.source,
+            event_count=len(state.candidates),
+            blank_line_count=state.blank_line_count,
+            task_count=task_count,
+            event_type_counts={},
+            candidate_event_ids_present=candidate_event_ids,
+            target_events_file=events_file or "tasks/events.jsonl",
+            committed=False,
+            appended_line_count=0,
+            post_validate=None,
+            post_ledger_check=None,
+            rolled_back=False,
+            rollback_error=None,
+            next_action="Fix the target events ledger path before committing.",
+        )
+    events_path = resolved_events
+
+    if not events_path.parent.is_dir():
+        return EventImportCommitResult(
+            status="blocked",
+            findings=[
+                Finding(
+                    rule_id="events-parent-missing",
+                    severity="block",
+                    action="deny",
+                    message="Events file parent directory must already exist.",
+                )
+            ],
+            source=state.source,
+            event_count=len(state.candidates),
+            blank_line_count=state.blank_line_count,
+            task_count=task_count,
+            event_type_counts={},
+            candidate_event_ids_present=candidate_event_ids,
+            target_events_file=events_file or "tasks/events.jsonl",
+            committed=False,
+            appended_line_count=0,
+            post_validate=None,
+            post_ledger_check=None,
+            rolled_back=False,
+            rollback_error=None,
+            next_action="Create the ledger directory explicitly before committing an event import.",
+        )
+
+    if not _has_trailing_newline(events_path):
+        return EventImportCommitResult(
+            status="blocked",
+            findings=[
+                Finding(
+                    rule_id="events-file-missing-trailing-newline",
+                    severity="block",
+                    action="deny",
+                    message="Events file must end with a newline before import commit.",
+                )
+            ],
+            source=state.source,
+            event_count=len(state.candidates),
+            blank_line_count=state.blank_line_count,
+            task_count=task_count,
+            event_type_counts={},
+            candidate_event_ids_present=candidate_event_ids,
+            target_events_file=events_file or "tasks/events.jsonl",
+            committed=False,
+            appended_line_count=0,
+            post_validate=None,
+            post_ledger_check=None,
+            rolled_back=False,
+            rollback_error=None,
+            next_action="Fix the ledger newline explicitly, then retry the import commit.",
+        )
+
+    original_size = events_path.stat().st_size
+    lines_to_append = [
+        json.dumps(candidate, ensure_ascii=False) + "\n"
+        for _line_no, candidate in state.candidates
+    ]
+
+    # Phase 3: append block.
+    try:
+        with open(events_path, "a", encoding="utf-8", newline="") as fh:
+            for line in lines_to_append:
+                fh.write(line)
+    except OSError as exc:
+        rollback_ok, rollback_error = _rollback_events_file(events_path, original_size)
+        return EventImportCommitResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="write-error",
+                    severity="error",
+                    action="error",
+                    message=f"Could not write event batch: {exc}",
+                )
+            ],
+            source=state.source,
+            event_count=len(state.candidates),
+            blank_line_count=state.blank_line_count,
+            task_count=task_count,
+            event_type_counts={},
+            candidate_event_ids_present=candidate_event_ids,
+            target_events_file=events_file or "tasks/events.jsonl",
+            committed=False,
+            appended_line_count=0,
+            post_validate=None,
+            post_ledger_check=None,
+            rolled_back=rollback_ok,
+            rollback_error=rollback_error,
+            next_action=(
+                "Write failed and rollback succeeded. Check disk space and permissions."
+                if rollback_ok
+                else "Write failed and rollback failed. Restore the event ledger manually."
+            ),
+        )
+
+    # Phase 4: post-check on the real ledger.
+    post_validate = validate_records(
+        root, _rel_to_root(root, events_path), "event"
+    )
+    post_ledger = check_ledger_consistency(
+        root,
+        tasks_file=tasks_file or "tasks/tasks.jsonl",
+        events_file=_rel_to_root(root, events_path),
+    )
+
+    failures: list[Finding] = []
+    if post_validate.status != "pass":
+        failures.extend(post_validate.findings)
+    if post_ledger.status != "pass":
+        failures.extend(post_ledger.findings)
+
+    result = EventImportCommitResult(
+        status="pass",
+        findings=[],
+        source=state.source,
+        event_count=len(state.candidates),
+        blank_line_count=state.blank_line_count,
+        task_count=task_count,
+        event_type_counts=state.event_type_counts,
+        candidate_event_ids_present=candidate_event_ids,
+        target_events_file=events_file or "tasks/events.jsonl",
+        committed=True,
+        appended_line_count=len(state.candidates),
+        post_validate=post_validate.status,
+        post_ledger_check=post_ledger.status,
+        rolled_back=False,
+        rollback_error=None,
+        next_action="Event batch committed successfully.",
+    )
+
+    if not failures:
+        return result
+
+    # Phase 5: rollback on post-check failure.
+    rollback_ok, rollback_error = _rollback_events_file(events_path, original_size)
+    result.status = "error" if not rollback_ok else "validation_failed"
+    result.findings = failures
+    result.committed = False
+    result.appended_line_count = 0
+    result.rolled_back = rollback_ok
+    result.rollback_error = rollback_error
+    result.next_action = (
+        "Post-import checks failed and rollback succeeded. Fix the candidate batch and rerun dry-run before commit."
+        if rollback_ok
+        else "Post-import checks failed and rollback failed. Restore the event ledger manually."
+    )
+    return result
