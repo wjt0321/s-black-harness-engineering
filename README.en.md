@@ -56,6 +56,59 @@ In one sentence:
 
 The repository has already moved from a read-only checking CLI to a minimal controlled-write runtime, and has now started to formalize the orchestration-hub backend blueprint.
 
+## Progress Bar
+
+> This is a long-term project. The percentages below are **stage-completion estimates**, not code-volume metrics. They exist to answer one practical question: where are we now, and what comes next?
+
+### Overall Progress (subjective engineering estimate)
+
+```text
+[███████████████░░░░░░░░░] about 60%
+```
+
+Current estimate:
+
+- **Security and audit core**: about **80%**
+- **Orchestration-hub backend abstractions**: about **45%**
+- **Future UI / Control Panel readiness**: about **20%**
+
+### Stage Closure Progress
+
+- ✅ Stage 0 — Project skeleton
+- ✅ Stage 1 — General policy model
+- ✅ Stage 2 — Task ledger
+- ✅ Stage 3 — Agent registry
+- ✅ Stage 4 — Tool adapter layer (first-round design)
+- ✅ Stage 5 — Minimal Runtime CLI
+- ✅ Stage 6 — Runtime read-only checking chain
+- ✅ Stage 7 — Controlled-write foundation
+- ✅ Stage 8 — Runtime Event Import capability pack (v0.11)
+- ✅ Stage 9 — Orchestration-hub positioning reset and blueprint
+- 🟡 Stage 10 — Adapter Runtime Interface (documented, needs further refinement)
+- 🟡 Stage 11 — Capability Routing Model (documented, needs further refinement)
+- 🟡 Stage 12 — Control Plane State Model (documented, needs further refinement)
+- ⚪ Stage 13 — Backend-first API Boundary (context kept, not urgent yet)
+- ⚪ Stage 14 — Minimal orchestration-hub execution loop
+- ⚪ Stage 15 — Backend preparation before UI / dashboard
+- ⚪ Stage 16 — UI / Control Panel
+
+### The Most Accurate Current Read
+
+The current state is best understood as:
+
+- **guardrails / ledgers / controlled writes are no longer a sketch; they are already a formed security core**
+- **the orchestration-hub backend line has completed its positioning reset and first batch of core documents**
+- **true unified integration, routing, and control-plane operating boundaries have not yet entered an execution loop**
+
+### What Comes Next
+
+The most natural next direction is not to keep adding scattered features, but to:
+
+1. keep refining the backend abstractions in **Stage 10-12**
+2. keep **Stage 13** as prepared context, but not expand it yet
+3. enter **Stage 14: the minimal orchestration-hub execution loop** at the right time
+4. backfill guardrail gaps when new stages expose them
+
 Implemented capability highlights:
 
 - structure validation, secret scan, path checks, action preflight
