@@ -1262,6 +1262,34 @@ python -m agent_runtime.cli --root "$SMOKE" runtime report \
 
 详细步骤与临时目录构造见 `docs/35-runtime-task-create-smoke.md`。
 
+## Controlled Write Regression
+
+受控写入命令（`runtime draft export --commit`、`runtime event append --commit`、`runtime task create --commit`）的完整链路已纳入回归测试。运行聚焦测试：
+
+```bash
+python -m pytest tests/test_controlled_write_regression.py -q
+```
+
+该测试在临时项目根中执行：
+
+```text
+task create dry-run -> task create commit -> event append dry-run -> event append commit -> task validate -> task check-ledger -> runtime report
+```
+
+并断言：
+
+- 受控写入只追加预期单行。
+- `runtime report` 不泄露 task title 与 event message。
+- 仓库真实 `tasks/tasks.jsonl` 与 `tasks/events.jsonl` 不被修改。
+
+建议 CI 在完整 `pytest` 之外显式跑一次受控写入 smoke test，作为回归保护：
+
+```bash
+python -m pytest tests/test_controlled_write_regression.py -q
+```
+
+详细边界与写入点梳理见 `docs/36-controlled-write-regression.md`。
+
 ## Runtime Event Append Smoke / Report Loop
 
 `runtime event append` 写入 event ledger 后，通常需要再跑一遍只读检查与聚合报告来确认状态。完整的 smoke loop 应在**临时项目副本**中进行：

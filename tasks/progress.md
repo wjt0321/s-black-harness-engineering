@@ -533,4 +533,14 @@
 - 更新 `docs/10-cli-poc-usage.md`：新增 "Runtime Task Create Smoke / Report Loop" 小节，并同步 `runtime report` 文本输出示例。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/35-runtime-task-create-smoke.md`。
 - 验证：`python -m pytest tests/test_runtime_task_create_smoke_loop.py tests/test_runtime_report.py -q` 通过；`python -m agent_runtime.cli doctor` PASS；`python tools/public_scan.py` OK；`git diff --check` PASS。
-- 不新增真实写入权限，不打 tag，不提交。
+- 不新增真实写入权限；本阶段不打 tag。
+
+## 2026-07-07（再续）— Controlled Write Regression
+
+- 新增 `docs/36-controlled-write-regression.md`：梳理三个受控写入点（`runtime draft export --commit`、`runtime event append --commit`、`runtime task create --commit`）的唯一写入目标、path guard、post-check、rollback、输出脱敏；列出必须保持只读的命令。
+- 新增 `tests/test_controlled_write_regression.py`：在 `tmp_path` 临时项目根中跑通 task create dry-run/commit -> event append dry-run/commit -> task validate/check-ledger -> runtime report，断言 ledger 行数、report 不泄露 title/message、仓库真实 ledger 不被修改。
+- 更新 `.github/workflows/ci.yml`：在 ledger smoke checks 后新增 `Run controlled write regression tests` 步骤，显式跑受控写入回归测试。
+- 更新 `docs/10-cli-poc-usage.md`：新增 "Controlled Write Regression" 小节，说明本地/CI 命令与断言。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/36-controlled-write-regression.md`。
+- 不新增任何写权限，不进入 adapter execution；本阶段不打 tag。
+- 验证：`python -m pytest tests/test_controlled_write_regression.py -q` 通过；`python -m pytest -q` 通过；`python -m agent_runtime.cli doctor` PASS；`python tools/public_scan.py` OK；`git diff --check` PASS。

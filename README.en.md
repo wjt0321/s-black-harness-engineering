@@ -120,6 +120,7 @@ The first phase does not:
 - `docs/33-runtime-task-create-commit.md`
 - `docs/34-release-notes-runtime-task-create-commit.md`
 - `docs/35-runtime-task-create-smoke.md`
+- `docs/36-controlled-write-regression.md`
 
 ## Development Principle
 
