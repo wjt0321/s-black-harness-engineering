@@ -124,10 +124,11 @@ python -m agent_runtime.cli policies list
 - `docs/37-runtime-event-import-dry-run.md`
 - `docs/38-release-notes-runtime-event-import-dry-run.md`
 - `docs/39-runtime-event-import-commit-design.md`
+- `docs/40-release-notes-runtime-event-import-commit.md`
 - `docs/41-runtime-event-import-consistency-freeze.md`
 - `docs/42-release-notes-runtime-event-import-consistency-freeze.md`
 - `docs/43-controlled-write-regression-event-import.md`
-- `docs/40-release-notes-runtime-event-import-commit.md`
+- `docs/44-release-notes-v0.11-runtime-event-import.md`
 
 ## 推进原则
 

@@ -1200,3 +1200,14 @@
 - 已跑 `python -m pytest -q`：通过。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-07（十续）— v0.11 Runtime Event Import Release
+
+- 新增 `docs/44-release-notes-v0.11-runtime-event-import.md`：汇总 Runtime Event Import 能力包，版本号为 `v0.11.0-runtime-event-import`。
+- Release 范围覆盖：
+  - `runtime event import --dry-run` 批量预检。
+  - `runtime event import --commit` 受控批量写入、post-check 与 byte-size rollback。
+  - consistency freeze：dry-run 输出 `plan_hash`，commit 可选 `--expected-plan-hash`。
+  - controlled write regression 扩展：将 event import commit 与 freeze mismatch 纳入统一回归保护。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/44-release-notes-v0.11-runtime-event-import.md`，并整理 Runtime Event Import 相关文档顺序。
+- 本阶段不新增代码能力，仅做 release notes、验证、tag 与收口。
