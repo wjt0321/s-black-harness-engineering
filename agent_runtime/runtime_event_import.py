@@ -925,6 +925,7 @@ def import_events_commit(
     tasks_file: str | None = None,
     events_file: str | None = None,
     expected_plan_hash: str | None = None,
+    require_dry_run: bool = False,
 ) -> CheckResult:
     """Commit a batch import of candidate events to an existing event ledger.
 
@@ -934,8 +935,39 @@ def import_events_commit(
 
     When ``expected_plan_hash`` is provided, the current plan hash is recomputed
     and compared before preflight; a mismatch returns ``blocked`` immediately.
+
+    When ``require_dry_run`` is True, ``--expected-plan-hash`` is mandatory;
+    missing it returns ``error``.
     """
     root = root.resolve()
+
+    if require_dry_run and expected_plan_hash is None:
+        return EventImportCommitResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="missing-expected-plan-hash",
+                    severity="error",
+                    action="error",
+                    message="--require-dry-run requires --expected-plan-hash.",
+                )
+            ],
+            source=file,
+            event_count=0,
+            blank_line_count=0,
+            task_count=0,
+            event_type_counts={},
+            candidate_event_ids_present=[],
+            target_events_file=events_file or "tasks/events.jsonl",
+            committed=False,
+            appended_line_count=0,
+            post_validate=None,
+            post_ledger_check=None,
+            rolled_back=False,
+            rollback_error=None,
+            freeze_check=None,
+            next_action="Rerun runtime event import --dry-run, review the plan_hash, then pass --expected-plan-hash.",
+        )
 
     # Phase 0: resolve candidate file and compute freeze metadata before
     # preflight, so a path error surfaces as a path error (not a freeze mismatch).
@@ -1002,10 +1034,11 @@ def import_events_commit(
     task_count = len({c[1].get("task_id") for c in state.candidates if c[1].get("task_id")})
     candidate_event_ids = [c[1].get("event_id") for c in state.candidates if c[1].get("event_id")]
 
+    freeze_active = expected_plan_hash is not None or require_dry_run
     freeze_kwargs = {
-        "freeze_check": "pass" if expected_plan_hash is not None else None,
+        "freeze_check": "pass" if freeze_active else None,
         "expected_plan_hash": expected_plan_hash,
-        "current_plan_hash": freeze.plan_hash if expected_plan_hash is not None else None,
+        "current_plan_hash": freeze.plan_hash if freeze_active else None,
     }
 
     if state.findings:

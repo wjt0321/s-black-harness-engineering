@@ -756,6 +756,37 @@ def _cmd_runtime_event_import(args: argparse.Namespace) -> int:
             next_action="Add --dry-run to simulate the import or --commit to persist the batch.",
         )
         return _emit_runtime_event_import_result(result, json_output=args.json)
+
+    require_dry_run = getattr(args, "require_dry_run", False)
+    if require_dry_run and dry_run:
+        result = CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="require-dry-run-with-dry-run",
+                    severity="error",
+                    action="error",
+                    message="--require-dry-run cannot be used with --dry-run.",
+                )
+            ],
+            next_action="Use --require-dry-run only with --commit.",
+        )
+        return _emit_runtime_event_import_result(result, json_output=args.json)
+    if require_dry_run and not commit:
+        result = CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="require-dry-run-requires-commit",
+                    severity="error",
+                    action="error",
+                    message="--require-dry-run can only be used with --commit.",
+                )
+            ],
+            next_action="Add --commit, or remove --require-dry-run.",
+        )
+        return _emit_runtime_event_import_result(result, json_output=args.json)
+
     if dry_run:
         result = import_events_dry_run(
             root,
@@ -770,6 +801,7 @@ def _cmd_runtime_event_import(args: argparse.Namespace) -> int:
             tasks_file=args.tasks_file,
             events_file=args.events_file,
             expected_plan_hash=getattr(args, "expected_plan_hash", None),
+            require_dry_run=require_dry_run,
         )
     return _emit_runtime_event_import_result(result, json_output=args.json)
 
@@ -1541,6 +1573,10 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_event_import_parser.add_argument("--dry-run", action="store_true", help="Run in read-only dry-run mode")
     runtime_event_import_parser.add_argument("--commit", action="store_true", help="Persist the batch to the event ledger")
     runtime_event_import_parser.add_argument("--expected-plan-hash", default=None, help="Expected plan hash from a previous dry-run (commit only)")
+    runtime_event_import_parser.add_argument(
+        "--require-dry-run", action="store_true",
+        help="Require the commit to bind a previous dry-run plan (commit only)"
+    )
     runtime_event_import_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
     runtime_event_import_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
     _add_global_args(runtime_event_import_parser)

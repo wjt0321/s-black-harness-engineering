@@ -26,7 +26,7 @@ It is not intended to replace QwenPaw immediately. The first phase focuses on do
 
 - Stage: read-only CLI POC plus Adapter execution envelope checks are runnable
 - Created: 2026-07-02
-- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, ledger validation, adapter envelope plan / validate / inspect / approval check / response check / gate check, task + adapter envelope runtime plan (including `--draft-json` envelope draft output), runtime draft validate / inspect / export `--dry-run` / `--commit`, runtime event append `--dry-run` / `--commit`, runtime event import `--dry-run` / `--commit` (with `--expected-plan-hash` consistency freeze), runtime task create `--dry-run` / `--commit`, runtime gate check, runtime ledger audit, and runtime report
+- Current implementation: minimal read-only CLI for structure validation, secret scanning, path checks, action preflight, registry queries, ledger validation, adapter envelope plan / validate / inspect / approval check / response check / gate check, task + adapter envelope runtime plan (including `--draft-json` envelope draft output), runtime draft validate / inspect / export `--dry-run` / `--commit`, runtime event append `--dry-run` / `--commit`, runtime event import `--dry-run` / `--commit` (with `--expected-plan-hash` consistency freeze and `--require-dry-run` strict freeze mode), runtime task create `--dry-run` / `--commit`, runtime gate check, runtime ledger audit, and runtime report
 - Current boundary: adapter flows, runtime plan, runtime draft validate / inspect / gate / runtime ledger audit, runtime report, and runtime task create `--dry-run` remain read-only by default and do not execute real external actions; `runtime draft export --commit` only writes new files under `drafts/runtime/.../*.json`, does not overwrite, and rolls back on failure; `runtime event append --commit` appends exactly one line to an event ledger JSONL and rolls back to the original byte size on failure; `runtime event import --commit` appends a continuous block of candidate events to an existing event ledger JSONL and rolls back to the original byte size on post-check failure; `runtime task create --commit` appends exactly one line to a task ledger JSONL, rolls back to the original byte size on post-check failure, and does not write the event ledger
 
 ## Continuous Integration
@@ -130,6 +130,7 @@ The first phase does not:
 - `docs/43-controlled-write-regression-event-import.md`
 - `docs/44-release-notes-v0.11-runtime-event-import.md`
 - `docs/45-runtime-event-import-strict-freeze-mode.md`
+- `docs/46-release-notes-runtime-event-import-strict-freeze.md`
 
 ## Development Principle
 

@@ -1225,3 +1225,35 @@
   - 未来实现 strict mode 后，controlled write regression 必须覆盖成功、缺 hash、stale hash 与兼容路径。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/45-runtime-event-import-strict-freeze-mode.md`。
 - 本阶段不新增代码能力，仅做设计与文档维护。
+
+## 2026-07-07（十二续）— Runtime Event Import Strict Freeze Mode 实现
+
+- 实现 `runtime event import --commit --require-dry-run` strict freeze mode。
+- 修改 `agent_runtime/cli.py`：
+  - `runtime event import` 新增 `--require-dry-run` 参数。
+  - 校验 `--require-dry-run` 不能与 `--dry-run` 同用、只能与 `--commit` 同用。
+  - 将 `require_dry_run` 传给 `import_events_commit`。
+- 修改 `agent_runtime/runtime_event_import.py`：
+  - `import_events_commit` 新增 `require_dry_run: bool = False`。
+  - 缺少 `--expected-plan-hash` 时返回 `error`（`rule_id=missing-expected-plan-hash`）。
+  - hash 一致时继续完整 preflight + append + post-check + rollback；hash 不一致直接 `blocked`。
+- 新增 `tests/test_runtime_event_import_strict_freeze.py`，覆盖：
+  - require-dry-run + 缺少 expected hash -> error。
+  - require-dry-run + dry-run -> error。
+  - require-dry-run + commit + 正确 hash -> success。
+  - require-dry-run + commit + stale hash -> blocked + ledger 不变。
+  - stale hash 输出脱敏。
+  - 向后兼容路径保持不变。
+- 更新 `tests/test_controlled_write_regression.py`：
+  - 新增 `test_controlled_write_regression_event_import_strict_freeze`。
+  - 在临时项目根中覆盖 `--require-dry-run` 成功与 stale hash 失败路径。
+- 新增 `docs/46-release-notes-runtime-event-import-strict-freeze.md`：阶段收口说明。
+- 更新 `docs/10-cli-poc-usage.md`：在 Runtime Event Import 章节新增 Strict Freeze Mode 小节与示例。
+- 更新 `README.md` / `README.en.md`：文档索引加入 `docs/46-release-notes-runtime-event-import-strict-freeze.md`，当前状态补充 strict freeze mode。
+- 保持安全边界：不执行 adapter、不访问网络、不发送消息、不读取 `.env`/credential；`--commit` 仍只允许向已存在的 event ledger 追加连续 block，失败按 byte size 回滚。
+- 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest tests/test_runtime_event_import_strict_freeze.py -q`：通过。
+- 已跑 `python -m pytest tests/test_controlled_write_regression.py -q`：通过。
+- 已跑 `python -m pytest -q`：通过。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。

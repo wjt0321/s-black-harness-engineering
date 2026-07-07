@@ -26,7 +26,7 @@
 
 - 阶段：只读 CLI POC + Adapter execution envelope 检查链路已可运行
 - 创建日期：2026-07-02
-- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询、ledger 校验，以及 adapter envelope 的 plan / validate / inspect / approval check / response check / gate check，和 task + adapter envelope 的 runtime plan（含 `--draft-json` envelope 草案输出） / runtime draft validate / runtime draft inspect / runtime draft export `--dry-run` `--commit` / runtime event append `--dry-run` `--commit` / runtime event import `--dry-run` `--commit`（含 `--expected-plan-hash` 一致性冻结） / runtime task create `--dry-run` `--commit` / runtime gate check / runtime check-ledger / runtime report
+- 当前实现：最小只读 CLI，可做结构校验、密钥扫描、路径检查、action preflight、registry 查询、ledger 校验，以及 adapter envelope 的 plan / validate / inspect / approval check / response check / gate check，和 task + adapter envelope 的 runtime plan（含 `--draft-json` envelope 草案输出） / runtime draft validate / runtime draft inspect / runtime draft export `--dry-run` `--commit` / runtime event append `--dry-run` `--commit` / runtime event import `--dry-run` `--commit`（含 `--expected-plan-hash` 一致性冻结与 `--require-dry-run` strict freeze mode） / runtime task create `--dry-run` `--commit` / runtime gate check / runtime check-ledger / runtime report
 - 当前边界：adapter 链路与 runtime plan / runtime draft validate / inspect / gate / runtime ledger audit / runtime report / runtime task create `--dry-run` 默认只读，不执行真实外部动作；`runtime draft export --commit` 仅写入新文件到 `drafts/runtime/.../*.json`，不支持 overwrite，写入失败自动回滚；`runtime event append --commit` 只追加单行到 event ledger JSONL，写入失败按原始 byte size 回滚；`runtime event import --commit` 只把整批 candidate event 作为连续 block 追加到已存在的 event ledger JSONL，post-check 失败按原始 byte size 回滚；`runtime task create --commit` 只追加单行到 task ledger JSONL，写后校验失败按原始 byte size 回滚，不自动写 event ledger
 
 ## 持续集成
@@ -130,6 +130,7 @@ python -m agent_runtime.cli policies list
 - `docs/43-controlled-write-regression-event-import.md`
 - `docs/44-release-notes-v0.11-runtime-event-import.md`
 - `docs/45-runtime-event-import-strict-freeze-mode.md`
+- `docs/46-release-notes-runtime-event-import-strict-freeze.md`
 
 ## 推进原则
 
