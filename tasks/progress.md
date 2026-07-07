@@ -1211,3 +1211,17 @@
   - controlled write regression 扩展：将 event import commit 与 freeze mismatch 纳入统一回归保护。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/44-release-notes-v0.11-runtime-event-import.md`，并整理 Runtime Event Import 相关文档顺序。
 - 本阶段不新增代码能力，仅做 release notes、验证、tag 与收口。
+
+## 2026-07-07（十一续）— Runtime Event Import Strict Freeze Mode 设计
+
+- 新增 `docs/45-runtime-event-import-strict-freeze-mode.md`：定义未来 strict freeze mode 边界，本阶段只写设计，不实现 CLI，不新增真实写权限。
+- 设计重点：
+  - 当前 v0.11 freeze 是 advisory-first：dry-run 输出 `plan_hash`，commit 可选 `--expected-plan-hash`，但不强制绑定 dry-run。
+  - strict freeze mode 建议新增 `--require-dry-run`，表达“本次 commit 必须绑定某次 dry-run 审阅结果”。
+  - `--require-dry-run` 只能与 `--commit` 一起使用，且必须同时提供 `--expected-plan-hash`。
+  - 缺少 expected hash 属于命令使用错误，建议返回 `error` / `missing-expected-plan-hash`。
+  - hash mismatch 继续沿用现有 `plan-hash-mismatch` blocked 语义。
+  - 第一版 strict mode 不强制 tasks ledger fingerprint，不新增单独 events ledger fingerprint 参数，不允许创建新 event ledger。
+  - 未来实现 strict mode 后，controlled write regression 必须覆盖成功、缺 hash、stale hash 与兼容路径。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/45-runtime-event-import-strict-freeze-mode.md`。
+- 本阶段不新增代码能力，仅做设计与文档维护。

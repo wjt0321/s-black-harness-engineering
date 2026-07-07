@@ -129,6 +129,7 @@ python -m agent_runtime.cli policies list
 - `docs/42-release-notes-runtime-event-import-consistency-freeze.md`
 - `docs/43-controlled-write-regression-event-import.md`
 - `docs/44-release-notes-v0.11-runtime-event-import.md`
+- `docs/45-runtime-event-import-strict-freeze-mode.md`
 
 ## 推进原则
 
