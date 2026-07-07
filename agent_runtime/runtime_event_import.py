@@ -15,6 +15,7 @@ involved.
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import re
@@ -44,9 +45,9 @@ _PUBLIC_SCAN_RULES: list[dict[str, str]] = _public_scan.SCAN_RULES
 class EventImportDryRunResult(CheckResult):
     """Result of simulating a batch event import.
 
-    The summary only exposes safe identifiers and counts. It never includes
-    event messages, metadata values, artifact payloads, evidence descriptions,
-    targets, inputs, or raw/decision refs.
+    The summary only exposes safe identifiers, counts, and consistency-freeze
+    metadata. It never includes event messages, metadata values, artifact
+    payloads, evidence descriptions, targets, inputs, or raw/decision refs.
     """
 
     source: str | None = None
@@ -57,6 +58,13 @@ class EventImportDryRunResult(CheckResult):
     candidate_event_ids_present: list[str] = field(default_factory=list)
     would_import: bool = False
     ledger_check: str | None = None
+    freeze_mode: str = "advisory"
+    candidate_fingerprint: str | None = None
+    events_ledger_exists: bool = False
+    events_ledger_fingerprint: str | None = None
+    events_ledger_size_bytes: int = 0
+    events_ledger_line_count: int = 0
+    plan_hash: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
@@ -72,6 +80,16 @@ class EventImportDryRunResult(CheckResult):
         d["would_import"] = self.would_import
         if self.ledger_check is not None:
             d["ledger_check"] = self.ledger_check
+        d["freeze_mode"] = self.freeze_mode
+        if self.candidate_fingerprint is not None:
+            d["candidate_fingerprint"] = self.candidate_fingerprint
+        d["events_ledger_exists"] = self.events_ledger_exists
+        if self.events_ledger_fingerprint is not None:
+            d["events_ledger_fingerprint"] = self.events_ledger_fingerprint
+        d["events_ledger_size_bytes"] = self.events_ledger_size_bytes
+        d["events_ledger_line_count"] = self.events_ledger_line_count
+        if self.plan_hash is not None:
+            d["plan_hash"] = self.plan_hash
         return d
 
 
@@ -79,9 +97,10 @@ class EventImportDryRunResult(CheckResult):
 class EventImportCommitResult(CheckResult):
     """Result of committing a batch event import.
 
-    The summary only exposes safe identifiers, counts, and post-check status.
-    It never includes event messages, metadata values, artifact payloads,
-    evidence descriptions, targets, inputs, or raw/decision refs.
+    The summary only exposes safe identifiers, counts, post-check status, and
+    consistency-freeze metadata. It never includes event messages, metadata
+    values, artifact payloads, evidence descriptions, targets, inputs, or
+    raw/decision refs.
     """
 
     source: str | None = None
@@ -97,6 +116,9 @@ class EventImportCommitResult(CheckResult):
     post_ledger_check: str | None = None
     rolled_back: bool = False
     rollback_error: str | None = None
+    freeze_check: str | None = None
+    expected_plan_hash: str | None = None
+    current_plan_hash: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
@@ -120,6 +142,12 @@ class EventImportCommitResult(CheckResult):
         d["rolled_back"] = self.rolled_back
         if self.rollback_error is not None:
             d["rollback_error"] = self.rollback_error
+        if self.freeze_check is not None:
+            d["freeze_check"] = self.freeze_check
+        if self.expected_plan_hash is not None:
+            d["expected_plan_hash"] = self.expected_plan_hash
+        if self.current_plan_hash is not None:
+            d["current_plan_hash"] = self.current_plan_hash
         return d
 
 
@@ -139,10 +167,126 @@ class _PreflightState:
     ledger_check: str | None
     findings: list[Finding]
     status: str = "pass"
+    freeze: "_FreezeState | None" = None
+
+
+@dataclass
+class _FreezeState:
+    """Consistency-freeze metadata for a candidate/events pair."""
+
+    candidate_fingerprint: str | None
+    events_ledger_exists: bool
+    events_ledger_fingerprint: str | None
+    events_ledger_size_bytes: int
+    events_ledger_line_count: int
+    plan_hash: str | None
 
 
 def _line_number(text: str, pos: int) -> int:
     return text.count("\n", 0, pos) + 1
+
+
+def _sha256_hex(data: bytes) -> str:
+    return "sha256:" + hashlib.sha256(data).hexdigest()
+
+
+def _compute_candidate_fingerprint(path: Path) -> str | None:
+    """Return a stable sha256 over non-empty raw candidate lines.
+
+    Empty lines are ignored; line order is preserved. Returns None if the file
+    cannot be read safely.
+    """
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return None
+    non_empty = [line for line in raw.splitlines() if line.strip()]
+    if not non_empty:
+        return _sha256_hex(b"")
+    return _sha256_hex(b"\n".join(non_empty))
+
+
+def _compute_events_ledger_fingerprint(path: Path) -> tuple[bool, str | None, int, int]:
+    """Return (exists, fingerprint, size_bytes, line_count) for an events ledger.
+
+    The fingerprint covers the ledger's full raw UTF-8 bytes. If the ledger does
+    not exist, returns (False, None, 0, 0).
+    """
+    if not path.is_file() or not is_safe_to_read(path):
+        return False, None, 0, 0
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return False, None, 0, 0
+    size = len(raw)
+    line_count = raw.count(b"\n")
+    if raw and not raw.endswith(b"\n"):
+        line_count += 1
+    return True, _sha256_hex(raw), size, line_count
+
+
+def _compute_plan_hash(
+    candidate_fingerprint: str | None,
+    tasks_file: str,
+    events_file: str,
+    events_ledger_fingerprint: str | None,
+    events_ledger_size_bytes: int,
+    events_ledger_line_count: int,
+) -> str | None:
+    """Return a canonical sha256 over the dry-run context.
+
+    Returns None if the candidate fingerprint is unavailable.
+    """
+    if candidate_fingerprint is None:
+        return None
+    plan_obj = {
+        "schema_version": 1,
+        "mode": "runtime-event-import",
+        "candidate_fingerprint": candidate_fingerprint,
+        "tasks_file": tasks_file,
+        "events_file": events_file,
+        "events_ledger_fingerprint": events_ledger_fingerprint,
+        "events_ledger_size_bytes": events_ledger_size_bytes,
+        "events_ledger_line_count": events_ledger_line_count,
+        "input_order_preserved": True,
+        "all_or_nothing": True,
+    }
+    canonical = json.dumps(plan_obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return _sha256_hex(canonical.encode("utf-8"))
+
+
+def _compute_freeze_state(
+    root: Path,
+    file: str,
+    tasks_file: str | None,
+    events_file: str | None,
+) -> _FreezeState:
+    """Compute consistency-freeze metadata for the current candidate/events pair."""
+    candidate_path = (root / file).resolve()
+    candidate_fingerprint = None
+    if candidate_path.is_file() and is_safe_to_read(candidate_path):
+        candidate_fingerprint = _compute_candidate_fingerprint(candidate_path)
+
+    events_path = (root / (events_file or "tasks/events.jsonl")).resolve()
+    exists, fingerprint, size, line_count = _compute_events_ledger_fingerprint(events_path)
+
+    plan_hash = _compute_plan_hash(
+        candidate_fingerprint,
+        tasks_file or "tasks/tasks.jsonl",
+        events_file or "tasks/events.jsonl",
+        fingerprint,
+        size,
+        line_count,
+    )
+
+    return _FreezeState(
+        candidate_fingerprint=candidate_fingerprint,
+        events_ledger_exists=exists,
+        events_ledger_fingerprint=fingerprint,
+        events_ledger_size_bytes=size,
+        events_ledger_line_count=line_count,
+        plan_hash=plan_hash,
+    )
 
 
 def _public_scan_text(text: str) -> list[Finding]:
@@ -407,6 +551,8 @@ def _run_preflight(
     target events ledger is reported as a blocked finding so that the commit
     target guard is enforced inside the preflight phase.
     """
+    freeze = _compute_freeze_state(root, file, tasks_file, events_file)
+
     resolved_path = _resolve_candidate_file(root, file)
     if isinstance(resolved_path, CheckResult):
         return _PreflightState(
@@ -417,6 +563,7 @@ def _run_preflight(
             ledger_check=None,
             findings=list(resolved_path.findings),
             status=resolved_path.status,
+            freeze=freeze,
         )
 
     if require_events_file_exists:
@@ -437,6 +584,7 @@ def _run_preflight(
                     )
                 ],
                 status="blocked",
+                freeze=freeze,
             )
 
     source = normalize_path(resolved_path.relative_to(root))
@@ -565,6 +713,7 @@ def _run_preflight(
             ledger_check=None,
             findings=findings,
             status=_coalesce_findings_status(findings),
+            freeze=freeze,
         )
 
     validate_result, ledger_result = _simulate_import_and_check(
@@ -610,6 +759,7 @@ def _run_preflight(
         ledger_check=ledger_check,
         findings=findings,
         status=status,
+        freeze=freeze,
     )
 
 
@@ -727,37 +877,45 @@ def import_events_dry_run(
     """
     root = root.resolve()
     state = _run_preflight(root, file, tasks_file, events_file)
+    freeze = state.freeze or _FreezeState(None, False, None, 0, 0, None)
 
     task_count = len({c[1].get("task_id") for c in state.candidates if c[1].get("task_id")})
     candidate_event_ids = [c[1].get("event_id") for c in state.candidates if c[1].get("event_id")]
+
+    dry_run_kwargs = {
+        "source": state.source,
+        "event_count": len(state.candidates),
+        "blank_line_count": state.blank_line_count,
+        "task_count": task_count,
+        "candidate_event_ids_present": candidate_event_ids,
+        "freeze_mode": "advisory",
+        "candidate_fingerprint": freeze.candidate_fingerprint,
+        "events_ledger_exists": freeze.events_ledger_exists,
+        "events_ledger_fingerprint": freeze.events_ledger_fingerprint,
+        "events_ledger_size_bytes": freeze.events_ledger_size_bytes,
+        "events_ledger_line_count": freeze.events_ledger_line_count,
+        "plan_hash": freeze.plan_hash,
+    }
 
     if state.findings:
         return EventImportDryRunResult(
             status=state.status,
             findings=state.findings,
-            source=state.source,
-            event_count=len(state.candidates),
-            blank_line_count=state.blank_line_count,
-            task_count=task_count,
-            event_type_counts={},
-            candidate_event_ids_present=candidate_event_ids,
             would_import=False,
             ledger_check=state.ledger_check,
+            event_type_counts={},
             next_action="Fix the reported issues before importing the event batch.",
+            **dry_run_kwargs,
         )
 
     return EventImportDryRunResult(
         status="pass",
         findings=[],
-        source=state.source,
-        event_count=len(state.candidates),
-        blank_line_count=state.blank_line_count,
-        task_count=task_count,
-        event_type_counts=state.event_type_counts,
-        candidate_event_ids_present=candidate_event_ids,
         would_import=True,
         ledger_check="pass",
+        event_type_counts=state.event_type_counts,
         next_action="Dry-run passed. Review the event batch before any future commit command.",
+        **dry_run_kwargs,
     )
 
 
@@ -766,14 +924,75 @@ def import_events_commit(
     file: str,
     tasks_file: str | None = None,
     events_file: str | None = None,
+    expected_plan_hash: str | None = None,
 ) -> CheckResult:
     """Commit a batch import of candidate events to an existing event ledger.
 
     The command re-runs the full preflight internally, appends the whole batch
     as one continuous JSONL block, then validates the ledger and rolls back to
     the original byte size if any post-check fails.
+
+    When ``expected_plan_hash`` is provided, the current plan hash is recomputed
+    and compared before preflight; a mismatch returns ``blocked`` immediately.
     """
     root = root.resolve()
+
+    # Phase 0: resolve candidate file and compute freeze metadata before
+    # preflight, so a path error surfaces as a path error (not a freeze mismatch).
+    resolved_candidate = _resolve_candidate_file(root, file)
+    if isinstance(resolved_candidate, CheckResult):
+        return EventImportCommitResult(
+            status=resolved_candidate.status,
+            findings=list(resolved_candidate.findings),
+            source=file,
+            event_count=0,
+            blank_line_count=0,
+            task_count=0,
+            event_type_counts={},
+            candidate_event_ids_present=[],
+            target_events_file=events_file or "tasks/events.jsonl",
+            committed=False,
+            appended_line_count=0,
+            post_validate=None,
+            post_ledger_check=None,
+            rolled_back=False,
+            rollback_error=None,
+            next_action="Fix the candidate file path before committing.",
+        )
+
+    freeze = _compute_freeze_state(root, file, tasks_file, events_file)
+
+    if expected_plan_hash is not None:
+        current = freeze.plan_hash
+        if current != expected_plan_hash:
+            return EventImportCommitResult(
+                status="blocked",
+                findings=[
+                    Finding(
+                        rule_id="plan-hash-mismatch",
+                        severity="block",
+                        action="deny",
+                        message="Current candidate or ledger context no longer matches the reviewed dry-run plan.",
+                    )
+                ],
+                source=normalize_path(resolved_candidate.relative_to(root)),
+                event_count=0,
+                blank_line_count=0,
+                task_count=0,
+                event_type_counts={},
+                candidate_event_ids_present=[],
+                target_events_file=events_file or "tasks/events.jsonl",
+                committed=False,
+                appended_line_count=0,
+                post_validate=None,
+                post_ledger_check=None,
+                rolled_back=False,
+                rollback_error=None,
+                freeze_check="failed",
+                expected_plan_hash=expected_plan_hash,
+                current_plan_hash=current,
+                next_action="Rerun runtime event import --dry-run and review the updated batch before commit.",
+            )
 
     # Phase 1: preflight reload. Commit never trusts an earlier dry-run.
     state = _run_preflight(
@@ -782,6 +1001,12 @@ def import_events_commit(
 
     task_count = len({c[1].get("task_id") for c in state.candidates if c[1].get("task_id")})
     candidate_event_ids = [c[1].get("event_id") for c in state.candidates if c[1].get("event_id")]
+
+    freeze_kwargs = {
+        "freeze_check": "pass" if expected_plan_hash is not None else None,
+        "expected_plan_hash": expected_plan_hash,
+        "current_plan_hash": freeze.plan_hash if expected_plan_hash is not None else None,
+    }
 
     if state.findings:
         return EventImportCommitResult(
@@ -801,6 +1026,7 @@ def import_events_commit(
             rolled_back=False,
             rollback_error=None,
             next_action="Fix the reported issues before committing the event batch.",
+            **freeze_kwargs,
         )
 
     # Phase 2: write preparation (commit-specific target guard). The first
@@ -824,6 +1050,7 @@ def import_events_commit(
             rolled_back=False,
             rollback_error=None,
             next_action="Fix the target events ledger path before committing.",
+            **freeze_kwargs,
         )
     events_path = resolved_events
 
@@ -852,6 +1079,7 @@ def import_events_commit(
             rolled_back=False,
             rollback_error=None,
             next_action="Create the ledger directory explicitly before committing an event import.",
+            **freeze_kwargs,
         )
 
     if not _has_trailing_newline(events_path):
@@ -879,6 +1107,7 @@ def import_events_commit(
             rolled_back=False,
             rollback_error=None,
             next_action="Fix the ledger newline explicitly, then retry the import commit.",
+            **freeze_kwargs,
         )
 
     original_size = events_path.stat().st_size
@@ -922,6 +1151,7 @@ def import_events_commit(
                 if rollback_ok
                 else "Write failed and rollback failed. Restore the event ledger manually."
             ),
+            **freeze_kwargs,
         )
 
     # Phase 4: post-check on the real ledger.
@@ -957,6 +1187,7 @@ def import_events_commit(
         rolled_back=False,
         rollback_error=None,
         next_action="Event batch committed successfully.",
+        **freeze_kwargs,
     )
 
     if not failures:

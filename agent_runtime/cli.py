@@ -655,6 +655,16 @@ def _render_runtime_event_import_summary(result: CheckResult) -> str:
         lines.append(f"would_import={result.would_import}")
         if result.ledger_check is not None:
             lines.append(f"ledger_check={result.ledger_check}")
+        lines.append(f"freeze_mode={result.freeze_mode}")
+        if result.candidate_fingerprint is not None:
+            lines.append(f"candidate_fingerprint={result.candidate_fingerprint}")
+        lines.append(f"events_ledger_exists={result.events_ledger_exists}")
+        if result.events_ledger_fingerprint is not None:
+            lines.append(f"events_ledger_fingerprint={result.events_ledger_fingerprint}")
+        lines.append(f"events_ledger_size_bytes={result.events_ledger_size_bytes}")
+        lines.append(f"events_ledger_line_count={result.events_ledger_line_count}")
+        if result.plan_hash is not None:
+            lines.append(f"plan_hash={result.plan_hash}")
         for finding in result.findings:
             loc = ""
             if finding.line is not None:
@@ -688,6 +698,12 @@ def _render_runtime_event_import_summary(result: CheckResult) -> str:
             lines.append(f"rolled_back={result.rolled_back}")
         if result.rollback_error is not None:
             lines.append(f"rollback_error={result.rollback_error}")
+        if result.freeze_check is not None:
+            lines.append(f"freeze_check={result.freeze_check}")
+        if result.expected_plan_hash is not None:
+            lines.append(f"expected_plan_hash={result.expected_plan_hash}")
+        if result.current_plan_hash is not None:
+            lines.append(f"current_plan_hash={result.current_plan_hash}")
         for finding in result.findings:
             loc = ""
             if finding.line is not None:
@@ -753,6 +769,7 @@ def _cmd_runtime_event_import(args: argparse.Namespace) -> int:
             file=args.file,
             tasks_file=args.tasks_file,
             events_file=args.events_file,
+            expected_plan_hash=getattr(args, "expected_plan_hash", None),
         )
     return _emit_runtime_event_import_result(result, json_output=args.json)
 
@@ -1523,6 +1540,7 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_event_import_parser.add_argument("--file", required=True, help="Path to candidate events JSONL file")
     runtime_event_import_parser.add_argument("--dry-run", action="store_true", help="Run in read-only dry-run mode")
     runtime_event_import_parser.add_argument("--commit", action="store_true", help="Persist the batch to the event ledger")
+    runtime_event_import_parser.add_argument("--expected-plan-hash", default=None, help="Expected plan hash from a previous dry-run (commit only)")
     runtime_event_import_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
     runtime_event_import_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
     _add_global_args(runtime_event_import_parser)

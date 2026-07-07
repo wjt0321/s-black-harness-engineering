@@ -1360,16 +1360,49 @@ rolled_back=False
 Next: Event batch committed successfully.
 ```
 
+### Consistency Freeze
+
+dry-run 默认输出一致性冻结元数据，用于在 dry-run 与 commit 之间建立“审阅上下文一致性”锚点：
+
+- `candidate_fingerprint`：candidate 文件非空原始行的 sha256。
+- `events_ledger_fingerprint`：目标 events ledger 完整原始字节的 sha256。
+- `events_ledger_size_bytes`、`events_ledger_line_count`：ledger 大小与行数。
+- `plan_hash`：一次 dry-run 完整上下文的 canonical sha256。
+- `freeze_mode=advisory`：当前为建议冻结模式，不强制 commit 必须传 hash。
+
+带 `--json` 的 dry-run 示例：
+
+```bash
+python -m agent_runtime.cli runtime event import \
+  --file candidate-events.jsonl \
+  --dry-run \
+  --json
+```
+
+commit 时可通过 `--expected-plan-hash` 绑定某次 dry-run 的 plan hash：
+
+```bash
+python -m agent_runtime.cli runtime event import \
+  --file candidate-events.jsonl \
+  --commit \
+  --expected-plan-hash sha256:... \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl
+```
+
+如果 dry-run 后 candidate 文件或 events ledger 被改动，commit 会立即返回 `blocked`（`plan-hash-mismatch`），不会进入 preflight 与写入阶段。不提供 `--expected-plan-hash` 时，commit 保持原有行为不变。
+
 约束：
 
 - `--dry-run` 与 `--commit` 互斥；两者都不提供时报错。
+- `--expected-plan-hash` 仅在 `--commit` 时生效。
 - 输入文件必须是项目根目录内的安全 `.jsonl` 文件，不能指向 `.git` / credential / secret 路径。
-- 批量语义为 all-or-nothing：任意一行失败或 post-check 失败，整批不保留。
+- 批量语义为 all-or-nothing：任意一行失败、post-check 失败或 freeze mismatch，整批不保留。
 - 输入顺序即模拟/写入顺序；不自动按 timestamp 排序。
 - `--commit` 只追加 event ledger，不写入 task ledger、不写 envelope。
-- 不回显完整 `message` / metadata values / artifacts payload / evidence description / `target` / `input` / `raw_ref` / `decision_ref` / secret match。
+- 不回显完整 `message` / metadata values / artifacts payload / evidence description / `target` / `input` / `raw_ref` / `decision_ref` / secret match；freeze 字段只暴露 hash、size、line count 等安全元数据。
 
-详细设计见 `docs/37-runtime-event-import-dry-run.md` 与 `docs/39-runtime-event-import-commit-design.md`，阶段收口说明见 `docs/38-release-notes-runtime-event-import-dry-run.md` 与 `docs/40-release-notes-runtime-event-import-commit.md`。
+详细设计见 `docs/37-runtime-event-import-dry-run.md`、`docs/39-runtime-event-import-commit-design.md` 与 `docs/41-runtime-event-import-consistency-freeze.md`，阶段收口说明见 `docs/38-release-notes-runtime-event-import-dry-run.md`、`docs/40-release-notes-runtime-event-import-commit.md` 与 `docs/42-release-notes-runtime-event-import-consistency-freeze.md`。
 
 ## Runtime Event Append Smoke / Report Loop
 

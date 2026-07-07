@@ -122,6 +122,19 @@
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 新增 ledger 跨记录一致性校验层 `agent_runtime/ledger_consistency.py`。
 - 新增 CLI 命令 `python -m agent_runtime.cli task check-ledger --tasks-file <file> --events-file <file>`。
 - 校验内容：event.task_id 存在性、状态流转连续性、created from_status 为 null、终态不可回退、snapshot status 与最新 event to_status 一致。
@@ -145,6 +158,19 @@
   - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 新增 `agent_runtime/policy_profile.py`，实现 agent -> policy profile 自动映射。
 - 新增 `--agent <agent-id>` 与 `--assignee <agent-id>` 全局参数，供 `check text`、`check path`、`check action`、`policies list` 自动选择 policy profile。
@@ -170,6 +196,19 @@
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 将 agent -> policy profile 映射从 `agent_runtime/policy_profile.py` 硬编码迁移到 `agents/agents.sample.json` 的 `policy_profile` 字段。
 - 更新 `agents/agents.schema.json`：新增可选字段 `policy_profile`，类型 string，minLength 1，给出常见示例。
 - 更新 `agents/agents.sample.json`：orchestrator/kimi-code/claude-code/omp -> s-black，media-agent -> wangcai，memory-agent -> dabai。
@@ -193,6 +232,19 @@
   - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 ## 下一步小任务
@@ -233,6 +285,19 @@
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
 - 新增只读 `adapter validate` CLI 命令，用于校验 Adapter execution envelope JSON 文件。
 - 新增 `agent_runtime/adapter_validation.py`：检查文件位于项目根目录内且为安全 `.json` 文件，使用 `jsonschema` 校验整个 envelope，失败时只输出相对路径、schema 错误路径/规则和简短摘要，不回显整条 artifact 或敏感值。
 - 更新 `agent_runtime/cli.py`：在 `adapter` 子命令下新增 `validate`，支持 `--file` 与 `--json`。
@@ -255,6 +320,19 @@
   - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增明日接续文档 `tasks/handoff-2026-07-04.md`，记录当前远端状态、Adapter execution envelope 阶段成果、只读 `adapter plan` / `adapter validate` 能力、验证结果、推送与代理记录，以及明日建议路线。
@@ -291,6 +369,19 @@
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
 - 新增只读 `adapter inspect` CLI 命令，用于读取 Adapter execution envelope JSON 文件并输出紧凑摘要。
 - 新增 `agent_runtime/adapter_validation.py` 中 `_load_envelope` / `_build_envelope_summary` / `inspect_envelope_file` 逻辑：先调用 `validate_envelope_file` 做 schema + consistency 校验，校验通过后再解析并汇总 artifact 信息。
 - 复用现有安全读取逻辑：文件必须在项目根目录内、为安全 `.json` 文件、拒绝 `.env`/credential 类文件。
@@ -315,6 +406,19 @@
   - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增只读 `adapter approval check` CLI 命令，用于检查某个 `adapter_request` 是否存在可继续执行的 `approval_record`。
@@ -343,6 +447,19 @@
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
 - 新增只读 `adapter response check` CLI 命令，用于检查某个 `adapter_request` 是否已有 `adapter_response` 以及 response/evidence 状态。
 - 新增 `agent_runtime/adapter_response.py`：复用 `adapter_validation.validate_envelope_file` 做 schema + consistency 校验，再按 `request_id` 定位请求与 response，返回 `pass` / `blocked` / `needs_approval` / `needs_input` / `validation_failed`。
 - 状态映射：`succeeded` 且 `evidence_count > 0` -> `pass`（返回码 0）；`succeeded` 但 `evidence_count == 0` -> `blocked`（返回码 2）；`blocked` -> `blocked`；`failed` -> `blocked`；`needs_approval` -> `needs_approval`（返回码 3）；`needs_input` -> `needs_input`（返回码 4）；`skipped` -> `blocked`；无 response -> `needs_input`（返回码 4）；请求不存在 -> `needs_input`（返回码 4）；校验失败 -> `validation_failed`（返回码 5）。
@@ -367,6 +484,19 @@
   - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增只读 `adapter gate check` CLI 命令，用于聚合 `adapter approval check` 与 `adapter response check`，给出某个 request 当前是否可继续的单一判断。
@@ -407,6 +537,19 @@
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime gate check` 对 task-20260703-001 + req-20260703-002 返回 BLOCKED（task 已 finished），对缺失 task 返回 ERROR，对缺失 request 返回 NEEDS_INPUT，JSON 输出脱敏。
 
 - 继续下一阶段：Runtime Ledger Audit。
@@ -436,6 +579,19 @@
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime check-ledger` 对仓库样例文件返回 WARN，正确报告 `request-id-no-event-metadata` 与 `task-terminal-but-request-pending`，JSON 输出脱敏。
 
 - 进入下一阶段：Runtime Plan POC。
@@ -463,6 +619,19 @@
   - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime plan` 对 task-20260703-001 + shell-local read_file 因 task 已 finished 返回 BLOCKED；对 running task 返回 PASS 或 NEEDS_APPROVAL，JSON 输出脱敏。
 
@@ -492,6 +661,19 @@
   - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime plan --draft-json` 对 running task + shell-local read_file 输出 schema 合法 envelope；对 github-cli git_push 输出含 approval_record 与 approval_requested event；对 finished task 输出 `envelope_draft: null`。
 
@@ -569,6 +751,19 @@
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime draft export --dry-run` 对 running task + shell-local read_file 输出 PASS 且不创建目标文件；对含 GitHub token 的 draft 返回 BLOCKED 且不回显 token。
 
 - Runtime Draft Export Dry-run 阶段正式收口。
@@ -625,6 +820,19 @@
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime draft export --commit` 对 shell-local read_file 写入 `drafts/runtime/.../*.json` 并通过 post validate/inspect；对 schema invalid 和已存在文件均不写且正确报错。
 
 - Runtime Draft Export Commit 阶段正式收口。
@@ -664,6 +872,19 @@
   - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime event append --dry-run` 对合法 candidate event返回 PASS 且不写 events file；对非法状态流转返回 VALIDATION_FAILED；对含 GitHub token 的 message 返回 BLOCKED 且不回显 token。
 
@@ -732,6 +953,19 @@
   - 明确第一版保守边界：不允许目标 `events_file` 不存在；只允许向现有 ledger 文件尾部追加连续 block；post-check 必须跑 `task validate --schema event` + `task check-ledger`。
   - 明确输出脱敏、删除边界、是否要求 dry-run、是否允许自动排序、是否允许 JSON array 输入等风险决策。
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 进入下一阶段：为未来 task snapshot 受控写入做预检门禁 —— `runtime task create --dry-run`。
@@ -853,6 +1087,19 @@
 - 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/39-runtime-event-import-commit-design.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
+## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
+
+- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 设计重点：
+  - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
+  - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
+  - 明确 `plan_hash` 应基于 candidate fingerprint、目标 ledger fingerprint、目标路径与事务语义等稳定字段计算，不替代 commit 内部 preflight，只补“审阅上下文一致性”这一层。
+  - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
+  - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
+  - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
+
 
 ## 2026-07-07（七续）— Runtime Event Import Commit 实现
 
@@ -890,6 +1137,43 @@
 - 不修改 `AGENTS.md`。
 - 已跑 `python -m pytest tests/test_runtime_event_import_commit.py -q`：通过。
 - 已跑 `python -m pytest tests/test_runtime_event_import_dry_run.py -q`：通过。
+- 已跑 `python -m pytest -q`：通过。
+- 已跑 `python -m agent_runtime.cli doctor`：PASS。
+- 已跑 `python tools/public_scan.py`：OK public scan。
+
+
+## 2026-07-07（八续）— Runtime Event Import Consistency Freeze 实现
+
+- 实现 `runtime event import` 一致性冻结最小链路。
+- 修改 `agent_runtime/runtime_event_import.py`：
+  - 新增 `_FreezeState` 与 freeze 计算辅助函数：`_sha256_hex`、`_compute_candidate_fingerprint`、`_compute_events_ledger_fingerprint`、`_compute_plan_hash`、`_compute_freeze_state`。
+  - `candidate_fingerprint`：candidate 文件非空原始行按输入顺序用 `\n` 拼接后 sha256。
+  - `events_ledger_fingerprint`：目标 events ledger 完整 UTF-8 字节 sha256；不存在时 fingerprint 为 `null`。
+  - `plan_hash`：稳定 JSON object canonical `json.dumps(..., sort_keys=True, separators=(",", ":"))` 后 sha256。
+  - 扩展 `EventImportDryRunResult` 与 `EventImportCommitResult`，承载 freeze 字段。
+  - `import_events_dry_run` 默认输出 `plan_hash`、`candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count`、`freeze_mode=advisory`。
+  - `import_events_commit` 新增 `expected_plan_hash` 参数；在 preflight 前先 resolve candidate 路径并计算 freeze；若提供 `--expected-plan-hash` 且不一致，立即返回 `blocked`。
+- 修改 `agent_runtime/cli.py`：
+  - `runtime event import` 新增 `--expected-plan-hash` 参数。
+  - 渲染函数输出 dry-run freeze 字段与 commit `freeze_check` / `expected_plan_hash` / `current_plan_hash`。
+- 新增 `tests/test_runtime_event_import_freeze.py`，覆盖：
+  - dry-run 输出 freeze 字段。
+  - 同一输入重复 dry-run `plan_hash` 稳定。
+  - candidate 改一行后 `plan_hash` 改变。
+  - events ledger 改变后 `events_ledger_fingerprint` 与 `plan_hash` 改变。
+  - commit 传正确 `--expected-plan-hash` 时通过。
+  - commit 在 dry-run 后 candidate 文件被改动时 blocked。
+  - commit 在 dry-run 后 events ledger 变化时 blocked。
+  - mismatch 输出脱敏，不回显 candidate 原始 JSON 行。
+  - 不提供 `--expected-plan-hash` 时，现有 commit 行为保持不变。
+  - JSON 输出包含 freeze 字段但不泄露敏感内容。
+- 新增 `docs/42-release-notes-runtime-event-import-consistency-freeze.md`：阶段收口说明，含能力、plan hash 输入、输出摘要、安全边界、测试覆盖、验证结果与已知限制。
+- 更新 `docs/10-cli-poc-usage.md`：在 Runtime Event Import 章节新增 Consistency Freeze 小节，说明 dry-run freeze 字段与 `--expected-plan-hash` 用法。
+- 更新 `README.md` 与 `README.en.md`：文档索引加入 `docs/42-release-notes-runtime-event-import-consistency-freeze.md`，当前状态补充一致性冻结能力。
+- 保持安全边界：不强制全局 always-on freeze、不冻结 tasks ledger、不实现 `--require-dry-run`、不访问网络、不读取 `.env`/credential。
+- 不修改 `AGENTS.md`。
+- 已跑 `python -m pytest tests/test_runtime_event_import_freeze.py -q`：通过。
+- 已跑 `python -m pytest tests/test_runtime_event_import_dry_run.py tests/test_runtime_event_import_commit.py tests/test_runtime_event_import_freeze.py -q`：通过。
 - 已跑 `python -m pytest -q`：通过。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
