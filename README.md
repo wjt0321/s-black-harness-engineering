@@ -121,6 +121,7 @@ python -m agent_runtime.cli policies list
 - `docs/34-release-notes-runtime-task-create-commit.md`
 - `docs/35-runtime-task-create-smoke.md`
 - `docs/36-controlled-write-regression.md`
+- `docs/37-runtime-event-import-dry-run.md`
 
 ## 推进原则
 

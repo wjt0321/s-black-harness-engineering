@@ -1290,6 +1290,23 @@ python -m pytest tests/test_controlled_write_regression.py -q
 
 详细边界与写入点梳理见 `docs/36-controlled-write-regression.md`。
 
+
+## Runtime Event Import Dry-run 预备设计
+
+`runtime event import --dry-run` 尚未实现。当前只保留设计文档，用于定义未来批量 event 导入预检的安全边界。
+
+设计原则：
+
+- 第一版只做 dry-run，不写 event ledger。
+- 输入建议为 JSONL，每行一个 event object。
+- 批量语义采用 all-or-nothing preflight；不允许部分成功。
+- 输入顺序即模拟导入顺序；不自动按 timestamp 排序。
+- 必须检测 candidate 内部重复 event_id、与现有 ledger 重复 event_id、引用不存在 task、非法状态迁移。
+- secret/public scan 命中时 blocked，且不回显完整 message / metadata / artifact payload / secret match。
+- 未来如需 commit，必须另写设计，不从 dry-run 直接推导。
+
+详细设计见 `docs/37-runtime-event-import-dry-run.md`。
+
 ## Runtime Event Append Smoke / Report Loop
 
 `runtime event append` 写入 event ledger 后，通常需要再跑一遍只读检查与聚合报告来确认状态。完整的 smoke loop 应在**临时项目副本**中进行：

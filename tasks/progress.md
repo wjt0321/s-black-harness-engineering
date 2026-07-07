@@ -544,3 +544,13 @@
 - 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/36-controlled-write-regression.md`。
 - 不新增任何写权限，不进入 adapter execution；本阶段不打 tag。
 - 验证：`python -m pytest tests/test_controlled_write_regression.py -q` 通过；`python -m pytest -q` 通过；`python -m agent_runtime.cli doctor` PASS；`python tools/public_scan.py` OK；`git diff --check` PASS。
+
+
+## 2026-07-07（四续）— Runtime Event Import Dry-run 预备设计
+
+- 新增 `docs/37-runtime-event-import-dry-run.md`：仅设计，不实现 CLI，不新增写权限。
+- 设计未来 `runtime event import --dry-run` 的批量语义：JSONL 输入、all-or-nothing preflight、输入顺序即模拟导入顺序、不允许部分成功。
+- 明确候选 event 批量预检需覆盖：schema validation、candidate 内部重复 event_id、与现有 ledger 重复 event_id、引用不存在 task、非法状态迁移、secret/public scan 与输出脱敏。
+- 明确未来 commit 阶段必须另写设计，不能直接从 dry-run 推导。
+- 更新 README / README.en 文档索引与 `docs/10-cli-poc-usage.md` 用法说明。
+- 不实现 `runtime event import` CLI，不写 ledger，不新增任何写权限。
