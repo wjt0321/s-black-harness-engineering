@@ -8,13 +8,13 @@
   <a href="README.md">中文</a> · <strong>English</strong>
 </p>
 
-> A lightweight Agent Runtime / Harness Orchestrator for policy guardrails, task ledgers, agent registries, adapter boundaries, and completion verification.
+> A lightweight Agent Runtime / Harness Orchestrator for policy guardrails, task ledgers, agent registries, adapter boundaries, and completion verification, gradually evolving into a multi-agent, multi-tool, multi-channel orchestration hub.
 
 ## What This Project Is
 
 `s-black harness engineering` is an agent engineering infrastructure project.
 
-Its goal is not to replace the chat host or start with a UI. Instead, it extracts the parts of agent work that most need hard boundaries:
+Its goal is not to replace the chat host or start with a UI. The first priority is to extract the parts of agent work that most need unified control:
 
 - policy checks
 - task ledgers
@@ -22,12 +22,39 @@ Its goal is not to replace the chat host or start with a UI. Instead, it extract
 - adapter boundaries
 - completion verification
 - controlled write flows
+- capability routing and orchestration foundations
 
-The long-term goal is a **small, auditable, portable runtime layer**, where QwenPaw is only one future host/adapter target rather than the only boundary.
+The long-term goal is a **small, auditable, portable runtime / control plane**, where QwenPaw is only one future host/adapter target rather than the only boundary.
+
+## Big Picture
+
+```text
+User / CLI / Lark / Future UI
+  -> Orchestration Hub / Control Plane
+  -> Capability Routing
+  -> Policy Guardrails / Approval / Completion Checks
+  -> Agent & Tool Adapters
+       -> QwenPaw
+       -> Kimi Code / WebBridge
+       -> Claude Code
+       -> OMP / pi
+       -> Shell
+       -> GitHub
+       -> Lark
+       -> Obsidian
+       -> Other external systems
+  -> Task / Event / Run / Approval / Artifact State
+  -> Report / Audit / Observability
+```
+
+In one sentence:
+
+- **guardrails / ledgers / controlled writes** are the security core
+- **unified integration / capability routing / control-plane state / future UI** are the larger orchestration-hub body this project is meant to grow into
 
 ## Where The Project Is Now
 
-The repository has already moved from a read-only checking CLI to a minimal controlled-write runtime.
+The repository has already moved from a read-only checking CLI to a minimal controlled-write runtime, and has now started to formalize the orchestration-hub backend blueprint.
 
 Implemented capability highlights:
 
@@ -41,6 +68,7 @@ Implemented capability highlights:
 - `runtime event import --expected-plan-hash` consistency freeze
 - `runtime event import --require-dry-run` strict freeze mode
 - controlled write regression coverage
+- documentation backbone for orchestration-hub vision, adapter interface, capability routing, and control-plane state
 
 ## Current Boundaries
 
@@ -74,10 +102,13 @@ If this is your first time in the repository, read in this order:
 
 1. `docs/00-index.md`
 2. `docs/01-vision-and-boundaries.md`
-3. `docs/10-cli-poc-usage.md`
-4. `docs/21-controlled-write-boundaries.md`
-5. `docs/45-runtime-event-import-strict-freeze-mode.md`
-6. `docs/46-release-notes-runtime-event-import-strict-freeze.md`
+3. `docs/02-roadmap.md`
+4. `docs/47-orchestration-hub-vision.md`
+5. `docs/48-adapter-runtime-interface.md`
+6. `docs/49-capability-routing-model.md`
+7. `docs/50-control-plane-state-model.md`
+8. `docs/10-cli-poc-usage.md`
+9. `docs/21-controlled-write-boundaries.md`
 
 If you only want the full progress ledger:
 
@@ -112,4 +143,4 @@ See `.github/workflows/ci.yml` for details.
 
 Move in small, reviewable, reversible steps.
 
-Define the rules, task model, agent registry, adapter boundaries, and completion checks first, then gradually expand executable runtime capability.
+First stabilize the rules, state model, agent registry, adapter boundaries, and controlled-write core, then gradually expand unified integration, capability routing, control-plane state, and future UI-ready backend boundaries.
