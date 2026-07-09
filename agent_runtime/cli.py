@@ -33,6 +33,7 @@ from .runtime_event_import import (
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_task_create import TaskCreateDryRunResult, create_task, create_task_dry_run
 from .runtime_report import RuntimeReportResult, check_runtime_report
+from .orchestration_overview import OverviewSummary, check_overview
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -1299,6 +1300,30 @@ def _cmd_policies_list(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def _cmd_orchestration_overview(args: argparse.Namespace) -> int:
+    """Render a read-only orchestration overview summary."""
+    root = _root_path(args)
+    summary = check_overview(root)
+    if args.json:
+        print(json.dumps(summary.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("OVERVIEW")
+        summary_dict = summary.to_dict()["summary"]
+        summary_parts = " ".join(f"{k}={v}" for k, v in summary_dict.items())
+        print(f"summary: {summary_parts}")
+        if summary.recent_tasks:
+            print("recent_tasks:")
+            for task in summary.recent_tasks:
+                capability = task.get("requested_capability") or "-"
+                print(
+                    f"- {task['task_id']} "
+                    f"{task['status']} "
+                    f"{capability} "
+                    f"updated_at={task['updated_at']}"
+                )
+    return EXIT_PASS
+
+
 def _cmd_task_status(args: argparse.Namespace) -> int:
     root = _root_path(args)
     task = find_task(root, args.task_id)
@@ -1600,6 +1625,20 @@ def build_parser() -> argparse.ArgumentParser:
     runtime_task_create_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
     _add_global_args(runtime_task_create_parser)
     runtime_task_create_parser.set_defaults(func=_cmd_runtime_task_create)
+
+    # orchestration overview
+    orchestration_parser = subparsers.add_parser(
+        "orchestration", help="Read-only orchestration overview aggregation"
+    )
+    orchestration_subparsers = orchestration_parser.add_subparsers(
+        dest="orchestration_command", required=True
+    )
+
+    orchestration_overview_parser = orchestration_subparsers.add_parser(
+        "overview", help="Show a read-only overview of tasks and events"
+    )
+    _add_global_args(orchestration_overview_parser)
+    orchestration_overview_parser.set_defaults(func=_cmd_orchestration_overview)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

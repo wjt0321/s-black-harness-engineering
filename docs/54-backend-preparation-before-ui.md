@@ -335,6 +335,7 @@
 
 | 页面数据 | 现有 CLI 命令 |
 |:---|:---|
+| 总览聚合 | `python -m agent_runtime.cli orchestration overview` |
 | Task 列表/详情 | `python -m agent_runtime.cli task status`、`task events` |
 | Run 关联的 envelope 摘要 | `python -m agent_runtime.cli runtime draft inspect` |
 | 聚合报告 | `python -m agent_runtime.cli runtime report` |
@@ -345,7 +346,6 @@
 
 | 页面数据 | 53 草案命令 |
 |:---|:---|
-| 总览聚合 | `orchestration overview`（尚未定义） |
 | 任务列表/详情 | `orchestration task list`、`orchestration task get` |
 | 执行列表/详情 | `orchestration run list`、`orchestration inspect` |
 | 审批列表/详情 | `orchestration approval list`、`orchestration approval get` |

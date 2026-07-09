@@ -25,7 +25,8 @@
 | 前缀 | 含义 | 示例 |
 |:---|:---|:---|
 | `python -m agent_runtime.cli <existing>` | 仓库中已经存在的 CLI 命令，可直接运行（部分可能仍在 POC 阶段）。 | `runtime plan`、`runtime gate check` |
-| `python -m agent_runtime.cli orchestration <draft> ...` | 为 52 闭环设计的候选子命令，**当前尚未实现**，仅作草案参考。 | `orchestration route preview` |
+| `python -m agent_runtime.cli orchestration overview` | 已存在：只读总览聚合。 | `orchestration overview --json` |
+| `python -m agent_runtime.cli orchestration <draft> ...` | 为 52 闭环设计的其他候选子命令，**当前尚未实现**，仅作草案参考。 | `orchestration route preview` |
 | `orchestrator.sh` / `loop.sh` | 示意性脚本名，表示未来可能由脚本/自动化工作流编排的调用序列。 | — |
 
 ## 命令总览：按 52 七步闭环组织
@@ -178,6 +179,9 @@ python -m agent_runtime.cli orchestration run \
 已存在：
 
 ```bash
+python -m agent_runtime.cli orchestration overview
+python -m agent_runtime.cli orchestration overview --json
+
 python -m agent_runtime.cli task status task-20260709-001
 python -m agent_runtime.cli task events task-20260709-001
 
@@ -273,6 +277,7 @@ python -m agent_runtime.cli orchestration run \
 | `runtime gate check ...` | 判断 task + request 能否继续 |
 | `runtime report ...` | 聚合报告 |
 | `task status / task events ...` | 查询 task 状态与事件流 |
+| `orchestration overview` | 总览聚合（已存在） |
 | `orchestration route preview`（草案） | 预览 routing 结果 |
 | `orchestration preflight`（草案） | 聚合 preflight |
 | `orchestration inspect / report`（草案） | 查看 run / report |
@@ -335,6 +340,9 @@ python -m agent_runtime.cli orchestration run \
   --request-id req-20260709-001 \
   --mode dry-run
 
+# 4.5. overview (already exists)
+python -m agent_runtime.cli orchestration overview
+
 # 5. inspect
 python -m agent_runtime.cli orchestration inspect \
   --task-id "$TASK_ID" \
@@ -373,7 +381,7 @@ python -m agent_runtime.cli orchestration report \
 
 本文不实现：
 
-- 任何新的 CLI 子命令。
+- 除 `orchestration overview` 之外的任何新的 CLI 子命令。
 - HTTP / RPC / service 接口。
 - 前端或看板。
 - 数据库选型。
