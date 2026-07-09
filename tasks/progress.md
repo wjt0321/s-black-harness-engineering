@@ -1540,3 +1540,33 @@
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
 - 不弱化 guardrail，`--commit` 仍明确不执行真实 adapter。
+
+## 2026-07-09（续）— Stage 15.8 收口：docs/59-release-notes-orchestration-run-controlled-execution.md
+
+- 新增 `docs/59-release-notes-orchestration-run-controlled-execution.md`，记录 `orchestration run --dry-run` 与 `orchestration run --commit` 第一版 A-only controlled write 落地。
+- 文档覆盖：
+  - 阶段定位：Stage 15.6 design gate 后的 run 侧第一版实现收口。
+  - 已实现命令：`orchestration run --dry-run`（只读 plan preview + plan_hash）、`orchestration run --commit`（A-only envelope draft export）。
+  - run dry-run 输出口径：route/preflight/candidate envelope/events/artifact/evidence 安全摘要、plan_hash；不写 ledger/envelope。
+  - run commit 语义：必须 matching `--expected-plan-hash`；hash mismatch blocked；preflight 非 pass 不写；复用 `runtime draft export --commit` 受控写入机制；不执行 adapter、不追加 events、不写独立 Run storage。
+  - post-check/rollback：schema/inspect 检查，失败删除刚生成的 draft 文件；不覆盖已有 output path。
+  - 安全边界：不访问网络、不发送消息、不执行真实 adapter、不回显 input payload/target 原文/raw_ref/decision_ref/payload_refs/evidence descriptions。
+  - 验证：run dry-run tests、run commit tests、全量 pytest、doctor、public_scan、diff check、GitHub CI success。
+  - 未实现事项：B 侧 run lifecycle events、retry/fallback、task submit commit、真实 adapter execution、DB/service/UI。
+  - 下一步建议：优先补 B 侧 run lifecycle events 的 event schema + controlled append，或先写 60 设计 gate。
+- 更新 `docs/00-index.md`：中枢台后端主线与发布/阶段收口列表加入 59。
+- 更新 `docs/02-roadmap.md`：
+  - Stage 14 说明更新为「设计文档、命令草案与 run 侧 A-only commit 已落地」。
+  - 新增 Stage 15.7（Orchestration Run Dry-run 落地）与 Stage 15.8（Orchestration Run Commit A-only 落地）。
+  - Stage 15.5 说明去掉「run --commit 仍暂缓」。
+  - 不标记 Stage 16 开始。
+- 更新 `README.md` / `README.en.md`：
+  - 阶段进度列表加入 ✅ Stage 15.7 / ✅ Stage 15.8。
+  - 已落地能力列表加入 `orchestration run --dry-run` 与 `orchestration run --commit` A-only，明确不执行真实 adapter、不追加 events。
+- 本次为纯文档改动，不改代码/测试/schema。
+- 验证：
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+- 不说真实 adapter execution 已实现；不弱化 guardrail。

@@ -88,9 +88,11 @@
 - 🟡 Stage 11 — Capability Routing Model（文档已起，后续待继续细化）
 - 🟡 Stage 12 — Control Plane State Model（文档已起，后续待继续细化）
 - 🟡 Stage 13 — Backend-first API Boundary（设计文档已落地，协议选择仍暂缓）
-- 🟡 Stage 14 — 中枢台最小编排闭环（设计文档与命令草案已落地，受控实现仍暂缓）
+- 🟡 Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A-only commit 已落地）
 - 🟡 Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，前端实现仍暂缓）
-- 🟡 Stage 15.5 — Orchestration 受控写入边界（第一批 controlled handoff / approval resolve 已落地，run --commit 仍暂缓）
+- 🟡 Stage 15.5 — Orchestration 受控写入边界（第一批 controlled handoff / approval resolve 已落地）
+- ✅ Stage 15.7 — Orchestration Run Dry-run 落地
+- ✅ Stage 15.8 — Orchestration Run Commit（A-only）落地
 - ⚪ Stage 16 — UI / Control Panel（远期）
 
 ### 现在最明确的位置
@@ -125,6 +127,7 @@
 - 中枢台总蓝图、adapter 接口、capability routing、control plane state 文档主线
 - Stage 15 read-model CLI：`orchestration overview`、`orchestration task list/get`、`orchestration run list/inspect`、`orchestration approval list/get`、`orchestration artifact list/get`、`orchestration report generate`
 - Stage 15.5 controlled handoff：`orchestration route preview`、`orchestration preflight`、受控写入 `orchestration approval resolve`（只记录 decision，不执行原请求）
+- Stage 15.7/15.8 run controlled execution：`orchestration run --dry-run`（只读 plan preview + plan_hash）、受控写入 `orchestration run --commit`（A-only envelope draft export，不执行真实 adapter，不追加 events）
 
 ## 当前边界
 

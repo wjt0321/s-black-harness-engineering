@@ -269,7 +269,7 @@
 
 ---
 
-## Stage 14 — 中枢台最小编排闭环（设计文档已落地，受控实现仍暂缓）
+## Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A-only commit 已落地）
 
 目标：在后端抽象稳定后，跑通第一个真正体现“中枢台”特征的最小闭环。
 
@@ -360,9 +360,9 @@
 
 说明：
 
-- 本阶段先实现只读 handoff 命令，再实现第一条受控写入命令；`orchestration run --commit`、retry / fallback、真实 adapter execution 仍未开放。
+- 本阶段先实现只读 handoff 命令，再实现第一条受控写入命令；`orchestration run --commit` A-only、retry / fallback、真实 adapter execution 仍未开放。
 - 不标记 Stage 16 开始；Stage 16 仍保持远期。
-- 完成本阶段后，下一步建议先明确 run draft/export 产物形态，再进入 Stage 14 run 侧实现。
+- 完成本阶段后，下一步建议先明确 run draft/export 产物形态，再进入 Stage 14/15.7/15.8 run 侧实现。
 
 ---
 
@@ -388,6 +388,60 @@
 - 本阶段是 design gate，不新增代码实现。
 - 若进入实现，先在 `tasks/event.schema.json` 新增候选 event types（如 `run_planned`、`run_draft_exported`、`run_blocked`）并补测试。
 - 不实现 `orchestration task submit --commit`、retry / fallback、真实 adapter execution。
+- 不标记 Stage 16 开始；Stage 16 仍保持远期。
+
+---
+
+## Stage 15.7 — Orchestration Run Dry-run 落地
+
+目标：实现只读的 `orchestration run --dry-run`，输出 run plan preview 与稳定 `plan_hash`。
+
+主要交付物：
+
+- `agent_runtime/orchestration_run_dry_run.py`
+- `tests/test_orchestration_run_dry_run.py`
+- `docs/10-cli-poc-usage.md` / `docs/53-minimal-orchestration-loop-cli-draft.md` 更新
+
+已落地能力：
+
+- `orchestration run --dry-run` 聚合 routing + guardrail preflight + runtime plan 安全摘要。
+- 输出 candidate envelope/events/artifact/evidence refs 与 `plan_hash`。
+- 不写 ledger、不写 envelope/draft、不执行 adapter、不访问网络。
+
+说明：
+
+- `--commit` 仍标记为未实现；传入返回 `needs_input`。
+- 不标记 Stage 16 开始。
+
+---
+
+## Stage 15.8 — Orchestration Run Commit（A-only）落地
+
+目标：实现 `orchestration run --commit` 第一版 A-only controlled write，把已审阅 run plan 沉淀为 envelope draft 文件。
+
+主要交付物：
+
+- `agent_runtime/orchestration_run_commit.py`
+- `tests/test_orchestration_run_commit.py`
+- `docs/59-release-notes-orchestration-run-controlled-execution.md`
+- `docs/10-cli-poc-usage.md` / `docs/53-minimal-orchestration-loop-cli-draft.md` / `docs/58-orchestration-run-controlled-execution-design.md` 更新
+
+已落地能力：
+
+- `orchestration run --commit` 必须提供 `--output` 与 `--expected-plan-hash`。
+- commit 前重新 dry-run/preflight；非 `pass` 状态不写，hash mismatch 不写。
+- 复用 `runtime_draft_export` 受控写入机制：路径校验、scan、写入、post-check、失败回滚。
+- 产物为 `drafts/runtime/.../*.json` envelope draft；不覆盖已存在文件。
+
+仍后续：
+
+- B 侧 run lifecycle events append。
+- retry / fallback 自动化。
+- `orchestration task submit --commit`。
+- 真实 adapter execution、网络访问、消息发送、UI/服务/数据库。
+
+说明：
+
 - 不标记 Stage 16 开始；Stage 16 仍保持远期。
 
 ---
