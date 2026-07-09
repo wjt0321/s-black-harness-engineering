@@ -1668,6 +1668,19 @@ python -m agent_runtime.cli orchestration route preview \
   --mode dry-run
 ```
 
+Preflight handoff 聚合（只读）：
+
+```bash
+python -m agent_runtime.cli orchestration preflight --capability git_push --json
+python -m agent_runtime.cli orchestration preflight \
+  --task-id task-20260703-001 \
+  --capability git_push \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --mode dry-run
+```
+
 边界说明：
 
 - `orchestration run/approval/artifact list|get` 当前都是 envelope-scoped read model，没有独立 Run / Approval / Artifact 持久集合。

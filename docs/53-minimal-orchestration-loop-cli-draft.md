@@ -36,7 +36,8 @@
 | `python -m agent_runtime.cli orchestration artifact get` | 已存在：只读 artifact 详情 + 关联 request 安全摘要（envelope-scoped，不回显 input/raw payload）。 | `orchestration artifact get --artifact-id ... --envelope ...` |
 | `python -m agent_runtime.cli orchestration report generate` | 已存在：只读报告生成（当前为 `runtime report` 的薄包装，runtime-report-backed read model）。 | `orchestration report generate --task-id ... --request-id ... --envelope ...` |
 | `python -m agent_runtime.cli orchestration route preview` | 已存在：只读 capability routing preview，输出安全 routing decision（不写 ledger/envelope）。 | `orchestration route preview --capability git_push --json` |
-| `python -m agent_runtime.cli orchestration <draft> ...` | 为 52 闭环设计的其他候选子命令，**当前尚未实现**，仅作草案参考。 | `orchestration preflight`、`orchestration run --commit` |
+| `python -m agent_runtime.cli orchestration preflight` | 已存在：只读 handoff 预检，聚合 routing + guardrail preflight 安全摘要（不写 ledger/envelope）。 | `orchestration preflight --capability git_push --json` |
+| `python -m agent_runtime.cli orchestration <draft> ...` | 为 52 闭环设计的其他候选子命令，**当前尚未实现**，仅作草案参考。 | `orchestration run --commit`、`orchestration task submit --commit`、`orchestration approval resolve` |
 | `orchestrator.sh` / `loop.sh` | 示意性脚本名，表示未来可能由脚本/自动化工作流编排的调用序列。 | — |
 
 ## 命令总览：按 52 七步闭环组织
@@ -125,6 +126,37 @@ python -m agent_runtime.cli agents list --capability dispatch.agent.coding
 已存在：
 
 ```bash
+python -m agent_runtime.cli orchestration preflight \
+  --task-id task-20260709-001 \
+  --capability git_push \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --mode dry-run
+```
+
+JSON 输出：
+
+```bash
+python -m agent_runtime.cli orchestration preflight \
+  --capability git_push \
+  --mode dry-run \
+  --json
+```
+
+期望输出摘要：
+
+```text
+PREFLIGHT
+capability=git_push adapter=github-cli operation=git_push requested_mode=dry-run selected_mode=dry-run effective_mode=dry-run requires_approval=true requires_dry_run=true
+route_status=pass guardrail_status=needs_approval finding_count=1
+- github-cli-approval: github-cli: this external operation requires explicit user approval.
+Next: ask for approval for this task, target, and operation.
+```
+
+辅助查询（仍可用）：
+
+```bash
 python -m agent_runtime.cli check action \
   --adapter adapter-A \
   --operation edit_file \
@@ -138,28 +170,11 @@ python -m agent_runtime.cli runtime plan \
   --draft-json
 ```
 
-候选草案（面向 52 闭环的聚合 preflight）：
-
-```bash
-python -m agent_runtime.cli orchestration preflight \
-  --task-id task-20260709-001 \
-  --request-id req-20260709-001 \
-  --envelope drafts/runtime/task-20260709-001/req-20260709-001.envelope.json
-```
-
-期望输出摘要：
-
-```text
-preflight: ALLOWED_WITH_CONSTRAINTS
-constraints:
-  - mode forced to dry-run
-  - requires_review: true
-next: proceed with dry-run
-```
-
 边界：
 
-- 只读，不执行 adapter、不写 ledger。
+- 只读，不执行 adapter、不写 ledger、不写 envelope。
+- `--operation` / `--target` 可选；缺失时若 adapter input_schema 要求则返回 `needs_input`。
+- `--mode commit` 对高风险/需审批 adapter 会被强制降级为 `dry-run`；preflight 本身仍只读。
 - 结果决定闭环执行模式，但不阻塞闭环设计本身。
 
 ### 4. Run Dry-run / Commit（执行受控运行）
@@ -324,7 +339,7 @@ python -m agent_runtime.cli orchestration run \
 | `orchestration artifact get` | artifact 详情（已存在，envelope-scoped） |
 | `orchestration report generate` | 报告生成（已存在，`runtime report` 薄包装） |
 | `orchestration route preview` | capability routing preview（已存在，只读） |
-| `orchestration preflight`（草案） | 聚合 preflight |
+| `orchestration preflight` | 聚合 routing + guardrail preflight（已存在，只读） |
 | `orchestration inspect / report`（草案） | 查看 run / report |
 
 ### 受控写入命令
@@ -377,7 +392,8 @@ python -m agent_runtime.cli orchestration route preview \
 # 3. preflight
 python -m agent_runtime.cli orchestration preflight \
   --task-id "$TASK_ID" \
-  --request-id req-20260709-001
+  --capability "$CAPABILITY" \
+  --mode dry-run
 
 # 4. dry-run
 python -m agent_runtime.cli orchestration run \
@@ -426,7 +442,7 @@ python -m agent_runtime.cli orchestration report \
 
 本文不实现：
 
-- 除 `orchestration overview`、`orchestration task list`、`orchestration task get`、`orchestration run list`、`orchestration run inspect`、`orchestration approval list`、`orchestration approval get`、`orchestration artifact list`、`orchestration artifact get`、`orchestration report generate`、`orchestration route preview` 之外的任何新的 CLI 子命令。
+- 除 `orchestration overview`、`orchestration task list`、`orchestration task get`、`orchestration run list`、`orchestration run inspect`、`orchestration approval list`、`orchestration approval get`、`orchestration artifact list`、`orchestration artifact get`、`orchestration report generate`、`orchestration route preview`、`orchestration preflight` 之外的任何新的 CLI 子命令。
 - HTTP / RPC / service 接口。
 - 前端或看板。
 - 数据库选型。

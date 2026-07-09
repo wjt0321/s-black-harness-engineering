@@ -1361,3 +1361,32 @@
   - `orchestration approval resolve`（受控写入）。
   - `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— orchestration preflight 只读 handoff 命令落地
+
+- 新增 `agent_runtime/orchestration_preflight.py`：实现 `PreflightResult` 与 `check_preflight()`。
+  - 复用 `orchestration_route.preview_route()` 得到 routing decision；routing 不通过时直接返回其状态，不继续 guardrail。
+  - 复用 `policy.check_action()` 做 guardrail preflight，不重复实现规则。
+  - `--operation` 缺失时，若 route preview 已推导出 operation 则使用；否则返回 `needs_input`。
+  - `--target` 缺失时，若所选 adapter 的 `input_schema` 要求 `target` 字段则返回 `needs_input`，不猜测 target。
+  - `--mode commit` 时，若 routing 或 guardrail 任一要求 dry-run / approval，则 `effective_mode` 强制为 `dry-run`；preflight 本身仍只读。
+  - 输出包含 `status`、`requested_capability`、`task_id`、`requested_mode`、`selected_mode`、`effective_mode`、`route` 安全摘要、`guardrail` 安全摘要、`requires_approval`、`requires_dry_run`、`constraints`、`findings`、`next_action`。
+- 在 `agent_runtime/cli.py` 注册 `orchestration preflight` 子命令，支持 `--capability`、`--task-id`、`--adapter`、`--operation`、`--target`、`--mode`、`--json`、全局 `--root` / `--policy` / `--policy-profile` / `--agent` / `--assignee`。
+- 新增 `tests/test_orchestration_preflight.py`，覆盖 JSON 结构、human smoke、route blocked 跳过 guardrail、missing operation、missing target、local commit allowed、external commit 降级、guardrail blocked、task 上下文、只读不写文件。
+- 文档同步：
+  - 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration preflight` 从候选草案改为已存在只读命令，更新命令示例与脚本示例。
+  - 更新 `docs/56-orchestration-controlled-write-boundary.md`：标记 preflight 已落地，说明输入/处理/输出语义。
+  - 更新 `docs/10-cli-poc-usage.md`：新增 preflight 示例。
+- 安全边界保持不变：
+  - 不写 ledger / draft / envelope，不执行 adapter，不访问网络，不引入服务 / API / DB / UI。
+  - 不回显完整 `input` payload、`raw_ref`、`decision_ref`、`payload_refs`、evidence descriptions 或 secret match。
+- 验证：
+  - `python -m pytest tests/test_orchestration_preflight.py -q`：通过。
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 未实现事项（仍留在 53 草案 / 56 设计边界中）：
+  - `orchestration approval resolve`（受控写入）。
+  - `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
+- 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。

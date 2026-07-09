@@ -37,6 +37,7 @@ from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
 from .orchestration_artifact import ArtifactDetailResult, ArtifactListResult, get_artifact, list_artifacts
+from .orchestration_preflight import PreflightResult, check_preflight
 from .orchestration_report import ReportGenerateResult, generate_report
 from .orchestration_route import RoutePreviewResult, preview_route
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
@@ -1395,6 +1396,76 @@ def _emit_route_preview_result(result: RoutePreviewResult, json_output: bool) ->
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _cmd_orchestration_preflight(args: argparse.Namespace) -> int:
+    """Render a read-only orchestration preflight handoff check."""
+    root = _root_path(args)
+    capability = args.capability
+    requested_mode = getattr(args, "mode", "dry-run")
+    if requested_mode not in {"dry-run", "commit"}:
+        result = PreflightResult(
+            status="error",
+            requested_capability=capability,
+            task_id=getattr(args, "task_id", None),
+            requested_mode=requested_mode,
+            selected_mode="dry-run",
+            effective_mode="dry-run",
+            findings=[
+                Finding(
+                    rule_id="invalid-mode",
+                    severity="error",
+                    action="error",
+                    message="--mode must be 'dry-run' or 'commit'.",
+                )
+            ],
+            next_action="Provide --mode dry-run or --mode commit.",
+        )
+        return _emit_preflight_result(result, json_output=args.json)
+
+    result = check_preflight(
+        root,
+        capability=capability,
+        task_id=getattr(args, "task_id", None),
+        adapter_id=getattr(args, "adapter", None),
+        operation=getattr(args, "operation", None),
+        target=getattr(args, "target", None),
+        requested_mode=requested_mode,
+        explicit_policy=_explicit_policy(args, root),
+        profile=resolve_profile(args, root),
+    )
+    return _emit_preflight_result(result, json_output=args.json)
+
+
+def _emit_preflight_result(result: PreflightResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("PREFLIGHT")
+        print(
+            f"capability={result.requested_capability} "
+            f"adapter={result.route.get('selected_adapter_id') or '-'} "
+            f"operation={result.route.get('operation') or '-'} "
+            f"requested_mode={result.requested_mode} "
+            f"selected_mode={result.selected_mode} "
+            f"effective_mode={result.effective_mode} "
+            f"requires_approval={result.requires_approval} "
+            f"requires_dry_run={result.requires_dry_run}"
+        )
+        guardrail = result.guardrail
+        print(
+            f"route_status={result.route.get('status') or '-'} "
+            f"guardrail_status={guardrail.get('status') or '-'} "
+            f"finding_count={guardrail.get('finding_count', 0)}"
+        )
+        if result.task_id is not None:
+            print(f"task_id={result.task_id}")
+        if result.findings:
+            for finding in result.findings:
+                print(f"- {finding.rule_id}: {finding.message}")
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_orchestration_task_list(args: argparse.Namespace) -> int:
     """Render a read-only list of task snapshots."""
     root = _root_path(args)
@@ -2105,6 +2176,31 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_route_preview_parser)
     orchestration_route_preview_parser.set_defaults(func=_cmd_orchestration_route_preview)
+
+    # orchestration preflight
+    orchestration_preflight_parser = orchestration_subparsers.add_parser(
+        "preflight", help="Run read-only orchestration preflight (routing + guardrail)"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--capability", required=True, help="Requested capability"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--task-id", default=None, help="Optional task id for context"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--adapter", default=None, help="Explicit adapter id to validate against capability"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--operation", default=None, help="Operation to check; uses route-derived operation if omitted"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--target", default=None, help="Target for guardrail check"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--mode", default="dry-run", choices=["dry-run", "commit"], help="Requested execution mode"
+    )
+    _add_global_args(orchestration_preflight_parser)
+    orchestration_preflight_parser.set_defaults(func=_cmd_orchestration_preflight)
 
     # orchestration task list
     orchestration_task_parser = orchestration_subparsers.add_parser(

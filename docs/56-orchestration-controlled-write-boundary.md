@@ -33,10 +33,13 @@ Stage 15 的 read-model CLI 已经封版：六类页面视角（overview / task 
    - `operation` 仅在 adapter 的 `input_schema` 要求 `operation` 字段时才用 capability 推导，否则为 `null`，避免猜测。
    - 为 `orchestration preflight` 和 `runtime plan` 提供输入。
 
-2. `orchestration preflight`
-   - 输入：routing decision 或显式 `(task_id, adapter_id, operation, target)`。
-   - 输出：聚合 preflight 结果（routing + guardrail + capability constraints）。
-   - 只读，不写 ledger / envelope。
+2. `orchestration preflight`（**已落地**）
+   - 输入：`requested_capability` + 可选 `--task-id` / `--adapter` / `--operation` / `--target` / `--mode`。
+   - 处理：先调用 `orchestration route preview` 得到 routing decision；若 routing 不通过，直接返回其状态并不继续 guardrail；否则用 `policy.check_action` 做 guardrail preflight。
+   - 输出：聚合 preflight 结果，包括 `route` 安全摘要、`guardrail` 安全摘要、`requested_mode` / `selected_mode` / `effective_mode`、`requires_approval`、`requires_dry_run`、`constraints`、`findings`、`next_action`。
+   - 只读，不写 ledger / envelope / 不执行 adapter / 不访问网络。
+   - `--operation` / `--target` 缺失时，若 adapter `input_schema` 要求则返回 `needs_input`；不猜测 operation 或 target。
+   - `--mode commit` 时，若 routing 或 guardrail 任一要求 dry-run / approval，则 `effective_mode` 强制为 `dry-run`；preflight 本身仍只读。
    - 明确 run 的 `mode`（dry-run / commit）、`requires_approval`、`requires_dry_run`。
 
 ### 第二梯队：第一个真正受控写入命令
@@ -242,7 +245,7 @@ routing decision 的下游消费路径：
 ## 下一步建议
 
 1. ~~先实现 `orchestration route preview`（只读）~~ 已落地。
-2. 再实现 `orchestration preflight`（只读）。
+2. ~~再实现 `orchestration preflight`（只读）~~ 已落地。
 3. 最后实现 `orchestration approval resolve`（受控写入），并选择 event-ledger-append 或 envelope-draft-export 其中一种产物形态作为第一版。
 4. 每完成一个命令，更新 53 中对应命令从“草案”到“已存在”，并补 release notes。
 5. 在此三者稳定前，不实现 `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
