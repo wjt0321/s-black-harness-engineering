@@ -74,15 +74,15 @@ Current estimate:
 
 ### Versioning Note
 
-The repository's Git tag / semver freeze point currently still stops at `v0.11.0-runtime-event-import`.
+The latest milestone baseline is now `v0.12.0-orchestration-foundation` (commit `38b4b69`, already pushed).
 
-Since the orchestration line began, the project has effectively switched to using **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, and `62`. That means:
+After `v0.11.0-runtime-event-import`, the project entered the orchestration line and effectively switched to **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, `65`, and `67`. That means:
 
 - stage closure did continue;
-- but a new semver / tag cadence was **not** consistently maintained;
-- the current state is best described as a **half-migrated versioning policy**.
+- semver / tags no longer advanced stage-by-stage;
+- versioning moved to a "stage progression + release-notes closure + milestone tags" model.
 
-The repository now formalizes this through `docs/64-versioning-governance.md`:
+The repository formalizes this through `docs/64-versioning-governance.md`, and `v0.12.0-orchestration-foundation` is now the first fully frozen milestone under that policy:
 
 - stage numbers continue to represent internal progression order;
 - release-notes documents close individual stages;
@@ -110,6 +110,9 @@ The repository now formalizes this through `docs/64-versioning-governance.md`:
 - ✅ Stage 15.7 — Orchestration Run Dry-run landed
 - ✅ Stage 15.8 — Orchestration Run Commit (A-only) landed
 - ✅ Stage 15.9 — Orchestration Run Lifecycle Events landed
+- ✅ Stage 15.95 — Orchestration Task Submit Created Event landed
+- ✅ Stage 15.96 — Orchestration Run Retry / Fallback Dry-run landed
+- ✅ Stage 15.97 — Orchestration Foundation Freeze completed (baseline: `38b4b69` / `v0.12.0-orchestration-foundation`)
 - ⚪ Stage 16 — UI / Control Panel (future)
 
 ### The Most Accurate Current Read
@@ -126,8 +129,9 @@ The most natural next direction is not to keep adding scattered features, but to
 
 1. keep refining the backend abstractions in **Stage 10-12**
 2. keep **Stage 13** as prepared context, but not expand it yet
-3. enter **Stage 14: the minimal orchestration-hub execution loop** at the right time
-4. backfill guardrail gaps when new stages expose them
+3. use the post-freeze window to align documentation wording and next-step entry points
+4. then decide whether to enter retry / fallback commit design or another orchestration-backend design step
+5. backfill guardrail gaps when new stages expose them
 
 Implemented capability highlights:
 

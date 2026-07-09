@@ -125,9 +125,14 @@ git diff --check
 
 ## 下一步建议
 
-本阶段完成后，下一步建议二选一：
+本阶段完成后，后续实际已发生的路径是：
+
+1. 已完成 `v0.12.0-orchestration-foundation` milestone freeze。
+2. 当前基线为 `38b4b69` / `v0.12.0-orchestration-foundation`。
+
+因此如果从现在继续往后接，下一步建议应改为：
 
 1. 进入 retry/fallback commit 设计。
-2. 先做 `v0.12.0-orchestration-foundation` milestone freeze 检查。
+2. 或先做 post-freeze 文档整理与下一拍入口统一。
 
-默认建议先做 milestone freeze 检查，因为当前 orchestration foundation 已经覆盖：read models、controlled handoff、run A+B、task submit A+B、retry/fallback dry-run preview。
+默认建议先完成 post-freeze 文档收口，再进入 retry/fallback commit 设计。

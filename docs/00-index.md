@@ -77,6 +77,8 @@
 
 适合：想理解项目如何从 guardrail 内核演进成中枢运行台、以及最小执行闭环如何串起 adapter / routing / state 的读者。
 
+> 当前补充：`v0.12.0-orchestration-foundation` 已在 `38b4b69` 完成冻结并 push；`68` / `69` 记录的是冻结前判定与执行方案，不应再被读成“当前仍待执行”。
+
 > 注意：旧 `14-task-runtime-bridge.md` 属于早期 Runtime gate 设计，与高位编号的中枢台后端主线不是同一组文档。
 
 ### 6. 想看发布与阶段收口

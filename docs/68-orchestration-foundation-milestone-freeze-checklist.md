@@ -1,5 +1,7 @@
 # 68 — Orchestration Foundation Milestone Freeze Checklist
 
+> 后续状态补充：本清单对应的冻结动作已在 commit `38b4b69` 完成，tag 为 `v0.12.0-orchestration-foundation`，且已 push。本文档保留为冻结前判定记录，不再代表“当前仍待冻结”。
+
 ## 目标
 
 本文档用于判断当前仓库是否已经具备冻结为 `v0.12.0-orchestration-foundation` 候选里程碑的条件。
@@ -111,7 +113,7 @@
 
 ## 工作区状态检查
 
-当前仍处于**未提交冻结前**状态：
+以下内容记录的是**本文档写下当时的冻结前状态**：
 
 - 有实现代码改动
 - 有 README / roadmap / progress / release notes 改动
@@ -119,10 +121,16 @@
 - 尚未创建 `v0.12.0-orchestration-foundation` tag
 - 尚未 push
 
-这意味着：
+这意味着在当时：
 
 - 从“能力与证据”角度，已经达到候选冻结点；
 - 从“Git 冻结动作”角度，还差一次整理后的 commit/tag/push 决策。
+
+后续实际结果已是：
+
+- commit `38b4b69`
+- tag `v0.12.0-orchestration-foundation`
+- push 完成
 
 ## 当前判定
 
@@ -140,27 +148,34 @@
 
 ### 冻结动作判定
 
-**尚未执行。**
+**就本文档写下当时而言：尚未执行。**
 
-当前还没有做：
+当时还没有做：
 
 - 统一 commit
 - 创建 tag
 - push
 
-因此现在的正确状态不是“已经冻结完成”，而是：
+因此这份清单在当时的正确结论是：
 
 > **已具备 milestone freeze 候选条件，等待最终整理与冻结动作。**
 
+但从当前仓库状态看，这一步后续已经完成，冻结基线为：`38b4b69` / `v0.12.0-orchestration-foundation`。
+
 ## 建议的下一步
 
-推荐顺序：
+以下顺序记录的是本文档写下当时的建议动作：
 
 1. 维持当前工作区不再扩功能。
 2. 由维护者审一下这批未提交变更的最终口径。
 3. 若确认无新增功能，再统一 commit。
 4. commit 后创建：`v0.12.0-orchestration-foundation`
 5. 如需要，再执行 push。
+
+从当前状态继续往后接时，下一步不应再重复以上动作，而应优先进入：
+
+1. post-freeze 文档整理
+2. retry/fallback commit 设计或其他下一拍 design gate
 
 ## 本阶段结束判定
 
@@ -172,4 +187,4 @@
 - 验证已通过
 - 不擅自执行 tag / push
 
-以上条件当前均已满足。
+以上条件在本文档写下当时均已满足；而冻结动作本身已在后续完成。

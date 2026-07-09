@@ -74,15 +74,15 @@
 
 ### 版本号说明
 
-当前仓库的 Git tag / semver 冻结点仍停在 `v0.11.0-runtime-event-import`。
+当前仓库最新里程碑基线已经是 `v0.12.0-orchestration-foundation`（commit `38b4b69`，已 push）。
 
-从 orchestration 主线开始，项目实际上改用“**阶段编号 + release notes 文档**”做阶段收口，例如 `55`、`57`、`59`、`61`、`62`。这代表：
+在 `v0.11.0-runtime-event-import` 之后，项目进入 orchestration 主线，实际改用“**阶段编号 + release notes 文档**”做阶段收口，例如 `55`、`57`、`59`、`61`、`65`、`67`。这代表：
 
-- 不是完全没做阶段收口；
-- 但也**没有继续稳定执行新的 semver / tag 策略**；
-- 当前状态更接近“版本治理半迁移中”。
+- 阶段收口一直在继续；
+- semver / tag 不再按每个阶段同步增长；
+- 版本治理改为“阶段推进 + release notes 收口 + 里程碑打 tag”。
 
-当前已通过 `docs/64-versioning-governance.md` 正式定义版本治理：
+当前已通过 `docs/64-versioning-governance.md` 正式定义该策略，并已在 `v0.12.0-orchestration-foundation` 完成一次实际冻结：
 
 - 阶段编号继续用于推进顺序；
 - release notes 用于单阶段收口；
@@ -110,6 +110,9 @@
 - ✅ Stage 15.7 — Orchestration Run Dry-run 落地
 - ✅ Stage 15.8 — Orchestration Run Commit（A-only）落地
 - ✅ Stage 15.9 — Orchestration Run Lifecycle Events 落地
+- ✅ Stage 15.95 — Orchestration Task Submit Created Event 落地
+- ✅ Stage 15.96 — Orchestration Run Retry / Fallback Dry-run 落地
+- ✅ Stage 15.97 — Orchestration Foundation Freeze 完成（基线：`38b4b69` / `v0.12.0-orchestration-foundation`）
 - ⚪ Stage 16 — UI / Control Panel（远期）
 
 ### 现在最明确的位置
@@ -126,8 +129,9 @@
 
 1. 继续把 **Stage 10-12** 这三层后端抽象打细
 2. 保留 **Stage 13** 上下文，但暂不急着展开
-3. 在合适时机进入 **Stage 14：中枢台最小编排闭环**
-4. guardrail 若在新阶段中暴露缺口，再边做边回补
+3. 在 freeze 之后先整理 post-freeze 文档口径与下一拍入口
+4. 再决定是否进入 retry / fallback commit 设计等新的 orchestration backend 阶段
+5. guardrail 若在新阶段中暴露缺口，再边做边回补
 
 已落地的主线能力包括：
 

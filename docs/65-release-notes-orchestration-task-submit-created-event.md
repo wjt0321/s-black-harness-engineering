@@ -149,9 +149,14 @@ git diff --check
 
 ## 下一步建议
 
-本阶段完成后，下一步建议进入：
+本阶段完成后，后续实际已走完的路径是：
 
-1. retry / fallback design gate
-2. 或先做 `v0.12.0-orchestration-foundation` milestone freeze 检查
+1. 先完成 retry / fallback design gate 与 dry-run preview
+2. 再完成 `v0.12.0-orchestration-foundation` milestone freeze
 
-默认仍建议先完成 retry / fallback design gate，再决定是否冻结新的 orchestration milestone tag。
+如果以后从本阶段继续往后接，当前更自然的下一拍不再是重复 freeze 检查，而是：
+
+1. 进入 retry / fallback commit 设计
+2. 或先做 post-freeze 文档口径整理与后续 design gate 选择
+
+默认建议优先进入 retry / fallback commit 设计，而不是重复执行已完成的 milestone freeze。

@@ -13,15 +13,15 @@
 
 ## 版本治理说明
 
-当前仓库的 Git tag / semver 冻结点仍停在 `v0.11.0-runtime-event-import`。
+当前仓库最新里程碑基线已更新为 `v0.12.0-orchestration-foundation`（commit `38b4b69`，已 push）。
 
-从 orchestration 阶段开始，项目持续使用 `docs/55`、`docs/57`、`docs/59`、`docs/61`、`docs/62` 这类**阶段编号 + release notes**来完成阶段收口，但并未同步继续打新的 semver tag。
+从 orchestration 阶段开始，项目持续使用 `docs/55`、`docs/57`、`docs/59`、`docs/61`、`docs/62`、`docs/65`、`docs/67` 这类**阶段编号 + release notes**来完成阶段收口，而 semver/tag 改为只在里程碑节点冻结。
 
-这表示当前版本治理处于一个过渡态：
+这表示版本治理已经从“过渡态”进入“已执行态”：
 
-- release notes 与阶段文档仍在持续更新；
-- 但 semver/tag 策略并没有正式续上；
-- 现在已补充独立治理文档 `docs/64-versioning-governance.md`，正式定义为“阶段推进 + release notes 收口 + 里程碑打 tag”。
+- release notes 与阶段文档持续更新；
+- semver/tag 不再逐阶段增长；
+- `docs/64-versioning-governance.md` 定义的“阶段推进 + release notes 收口 + 里程碑打 tag”策略，已经在 `v0.12.0-orchestration-foundation` 得到实际执行。
 
 两条主线并行推进，但优先级上仍遵循：先把底层边界和状态模型打稳，再逐步放开接入、编排和未来 UI 可操作性。
 
@@ -537,21 +537,21 @@
 
 ---
 
-## Stage 15.97 — Orchestration Foundation Freeze 准备完成
+## Stage 15.97 — Orchestration Foundation Freeze 完成
 
-目标：在不直接执行 commit / tag / push 的前提下，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、检查清单与执行方案补齐，确保后续只差最终 Git 动作。
+目标：把 `v0.12.0-orchestration-foundation` 作为 orchestration foundation 的首个正式里程碑基线完成冻结，并为后续 post-freeze 文档整理与下一拍设计建立稳定起点。
 
 已完成范围：
 
-- 已新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md`，明确候选能力包、验证证据与当前判定。
-- 已新增 `docs/69-orchestration-foundation-freeze-execution-plan.md`，明确冻结范围、建议 commit message、建议 tag、annotated tag message 与执行顺序。
+- 已新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md`，明确候选能力包、验证证据与冻结前判定。
+- 已新增 `docs/69-orchestration-foundation-freeze-execution-plan.md`，记录冻结范围、建议 commit message、建议 tag、annotated tag message 与执行顺序。
 - 已完成冻结前验证：全量 `pytest tests -q`、`doctor`、`public_scan`、`git diff --check`。
-- 已明确当前状态：能力包已满足 `v0.12.0-orchestration-foundation` 候选冻结条件，但尚未执行 commit / tag / push。
+- 已完成实际冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 
 说明：
 
-- 本阶段是冻结前准备收口，不自动代替用户执行 Git 冻结动作。
-- 下一步若继续推进，将进入真正的 commit / tag 决策与执行阶段。
+- `68` / `69` 仍保留为冻结前判断与执行方案的历史文档。
+- 当前阶段已经不再是“等待 Git 动作”，而是进入 freeze 之后的文档收口与下一拍承接。
 - 不标记 Stage 16 开始；Stage 16 仍保持远期。
 
 ---
@@ -600,6 +600,7 @@ guardrail / ledger / controlled write 这条主线仍然是必需能力，不应
 3. 先把“中枢台后端”这条主线的文档和抽象立起来
 4. 在后续阶段中持续记录和回补 guardrail 缺口
 5. 给后续实现留下清晰的顺序和 handoff
+6. 对已冻结里程碑，在进入下一拍前先完成 post-freeze 文档口径校正
 
 换句话说：
 
