@@ -163,6 +163,8 @@ If this is your first time in the repository, read in this order:
 8. `docs/10-cli-poc-usage.md`
 9. `docs/21-controlled-write-boundaries.md`
 
+The documents `docs/47-orchestration-hub-vision.md` through `docs/50-control-plane-state-model.md` form the orchestration-hub backend backbone; read them in numbered order.
+
 If you only want the full progress ledger:
 
 - `tasks/progress.md`

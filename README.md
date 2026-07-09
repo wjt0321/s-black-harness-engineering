@@ -163,6 +163,8 @@ python -m agent_runtime.cli policies list
 8. `docs/10-cli-poc-usage.md`
 9. `docs/21-controlled-write-boundaries.md`
 
+其中 `docs/47-orchestration-hub-vision.md` 到 `docs/50-control-plane-state-model.md` 是中枢台后端主线，建议按编号顺序阅读。
+
 如果你只想看完整进度账本：
 
 - `tasks/progress.md`

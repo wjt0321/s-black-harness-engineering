@@ -40,7 +40,7 @@ Capability 是上层任务意图和底层 adapter 实现之间的中间层。
 
 ## 路由输入
 
-一次 routing 至少要考虑：
+一次 routing 至少要消费以下输入。其中 `available_adapters` 来自 `48 — Adapter Runtime Interface` 中定义的 adapter 能力声明与约束；`policy_constraints` 来自安全与审计内核。
 
 - `task_type`
 - `requested_capability`
@@ -48,14 +48,19 @@ Capability 是上层任务意图和底层 adapter 实现之间的中间层。
 - `execution_mode`（inspect / dry-run / commit / review）
 - `workspace_scope`
 - `user_approval_state`
-- `available_adapters`
+- `available_adapters`（来自 adapter registry / adapter metadata）
 - `preferred_agent`
 - `policy_constraints`
 - `cost / latency / reliability profile`
 
 ## 路由输出
 
-Routing 的输出不只是“选中了谁”，还应包括选择理由和后续约束。
+Routing 的输出不只是“选中了谁”，还应包括选择理由和后续约束。这些输出会直接进入下游执行与状态沉淀：
+
+- `selected_adapter_id` -> 交给 `48 — Adapter Runtime Interface` 生成并执行具体 adapter request。
+- `requires_approval` / `requires_dry_run` / `requires_review` -> 交给 guardrail 内核决定 preflight 策略。
+- `fallback_adapter_ids` -> 作为 retry / escalation 时的候选链。
+- `expected_artifacts` / `routing_reason` / `blocked_reason` -> 写入 `50 — Control Plane State Model` 的 `Run` / `Event` / `Report`。
 
 建议输出：
 
@@ -217,6 +222,26 @@ Task intent
 - UI 交互层
 
 本文只先定义 capability routing 的后端模型。
+
+## 本文的产出与下游消费
+
+本文产生的 routing 结果会由 48 和 50 继续消费：
+
+| 本文产出 | 下游文档 | 消费方式 |
+|:---|:---|:---|
+| `selected_adapter_id` / `selected_capability` / `operation` 推断 | `48 — Adapter Runtime Interface` | 组装 adapter request 并执行 |
+| `requires_approval` / `requires_dry_run` / `requires_review` | Guardrail Core + `48` | 决定 preflight 与执行模式 |
+| `fallback_adapter_ids` / `routing_reason` / `blocked_reason` | `50 — Control Plane State Model` | 写入 `Run`、`Event`、`Report` |
+
+整个链条可简化为：
+
+```text
+Task intent
+  -> Capability routing (本文)
+  -> Guardrail preflight
+  -> Adapter execution / dry-run / commit (48)
+  -> Run / Artifact / Evidence / Report (50)
+```
 
 ## 下一步衔接
 

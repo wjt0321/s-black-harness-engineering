@@ -275,6 +275,19 @@ Adapter 输出不应只有文本结果，还应能产出结构化 artifact。
 
 但这些积木还没有被提升为“中枢台统一 adapter 接口”的完整叙事。本文的作用就是把它们从“局部能力”收束到“统一接入协议”主线上。
 
+## 本文的产出与下游消费
+
+本文产生的核心约定会被 49 和 50 直接消费：
+
+| 本文产出 | 下游文档 | 消费方式 |
+|:---|:---|:---|
+| adapter 能力声明 (`capabilities` / `risk_level` / `supports_*`) | `49 — Capability Routing Model` | 作为路由候选集和约束过滤的输入 |
+| adapter 统一 request / response 模型 | `49 — Capability Routing Model` | 路由决策后生成具体执行请求的模板 |
+| adapter response / artifact / evidence 模型 | `50 — Control Plane State Model` | 作为 `Run` / `Artifact` / `Evidence` 对象的字段来源 |
+| approval / timeout / cancel / error 语义 | `50 — Control Plane State Model` | 作为 `ApprovalRequest` / `Run` 状态转换的依据 |
+
+也就是说，48 负责定义“每个积木长什么样”，49 负责“按意图挑选积木”，50 负责“把挑选和执行过程沉淀成状态”。
+
 ## 下一步衔接
 
 本文之后应继续：

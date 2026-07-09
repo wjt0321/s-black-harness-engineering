@@ -22,6 +22,20 @@
 
 因此中枢台必须拥有自己的一层控制面状态，而不是只依赖底层工具的原生输出。
 
+## 这些状态对象从哪里来
+
+控制面状态不是凭空产生的，它由上游路由决策和 adapter 执行共同写入：
+
+- `Task`：由任务提交入口创建，携带 `requested_capability`、assignee、workspace 等业务上下文。
+- `Run`：由 `49 — Capability Routing Model` 的输出触发，记录最终选中的 `adapter_id`、`capability`、`operation`、`mode` 以及 routing reason。
+- `ApprovalRequest`：由 guardrail preflight 或 routing 的 `requires_approval` 触发，记录审批目标、原因和决议。
+- `Artifact`：由 `48 — Adapter Runtime Interface` 的执行结果产出，例如 draft、report、snapshot、exported json。
+- `Evidence`：由 guardrail 检查、adapter 执行后校验、或 artifact 持久化动作产生，作为“可以进入下一步”的证明。
+- `Event`：记录上述任何一次状态迁移或动作，形成按时间排列的审计流。
+- `Report`：基于同一 task 下的 run、artifact、evidence 聚合生成，用于阶段收口。
+
+也就是说，50 是 48 和 49 的执行结果沉淀层；没有 48 的 adapter 语义和 49 的路由决策，控制面状态只会变成无意义的日志堆砌。
+
 ## 核心状态对象
 
 ### 1. Task
@@ -224,6 +238,136 @@ Task
 - Run 记录具体执行尝试
 - Approval / Artifact / Evidence 依附于 Run
 - Report 面向汇总和收口
+
+## 最小链路样例：从任务意图到 Report
+
+以下是一个后端视角的完整链路，说明 `49 — Capability Routing Model` 和 `48 — Adapter Runtime Interface` 如何共同产出 `50` 中的状态对象。本样例不进入 API / HTTP / UI，只展示状态如何沉淀。
+
+### 任务意图
+
+```text
+task_type: coding_request
+requested_capability: dispatch.agent.coding
+title: 为 workspace 内一个代码修改请求生成 dry-run draft
+workspace: D:/agent-runtime
+execution_mode: dry-run
+```
+
+### 1. Capability Routing
+
+`49` 根据 `requested_capability` 和可用 adapter 做路由：
+
+```text
+selected_adapter_id: kimi-code-acp
+selected_capability: dispatch.agent.coding
+operation: edit_file
+requires_approval: false
+requires_dry_run: true
+requires_review: true
+fallback_adapter_ids: [omp-acp, claude-code-acp]
+routing_reason: 默认优先 Kimi Code；当前任务在工作区内、风险等级 medium，dry-run 模式无需审批
+```
+
+### 2. Guardrail Preflight
+
+路由结果被提交给 guardrail 内核：
+
+```text
+path_check: PASS（目标路径在工作区内）
+secret_scan: PASS（无命中）
+action_rule: 允许 dry-run，commit 阶段需审批
+preflight_result: ALLOWED_WITH_CONSTRAINTS
+```
+
+### 3. Adapter Execution
+
+`48` 组装统一 request 并执行（当前仍为受控模拟，不触发真实外部执行）：
+
+```text
+request_id: req-20260707-001
+run_id: run-20260707-001
+task_id: task-20260707-001
+adapter_id: kimi-code-acp
+capability: dispatch.agent.coding
+operation: edit_file
+mode: dry-run
+input: {target: agent_runtime/loader.py, instruction: 生成一个路径归一化函数修改草案}
+```
+
+### 4. 状态沉淀
+
+执行结果写入控制面状态：
+
+**Task**
+
+```text
+task_id: task-20260707-001
+status: running
+requested_capability: dispatch.agent.coding
+assignee: kimi-code-acp
+```
+
+**Run**
+
+```text
+run_id: run-20260707-001
+task_id: task-20260707-001
+request_id: req-20260707-001
+adapter_id: kimi-code-acp
+capability: dispatch.agent.coding
+operation: edit_file
+mode: dry-run
+status: completed
+fallback_from: null
+```
+
+**Event**
+
+```text
+event_id: evt-20260707-001
+task_id: task-20260707-001
+actor: orchestration_hub
+event_type: run_completed
+message: kimi-code-acp dry-run 完成，等待 review
+```
+
+**Artifact**
+
+```text
+artifact_id: art-20260707-001
+task_id: task-20260707-001
+run_id: run-20260707-001
+artifact_type: draft_file
+path_or_ref: drafts/runtime/task-20260707-001/loader-normalize.envelope.json
+producer: kimi-code-acp
+safe_to_preview: true
+```
+
+**Evidence**
+
+```text
+evidence_id: evi-20260707-001
+task_id: task-20260707-001
+run_id: run-20260707-001
+evidence_type: public_scan_passed
+summary: 草案通过公开发布风险扫描
+artifact_refs: [art-20260707-001]
+```
+
+### 5. Report 收口
+
+```text
+report_id: rep-20260707-001
+task_id: task-20260707-001
+scope: single_run
+status_summary: dry-run 完成，待 review 后 commit
+key_findings: [路径在工作区内, 无敏感信息泄露, 已生成 draft]
+artifact_refs: [art-20260707-001]
+evidence_refs: [evi-20260707-001]
+next_action: 人工 review draft，确认后执行 commit 或驳回
+```
+
+这个样例展示了 47-50 这组文档的衔接：路由决策来自 49，adapter 语义来自 48，所有状态对象最终在 50 中沉淀成可审计、可回放、可被未来 UI 消费的格式。这里刻意把结果收束在 dry-run draft / artifact / evidence 层，而不是承诺当前阶段已经放开真实外部执行。
 
 ## 与当前仓库的关系
 
