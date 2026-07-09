@@ -161,10 +161,11 @@ python -m agent_runtime.cli policies list
 6. `docs/49-capability-routing-model.md`
 7. `docs/50-control-plane-state-model.md`
 8. `docs/52-minimal-orchestration-loop.md`
-9. `docs/10-cli-poc-usage.md`
-10. `docs/21-controlled-write-boundaries.md`
+9. `docs/53-minimal-orchestration-loop-cli-draft.md`
+10. `docs/10-cli-poc-usage.md`
+11. `docs/21-controlled-write-boundaries.md`
 
-其中 `docs/47-orchestration-hub-vision.md` 到 `docs/52-minimal-orchestration-loop.md` 是中枢台后端主线，建议按编号顺序阅读。
+其中 `docs/47-orchestration-hub-vision.md` 到 `docs/53-minimal-orchestration-loop-cli-draft.md` 是中枢台后端主线，建议按编号顺序阅读。
 
 如果你只想看完整进度账本：
 

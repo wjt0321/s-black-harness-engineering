@@ -270,6 +270,7 @@
 主要交付物：
 
 - `docs/52-minimal-orchestration-loop.md`
+- `docs/53-minimal-orchestration-loop-cli-draft.md`（命令面草案参考，非正式 API 边界）
 
 候选闭环：
 
