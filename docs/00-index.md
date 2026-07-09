@@ -62,6 +62,7 @@
 - `55-release-notes-orchestration-read-models.md`
 - `56-orchestration-controlled-write-boundary.md`
 - `57-release-notes-orchestration-controlled-handoff.md`
+- `58-orchestration-run-controlled-execution-design.md`
 
 适合：想理解项目如何从 guardrail 内核演进成中枢运行台、以及最小执行闭环如何串起 adapter / routing / state 的读者。
 
@@ -76,6 +77,7 @@
 - `23` ~ `46` 各阶段 release notes
 - `55-release-notes-orchestration-read-models.md`
 - `57-release-notes-orchestration-controlled-handoff.md`
+- `58-orchestration-run-controlled-execution-design.md`
 
 适合：想知道每一阶段交付了什么、能力如何封版的读者。
 

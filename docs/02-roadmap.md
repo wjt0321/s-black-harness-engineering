@@ -366,6 +366,32 @@
 
 ---
 
+## Stage 15.6 — Orchestration Run 受控执行设计（design gate，进入 run 实现前）
+
+目标：在实现 `orchestration run --dry-run / --commit` 之前，先定义 run 的产物形态、freeze guard、event/artifact/evidence 沉淀规则和 rollback 策略，避免匆忙开放 run 写入。
+
+主要交付物：
+
+- `docs/58-orchestration-run-controlled-execution-design.md`
+
+要做的事：
+
+- 定义 `orchestration run --dry-run` 输出：routing summary、preflight summary、candidate envelope/events summary、artifact/evidence refs、稳定 `plan_hash`。
+- 定义 `orchestration run --commit` 产物策略：优先 envelope draft export（A），配合 run lifecycle events append（B），all-or-nothing 回滚。
+- 定义 freeze guard：`--expected-plan-hash` 覆盖 task_id、request_id、capability、adapter_id、operation、target 摘要、mode、routing、preflight、candidate envelope/events 指纹；mismatch 返回 `blocked`。
+- 定义 approval handoff：preflight `needs_approval` 时 commit 不写产物；已有 `approval_resolved` event 仍需重新 preflight。
+- 明确 state model mapping：Run 暂不独立持久，由 `(task_id, request_id, envelope_path)` + run lifecycle events 代理；Artifact/Evidence 仍 envelope-scoped；Report 仍 runtime-report-backed。
+- 明确 rollback / post-check：draft export 失败删除新文件，event append 失败按 byte size 回滚，post-check 包括 schema / ledger consistency / runtime audit / public scan。
+
+说明：
+
+- 本阶段是 design gate，不新增代码实现。
+- 若进入实现，先在 `tasks/event.schema.json` 新增候选 event types（如 `run_planned`、`run_draft_exported`、`run_blocked`）并补测试。
+- 不实现 `orchestration task submit --commit`、retry / fallback、真实 adapter execution。
+- 不标记 Stage 16 开始；Stage 16 仍保持远期。
+
+---
+
 ## Stage 16 — UI / Control Panel（远期）
 
 目标：在后端抽象稳定后，为中枢台提供一个真正可操作、可观察、可审计的前端或看板。

@@ -1450,3 +1450,25 @@
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
 - 不弱化 guardrail，不夸大 run --commit 已实现。
+
+## 2026-07-09（续）— Stage 15.6：orchestration run 受控执行设计 gate
+
+- 新增 `docs/58-orchestration-run-controlled-execution-design.md`，作为进入 `orchestration run --dry-run/--commit` 实现前的设计 gate。
+- 文档覆盖：
+  - 命令候选形态：`--task-id`、`--request-id`、`--capability`、`--adapter`、`--operation`、`--target`、`--mode`、`--expected-plan-hash`、`--require-dry-run`。
+  - dry-run 产物形态：只读 run plan preview，含 routing/preflight/candidate envelope/events/artifact/evidence refs 安全摘要和稳定 `plan_hash`。
+  - commit 产物形态：不执行真实 adapter；优先 envelope draft export（A）+ run lifecycle events append（B），all-or-nothing 回滚；第一版可降级为只做 A。
+  - freeze guard：`plan_hash` 覆盖稳定安全字段；commit `--expected-plan-hash` mismatch 返回 `blocked`；`--require-dry-run` 要求绑定审阅上下文。
+  - approval handoff：preflight needs_approval 时 commit 不写产物；已有 `approval_resolved` event 仍需重新 preflight；granted 不是执行授权。
+  - state model mapping：Run 暂不独立持久；Artifact/Evidence 仍 envelope-scoped；Report 仍 runtime-report-backed。
+  - rollback / post-check：draft export 失败删除新文件，event append 失败按 byte size 回滚，post-check 包括 schema / ledger consistency / runtime audit / public scan。
+  - 验收标准与下一步建议。
+- 更新 `docs/00-index.md`：中枢台后端主线与发布/阶段收口列表加入 58。
+- 更新 `docs/02-roadmap.md`：新增 Stage 15.6 设计 gate，不标记 Stage 16 开始。
+- 本次为纯文档改动，不改代码/测试/schema。
+- 验证：
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+- 不弱化 guardrail，不夸大 run --commit 已实现。
