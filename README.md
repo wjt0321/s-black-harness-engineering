@@ -72,6 +72,22 @@
 - **中枢台后端抽象**：约 **55%**
 - **未来 UI / Control Panel 准备度**：约 **30%**
 
+### 版本号说明
+
+当前仓库的 Git tag / semver 冻结点仍停在 `v0.11.0-runtime-event-import`。
+
+从 orchestration 主线开始，项目实际上改用“**阶段编号 + release notes 文档**”做阶段收口，例如 `55`、`57`、`59`、`61`、`62`。这代表：
+
+- 不是完全没做阶段收口；
+- 但也**没有继续稳定执行新的 semver / tag 策略**；
+- 当前状态更接近“版本治理半迁移中”。
+
+当前已通过 `docs/64-versioning-governance.md` 正式定义版本治理：
+
+- 阶段编号继续用于推进顺序；
+- release notes 用于单阶段收口；
+- semver / Git tag 只用于里程碑级冻结点，不再逐阶段补 tag。
+
 ### 阶段闭环进度
 
 - ✅ Stage 0 — 项目骨架
@@ -179,8 +195,15 @@ python -m agent_runtime.cli policies list
 17. `docs/60-orchestration-run-lifecycle-events-design.md`
 18. `docs/61-release-notes-orchestration-run-lifecycle-events.md`
 19. `docs/62-orchestration-task-submit-controlled-write-design.md`
-20. `docs/10-cli-poc-usage.md`
-21. `docs/21-controlled-write-boundaries.md`
+20. `docs/63-orchestration-task-submit-created-event-design.md`
+21. `docs/64-versioning-governance.md`
+22. `docs/65-release-notes-orchestration-task-submit-created-event.md`
+23. `docs/66-orchestration-run-retry-fallback-design.md`
+24. `docs/67-release-notes-orchestration-run-retry-fallback.md`
+25. `docs/68-orchestration-foundation-milestone-freeze-checklist.md`
+26. `docs/69-orchestration-foundation-freeze-execution-plan.md`
+27. `docs/10-cli-poc-usage.md`
+28. `docs/21-controlled-write-boundaries.md`
 
 其中 `docs/47-orchestration-hub-vision.md` 到 `docs/54-backend-preparation-before-ui.md` 是中枢台后端主线，建议按编号顺序阅读。
 

@@ -1190,7 +1190,7 @@ python -m agent_runtime.cli runtime task create \
   --events-file tasks/events.jsonl
 ```
 
-通过 orchestration 命名空间提交 task：
+通过 orchestration 命名空间提交 task（A+B controlled write）：
 
 ```bash
 python -m agent_runtime.cli orchestration task submit \
@@ -1204,22 +1204,25 @@ python -m agent_runtime.cli orchestration task submit \
   --events-file tasks/events.jsonl
 ```
 
-Commit 边界：
+`--dry-run` 会完全只读地预览 commit 将执行的两步写入（A=task ledger，B=created event），输出中包含 `would_create=True` 和 `would_append_created_event=True`。
 
-- 只允许追加 exactly one JSON object as the last line of task ledger JSONL。
-- 不自动写 event ledger；如需 created event，后续显式使用 `runtime event append --commit`。
-- `orchestration task submit --dry-run / --commit` 第一版复用同一边界：只写 task ledger，不自动写 event / route / preflight / run。
-- 目标 task ledger 必须位于项目根内、后缀为 `.jsonl`、不是样本 ledger、不是 git/credential 路径。
+`--commit` 边界：
+
+- A：向 task ledger 追加 exactly one JSON object as the last line。
+- B：向 events ledger 追加 exactly one `event_type=created` event，其 `task_id` 指向刚提交的 task，`from_status=null`，`to_status` 等于 task snapshot 的 `status`。
+- `--events-file` 在 `--commit` 下必填；缺失时返回 `needs_input`，不写 A/B。
+- A 或 B 任一环节失败，或 post-check 失败，task ledger 与 events ledger 都回滚到原始 byte size。
+- post-check 针对实际落盘后的 task + events ledger，包括 schema 校验与 `task check-ledger` 跨记录一致性。
+- 不自动执行 route / preflight / run / adapter。
+- 目标 ledger 必须位于项目根内、后缀为 `.jsonl`、不是样本 ledger、不是 git/credential 路径。
 - 父目录必须已存在；现有非空文件必须以换行结尾。
-- 输出只包含 task id、状态、计数和检查状态，不回显 title / summary / evidence description / secret match。
+- 输出只包含 task id、event id、状态、计数和检查状态，不回显 title / summary / evidence description / secret match；created event 的 metadata 只放安全摘要。
 
 约束：
 
 - `--dry-run` 与 `--commit` 必须显式二选一。
 - `--dry-run` 不写 `tasks/tasks.jsonl`、不写 `tasks/events.jsonl`、不写 envelope。
-- `--commit` 只写 task ledger，不写 `tasks/events.jsonl`、不写 envelope。
-- 目标 task ledger 必须位于项目根目录内、后缀 `.jsonl`。
-- 新创建的 task 可以暂时没有对应 event；ledger consistency 只检查是否破坏现有 ledger。
+- `--commit` 原子写 task ledger + created event，不写 envelope、不执行外部动作。
 - 不回显完整 title / summary / evidence description / secret match。
 
 详细设计见 `docs/31-runtime-task-create-dry-run.md` 与 `docs/34-release-notes-runtime-task-create-commit.md`。
@@ -1723,6 +1726,37 @@ python -m agent_runtime.cli orchestration run \
 
 - 聚合 `orchestration route preview` + `orchestration preflight` + `runtime plan` 的安全摘要，输出候选 envelope/events/artifact/evidence refs 与 `plan_hash`。
 - 不回显完整 input payload、target 原文、`raw_ref`、`decision_ref`、evidence descriptions。
+
+Run retry / fallback dry-run preview（只读，不写 ledger/envelope/draft）：
+
+```bash
+python -m agent_runtime.cli orchestration run \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --capability git_push \
+  --operation git_push \
+  --target origin/main \
+  --retry-of req-20260703-001 \
+  --dry-run
+
+python -m agent_runtime.cli orchestration run \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-003 \
+  --capability git_push \
+  --operation git_push \
+  --target origin/main \
+  --fallback-from req-20260703-001 \
+  --fallback-to shell-local \
+  --dry-run \
+  --json
+```
+
+说明：
+
+- `--retry-of` 与 `--fallback-from` 不能同时使用；`--fallback-to` 必须与 `--fallback-from` 一起使用。
+- retry / fallback 会生成新的 `request_id`，重新执行 route / preflight / dry-run，不自动复用旧 `plan_hash` 或 approval。
+- 输出包含 `lineage_type`、`retry_of` / `fallback_from` / `fallback_to`，`plan_hash` 会随 lineage 字段变化，避免与普通 dry-run 误用同一 hash。
+- 本阶段只实现 dry-run preview，不实现 retry/fallback 的自动 commit。
 
 Run commit（受控写入，A+B：envelope draft export + lifecycle events append）：
 

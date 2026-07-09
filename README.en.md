@@ -72,6 +72,22 @@ Current estimate:
 - **Orchestration-hub backend abstractions**: about **55%**
 - **Future UI / Control Panel readiness**: about **30%**
 
+### Versioning Note
+
+The repository's Git tag / semver freeze point currently still stops at `v0.11.0-runtime-event-import`.
+
+Since the orchestration line began, the project has effectively switched to using **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, and `62`. That means:
+
+- stage closure did continue;
+- but a new semver / tag cadence was **not** consistently maintained;
+- the current state is best described as a **half-migrated versioning policy**.
+
+The repository now formalizes this through `docs/64-versioning-governance.md`:
+
+- stage numbers continue to represent internal progression order;
+- release-notes documents close individual stages;
+- semver / Git tags are reserved for milestone-level freeze points rather than every stage.
+
 ### Stage Closure Progress
 
 - ✅ Stage 0 — Project skeleton
@@ -179,8 +195,15 @@ If this is your first time in the repository, read in this order:
 17. `docs/60-orchestration-run-lifecycle-events-design.md`
 18. `docs/61-release-notes-orchestration-run-lifecycle-events.md`
 19. `docs/62-orchestration-task-submit-controlled-write-design.md`
-20. `docs/10-cli-poc-usage.md`
-21. `docs/21-controlled-write-boundaries.md`
+20. `docs/63-orchestration-task-submit-created-event-design.md`
+21. `docs/64-versioning-governance.md`
+22. `docs/65-release-notes-orchestration-task-submit-created-event.md`
+23. `docs/66-orchestration-run-retry-fallback-design.md`
+24. `docs/67-release-notes-orchestration-run-retry-fallback.md`
+25. `docs/68-orchestration-foundation-milestone-freeze-checklist.md`
+26. `docs/69-orchestration-foundation-freeze-execution-plan.md`
+27. `docs/10-cli-poc-usage.md`
+28. `docs/21-controlled-write-boundaries.md`
 
 The documents `docs/47-orchestration-hub-vision.md` through `docs/54-backend-preparation-before-ui.md` form the orchestration-hub backend backbone; read them in numbered order.
 

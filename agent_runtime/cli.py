@@ -35,7 +35,7 @@ from .runtime_task_create import TaskCreateDryRunResult, create_task, create_tas
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
-from .orchestration_task_submit import submit_task
+from .orchestration_task_submit import submit_task, TaskSubmitResult
 from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
 from .orchestration_approval_resolve import ApprovalResolveResult, resolve_approval
 from .orchestration_artifact import ArtifactDetailResult, ArtifactListResult, get_artifact, list_artifacts
@@ -874,11 +874,61 @@ def _emit_runtime_task_create_result(result: CheckResult, json_output: bool) -> 
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _render_orchestration_task_submit_summary(result: CheckResult) -> str:
+    """Render a compact human-readable orchestration task submit summary."""
+    if not isinstance(result, TaskSubmitResult):
+        return result.render_human()
+
+    lines = [result.status.upper()]
+    if result.source is not None:
+        lines.append(f"Source: {result.source}")
+    if result.task_id is not None:
+        lines.append(f"task_id={result.task_id}")
+    if result.event_id is not None:
+        lines.append(f"event_id={result.event_id}")
+    if result.task_status is not None:
+        lines.append(f"status={result.task_status}")
+    lines.append(f"title_present={result.title_present}")
+    lines.append(f"assignee_present={result.assignee_present}")
+    if result.tag_count is not None:
+        lines.append(f"tag_count={result.tag_count}")
+    if result.artifact_count is not None:
+        lines.append(f"artifact_count={result.artifact_count}")
+    if result.evidence_count is not None:
+        lines.append(f"evidence_count={result.evidence_count}")
+    lines.append(f"would_create={result.would_create}")
+    lines.append(f"would_append_created_event={result.would_append_created_event}")
+    if result.ledger_check is not None:
+        lines.append(f"ledger_check={result.ledger_check}")
+    lines.append(f"committed={result.committed}")
+    lines.append(f"created_event_committed={result.created_event_committed}")
+    if result.post_validate_tasks is not None:
+        lines.append(f"post_validate_tasks={result.post_validate_tasks}")
+    if result.post_validate_events is not None:
+        lines.append(f"post_validate_events={result.post_validate_events}")
+    if result.post_ledger_check is not None:
+        lines.append(f"post_ledger_check={result.post_ledger_check}")
+    if result.rolled_back:
+        lines.append(f"rolled_back={result.rolled_back}")
+    if result.rollback_error is not None:
+        lines.append(f"rollback_error={result.rollback_error}")
+    if result.metadata_keys:
+        lines.append("metadata_keys=" + ",".join(result.metadata_keys))
+    for finding in result.findings:
+        loc = ""
+        if finding.line is not None:
+            loc = f" at line {finding.line}"
+        lines.append(f"- {finding.rule_id}{loc}: {finding.message}")
+    if result.next_action:
+        lines.append(f"Next: {result.next_action}")
+    return "\n".join(lines)
+
+
 def _emit_orchestration_task_submit_result(result: CheckResult, json_output: bool) -> int:
     if json_output:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
-        print(_render_runtime_task_create_summary(result))
+        print(_render_orchestration_task_submit_summary(result))
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
@@ -1666,6 +1716,15 @@ def _emit_run_dry_run_result(result: RunDryRunResult, json_output: bool) -> int:
             f"mode={result.mode} "
             f"status={result.status}"
         )
+        if result.lineage_type:
+            lineage_parts = [f"lineage_type={result.lineage_type}"]
+            if result.retry_of:
+                lineage_parts.append(f"retry_of={result.retry_of}")
+            if result.fallback_from:
+                lineage_parts.append(f"fallback_from={result.fallback_from}")
+            if result.fallback_to:
+                lineage_parts.append(f"fallback_to={result.fallback_to}")
+            print(" ".join(lineage_parts))
         route = result.route
         print(
             f"adapter={route.get('selected_adapter_id') or '-'} "
@@ -1796,12 +1855,17 @@ def _cmd_orchestration_run(args: argparse.Namespace) -> int:
         )
         return _emit_run_commit_result(result, json_output=args.json)
 
+    retry_of = getattr(args, "retry_of", None)
+    fallback_from = getattr(args, "fallback_from", None)
+    fallback_to = getattr(args, "fallback_to", None)
+    effective_adapter_id = fallback_to if fallback_to is not None else getattr(args, "adapter", None)
+
     result = dry_run_run(
         root,
         task_id=task_id,
         request_id=request_id,
         capability=capability,
-        adapter_id=getattr(args, "adapter", None),
+        adapter_id=effective_adapter_id,
         operation=getattr(args, "operation", None),
         target=getattr(args, "target", None),
         requested_mode="dry-run",
@@ -1810,6 +1874,9 @@ def _cmd_orchestration_run(args: argparse.Namespace) -> int:
         actor="cli",
         tasks_file=getattr(args, "tasks_file", None),
         args=args,
+        retry_of=retry_of,
+        fallback_from=fallback_from,
+        fallback_to=fallback_to,
     )
     return _emit_run_dry_run_result(result, json_output=args.json)
 
@@ -2457,10 +2524,10 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_task_submit_source = orchestration_task_submit_parser.add_mutually_exclusive_group(required=True)
     orchestration_task_submit_source.add_argument("--file", default=None, help="Path to candidate task JSON file")
     orchestration_task_submit_source.add_argument("--stdin", action="store_true", help="Read candidate task JSON from stdin")
-    orchestration_task_submit_parser.add_argument("--dry-run", action="store_true", help="Simulate task submit without writing")
-    orchestration_task_submit_parser.add_argument("--commit", action="store_true", help="Append exactly one task record to the task ledger")
+    orchestration_task_submit_parser.add_argument("--dry-run", action="store_true", help="Simulate task submit without writing (previews A+B)")
+    orchestration_task_submit_parser.add_argument("--commit", action="store_true", help="Append one task record and one created event atomically")
     orchestration_task_submit_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
-    orchestration_task_submit_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
+    orchestration_task_submit_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (required for --commit; default: tasks/events.jsonl)")
     _add_global_args(orchestration_task_submit_parser)
     orchestration_task_submit_parser.set_defaults(func=_cmd_orchestration_task_submit)
 
@@ -2506,6 +2573,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     orchestration_run_parser.add_argument(
         "--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)"
+    )
+    orchestration_run_parser.add_argument(
+        "--retry-of", default=None, help="Source request id for a retry dry-run preview"
+    )
+    orchestration_run_parser.add_argument(
+        "--fallback-from", default=None, help="Source request id for a fallback dry-run preview"
+    )
+    orchestration_run_parser.add_argument(
+        "--fallback-to", default=None, help="Fallback adapter id (requires --fallback-from)"
     )
     run_mode_group = orchestration_run_parser.add_mutually_exclusive_group()
     run_mode_group.add_argument(

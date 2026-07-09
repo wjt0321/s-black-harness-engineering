@@ -39,6 +39,10 @@ class RunDryRunResult:
     findings: list[Finding] = field(default_factory=list)
     next_action: str | None = None
     envelope_draft: dict[str, Any] | None = field(default=None, repr=False)
+    lineage_type: str | None = None
+    retry_of: str | None = None
+    fallback_from: str | None = None
+    fallback_to: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -61,6 +65,14 @@ class RunDryRunResult:
             d["findings"] = [f.to_dict() for f in self.findings]
         if self.next_action is not None:
             d["next_action"] = self.next_action
+        if self.lineage_type is not None:
+            d["lineage_type"] = self.lineage_type
+        if self.retry_of is not None:
+            d["retry_of"] = self.retry_of
+        if self.fallback_from is not None:
+            d["fallback_from"] = self.fallback_from
+        if self.fallback_to is not None:
+            d["fallback_to"] = self.fallback_to
         return d
 
 
@@ -82,6 +94,10 @@ def _compute_plan_hash(
     candidate_envelope_summary: dict[str, Any],
     candidate_events_summary: list[dict[str, Any]],
     target: str | None,
+    lineage_type: str | None = None,
+    retry_of: str | None = None,
+    fallback_from: str | None = None,
+    fallback_to: str | None = None,
 ) -> str:
     """Compute a stable plan hash from safe, deterministic fields.
 
@@ -97,7 +113,7 @@ def _compute_plan_hash(
         "requires_approval": candidate_envelope_summary.get("requires_approval"),
     }
     event_sequence = [e.get("event_type") for e in candidate_events_summary]
-    payload = {
+    payload: dict[str, Any] = {
         "task_id": task_id,
         "request_id": request_id,
         "requested_capability": requested_capability,
@@ -114,6 +130,14 @@ def _compute_plan_hash(
         "candidate_envelope_summary": envelope_summary_for_hash,
         "candidate_event_type_sequence": event_sequence,
     }
+    if lineage_type is not None:
+        payload["lineage_type"] = lineage_type
+    if retry_of is not None:
+        payload["retry_of"] = retry_of
+    if fallback_from is not None:
+        payload["fallback_from"] = fallback_from
+    if fallback_to is not None:
+        payload["fallback_to"] = fallback_to
     canonical = json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
@@ -272,6 +296,9 @@ def dry_run_run(
     actor: str = "cli",
     tasks_file: str | None = None,
     args: Any | None = None,
+    retry_of: str | None = None,
+    fallback_from: str | None = None,
+    fallback_to: str | None = None,
 ) -> RunDryRunResult:
     """Generate a read-only run dry-run preview.
 
@@ -290,6 +317,85 @@ def dry_run_run(
             rule_id="run-mode-not-implemented",
             status="needs_input",
         )
+
+    lineage_type: str | None = None
+    if retry_of is not None and fallback_from is not None:
+        return RunDryRunResult(
+            status="validation_failed",
+            task_id=task_id,
+            request_id=request_id,
+            requested_capability=capability,
+            mode="dry-run",
+            findings=[
+                Finding(
+                    rule_id="lineage-mutually-exclusive",
+                    severity="block",
+                    action="validation_failed",
+                    message="--retry-of and --fallback-from cannot be used together.",
+                )
+            ],
+            next_action="Provide either --retry-of or --fallback-from, not both.",
+        )
+    if fallback_to is not None and fallback_from is None:
+        return RunDryRunResult(
+            status="validation_failed",
+            task_id=task_id,
+            request_id=request_id,
+            requested_capability=capability,
+            mode="dry-run",
+            findings=[
+                Finding(
+                    rule_id="fallback-to-requires-fallback-from",
+                    severity="block",
+                    action="validation_failed",
+                    message="--fallback-to can only be used with --fallback-from.",
+                )
+            ],
+            next_action="Provide --fallback-from when using --fallback-to.",
+        )
+    if retry_of is not None:
+        if request_id == retry_of:
+            return RunDryRunResult(
+                status="validation_failed",
+                task_id=task_id,
+                request_id=request_id,
+                requested_capability=capability,
+                mode="dry-run",
+                findings=[
+                    Finding(
+                        rule_id="lineage-request-id-must-differ",
+                        severity="block",
+                        action="validation_failed",
+                        message="New request_id must differ from --retry-of source request_id.",
+                    )
+                ],
+                next_action="Provide a new --request-id different from --retry-of.",
+            )
+        lineage_type = "retry"
+    if fallback_from is not None:
+        if request_id == fallback_from:
+            return RunDryRunResult(
+                status="validation_failed",
+                task_id=task_id,
+                request_id=request_id,
+                requested_capability=capability,
+                mode="dry-run",
+                findings=[
+                    Finding(
+                        rule_id="lineage-request-id-must-differ",
+                        severity="block",
+                        action="validation_failed",
+                        message="New request_id must differ from --fallback-from source request_id.",
+                    )
+                ],
+                next_action="Provide a new --request-id different from --fallback-from.",
+            )
+        lineage_type = "fallback"
+
+    # For fallback, the explicit fallback adapter id must be used for routing
+    # and preflight, regardless of any adapter_id passed by the caller.
+    if fallback_to is not None:
+        adapter_id = fallback_to
 
     task = find_task(root, task_id, explicit_file=tasks_file)
     if task is None:
@@ -417,6 +523,10 @@ def dry_run_run(
         candidate_envelope_summary=envelope_summary,
         candidate_events_summary=events_summary,
         target=target,
+        lineage_type=lineage_type,
+        retry_of=retry_of,
+        fallback_from=fallback_from,
+        fallback_to=fallback_to,
     )
 
     if preflight.status == "pass":
@@ -444,4 +554,8 @@ def dry_run_run(
         findings=list(preflight.findings),
         next_action=next_action,
         envelope_draft=envelope,
+        lineage_type=lineage_type,
+        retry_of=retry_of,
+        fallback_from=fallback_from,
+        fallback_to=fallback_to,
     )

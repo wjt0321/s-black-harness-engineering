@@ -11,6 +11,18 @@
 - **主线 A：安全与审计内核**
 - **主线 B：中枢台接入与编排**
 
+## 版本治理说明
+
+当前仓库的 Git tag / semver 冻结点仍停在 `v0.11.0-runtime-event-import`。
+
+从 orchestration 阶段开始，项目持续使用 `docs/55`、`docs/57`、`docs/59`、`docs/61`、`docs/62` 这类**阶段编号 + release notes**来完成阶段收口，但并未同步继续打新的 semver tag。
+
+这表示当前版本治理处于一个过渡态：
+
+- release notes 与阶段文档仍在持续更新；
+- 但 semver/tag 策略并没有正式续上；
+- 现在已补充独立治理文档 `docs/64-versioning-governance.md`，正式定义为“阶段推进 + release notes 收口 + 里程碑打 tag”。
+
 两条主线并行推进，但优先级上仍遵循：先把底层边界和状态模型打稳，再逐步放开接入、编排和未来 UI 可操作性。
 
 ---
@@ -478,6 +490,68 @@
 
 - 本阶段已经从 design gate 进入实现收口。
 - `orchestration run --dry-run` / `--commit` 的 freeze guard 语义保持不变。
+- 不标记 Stage 16 开始；Stage 16 仍保持远期。
+
+---
+
+## Stage 15.95 — Orchestration Task Submit Created Event 落地
+
+目标：把 `orchestration task submit --commit` 从只写 task ledger 的 A-only 入口，升级为 A+B controlled write，使其真正对齐 `TaskCollection.create` 的“Task + 初始 Event”语义。
+
+已完成范围：
+
+- A：向 task ledger 追加新 task snapshot。
+- B：向 event ledger 追加一条 `created` event。
+- A+B：all-or-nothing rollback，不接受“task 已存在但没有 created event”或“created event 已存在但 task 不存在”的残留状态。
+- 输出与 read model 一致性：补齐 task list/get 与 event timeline 的入口一致性，但仍不自动触发 route / preflight / run。
+- 阶段收口文档：`docs/65-release-notes-orchestration-task-submit-created-event.md`。
+
+说明：
+
+- 本阶段已从 design gate 进入实现收口。
+- `orchestration task submit --commit` 现在要求显式 `--events-file`，缺失则不写 A/B。
+- retry / fallback、真实 adapter execution 仍未开放。
+- 不标记 Stage 16 开始；Stage 16 仍保持远期。
+
+---
+
+## Stage 15.96 — Orchestration Run Retry / Fallback Dry-run 落地
+
+目标：在 task submit 入口 A+B 与 run commit A+B 均已落地后，补齐恢复性执行分支的第一版只读 preview：`orchestration run --retry-of` 与 `orchestration run --fallback-from / --fallback-to`。
+
+已完成范围：
+
+- Retry：同一 task 下基于旧 request 重新生成新 run plan，新 request_id 必须不同于原 request_id，并通过 `retry_of` 关联。
+- Fallback：同一 task 下切换到显式 fallback adapter，新 request_id 必须不同于原 request_id，并通过 `fallback_from` / `fallback_to` 关联。
+- 每次 retry / fallback 都重新 route、preflight、dry-run，不信任旧 plan_hash 或旧 approval。
+- `plan_hash` 纳入 lineage 字段，避免普通 dry-run、retry dry-run、fallback dry-run 共用同一 hash。
+- 第一版仅实现 dry-run preview，不实现 retry/fallback commit。
+- 不扩展 event schema enum，不引入独立 Run storage，不自动执行真实 adapter。
+- 阶段收口文档：`docs/67-release-notes-orchestration-run-retry-fallback.md`。
+
+说明：
+
+- 本阶段已从 design gate 进入 dry-run preview 实现收口。
+- retry/fallback commit 语义仍需另开设计。
+- 不标记 Stage 16 开始；Stage 16 仍保持远期。
+
+---
+
+## Stage 15.97 — Orchestration Foundation Freeze 准备完成
+
+目标：在不直接执行 commit / tag / push 的前提下，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、检查清单与执行方案补齐，确保后续只差最终 Git 动作。
+
+已完成范围：
+
+- 已新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md`，明确候选能力包、验证证据与当前判定。
+- 已新增 `docs/69-orchestration-foundation-freeze-execution-plan.md`，明确冻结范围、建议 commit message、建议 tag、annotated tag message 与执行顺序。
+- 已完成冻结前验证：全量 `pytest tests -q`、`doctor`、`public_scan`、`git diff --check`。
+- 已明确当前状态：能力包已满足 `v0.12.0-orchestration-foundation` 候选冻结条件，但尚未执行 commit / tag / push。
+
+说明：
+
+- 本阶段是冻结前准备收口，不自动代替用户执行 Git 冻结动作。
+- 下一步若继续推进，将进入真正的 commit / tag 决策与执行阶段。
 - 不标记 Stage 16 开始；Stage 16 仍保持远期。
 
 ---

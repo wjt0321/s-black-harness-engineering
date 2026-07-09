@@ -341,3 +341,232 @@ def test_cli_missing_required_args(capsys, tmp_path: Path) -> None:
     captured = capsys.readouterr()
     assert code == 4  # needs_input
     assert "Missing required arguments" in captured.out
+
+
+RETRY_REQUEST_ID = "req-20260709-002"
+FALLBACK_REQUEST_ID = "req-20260709-003"
+SOURCE_REQUEST_ID = REQUEST_ID
+
+
+def test_retry_dry_run_pass_has_lineage_and_plan_hash(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=RETRY_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=SOURCE_REQUEST_ID,
+    )
+    d = result.to_dict()
+    assert d["status"] == "pass"
+    assert d["lineage_type"] == "retry"
+    assert d["retry_of"] == SOURCE_REQUEST_ID
+    assert d["request_id"] == RETRY_REQUEST_ID
+    assert "fallback_from" not in d
+    assert "fallback_to" not in d
+    assert "plan_hash" in d
+    assert d["plan_hash"]
+
+
+def test_fallback_dry_run_pass_routes_to_fallback_adapter(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=FALLBACK_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        fallback_from=SOURCE_REQUEST_ID,
+        fallback_to="dummy-local",
+    )
+    d = result.to_dict()
+    assert d["status"] == "pass"
+    assert d["lineage_type"] == "fallback"
+    assert d["fallback_from"] == SOURCE_REQUEST_ID
+    assert d["fallback_to"] == "dummy-local"
+    assert d["request_id"] == FALLBACK_REQUEST_ID
+    assert d["route"]["selected_adapter_id"] == "dummy-local"
+    assert "retry_of" not in d
+    assert "plan_hash" in d
+    assert d["plan_hash"]
+
+
+def test_retry_request_id_same_as_source_returns_validation_failed(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    before = (fake_root / "tasks" / "tasks.jsonl").read_bytes()
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=SOURCE_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=SOURCE_REQUEST_ID,
+    )
+    assert result.status == "validation_failed"
+    assert result.findings[0].rule_id == "lineage-request-id-must-differ"
+    assert (fake_root / "tasks" / "tasks.jsonl").read_bytes() == before
+    drafts_dir = fake_root / "drafts"
+    assert not drafts_dir.exists() or list(drafts_dir.rglob("*.json")) == []
+
+
+def test_fallback_request_id_same_as_source_returns_validation_failed(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=SOURCE_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        fallback_from=SOURCE_REQUEST_ID,
+        fallback_to="dummy-local",
+    )
+    assert result.status == "validation_failed"
+    assert result.findings[0].rule_id == "lineage-request-id-must-differ"
+
+
+def test_retry_and_fallback_mutually_exclusive(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=RETRY_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=SOURCE_REQUEST_ID,
+        fallback_from=SOURCE_REQUEST_ID,
+        fallback_to="dummy-local",
+    )
+    assert result.status == "validation_failed"
+    assert result.findings[0].rule_id == "lineage-mutually-exclusive"
+
+
+def test_fallback_to_without_fallback_from_returns_validation_failed(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=FALLBACK_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        fallback_to="dummy-local",
+    )
+    assert result.status == "validation_failed"
+    assert result.findings[0].rule_id == "fallback-to-requires-fallback-from"
+
+
+def test_retry_dry_run_does_not_write_ledger_or_envelope(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    before = (fake_root / "tasks" / "tasks.jsonl").read_bytes()
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=RETRY_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=SOURCE_REQUEST_ID,
+    )
+    assert result.status == "pass"
+    assert (fake_root / "tasks" / "tasks.jsonl").read_bytes() == before
+    drafts_dir = fake_root / "drafts"
+    assert not drafts_dir.exists() or list(drafts_dir.rglob("*.json")) == []
+
+
+def test_plan_hash_differs_with_lineage(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    base = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=RETRY_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+    )
+    retry = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=RETRY_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=SOURCE_REQUEST_ID,
+    )
+    assert base.plan_hash != retry.plan_hash
+
+
+def test_cli_retry_dry_run_json_output(capsys, tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    args = [
+        "--root", str(fake_root),
+        "orchestration", "run",
+        "--task-id", TASK_ID,
+        "--request-id", RETRY_REQUEST_ID,
+        "--capability", "read_file",
+        "--operation", "read_file",
+        "--target", "docs/06-adapter-layer.md",
+        "--retry-of", SOURCE_REQUEST_ID,
+        "--dry-run",
+        "--json",
+    ]
+    code = main(args)
+    captured = capsys.readouterr()
+    result = json.loads(captured.out)
+    assert code == 0
+    assert result["status"] == "pass"
+    assert result["lineage_type"] == "retry"
+    assert result["retry_of"] == SOURCE_REQUEST_ID
+    assert result["request_id"] == RETRY_REQUEST_ID
+    assert "plan_hash" in result
+
+
+def test_cli_fallback_dry_run_human_readable_smoke(capsys, tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    args = [
+        "--root", str(fake_root),
+        "orchestration", "run",
+        "--task-id", TASK_ID,
+        "--request-id", FALLBACK_REQUEST_ID,
+        "--capability", "read_file",
+        "--operation", "read_file",
+        "--target", "docs/06-adapter-layer.md",
+        "--fallback-from", SOURCE_REQUEST_ID,
+        "--fallback-to", "dummy-local",
+        "--dry-run",
+    ]
+    code = main(args)
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "RUN" in captured.out
+    assert "lineage_type=fallback" in captured.out
+    assert f"fallback_from={SOURCE_REQUEST_ID}" in captured.out
+    assert "fallback_to=dummy-local" in captured.out
+    assert "plan_hash" in captured.out
+
+
+def test_fallback_to_overrides_adapter_id_in_direct_call(tmp_path: Path) -> None:
+    """fallback_to must bind to effective adapter_id even when caller passes a different adapter_id."""
+    fake_root = _setup_fake_root(tmp_path)
+    # github-cli does not support read_file; without fallback_to this would be blocked.
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=FALLBACK_REQUEST_ID,
+        capability="read_file",
+        adapter_id="github-cli",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        fallback_from=SOURCE_REQUEST_ID,
+        fallback_to="dummy-local",
+    )
+    d = result.to_dict()
+    assert d["status"] == "pass"
+    assert d["lineage_type"] == "fallback"
+    assert d["fallback_to"] == "dummy-local"
+    assert d["route"]["selected_adapter_id"] == "dummy-local"

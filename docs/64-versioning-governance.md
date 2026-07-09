@@ -1,0 +1,210 @@
+# 63 — 版本治理与 Tag 策略
+
+## 背景
+
+仓库当前可见的 Git tag / semver 冻结在 `v0.11.0-runtime-event-import`。
+
+但从 orchestration 主线开始，项目并没有停止推进，而是改用以下形态持续收口：
+
+- 设计文档：如 `56`、`58`、`60`、`62`
+- 阶段 release notes：如 `55`、`57`、`59`、`61`
+- 代码提交：围绕 `orchestration *` 命令持续实现
+
+因此问题不是“55/57/59/61/62 漏打 tag”，而是**版本治理从 Runtime 线切到 Orchestration 线之后，没有把新规则正式写下来**。
+
+本文档的目标，就是把这个规则补齐。
+
+## 结论
+
+从 `v0.11.0-runtime-event-import` 之后，仓库采用以下三层版本治理：
+
+1. **Semver tag 负责里程碑冻结**
+2. **阶段编号负责文档与实现推进顺序**
+3. **Release notes 负责单阶段收口说明**
+
+这三者不再要求一一对应。
+
+也就是说：
+
+- 不是每个阶段编号都要对应一个 Git tag；
+- 不是每篇 release notes 都要升级一次 semver；
+- 只有形成明确的、可对外描述的里程碑能力包时，才打新的 tag。
+
+## 三层对象的职责
+
+### 1. Semver / Git tag
+
+Semver tag 只用于**里程碑级冻结点**。
+
+它应该满足以下条件：
+
+- 能代表一段稳定、可回看、可引用的能力集合；
+- 相比上一个 tag，已经形成清晰的新阶段能力包，而不只是单个局部命令；
+- 对外描述时，用一个版本名比用多个阶段号更清楚；
+- 该冻结点最好同时包含：代码、文档、release notes、验证记录。
+
+因此，tag 的节奏应当比 release notes 更稀疏。
+
+### 2. 阶段编号
+
+阶段编号用于表示 orchestration 主线内部的**推进顺序**。
+
+它的作用是：
+
+- 保持设计文档、实现收口、路线图引用之间的可追踪顺序；
+- 让读者知道当前能力是如何一阶段一阶段长出来的；
+- 为后续设计 gate 与实现 gate 留出稳定编号。
+
+阶段编号不是版本号，也不要求对外暴露为 semver。
+
+### 3. Release notes
+
+Release notes 用于记录单阶段的：
+
+- 阶段定位
+- 已实现能力
+- 安全边界
+- 已知限制
+- 验证方式
+- 后续入口
+
+Release notes 是阶段收口文档，不自动等于 tag 候选。
+
+## 从 Runtime 线到 Orchestration 线的策略变化
+
+`v0.1.0` 到 `v0.11.0` 期间，仓库主要沿着 Runtime / controlled-write 积木推进，tag 粒度相对密。
+
+从 orchestration 主线开始，推进模式发生了变化：
+
+- 文档与实现交替推进；
+- 有些阶段是 design gate，不是 release gate；
+- 多个连续阶段一起看，才构成一个更完整的 control-plane 能力面。
+
+因此继续沿用“每个阶段一个 semver tag”的方式，会带来两个问题：
+
+1. tag 变得过密，信息噪声高；
+2. design gate 与 implementation gate 会被误当成同等级发布节点。
+
+所以从 orchestration 主线开始，默认规则改为：
+
+- **阶段照常推进；**
+- **release notes 照常收口；**
+- **tag 只在里程碑阶段补打。**
+
+## 对 55 / 57 / 59 / 61 / 62 的具体判定
+
+### 55
+
+`55-release-notes-orchestration-read-models.md` 是明确的阶段 release notes。
+
+它属于 orchestration read-model CLI 第一版收口，适合作为里程碑候选的一部分，但**不单独补 semver tag**。
+
+### 57
+
+`57-release-notes-orchestration-controlled-handoff.md` 是明确的阶段 release notes。
+
+它把 route preview / preflight / approval resolve 这一段受控 handoff 跑通，属于里程碑候选的一部分，但**不单独补 semver tag**。
+
+### 59
+
+`59-release-notes-orchestration-run-controlled-execution.md` 是明确的阶段 release notes。
+
+它把 run dry-run / commit 的第一版边界建立起来，属于里程碑候选的一部分，但**不单独补 semver tag**。
+
+### 61
+
+`61-release-notes-orchestration-run-lifecycle-events.md` 是明确的阶段 release notes。
+
+它把 run commit 从 A-only 提升到 A+B controlled write，是 orchestration 主线里的重要实现收口，但**仍建议并入统一里程碑 tag，而不是单独补 tag**。
+
+### 62
+
+`62-orchestration-task-submit-controlled-write-design.md` 目前是 design gate，不是 release notes。
+
+因此：
+
+- 当前**不应**为 62 单独打 release tag；
+- 只有当 62 对应实现完成，并产生独立 release notes 后，才进入里程碑候选集合。
+
+## 当前默认决策
+
+当前默认决策如下：
+
+- **不追补** 55 / 57 / 59 / 61 的逐阶段 semver tag；
+- **不为** 62 设计文档打 tag；
+- 继续保留阶段编号 + release notes 的推进方式；
+- 等 `orchestration task submit` 实现收口之后，再判断是否把 55 / 57 / 59 / 61 / 62x 合并冻结为一个新的 orchestration milestone tag。
+
+这里的 `62x` 指：62 对应设计完成后，后续若产生实现文档与 release notes，应以实现收口文档为准，而不是以设计文档本身为准。
+
+## 新 tag 的触发条件
+
+从现在开始，只有满足以下条件之一，才建议新建 tag：
+
+### 条件 A：形成新的 orchestration 里程碑能力包
+
+例如同时满足：
+
+- read models 已齐；
+- controlled handoff 已齐；
+- run controlled execution 已齐；
+- run lifecycle events 已齐；
+- task submit 入口也已齐。
+
+这时可以把多个连续阶段合并为一个新的里程碑版本。
+
+### 条件 B：出现需要稳定对外引用的冻结点
+
+例如：
+
+- 需要给其他仓库/文档/演示明确引用一个版本；
+- 需要为某个集成方提供稳定基线；
+- 需要把一个阶段能力包作为“当前推荐基线”固定下来。
+
+### 条件 C：代码与文档已经明显跨过上一 tag 的语义边界
+
+如果相对 `v0.11.0-runtime-event-import`，能力叙事已经从 Runtime 工具链明显扩展到 Orchestration control plane，则应考虑新 tag，而不是无限期停留在旧 tag 之后。
+
+## 新 tag 的命名建议
+
+后续若决定给 orchestration 里程碑补统一 tag，建议遵循原有模式继续扩展：
+
+- `v0.12.0-orchestration-foundation`
+- 或 `v0.12.0-orchestration-control-plane-foundation`
+
+命名原则：
+
+- 保留 `v0.x.y-*` 形态，避免仓库出现第二套完全不同的 tag 命名体系；
+- 后缀描述里程碑能力包，而不是单个命令；
+- 不把阶段号直接塞进 tag 名里，避免把内部推进编号误当成公开版本名。
+
+当前更推荐的候选名是：`v0.12.0-orchestration-foundation`。
+
+原因：55 / 57 / 59 / 61 / 62 共同描述的是 orchestration 基础面的建立，而不是某一个孤立功能点。
+
+## 补 tag 前的最小检查清单
+
+在真正创建下一个 tag 之前，至少应完成以下检查：
+
+- 对应阶段 release notes 已完整存在；
+- README / roadmap / index 已能解释该里程碑是什么；
+- 关键命令已有测试或可重复验证路径；
+- `tasks/progress.md` 与 handoff 文档已能追溯该阶段；
+- tag 指向的提交足够稳定，不是只包含单个 design gate。
+
+## 对仓库文档的影响
+
+从本文档生效后，仓库里的“版本治理说明”应统一表述为：
+
+- `v0.11.0-runtime-event-import` 是上一条 semver 冻结点；
+- 55 / 57 / 59 / 61 / 62 是 orchestration 主线的连续阶段文档；
+- 当前采用“阶段推进 + release notes 收口 + 里程碑打 tag”的版本治理策略。
+
+## 实施结果
+
+本文档落地后，当前问题的处理结论就是：
+
+- 先不补 55 / 57 / 59 / 61 的统一版本号或 tag；
+- 先不为 62 打 tag；
+- 继续推进 task submit；
+- 等 orchestration 入口与 run 主线形成更完整里程碑后，再统一决定下一个 semver tag。

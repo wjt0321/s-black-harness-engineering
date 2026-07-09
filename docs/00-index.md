@@ -67,6 +67,13 @@
 - `60-orchestration-run-lifecycle-events-design.md`
 - `61-release-notes-orchestration-run-lifecycle-events.md`
 - `62-orchestration-task-submit-controlled-write-design.md`
+- `63-orchestration-task-submit-created-event-design.md`
+- `64-versioning-governance.md`
+- `65-release-notes-orchestration-task-submit-created-event.md`
+- `66-orchestration-run-retry-fallback-design.md`
+- `67-release-notes-orchestration-run-retry-fallback.md`
+- `68-orchestration-foundation-milestone-freeze-checklist.md`
+- `69-orchestration-foundation-freeze-execution-plan.md`
 
 适合：想理解项目如何从 guardrail 内核演进成中枢运行台、以及最小执行闭环如何串起 adapter / routing / state 的读者。
 
@@ -86,8 +93,15 @@
 - `60-orchestration-run-lifecycle-events-design.md`
 - `61-release-notes-orchestration-run-lifecycle-events.md`
 - `62-orchestration-task-submit-controlled-write-design.md`
+- `63-orchestration-task-submit-created-event-design.md`
+- `64-versioning-governance.md`
+- `65-release-notes-orchestration-task-submit-created-event.md`
+- `66-orchestration-run-retry-fallback-design.md`
+- `67-release-notes-orchestration-run-retry-fallback.md`
+- `68-orchestration-foundation-milestone-freeze-checklist.md`
+- `69-orchestration-foundation-freeze-execution-plan.md`
 
-适合：想知道每一阶段交付了什么、能力如何封版的读者。
+适合：想知道每一阶段交付了什么、能力如何封版，以及版本治理如何从 Runtime 线过渡到 Orchestration 线的读者。
 
 ## 当前最重要的几份文档
 
