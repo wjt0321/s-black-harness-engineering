@@ -1681,21 +1681,46 @@ python -m agent_runtime.cli orchestration preflight \
   --mode dry-run
 ```
 
+审批决议（受控写入，追加 event ledger）：
+
+```bash
+# dry-run：只生成 event preview，不写 ledger
+python -m agent_runtime.cli orchestration approval resolve \
+  --approval-id appr-20260703-001 \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-001 \
+  --decision granted \
+  --reason "reviewed, safe to proceed" \
+  --envelope drafts/runtime/task-20260703-001/req-20260703-001.envelope.json \
+  --events-file tasks/events.jsonl \
+  --dry-run
+
+# commit：追加一条 approval_resolved event，写后校验，失败回滚
+python -m agent_runtime.cli orchestration approval resolve \
+  --approval-id appr-20260703-001 \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-001 \
+  --decision granted \
+  --reason "reviewed, safe to proceed" \
+  --envelope drafts/runtime/task-20260703-001/req-20260703-001.envelope.json \
+  --events-file tasks/events.jsonl \
+  --commit
+```
+
 边界说明：
 
 - `orchestration run/approval/artifact list|get` 当前都是 envelope-scoped read model，没有独立 Run / Approval / Artifact 持久集合。
 - `orchestration report generate` 是对 `runtime report` 的薄包装，每次实时聚合，不沉淀为独立 Report 集合；`report list` / `report get` 尚未实现。
+- `orchestration approval resolve` 是当前 orchestration 命名空间中唯一的受控写入命令：只追加 `approval_resolved` event，不修改输入 envelope，不直接执行原请求；granted 后仍需重新发起 preflight/run。
 - 所有命令都支持 `--json`，人类输出保持紧凑并脱敏。
 
 ## 当前安全边界
-
-第一版 CLI 保持只读：
 
 - 不执行外部命令。
 - 不访问网络。
 - 不发送消息。
 - 不删除文件。
-- 不写真实 task ledger。
+- 除 `orchestration approval resolve --commit` 外，其余 CLI 保持只读；`approval resolve` 也仅在受控写入边界内追加 event ledger 单行，并遵循 `--dry-run | --commit` 显式模式、写前/写后校验、失败回滚。
 - 不读取 `.env`、`.env.local` 或密钥文件。
 - 不回显完整 secret match。
 
@@ -1719,7 +1744,7 @@ python tools/public_scan.py
 ## 当前限制
 
 - `check action` 仍然只做 preflight 判断，不执行真实外部动作。
-- `tasks/tasks.jsonl` 和 `tasks/events.jsonl` 目前只支持 CLI 查询，不支持 CLI 写入。
+- `tasks/tasks.jsonl` 目前只支持 CLI 查询；`tasks/events.jsonl` 可通过 `runtime event append --commit`、`runtime event import --commit` 和 `orchestration approval resolve --commit` 受控追加，但必须有显式 `--commit`、写后校验与失败回滚。
 - 还没有后台服务。
 - 还没有插件系统或真实 adapter 执行。
 

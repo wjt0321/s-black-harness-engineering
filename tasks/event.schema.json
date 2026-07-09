@@ -34,7 +34,8 @@
         "artifact_added",
         "evidence_added",
         "finished",
-        "failed"
+        "failed",
+        "approval_resolved"
       ]
     },
     "from_status": {

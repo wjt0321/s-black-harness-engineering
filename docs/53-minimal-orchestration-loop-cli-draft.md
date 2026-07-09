@@ -37,7 +37,8 @@
 | `python -m agent_runtime.cli orchestration report generate` | 已存在：只读报告生成（当前为 `runtime report` 的薄包装，runtime-report-backed read model）。 | `orchestration report generate --task-id ... --request-id ... --envelope ...` |
 | `python -m agent_runtime.cli orchestration route preview` | 已存在：只读 capability routing preview，输出安全 routing decision（不写 ledger/envelope）。 | `orchestration route preview --capability git_push --json` |
 | `python -m agent_runtime.cli orchestration preflight` | 已存在：只读 handoff 预检，聚合 routing + guardrail preflight 安全摘要（不写 ledger/envelope）。 | `orchestration preflight --capability git_push --json` |
-| `python -m agent_runtime.cli orchestration <draft> ...` | 为 52 闭环设计的其他候选子命令，**当前尚未实现**，仅作草案参考。 | `orchestration run --commit`、`orchestration task submit --commit`、`orchestration approval resolve` |
+| `python -m agent_runtime.cli orchestration <draft> ...` | 为 52 闭环设计的其他候选子命令，**当前尚未实现**，仅作草案参考。 | `orchestration run --commit`、`orchestration task submit --commit` |
+| `python -m agent_runtime.cli orchestration approval resolve` | 已存在：受控写入审批决议，追加 `approval_resolved` event 到 event ledger（不写原 envelope、不直接执行原请求）。 | `orchestration approval resolve --approval-id ... --task-id ... --request-id ... --decision granted --reason "..." --dry-run` |
 | `orchestrator.sh` / `loop.sh` | 示意性脚本名，表示未来可能由脚本/自动化工作流编排的调用序列。 | — |
 
 ## 命令总览：按 52 七步闭环组织
@@ -272,25 +273,38 @@ python -m agent_runtime.cli adapter approval check \
   --request-id req-20260709-001
 ```
 
-候选草案：
+审批决议写入（event-ledger append 方案）：
 
 ```bash
 python -m agent_runtime.cli orchestration approval resolve \
   --approval-id appr-20260709-001 \
+  --task-id task-20260709-001 \
+  --request-id req-20260709-001 \
   --decision granted \
-  --reason " reviewed, safe to proceed"
+  --reason "reviewed, safe to proceed" \
+  --envelope drafts/runtime/task-20260709-001/req-20260709-001.envelope.json \
+  --events-file tasks/events.jsonl \
+  --dry-run
 
 python -m agent_runtime.cli orchestration approval resolve \
   --approval-id appr-20260709-001 \
-  --decision rejected \
-  --reason "target not confirmed"
+  --task-id task-20260709-001 \
+  --request-id req-20260709-001 \
+  --decision denied \
+  --reason "target not confirmed" \
+  --envelope drafts/runtime/task-20260709-001/req-20260709-001.envelope.json \
+  --events-file tasks/events.jsonl \
+  --commit
 ```
 
 边界：
 
-- 受控写入：审批决议会追加到 event ledger 或更新 envelope 中的 approval_record。
-- 需要显式 `--decision` 和 `--reason`。
-- 决议只作用于本次 `this command + this approval_id + this task_id + this request_id`。
+- 受控写入：只追加一条 `approval_resolved` event 到 event ledger；不修改输入 envelope，不直接执行原请求。
+- 必须显式 `--dry-run | --commit` 二选一，不允许静默 commit。
+- `--decision` 只允许 `granted` / `denied` / `expired`；`--reason` 必填且长度受限。
+- 会校验 `approval_id` 存在于 envelope，且传入的 `task_id` / `request_id` 与 approval scope / request 一致。
+- `granted` 后仍必须重新发起新的 `orchestration preflight` / `orchestration run`，不能复用旧 preflight 直接 commit。
+- 输出不回显完整 `reason`、`input` payload、`raw_ref`、`decision_ref`、`payload_refs` 或 secret。
 
 ### 7. Fallback / Retry（回退与重试）
 
@@ -351,7 +365,7 @@ python -m agent_runtime.cli orchestration run \
 | `runtime event append --commit` | 追加 event ledger 单行 |
 | `runtime event import --commit` | 批量追加 event ledger |
 | `orchestration run --commit`（草案） | 执行一次受控 run，沉淀 run / event / artifact / evidence |
-| `orchestration approval resolve`（草案） | 写入审批决议 |
+| `orchestration approval resolve --commit` | 追加 `approval_resolved` event 到 event ledger（不执行原请求、不修改输入 envelope） |
 
 ### 仍然故意不做
 
@@ -412,7 +426,13 @@ python -m agent_runtime.cli orchestration inspect \
 # 6. if approval needed, resolve (otherwise skip)
 # python -m agent_runtime.cli orchestration approval resolve \
 #   --approval-id appr-20260709-001 \
-#   --decision granted
+#   --task-id "$TASK_ID" \
+#   --request-id req-20260709-001 \
+#   --decision granted \
+#   --reason "reviewed, safe to proceed" \
+#   --envelope drafts/runtime/"$TASK_ID"/req-20260709-001.envelope.json \
+#   --events-file tasks/events.jsonl \
+#   --commit
 
 # 7. report
 python -m agent_runtime.cli orchestration report \
@@ -442,7 +462,7 @@ python -m agent_runtime.cli orchestration report \
 
 本文不实现：
 
-- 除 `orchestration overview`、`orchestration task list`、`orchestration task get`、`orchestration run list`、`orchestration run inspect`、`orchestration approval list`、`orchestration approval get`、`orchestration artifact list`、`orchestration artifact get`、`orchestration report generate`、`orchestration route preview`、`orchestration preflight` 之外的任何新的 CLI 子命令。
+- 除 `orchestration overview`、`orchestration task list`、`orchestration task get`、`orchestration run list`、`orchestration run inspect`、`orchestration approval list`、`orchestration approval get`、`orchestration approval resolve`、`orchestration artifact list`、`orchestration artifact get`、`orchestration report generate`、`orchestration route preview`、`orchestration preflight` 之外的任何新的 CLI 子命令。
 - HTTP / RPC / service 接口。
 - 前端或看板。
 - 数据库选型。

@@ -36,6 +36,7 @@ from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
+from .orchestration_approval_resolve import ApprovalResolveResult, resolve_approval
 from .orchestration_artifact import ArtifactDetailResult, ArtifactListResult, get_artifact, list_artifacts
 from .orchestration_preflight import PreflightResult, check_preflight
 from .orchestration_report import ReportGenerateResult, generate_report
@@ -1708,6 +1709,60 @@ def _cmd_orchestration_approval_get(args: argparse.Namespace) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _cmd_orchestration_approval_resolve(args: argparse.Namespace) -> int:
+    """Record an approval decision by appending a task event (dry-run or commit)."""
+    root = _root_path(args)
+    dry_run = getattr(args, "dry_run", False)
+    commit = getattr(args, "commit", False)
+    result = resolve_approval(
+        root,
+        approval_id=args.approval_id,
+        task_id=args.task_id,
+        request_id=args.request_id,
+        decision=args.decision,
+        reason=args.reason,
+        envelope_file=args.envelope,
+        dry_run=dry_run,
+        commit=commit,
+        events_file=getattr(args, "events_file", None),
+        tasks_file=getattr(args, "tasks_file", None),
+        actor="cli",
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("APPROVAL RESOLVE")
+        print(
+            f"approval_id={result.approval_id} "
+            f"task_id={result.task_id} "
+            f"request_id={result.request_id} "
+            f"decision={result.decision} "
+            f"mode={result.mode} "
+            f"status={result.status}"
+        )
+        event = result.event_written or result.event_preview
+        if event is not None:
+            print(
+                f"event: event_id={event.get('event_id', '-')} "
+                f"event_type={event.get('event_type', '-')} "
+                f"decision={event.get('decision', '-')}"
+            )
+        if result.write_summary is not None:
+            ws = result.write_summary
+            print(
+                f"write_summary: committed={ws.get('committed', False)} "
+                f"rolled_back={ws.get('rolled_back', False)} "
+                f"post_validate={ws.get('post_validate') or '-'} "
+                f"post_ledger_check={ws.get('post_ledger_check') or '-'}"
+            )
+        if result.findings:
+            for finding in result.findings:
+                print(f"- {finding.rule_id}: {finding.message}")
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_orchestration_artifact_list(args: argparse.Namespace) -> int:
     """Render a read-only artifact list view from an envelope (envelope-scoped read model)."""
     root = _root_path(args)
@@ -2300,6 +2355,43 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_approval_get_parser)
     orchestration_approval_get_parser.set_defaults(func=_cmd_orchestration_approval_get)
+
+    orchestration_approval_resolve_parser = orchestration_approval_subparsers.add_parser(
+        "resolve",
+        help="Record an approval decision as a task event (dry-run or commit)",
+    )
+    orchestration_approval_resolve_parser.add_argument(
+        "--approval-id", required=True, help="Approval id"
+    )
+    orchestration_approval_resolve_parser.add_argument(
+        "--task-id", required=True, help="Task id that matches the approval scope"
+    )
+    orchestration_approval_resolve_parser.add_argument(
+        "--request-id", required=True, help="Request id that matches the approval record"
+    )
+    orchestration_approval_resolve_parser.add_argument(
+        "--decision", default=None, help="Approval decision (granted, denied, expired)"
+    )
+    orchestration_approval_resolve_parser.add_argument(
+        "--reason", default=None, help="Reason for the decision"
+    )
+    orchestration_approval_resolve_parser.add_argument(
+        "--envelope", required=True, help="Path to adapter execution envelope JSON file"
+    )
+    orchestration_approval_resolve_parser.add_argument(
+        "--events-file", default=None, help="Target event ledger JSONL file"
+    )
+    orchestration_approval_resolve_parser.add_argument(
+        "--tasks-file", default=None, help="Task ledger JSONL file"
+    )
+    orchestration_approval_resolve_parser.add_argument(
+        "--dry-run", action="store_true", help="Preview the decision event without writing"
+    )
+    orchestration_approval_resolve_parser.add_argument(
+        "--commit", action="store_true", help="Append the decision event to the ledger"
+    )
+    _add_global_args(orchestration_approval_resolve_parser)
+    orchestration_approval_resolve_parser.set_defaults(func=_cmd_orchestration_approval_resolve)
 
     # orchestration artifact list/get
     orchestration_artifact_parser = orchestration_subparsers.add_parser(

@@ -42,13 +42,15 @@ Stage 15 的 read-model CLI 已经封版：六类页面视角（overview / task 
    - `--mode commit` 时，若 routing 或 guardrail 任一要求 dry-run / approval，则 `effective_mode` 强制为 `dry-run`；preflight 本身仍只读。
    - 明确 run 的 `mode`（dry-run / commit）、`requires_approval`、`requires_dry_run`。
 
-### 第二梯队：第一个真正受控写入命令
+### 第二梯队：第一个真正受控写入命令（已落地）
 
 3. `orchestration approval resolve`
    - 当前最有价值的写入候选：它只记录审批决议，不直接触发外部执行。
-   - 输出产物：
-     - 若选择向 event ledger 写入：追加一条 `approval_recorded` / `approval_denied` event。
-     - 若选择 envelope-scoped：生成新的 approval decision draft（通过 `runtime draft export` 机制导出），不原地修改输入 envelope。
+   - 第一版采用 **event-ledger append** 方案：
+     - `--dry-run` 只生成 `approval_resolved` event preview，不写 ledger。
+     - `--commit` 通过 `runtime event append --commit` 的受控写入机制，向 event ledger 追加一条 `approval_resolved` event；失败按 byte size 回滚。
+     - 不原地修改输入 envelope，不生成独立 Approval 存储。
+   - `--decision` 限定为 `granted` / `denied` / `expired`；`--reason` 必填且长度受限，输出和 event metadata 中不回显完整 reason（使用 reason hash / length）。
    - 不直接解锁原请求继续执行；granted 后仍需重新发起 run / preflight。
 
 ### 暂缓的写入命令
@@ -184,17 +186,14 @@ routing decision 的下游消费路径：
 
 ### 输出产物选项
 
-优先二选一，不在同一个命令里同时做：
+第一版已选定 **event ledger append** 方案：
 
-- **选项 A：event ledger append**
-  - 追加一条 `approval_recorded` event。
-  - 使用 `runtime event append --commit` 的受控写入机制。
-  - 失败按 byte size 回滚。
+- 追加一条 `approval_resolved` event。
+- 使用 `runtime event append --commit` 的受控写入机制。
+- 失败按 byte size 回滚。
+- event metadata 只保留 `approval_id`、`request_id`、`decision`、`reason_hash`、`reason_length`、`envelope_path` 等安全字段，不保留完整 reason、不保留 `decision_ref`。
 
-- **选项 B：envelope draft export**
-  - 生成新的 envelope draft，包含原 approval_record 和新的 decision_record。
-  - 使用 `runtime draft export --commit` 的受控写入机制。
-  - 不覆盖输入 envelope。
+envelope draft export 方案仍可作为未来候选，但不在第一版实现。
 
 两种选项都必须在 post-check 中验证：
 
@@ -246,6 +245,6 @@ routing decision 的下游消费路径：
 
 1. ~~先实现 `orchestration route preview`（只读）~~ 已落地。
 2. ~~再实现 `orchestration preflight`（只读）~~ 已落地。
-3. 最后实现 `orchestration approval resolve`（受控写入），并选择 event-ledger-append 或 envelope-draft-export 其中一种产物形态作为第一版。
-4. 每完成一个命令，更新 53 中对应命令从“草案”到“已存在”，并补 release notes。
-5. 在此三者稳定前，不实现 `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
+3. ~~实现 `orchestration approval resolve`（受控写入，event-ledger append 方案）~~ 已落地。
+4. 更新 53 / 10 / release notes，把 `orchestration approval resolve` 从草案标记为已存在。
+5. 在 `route preview` / `preflight` / `approval resolve` 稳定前，不实现 `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。

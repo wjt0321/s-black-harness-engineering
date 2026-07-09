@@ -1390,3 +1390,41 @@
   - `orchestration approval resolve`（受控写入）。
   - `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— orchestration approval resolve 受控写入命令落地
+
+- 修复并实现 `agent_runtime/orchestration_approval_resolve.py`：
+  - `ApprovalResolveResult` 与 `resolve_approval()` 通过 event-ledger append 方案记录审批决议。
+  - `--dry-run` 只输出 `approval_resolved` event preview，不写 ledger。
+  - `--commit` 复用 `runtime_event_append.append_event()` 的受控写入机制，追加单条 event 到 event ledger，写后做 schema / ledger / runtime audit 校验，失败按原始 byte size 回滚。
+  - 校验 `--decision` 必须为 `granted` / `denied` / `expired`，`--reason` 必填且 1-500 字符。
+  - 校验传入的 `task_id` / `request_id` 与 envelope 中 approval scope / request 一致，不一致返回 `blocked` 且不写。
+  - event metadata 只保留 `approval_id`、`request_id`、`decision`、`reason_hash`、`reason_length`、`envelope_path`，不回显完整 reason，不保存 `decision_ref`。
+  - `granted` 后的 `next_action` 明确要求重新发起新的 `orchestration preflight` / `orchestration run`，不能复用旧 preflight 直接 commit。
+- 调整 `agent_runtime/cli.py` 中 `orchestration approval resolve` 的参数校验策略：
+  - 移除 argparse 层的 `--decision` choices、`--reason` required、`--dry-run | --commit` 互斥组。
+  - 把 decision / reason / mode 冲突与缺失的校验下沉到模块内，统一返回 JSON / human 错误，保持与现有受控写入命令一致的输出风格。
+- 新增 `tests/test_orchestration_approval_resolve.py`，13 个测试覆盖：
+  - dry-run 不写 events ledger、commit 成功追加 event。
+  - commit 写后检查失败回滚。
+  - missing approval、task mismatch、request mismatch。
+  - invalid decision、missing reason、dry-run / commit 冲突。
+  - human / JSON 输出、granted 后 next_action 要求新 preflight、denied 记录 decision。
+  - 完整 reason / secret / `decision_ref` 不回显到 CLI 输出。
+- 文档同步：
+  - 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration approval resolve` 从候选草案改为已存在受控写入命令，补充 dry-run / commit 示例与边界说明。
+  - 更新 `docs/56-orchestration-controlled-write-boundary.md`：标记 `approval resolve` 已按 event-ledger append 方案落地，更新产物形态与下一步。
+  - 更新 `docs/10-cli-poc-usage.md`：新增 `orchestration approval resolve` 示例，并更新当前安全边界说明。
+- 安全边界保持不变：
+  - 不写原 envelope，不执行 adapter，不访问网络，不引入服务 / API / DB / UI。
+  - 不回显完整 `input` payload、`raw_ref`、`decision_ref`、`payload_refs`、evidence descriptions 或 secret match。
+- 验证：
+  - `python -m pytest tests/test_orchestration_approval_resolve.py -q`：13 passed。
+  - `python -m pytest tests -q`：全部通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 未实现事项（仍留在 53 草案 / 56 设计边界中）：
+  - `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
+  - envelope-draft-export 方案的 `approval resolve` 产物形态。
+- 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
