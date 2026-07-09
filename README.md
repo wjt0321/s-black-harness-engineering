@@ -160,10 +160,11 @@ python -m agent_runtime.cli policies list
 5. `docs/48-adapter-runtime-interface.md`
 6. `docs/49-capability-routing-model.md`
 7. `docs/50-control-plane-state-model.md`
-8. `docs/52-minimal-orchestration-loop.md`
-9. `docs/53-minimal-orchestration-loop-cli-draft.md`
-10. `docs/10-cli-poc-usage.md`
-11. `docs/21-controlled-write-boundaries.md`
+8. `docs/51-backend-first-api-boundary.md`
+9. `docs/52-minimal-orchestration-loop.md`
+10. `docs/53-minimal-orchestration-loop-cli-draft.md`
+11. `docs/10-cli-poc-usage.md`
+12. `docs/21-controlled-write-boundaries.md`
 
 其中 `docs/47-orchestration-hub-vision.md` 到 `docs/53-minimal-orchestration-loop-cli-draft.md` 是中枢台后端主线，建议按编号顺序阅读。
 

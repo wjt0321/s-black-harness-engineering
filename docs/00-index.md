@@ -55,6 +55,7 @@
 - `48-adapter-runtime-interface.md`
 - `49-capability-routing-model.md`
 - `50-control-plane-state-model.md`
+- `51-backend-first-api-boundary.md`
 - `52-minimal-orchestration-loop.md`
 - `53-minimal-orchestration-loop-cli-draft.md`
 

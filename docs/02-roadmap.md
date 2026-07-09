@@ -247,7 +247,7 @@
 
 ---
 
-## Stage 13 — Backend-first API Boundary（后续优先级高，暂缓实现）
+## Stage 13 — Backend-first API Boundary（设计文档已落地，协议选择仍暂缓）
 
 目标：虽然现在不急着做 UI，但后端必须先按未来可被 UI 调用的方式设计。
 
@@ -260,6 +260,11 @@
 主要交付物：
 
 - `docs/51-backend-first-api-boundary.md`
+
+说明：
+
+- 资源模型与操作模型已在 51 中定义。
+- 协议（REST / RPC / 本地进程调用）和鉴权细节仍不在本阶段展开。
 
 ---
 
