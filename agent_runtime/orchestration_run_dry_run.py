@@ -38,6 +38,7 @@ class RunDryRunResult:
     constraints: dict[str, Any] = field(default_factory=dict)
     findings: list[Finding] = field(default_factory=list)
     next_action: str | None = None
+    envelope_draft: dict[str, Any] | None = field(default=None, repr=False)
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -442,4 +443,5 @@ def dry_run_run(
         constraints=preflight.constraints,
         findings=list(preflight.findings),
         next_action=next_action,
+        envelope_draft=envelope,
     )

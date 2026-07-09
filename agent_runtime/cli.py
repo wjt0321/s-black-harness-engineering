@@ -43,6 +43,7 @@ from .orchestration_report import ReportGenerateResult, generate_report
 from .orchestration_route import RoutePreviewResult, preview_route
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
 from .orchestration_run_dry_run import RunDryRunResult, dry_run_run
+from .orchestration_run_commit import RunCommitResult, commit_run
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -1665,8 +1666,50 @@ def _emit_run_dry_run_result(result: RunDryRunResult, json_output: bool) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
-def _cmd_orchestration_run_dry_run(args: argparse.Namespace) -> int:
-    """Render a read-only orchestration run dry-run plan preview."""
+def _emit_run_commit_result(result: RunCommitResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("RUN COMMIT")
+        print(
+            f"task_id={result.task_id} "
+            f"request_id={result.request_id} "
+            f"capability={result.requested_capability} "
+            f"mode={result.mode} "
+            f"status={result.status}"
+        )
+        print(
+            f"plan_hash={result.plan_hash or '-'} "
+            f"expected_plan_hash={result.expected_plan_hash or '-'} "
+            f"freeze_check={result.freeze_check}"
+        )
+        write_summary = result.write_summary
+        if write_summary:
+            print(
+                f"write: output={write_summary.get('output') or '-'} "
+                f"committed={write_summary.get('committed', False)} "
+                f"rolled_back={write_summary.get('rolled_back', False)} "
+                f"post_validate={write_summary.get('post_validate') or '-'} "
+                f"post_inspect={write_summary.get('post_inspect') or '-'}"
+            )
+        if result.artifact_ref:
+            ref = result.artifact_ref
+            print(
+                f"artifact: type={ref.get('artifact_type')} "
+                f"path={ref.get('path')} "
+                f"adapter={ref.get('adapter_id') or '-'} "
+                f"operation={ref.get('operation') or '-'}"
+            )
+        if result.findings:
+            for finding in result.findings:
+                print(f"- {finding.rule_id}: {finding.message}")
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_orchestration_run(args: argparse.Namespace) -> int:
+    """Render a read-only run dry-run preview or commit an envelope draft."""
     root = _root_path(args)
     task_id = getattr(args, "task_id", None)
     request_id = getattr(args, "request_id", None)
@@ -1697,7 +1740,25 @@ def _cmd_orchestration_run_dry_run(args: argparse.Namespace) -> int:
         )
         return _emit_run_dry_run_result(result, json_output=args.json)
 
-    requested_mode = "commit" if getattr(args, "commit", False) else "dry-run"
+    if getattr(args, "commit", False):
+        result = commit_run(
+            root,
+            task_id=task_id,
+            request_id=request_id,
+            capability=capability,
+            output=getattr(args, "output", None),
+            expected_plan_hash=getattr(args, "expected_plan_hash", None),
+            adapter_id=getattr(args, "adapter", None),
+            operation=getattr(args, "operation", None),
+            target=getattr(args, "target", None),
+            require_dry_run=getattr(args, "require_dry_run", False),
+            explicit_policy=_explicit_policy(args, root),
+            profile=resolve_profile(args, root),
+            actor="cli",
+            tasks_file=getattr(args, "tasks_file", None),
+            args=args,
+        )
+        return _emit_run_commit_result(result, json_output=args.json)
 
     result = dry_run_run(
         root,
@@ -1707,7 +1768,7 @@ def _cmd_orchestration_run_dry_run(args: argparse.Namespace) -> int:
         adapter_id=getattr(args, "adapter", None),
         operation=getattr(args, "operation", None),
         target=getattr(args, "target", None),
-        requested_mode=requested_mode,
+        requested_mode="dry-run",
         explicit_policy=_explicit_policy(args, root),
         profile=resolve_profile(args, root),
         actor="cli",
@@ -2402,10 +2463,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--dry-run", action="store_true", help="Run in read-only dry-run mode (default)"
     )
     run_mode_group.add_argument(
-        "--commit", action="store_true", help="Persist the run plan (not yet implemented)"
+        "--commit", action="store_true", help="Persist the run plan as an envelope draft (A-only)"
+    )
+    orchestration_run_parser.add_argument(
+        "--output", default=None, help="Output envelope draft path (required for --commit)"
+    )
+    orchestration_run_parser.add_argument(
+        "--expected-plan-hash", default=None, help="Expected plan hash from a prior dry-run (required for --commit)"
+    )
+    orchestration_run_parser.add_argument(
+        "--require-dry-run", action="store_true", help="Require a dry-run review context (must provide expected plan hash)"
     )
     _add_global_args(orchestration_run_parser)
-    orchestration_run_parser.set_defaults(func=_cmd_orchestration_run_dry_run)
+    orchestration_run_parser.set_defaults(func=_cmd_orchestration_run)
 
     orchestration_run_subparsers = orchestration_run_parser.add_subparsers(
         dest="run_command", required=False

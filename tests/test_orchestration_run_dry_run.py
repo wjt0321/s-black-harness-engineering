@@ -330,7 +330,7 @@ def test_cli_commit_returns_needs_input(capsys, tmp_path: Path) -> None:
     code = main(args)
     captured = capsys.readouterr()
     assert code == 4  # needs_input
-    assert "--dry-run" in captured.out or "not implemented" in captured.out.lower()
+    assert "--output" in captured.out and "--expected-plan-hash" in captured.out
 
 
 def test_cli_missing_required_args(capsys, tmp_path: Path) -> None:

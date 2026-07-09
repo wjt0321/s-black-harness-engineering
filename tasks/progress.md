@@ -1503,3 +1503,40 @@
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
 - 不弱化 guardrail，`--commit` 仍明确未实现，不触发真实 adapter execution。
+
+## 2026-07-09（续）— Stage 15.8：orchestration run --commit 第一版 A-only 落地
+
+- 新增 `agent_runtime/orchestration_run_commit.py`：
+  - 实现 `RunCommitResult` 与 `commit_run()`。
+  - 复用 `orchestration_run_dry_run.dry_run_run()` 重新生成 run plan 并取 `envelope_draft`。
+  - 复用 `runtime_draft_export` 的 controlled-write helper：`_validate_output_path`、`_validate_drafts_runtime_path`、`_scan_export_content`、`_write_envelope_file`、`_post_write_check`、`_rollback_file`。
+  - 硬边界：
+    - `--commit` 必须提供 `--output` 与 `--expected-plan-hash`，缺失返回 `needs_input`，不写。
+    - `--commit` 会重新 dry-run/preflight；非 `pass` 状态（含 `needs_approval`）均不写。
+    - `--expected-plan-hash` mismatch 返回 `blocked`，不写。
+    - 输出路径必须位于 `drafts/runtime/` 下、`.json`、不覆盖已存在文件。
+    - 写入后做 schema validate + inspect post-check，失败删除新文件回滚。
+    - 不执行真实 adapter、不访问网络、不发送消息、不追加 event ledger（A-only）。
+- 更新 `agent_runtime/orchestration_run_dry_run.py`：
+  - `RunDryRunResult` 增加非序列化字段 `envelope_draft`，供 commit 阶段直接复用。
+- 更新 `agent_runtime/cli.py`：
+  - `orchestration run` parser 增加 `--output`、`--expected-plan-hash`、`--require-dry-run`。
+  - handler 改名为 `_cmd_orchestration_run`，在 `--commit` 时调用 `commit_run`。
+  - 新增 `_emit_run_commit_result` 人类可读渲染。
+  - `--commit` 不再是未实现，但 `--require-dry-run` 只要求必须提供 expected hash。
+- 新增 `tests/test_orchestration_run_commit.py`：
+  - 覆盖 missing args、hash mismatch blocked no write、matching hash writes envelope draft、output exists blocked no overwrite、preflight needs_approval no write、terminal task no write、write failure no partial file、输出不含 sensitive refs、CLI JSON/human smoke、A-only 不追加 events。
+- 修正 `tests/test_orchestration_run_dry_run.py`：
+  - `test_cli_commit_returns_needs_input` 断言改为提示 `--output`/`--expected-plan-hash`。
+- 文档同步：
+  - 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration run --commit` 标为已存在第一版 A-only controlled write。
+  - 更新 `docs/58-orchestration-run-controlled-execution-design.md`：标记 commit A-only 已落地，B lifecycle events 仍后续。
+  - 更新 `docs/10-cli-poc-usage.md`：新增 `orchestration run --commit` 示例与边界说明，更新安全边界与限制。
+- 验证：
+  - `python -m pytest tests/test_orchestration_run_commit.py -q`：11 passed。
+  - `python -m pytest tests -q`：全绿。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+- 不弱化 guardrail，`--commit` 仍明确不执行真实 adapter。
