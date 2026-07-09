@@ -24,10 +24,13 @@ Stage 15 的 read-model CLI 已经封版：六类页面视角（overview / task 
 
 在真正写入任何东西之前，建议先实现两个只读命令，把 capability routing 到 guardrail preflight 的 handoff 路径跑通：
 
-1. `orchestration route preview`
-   - 输入：task intent（`requested_capability` + 可选约束）。
-   - 输出：routing decision（selected adapter、operation、mode、risk、approval 要求、fallback candidates、routing reason）。
-   - 只读，不写 ledger / envelope。
+1. `orchestration route preview`（**已落地**）
+   - 输入：task intent（`requested_capability` + 可选 `--task-id` / `--adapter` / `--mode` 约束）。
+   - 输出：routing decision（`selected_adapter_id`、`capability`、`operation`、`requested_mode`、`selected_mode`、`risk_level`、`requires_approval`、`requires_dry_run`、`fallback_candidates`、`routing_reason`、`constraints`、`next_action`）。
+   - 只读，不写 ledger / envelope / 不执行 adapter / 不访问网络。
+   - `--adapter` 显式指定时校验支持性，不支持则返回 `blocked` 并给出 fallback candidates。
+   - 请求 `--mode commit` 时，若 adapter 为 external / destructive / privileged 或 `requires_approval`，`selected_mode` 会被强制降级为 `dry-run`；route preview 本身仍只读。
+   - `operation` 仅在 adapter 的 `input_schema` 要求 `operation` 字段时才用 capability 推导，否则为 `null`，避免猜测。
    - 为 `orchestration preflight` 和 `runtime plan` 提供输入。
 
 2. `orchestration preflight`
@@ -238,7 +241,7 @@ routing decision 的下游消费路径：
 
 ## 下一步建议
 
-1. 先实现 `orchestration route preview`（只读）。
+1. ~~先实现 `orchestration route preview`（只读）~~ 已落地。
 2. 再实现 `orchestration preflight`（只读）。
 3. 最后实现 `orchestration approval resolve`（受控写入），并选择 event-ledger-append 或 envelope-draft-export 其中一种产物形态作为第一版。
 4. 每完成一个命令，更新 53 中对应命令从“草案”到“已存在”，并补 release notes。

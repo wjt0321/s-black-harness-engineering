@@ -1656,6 +1656,18 @@ python -m agent_runtime.cli orchestration report generate \
   --envelope adapters/execution-envelope.examples.json
 ```
 
+Routing handoff 预览（只读）：
+
+```bash
+python -m agent_runtime.cli orchestration route preview --capability git_push
+python -m agent_runtime.cli orchestration route preview --capability git_push --json
+python -m agent_runtime.cli orchestration route preview \
+  --task-id task-20260703-001 \
+  --capability git_push \
+  --adapter github-cli \
+  --mode dry-run
+```
+
 边界说明：
 
 - `orchestration run/approval/artifact list|get` 当前都是 envelope-scoped read model，没有独立 Run / Approval / Artifact 持久集合。

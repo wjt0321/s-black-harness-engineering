@@ -1329,3 +1329,35 @@
 - 更新 `docs/02-roadmap.md`：在 Stage 15 与 Stage 16 之间新增 Stage 15.5 safety gate 说明，不标记 Stage 16 开始。
 - 本阶段不新增代码、不改测试、不改 README。
 - 不引入 Windows 绝对路径、内部身份称谓、真实 agent id、敏感信息。
+
+## 2026-07-09（续）— orchestration route preview 只读 handoff 命令落地
+
+- 新增 `agent_runtime/orchestration_route.py`：实现 `RoutePreviewResult` 与 `preview_route()`。
+  - 从 `adapters/adapters.sample.json` 读取 adapter registry。
+  - 按 `requested_capability` 匹配 enabled adapter；无匹配时返回 `needs_input`。
+  - `--adapter` 显式指定时校验支持性，不支持则返回 `blocked` 并给出 fallback candidates（仅列出支持该 capability 的 adapter）。
+  - `--mode commit` 对 external / destructive / privileged 或 `requires_approval` 的 adapter 强制降级为 `dry-run`；route preview 本身仍只读。
+  - `operation` 仅在 adapter `input_schema` 要求 `operation` 字段时才用 capability 推导，否则为 `null`。
+  - 输出包含 `selected_adapter_id`、`capability`、`operation`、`requested_mode`、`selected_mode`、`risk_level`、`requires_approval`、`requires_dry_run`、`fallback_candidates`、`routing_reason`、`constraints`、`next_action`。
+- 在 `agent_runtime/cli.py` 注册 `orchestration route preview` 子命令，支持 `--capability`、`--task-id`、`--adapter`、`--mode`、`--json`、全局 `--root`。
+- 新增 `tests/test_orchestration_route_preview.py`，覆盖 JSON 结构、human smoke、指定 adapter、adapter 不支持 capability、无匹配 adapter、task 上下文、commit 被强制 dry-run、只读不写文件。
+- 修复 `RoutePreviewResult.to_dict()`：始终输出 `selected_adapter_id`（含 `null`），保证 blocked/needs_input 结果也有稳定 key。
+- 调整测试期望：blocked 时的 fallback candidates 应为支持该 capability 的 adapter（如 `github-cli`），而非不支持 capability 的显式 `--adapter`。
+- 文档同步：
+  - 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration route preview` 从候选草案改为已存在只读命令，补充命令示例与边界说明。
+  - 更新 `docs/56-orchestration-controlled-write-boundary.md`：标记 route preview 已落地，并说明其字段与约束语义。
+  - 更新 `docs/10-cli-poc-usage.md`：在「Orchestration Read-Model CLI」章节新增 routing handoff 预览示例。
+- 安全边界保持不变：
+  - 不写 ledger / draft / envelope，不执行 adapter，不访问网络，不引入服务 / API / DB / UI。
+  - 不回显完整 `input` payload、`raw_ref`、`decision_ref`、`payload_refs`、evidence descriptions 或 secret match。
+- 验证：
+  - `python -m pytest tests/test_orchestration_route_preview.py -q`：通过。
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 未实现事项（仍留在 53 草案 / 56 设计边界中）：
+  - `orchestration preflight`（只读聚合）。
+  - `orchestration approval resolve`（受控写入）。
+  - `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
+- 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。

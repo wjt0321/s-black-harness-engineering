@@ -38,6 +38,7 @@ from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, lis
 from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
 from .orchestration_artifact import ArtifactDetailResult, ArtifactListResult, get_artifact, list_artifacts
 from .orchestration_report import ReportGenerateResult, generate_report
+from .orchestration_route import RoutePreviewResult, preview_route
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
@@ -1329,6 +1330,71 @@ def _cmd_orchestration_overview(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def _cmd_orchestration_route_preview(args: argparse.Namespace) -> int:
+    """Render a read-only capability routing preview."""
+    root = _root_path(args)
+    capability = args.capability
+    requested_mode = getattr(args, "mode", "dry-run")
+    if requested_mode not in {"dry-run", "commit"}:
+        result = RoutePreviewResult(
+            status="error",
+            requested_capability=capability,
+            findings=[
+                Finding(
+                    rule_id="invalid-mode",
+                    severity="error",
+                    action="error",
+                    message="--mode must be 'dry-run' or 'commit'.",
+                )
+            ],
+            next_action="Provide --mode dry-run or --mode commit.",
+        )
+        return _emit_route_preview_result(result, json_output=args.json)
+
+    result = preview_route(
+        root,
+        capability=capability,
+        task_id=getattr(args, "task_id", None),
+        adapter_id=getattr(args, "adapter", None),
+        requested_mode=requested_mode,
+    )
+    return _emit_route_preview_result(result, json_output=args.json)
+
+
+def _emit_route_preview_result(result: RoutePreviewResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("ROUTE PREVIEW")
+        print(
+            f"capability={result.requested_capability} "
+            f"adapter={result.selected_adapter_id or '-'} "
+            f"operation={result.operation or '-'} "
+            f"requested_mode={result.requested_mode} "
+            f"selected_mode={result.selected_mode} "
+            f"risk={result.risk_level or '-'} "
+            f"requires_approval={result.requires_approval} "
+            f"requires_dry_run={result.requires_dry_run}"
+        )
+        if result.task_id is not None:
+            print(f"task_id={result.task_id}")
+        if result.routing_reason:
+            print(f"reason: {result.routing_reason}")
+        if result.fallback_candidates:
+            print("fallback_candidates:")
+            for candidate in result.fallback_candidates:
+                print(f"- {candidate.get('adapter_id', '-')}: {candidate.get('reason', '')}")
+        if result.constraints:
+            constraints = result.constraints
+            print(
+                f"constraints: kind={constraints.get('adapter_kind', '-')} "
+                f"preflight_checks={','.join(constraints.get('preflight_checks', []))}"
+            )
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_orchestration_task_list(args: argparse.Namespace) -> int:
     """Render a read-only list of task snapshots."""
     root = _root_path(args)
@@ -2013,6 +2079,32 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_overview_parser)
     orchestration_overview_parser.set_defaults(func=_cmd_orchestration_overview)
+
+    # orchestration route preview
+    orchestration_route_preview_parser = orchestration_subparsers.add_parser(
+        "route", help="Capability routing preview through orchestration namespace"
+    )
+    orchestration_route_subparsers = orchestration_route_preview_parser.add_subparsers(
+        dest="route_command", required=True
+    )
+
+    orchestration_route_preview_parser = orchestration_route_subparsers.add_parser(
+        "preview", help="Preview capability routing without executing adapters (read-only)"
+    )
+    orchestration_route_preview_parser.add_argument(
+        "--capability", required=True, help="Requested capability"
+    )
+    orchestration_route_preview_parser.add_argument(
+        "--task-id", default=None, help="Optional task id for context"
+    )
+    orchestration_route_preview_parser.add_argument(
+        "--adapter", default=None, help="Explicit adapter id to validate against capability"
+    )
+    orchestration_route_preview_parser.add_argument(
+        "--mode", default="dry-run", choices=["dry-run", "commit"], help="Requested execution mode"
+    )
+    _add_global_args(orchestration_route_preview_parser)
+    orchestration_route_preview_parser.set_defaults(func=_cmd_orchestration_route_preview)
 
     # orchestration task list
     orchestration_task_parser = orchestration_subparsers.add_parser(
