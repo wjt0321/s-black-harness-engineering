@@ -1428,3 +1428,25 @@
   - `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
   - envelope-draft-export 方案的 `approval resolve` 产物形态。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— Stage 15.5 收口：controlled handoff + approval resolve release notes
+
+- 新增 `docs/57-release-notes-orchestration-controlled-handoff.md`，记录从 56 design gate 到第一批 handoff / controlled-write 命令落地的阶段成果。
+- 更新 `docs/00-index.md`：
+  - 中枢台后端主线列表加入 `57-release-notes-orchestration-controlled-handoff.md`。
+  - 发布与阶段收口列表加入 57。
+- 更新 `docs/02-roadmap.md`：
+  - Stage 15.5 状态从「design gate / 设计先行」调整为「第一批 controlled handoff / approval resolve 已落地」。
+  - 交付物加入 `docs/57-release-notes-orchestration-controlled-handoff.md`、`orchestration route preview`、`orchestration preflight`、`orchestration approval resolve`。
+  - 不标记 Stage 16 开始；run --commit / retry / fallback 仍暂缓。
+- 更新 `README.md` / `README.en.md`：
+  - 阶段进度列表加入 Stage 15.5 并已落地状态。
+  - 已落地能力列表加入 `orchestration route preview`、`orchestration preflight`、受控写入 `orchestration approval resolve`。
+  - 推荐阅读列表加入 56 / 57。
+- 本次为纯文档改动，不改代码/测试/schema。
+- 验证：
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+- 不弱化 guardrail，不夸大 run --commit 已实现。

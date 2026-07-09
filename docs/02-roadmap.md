@@ -333,27 +333,36 @@
 
 ---
 
-## Stage 15.5 — Orchestration 受控写入边界（safety gate，设计先行）
+## Stage 15.5 — Orchestration 受控写入边界（第一批 controlled handoff / approval resolve 已落地）
 
-目标：在进入第一批 orchestration 写入命令前，先把 dry-run / commit 语义、capability routing handoff、approval resolve 安全边界定清楚，避免在未明确写入规则时匆忙实现 `orchestration run --commit` 等命令。
+目标：在进入第一批 orchestration 写入命令前，先把 dry-run / commit 语义、capability routing handoff、approval resolve 安全边界定清楚，并实际落地第一批 handoff / controlled-write 命令。
 
 主要交付物：
 
-- `docs/56-orchestration-controlled-write-boundary.md`
+- `docs/56-orchestration-controlled-write-boundary.md`（design gate）
+- `docs/57-release-notes-orchestration-controlled-handoff.md`
+- `orchestration route preview`（只读 capability routing preview）
+- `orchestration preflight`（只读 routing + guardrail 聚合）
+- `orchestration approval resolve`（event-ledger append 方案受控写入）
 
-要做的事：
+已落地能力：
 
-- 明确第一批写入命令优先级：`route preview` / `preflight`（只读 handoff）优先，`approval resolve`（受控写入）次之。
-- 统一 dry-run / commit 语义：dry-run 只产 plan/preview，commit 只在现有 controlled-write 机制内 append/export。
-- 定义 capability routing handoff：routing 输出哪些安全字段、如何成为 `runtime plan` / `adapter plan` 的输入。
-- 定义 approval resolve 安全语义：只记录 decision、不直接执行原请求、granted 后仍需重新 preflight、rejected 生成拒绝 event。
-- 明确状态与产物边界：不引入 DB/service/UI，优先 append-only event 或生成新 envelope draft。
+- `route preview` 输出安全 routing decision，为 `preflight` / `runtime plan` 提供输入。
+- `preflight` 聚合 routing + guardrail，明确 `effective_mode`、`requires_approval`、`requires_dry_run`。
+- `approval resolve` 只记录 decision，不执行原请求；`--dry-run` 预览 event，`--commit` 追加 `approval_resolved` event 到 ledger；granted 后仍需重新发起 preflight/run。
+- `tasks/event.schema.json` 新增 `approval_resolved` event_type。
+
+要做的事（仍保留）：
+
+- 明确 `orchestration run --dry-run/--commit` 的 draft/export 产物形态和 freeze guard。
+- 明确 `orchestration task submit --commit` 与现有 `runtime task create --commit` 的关系。
+- 在 retry / fallback 自动化进入实现前，先确认 run 侧状态沉淀规则。
 
 说明：
 
-- 本阶段是 design gate，不新增代码实现。
+- 本阶段先实现只读 handoff 命令，再实现第一条受控写入命令；`orchestration run --commit`、retry / fallback、真实 adapter execution 仍未开放。
 - 不标记 Stage 16 开始；Stage 16 仍保持远期。
-- 完成 56 后，再按需回到 Stage 14 的受控实现，或继续补齐 Stage 10-12 的后端抽象。
+- 完成本阶段后，下一步建议先明确 run draft/export 产物形态，再进入 Stage 14 run 侧实现。
 
 ---
 

@@ -90,6 +90,7 @@
 - 🟡 Stage 13 — Backend-first API Boundary（设计文档已落地，协议选择仍暂缓）
 - 🟡 Stage 14 — 中枢台最小编排闭环（设计文档与命令草案已落地，受控实现仍暂缓）
 - 🟡 Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，前端实现仍暂缓）
+- 🟡 Stage 15.5 — Orchestration 受控写入边界（第一批 controlled handoff / approval resolve 已落地，run --commit 仍暂缓）
 - ⚪ Stage 16 — UI / Control Panel（远期）
 
 ### 现在最明确的位置
@@ -123,6 +124,7 @@
 - controlled write regression 覆盖
 - 中枢台总蓝图、adapter 接口、capability routing、control plane state 文档主线
 - Stage 15 read-model CLI：`orchestration overview`、`orchestration task list/get`、`orchestration run list/inspect`、`orchestration approval list/get`、`orchestration artifact list/get`、`orchestration report generate`
+- Stage 15.5 controlled handoff：`orchestration route preview`、`orchestration preflight`、受控写入 `orchestration approval resolve`（只记录 decision，不执行原请求）
 
 ## 当前边界
 
@@ -166,8 +168,10 @@ python -m agent_runtime.cli policies list
 10. `docs/53-minimal-orchestration-loop-cli-draft.md`
 11. `docs/54-backend-preparation-before-ui.md`
 12. `docs/55-release-notes-orchestration-read-models.md`
-13. `docs/10-cli-poc-usage.md`
-14. `docs/21-controlled-write-boundaries.md`
+13. `docs/56-orchestration-controlled-write-boundary.md`
+14. `docs/57-release-notes-orchestration-controlled-handoff.md`
+15. `docs/10-cli-poc-usage.md`
+16. `docs/21-controlled-write-boundaries.md`
 
 其中 `docs/47-orchestration-hub-vision.md` 到 `docs/54-backend-preparation-before-ui.md` 是中枢台后端主线，建议按编号顺序阅读。
 

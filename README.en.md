@@ -90,6 +90,7 @@ Current estimate:
 - 🟡 Stage 13 — Backend-first API Boundary (documented, protocol choice still deferred)
 - 🟡 Stage 14 — Minimal orchestration-hub execution loop (documents and CLI draft done, controlled implementation still deferred)
 - 🟡 Stage 15 — Backend preparation before UI / dashboard (read-model CLI first version landed, frontend still deferred)
+- 🟡 Stage 15.5 — Orchestration controlled-write boundary (first controlled handoff / approval resolve landed, run --commit still deferred)
 - ⚪ Stage 16 — UI / Control Panel (future)
 
 ### The Most Accurate Current Read
@@ -123,6 +124,7 @@ Implemented capability highlights:
 - controlled write regression coverage
 - documentation backbone for orchestration-hub vision, adapter interface, capability routing, and control-plane state
 - Stage 15 read-model CLI: `orchestration overview`, `orchestration task list/get`, `orchestration run list/inspect`, `orchestration approval list/get`, `orchestration artifact list/get`, `orchestration report generate`
+- Stage 15.5 controlled handoff: `orchestration route preview`, `orchestration preflight`, controlled-write `orchestration approval resolve` (records decision only, does not execute original request)
 
 ## Current Boundaries
 
@@ -166,8 +168,10 @@ If this is your first time in the repository, read in this order:
 10. `docs/53-minimal-orchestration-loop-cli-draft.md`
 11. `docs/54-backend-preparation-before-ui.md`
 12. `docs/55-release-notes-orchestration-read-models.md`
-13. `docs/10-cli-poc-usage.md`
-14. `docs/21-controlled-write-boundaries.md`
+13. `docs/56-orchestration-controlled-write-boundary.md`
+14. `docs/57-release-notes-orchestration-controlled-handoff.md`
+15. `docs/10-cli-poc-usage.md`
+16. `docs/21-controlled-write-boundaries.md`
 
 The documents `docs/47-orchestration-hub-vision.md` through `docs/54-backend-preparation-before-ui.md` form the orchestration-hub backend backbone; read them in numbered order.
 
