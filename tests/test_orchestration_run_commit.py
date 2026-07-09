@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 TASK_ID = "task-20260709-001"
 REQUEST_ID = "req-20260709-001"
+EVENTS_FILE = "tasks/events.jsonl"
 
 
 def _setup_fake_root(tmp_path: Path) -> Path:
@@ -86,8 +88,22 @@ def _setup_fake_root(tmp_path: Path) -> Path:
         json.dumps(task, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+    (tasks_dir / "events.jsonl").write_text("", encoding="utf-8")
 
     return fake_root
+
+
+def _read_events(fake_root: Path, events_file: str = EVENTS_FILE) -> list[dict[str, Any]]:
+    path = fake_root / events_file
+    if not path.is_file():
+        return []
+    events = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        events.append(json.loads(line))
+    return events
 
 
 def _base_args(fake_root: Path, **extra: str) -> list[str]:
@@ -124,6 +140,7 @@ def test_commit_missing_args_returns_needs_input(tmp_path: Path) -> None:
     assert result.status == "needs_input"
     assert "--output" in result.findings[0].message
     assert "--expected-plan-hash" in result.findings[0].message
+    assert "--events-file" in result.findings[0].message
 
 
 def test_commit_hash_mismatch_blocked_no_write(tmp_path: Path) -> None:
@@ -138,15 +155,17 @@ def test_commit_hash_mismatch_blocked_no_write(tmp_path: Path) -> None:
         target="docs/06-adapter-layer.md",
         output=output,
         expected_plan_hash="deadbeef",
+        events_file=EVENTS_FILE,
     )
     assert result.status == "blocked"
     assert result.freeze_check == "failed"
     assert result.plan_hash is not None
     assert result.expected_plan_hash == "deadbeef"
     assert not (fake_root / output).exists()
+    assert _read_events(fake_root) == []
 
 
-def test_commit_matching_hash_writes_envelope_draft(tmp_path: Path) -> None:
+def test_commit_matching_hash_writes_envelope_draft_and_events(tmp_path: Path) -> None:
     fake_root = _setup_fake_root(tmp_path)
     dry_run = dry_run_run(
         fake_root,
@@ -169,6 +188,7 @@ def test_commit_matching_hash_writes_envelope_draft(tmp_path: Path) -> None:
         target="docs/06-adapter-layer.md",
         output=output,
         expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
     )
     assert result.status == "pass"
     assert result.freeze_check == "pass"
@@ -176,13 +196,141 @@ def test_commit_matching_hash_writes_envelope_draft(tmp_path: Path) -> None:
     assert result.write_summary.get("rolled_back") is False
     assert result.write_summary.get("post_validate") == "pass"
     assert result.write_summary.get("post_inspect") == "pass"
+    assert result.write_summary.get("event_post_validate") == "pass"
+    assert result.write_summary.get("appended_event_count") == 2
     assert result.artifact_ref.get("path") == output
+    assert len(result.event_refs) == 2
 
     written_path = fake_root / output
     assert written_path.is_file()
     envelope = json.loads(written_path.read_text(encoding="utf-8"))
     assert envelope.get("version") == 1
     assert any(a.get("artifact_type") == "adapter_request" for a in envelope.get("artifacts", []))
+
+    events = _read_events(fake_root)
+    assert [e["event_type"] for e in events] == ["run_planned", "run_draft_exported"]
+    for event in events:
+        assert event["task_id"] == TASK_ID
+        assert event["actor"] == "cli"
+        metadata = event.get("metadata", {})
+        assert metadata.get("request_id") == REQUEST_ID
+        assert metadata.get("capability") == "read_file"
+        assert metadata.get("mode") == "dry-run"
+        assert "plan_hash" in metadata
+
+
+def test_commit_post_check_uses_committed_events_ledger(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+    )
+    observed: list[str] = []
+
+    import agent_runtime.orchestration_run_commit as run_commit_module
+
+    original_check = run_commit_module.check_ledger_consistency
+
+    def spy_check_ledger_consistency(root: Path, tasks_file: str, events_file: str):
+        observed.append(events_file)
+        return original_check(root, tasks_file, events_file)
+
+    monkeypatch.setattr(
+        run_commit_module,
+        "check_ledger_consistency",
+        spy_check_ledger_consistency,
+    )
+
+    output = "drafts/runtime/task-001/req-001.envelope.json"
+    result = commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
+    )
+
+    assert result.status == "pass"
+    assert EVENTS_FILE in observed
+    assert not any(path.startswith("tmp") or path.endswith(".tmp") for path in observed)
+
+
+def test_commit_event_order_and_metadata_safety(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+    )
+    output = "drafts/runtime/task-001/req-001.envelope.json"
+    commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
+    )
+
+    events = _read_events(fake_root)
+    assert len(events) == 2
+    planned, exported = events
+    assert planned["event_type"] == "run_planned"
+    assert exported["event_type"] == "run_draft_exported"
+    assert planned["timestamp"] <= exported["timestamp"]
+
+    dumped = json.dumps(events, ensure_ascii=False)
+    assert "decision_ref" not in dumped
+    assert "payload_refs" not in dumped
+    assert "raw_ref" not in dumped
+    assert "evidence description" not in dumped.lower()
+
+
+def test_commit_event_append_failure_rolls_back_draft_and_events(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+    )
+    # Pre-seed the events ledger with a malformed line so post-check fails.
+    events_path = fake_root / EVENTS_FILE
+    events_path.write_text("this is not json\n", encoding="utf-8")
+    original_bytes = events_path.read_bytes()
+
+    output = "drafts/runtime/task-001/req-001.envelope.json"
+    result = commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
+    )
+    assert result.status == "blocked"
+    assert result.write_summary.get("rolled_back") is True
+    assert not (fake_root / output).exists()
+    assert events_path.read_bytes() == original_bytes
 
 
 def test_commit_output_exists_blocked_no_overwrite(tmp_path: Path) -> None:
@@ -209,11 +357,13 @@ def test_commit_output_exists_blocked_no_overwrite(tmp_path: Path) -> None:
         target="docs/06-adapter-layer.md",
         output=output,
         expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
     )
     assert result.status == "blocked"
     assert "already exists" in result.findings[0].message.lower()
     # Ensure original content not overwritten.
     assert existing.read_text(encoding="utf-8") == '{"version": 1}\n'
+    assert _read_events(fake_root) == []
 
 
 def test_commit_preflight_needs_approval_no_write(tmp_path: Path) -> None:
@@ -239,9 +389,11 @@ def test_commit_preflight_needs_approval_no_write(tmp_path: Path) -> None:
         target="origin/main",
         output=output,
         expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
     )
     assert result.status == "blocked"
     assert not (fake_root / output).exists()
+    assert _read_events(fake_root) == []
 
 
 def test_commit_terminal_task_no_write(tmp_path: Path) -> None:
@@ -261,9 +413,11 @@ def test_commit_terminal_task_no_write(tmp_path: Path) -> None:
         target="docs/06-adapter-layer.md",
         output=output,
         expected_plan_hash="any-hash",
+        events_file=EVENTS_FILE,
     )
     assert result.status in {"blocked", "error"}
     assert not (fake_root / output).exists()
+    assert _read_events(fake_root) == []
 
 
 def test_commit_write_failure_no_partial_file(tmp_path: Path) -> None:
@@ -291,9 +445,11 @@ def test_commit_write_failure_no_partial_file(tmp_path: Path) -> None:
         target="docs/06-adapter-layer.md",
         output=output,
         expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
     )
     assert result.status == "error"
     assert not (fake_root / output).exists()
+    assert _read_events(fake_root) == []
 
 
 def test_commit_output_does_not_expose_sensitive_refs(tmp_path: Path) -> None:
@@ -316,6 +472,7 @@ def test_commit_output_does_not_expose_sensitive_refs(tmp_path: Path) -> None:
         target="docs/06-adapter-layer.md",
         output=output,
         expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
     )
     d = result.to_dict()
     dumped = json.dumps(d, ensure_ascii=False)
@@ -340,6 +497,7 @@ def test_cli_commit_json_output(capsys, tmp_path: Path) -> None:
             fake_root,
             output=output,
             expected_plan_hash=dry_run.plan_hash,
+            events_file=EVENTS_FILE,
             commit="",
         )
         + ["--json"]
@@ -350,10 +508,43 @@ def test_cli_commit_json_output(capsys, tmp_path: Path) -> None:
     assert result["status"] == "pass"
     assert result["freeze_check"] == "pass"
     assert result["write_summary"]["committed"] is True
+    assert result["write_summary"]["appended_event_count"] == 2
     assert (fake_root / output).is_file()
+    assert len(_read_events(fake_root)) == 2
 
 
 def test_cli_commit_human_readable_smoke(capsys, tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+    )
+    output = "drafts/runtime/task-001/req-001.envelope.json"
+    code = main(
+        _base_args(
+            fake_root,
+            output=output,
+            expected_plan_hash=dry_run.plan_hash,
+            events_file=EVENTS_FILE,
+            commit="",
+        )
+    )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "RUN COMMIT" in captured.out
+    assert TASK_ID in captured.out
+    assert REQUEST_ID in captured.out
+    assert "freeze_check=pass" in captured.out
+    assert "events_file=" in captured.out
+    assert (fake_root / output).is_file()
+    assert len(_read_events(fake_root)) == 2
+
+
+def test_cli_commit_missing_events_file_returns_needs_input(capsys, tmp_path: Path) -> None:
     fake_root = _setup_fake_root(tmp_path)
     dry_run = dry_run_run(
         fake_root,
@@ -373,16 +564,26 @@ def test_cli_commit_human_readable_smoke(capsys, tmp_path: Path) -> None:
         )
     )
     captured = capsys.readouterr()
-    assert code == 0
-    assert "RUN COMMIT" in captured.out
-    assert TASK_ID in captured.out
-    assert REQUEST_ID in captured.out
-    assert "freeze_check=pass" in captured.out
-    assert (fake_root / output).is_file()
+    assert code != 0
+    assert "--events-file" in captured.out
+    assert not (fake_root / output).exists()
 
 
-def test_commit_is_only_a_strategy_no_events_appended(tmp_path: Path) -> None:
+def test_commit_does_not_modify_existing_valid_events(tmp_path: Path) -> None:
     fake_root = _setup_fake_root(tmp_path)
+    pre_existing = {
+        "event_id": "evt-20260701-001",
+        "task_id": TASK_ID,
+        "timestamp": "2026-07-01T00:00:00+08:00",
+        "actor": "user",
+        "event_type": "created",
+        "from_status": None,
+        "to_status": "running",
+        "message": "Task created",
+    }
+    events_path = fake_root / EVENTS_FILE
+    events_path.write_text(json.dumps(pre_existing, ensure_ascii=False) + "\n", encoding="utf-8")
+
     dry_run = dry_run_run(
         fake_root,
         task_id=TASK_ID,
@@ -392,10 +593,6 @@ def test_commit_is_only_a_strategy_no_events_appended(tmp_path: Path) -> None:
         target="docs/06-adapter-layer.md",
     )
     output = "drafts/runtime/task-001/req-001.envelope.json"
-    events_file = fake_root / "tasks" / "events.jsonl"
-    events_file.write_text("", encoding="utf-8")
-    before = events_file.read_bytes()
-
     result = commit_run(
         fake_root,
         task_id=TASK_ID,
@@ -405,6 +602,10 @@ def test_commit_is_only_a_strategy_no_events_appended(tmp_path: Path) -> None:
         target="docs/06-adapter-layer.md",
         output=output,
         expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
     )
     assert result.status == "pass"
-    assert events_file.read_bytes() == before
+
+    events = _read_events(fake_root)
+    assert events[0]["event_type"] == "created"
+    assert [e["event_type"] for e in events[1:]] == ["run_planned", "run_draft_exported"]

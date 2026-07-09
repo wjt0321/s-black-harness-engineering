@@ -269,7 +269,7 @@
 
 ---
 
-## Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A-only commit 已落地）
+## Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A+B commit 已落地）
 
 目标：在后端抽象稳定后，跑通第一个真正体现“中枢台”特征的最小闭环。
 
@@ -360,7 +360,7 @@
 
 说明：
 
-- 本阶段先实现只读 handoff 命令，再实现第一条受控写入命令；`orchestration run --commit` A-only、retry / fallback、真实 adapter execution 仍未开放。
+- 本阶段先实现只读 handoff 命令，再实现第一条受控写入命令；`orchestration run --commit` 已在 Stage 15.8/15.9 升级到 A+B，retry / fallback、真实 adapter execution 仍未开放。
 - 不标记 Stage 16 开始；Stage 16 仍保持远期。
 - 完成本阶段后，下一步建议先明确 run draft/export 产物形态，再进入 Stage 14/15.7/15.8 run 侧实现。
 
@@ -415,7 +415,7 @@
 
 ---
 
-## Stage 15.8 — Orchestration Run Commit（A-only）落地
+## Stage 15.8 — Orchestration Run Commit（A-only 第一版）落地
 
 目标：实现 `orchestration run --commit` 第一版 A-only controlled write，把已审阅 run plan 沉淀为 envelope draft 文件。
 
@@ -435,7 +435,6 @@
 
 仍后续：
 
-- B 侧 run lifecycle events append。
 - retry / fallback 自动化。
 - `orchestration task submit --commit`。
 - 真实 adapter execution、网络访问、消息发送、UI/服务/数据库。
@@ -446,29 +445,39 @@
 
 ---
 
-## Stage 15.9 — Orchestration Run Lifecycle Events 设计（design gate，进入 B 侧 event append 前）
+## Stage 15.9 — Orchestration Run Lifecycle Events 落地
 
-目标：在实现 `orchestration run --commit` B 侧 run lifecycle events 之前，先定义 event schema、controlled append、freeze/post-check、与 A-only envelope draft export 的 all-or-nothing 关系。
+目标：把 `orchestration run --commit` 从 A-only envelope draft export 升级为 A+B controlled write，在不放开真实 adapter execution 的前提下，为 run 沉淀最小 lifecycle event trail。
 
 主要交付物：
 
 - `docs/60-orchestration-run-lifecycle-events-design.md`
+- `docs/61-release-notes-orchestration-run-lifecycle-events.md`
+- `tasks/event.schema.json` enum 扩展
+- `agent_runtime/orchestration_run_commit.py`
+- `tests/test_orchestration_run_commit.py`
+- `tests/test_task_validation.py`
 
-要做的事：
+已落地能力：
 
-- 定义候选 event types：`run_planned`、`run_draft_exported`、`run_blocked`；明确 `run_commit_failed` 暂不进入 schema enum。
-- 定义 event payload 安全字段：基础字段 + metadata 安全子集；禁止 input/target 原文、raw_ref、decision_ref、payload_refs、evidence descriptions、reason 原文、secret match。
-- 定义 B 侧 controlled append 方案：复用 `runtime event append/import --commit`，支持 batch all-or-nothing，失败按 byte size 回滚。
-- 明确 A+B 组合策略：A 成功 B 失败时回滚 A（删除 draft）和 B（truncate）；要求显式 `--events-file`。
-- 明确 freeze guard 与 idempotency：plan_hash 语义不变；event_id 避免冲突；重复 commit blocked。
-- 明确 approval / blocked 分支：preflight needs_approval、hash mismatch、terminal task 均不写 A/B；第一版不写 `run_blocked`。
-- 说明 read-model 影响：`orchestration run list` 可后续考虑纳入 lifecycle events，但不强制；`task events` 自然显示；report 仍 runtime-report-backed。
+- `orchestration run --commit` 必须显式提供 `--events-file`；缺失返回 `needs_input`，不写 A/B。
+- 成功路径执行 A+B：写入 envelope draft/export 文件，并追加 `run_planned` + `run_draft_exported` lifecycle events。
+- B 写入后检查实际落盘的 events ledger：event schema validation、task/event ledger consistency、runtime ledger audit。
+- B 失败时回滚 A（删除 draft）和 B（truncate events ledger 或删除本次新建 ledger 文件），保持 all-or-nothing。
+- `tasks/event.schema.json` 新增 `run_planned`、`run_draft_exported`、`run_blocked` enum；第一版成功路径只写入前两者。
+- CLI 输出新增 `events_file`、`appended_event_count` 与 `event_refs` 安全摘要。
+
+仍后续：
+
+- `run_blocked` 暂不写入 blocked/needs_approval/hash mismatch 路径。
+- retry / fallback 自动化。
+- `orchestration task submit --commit`。
+- 真实 adapter execution、网络访问、消息发送、UI/服务/数据库。
 
 说明：
 
-- 本阶段是 design gate，不新增代码实现，不改 schema。
-- 若进入实现，先在 `tasks/event.schema.json` 新增 enum 值并补测试。
-- 不实现 `run_commit_failed` event、retry / fallback、`orchestration task submit --commit`、真实 adapter execution。
+- 本阶段已经从 design gate 进入实现收口。
+- `orchestration run --dry-run` / `--commit` 的 freeze guard 语义保持不变。
 - 不标记 Stage 16 开始；Stage 16 仍保持远期。
 
 ---

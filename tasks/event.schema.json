@@ -35,7 +35,10 @@
         "evidence_added",
         "finished",
         "failed",
-        "approval_resolved"
+        "approval_resolved",
+        "run_planned",
+        "run_draft_exported",
+        "run_blocked"
       ]
     },
     "from_status": {

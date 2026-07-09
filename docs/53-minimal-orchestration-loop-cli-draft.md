@@ -38,7 +38,7 @@
 | `python -m agent_runtime.cli orchestration route preview` | 已存在：只读 capability routing preview，输出安全 routing decision（不写 ledger/envelope）。 | `orchestration route preview --capability git_push --json` |
 | `python -m agent_runtime.cli orchestration preflight` | 已存在：只读 handoff 预检，聚合 routing + guardrail preflight 安全摘要（不写 ledger/envelope）。 | `orchestration preflight --capability git_push --json` |
 | `python -m agent_runtime.cli orchestration run --dry-run` | 已存在：只读 run plan preview，输出 routing/preflight/candidate envelope/events/artifact/evidence refs 安全摘要与 `plan_hash`（不写 ledger/envelope/draft）。 | `orchestration run --task-id ... --request-id ... --capability ... --dry-run` |
-| `python -m agent_runtime.cli orchestration run --commit` | 已存在：第一版 A-only controlled write，把已审阅 run plan 沉淀为 envelope draft（不追加 events、不执行 adapter、不访问网络）。 | `orchestration run ... --commit --expected-plan-hash sha256:... --output drafts/runtime/.../...envelope.json` |
+| `python -m agent_runtime.cli orchestration run --commit` | 已存在：A+B controlled write，把已审阅 run plan 沉淀为 envelope draft 并追加 `run_planned` + `run_draft_exported` lifecycle events（不执行 adapter、不访问网络）。 | `orchestration run ... --commit --expected-plan-hash sha256:... --output drafts/runtime/.../...envelope.json --events-file tasks/events.jsonl` |
 | `python -m agent_runtime.cli orchestration <draft> ...` | 为 52 闭环设计的其他候选子命令，**当前尚未实现**，仅作草案参考。 | `orchestration task submit --commit` |
 | `python -m agent_runtime.cli orchestration approval resolve` | 已存在：受控写入审批决议，追加 `approval_resolved` event 到 event ledger（不写原 envelope、不直接执行原请求）。 | `orchestration approval resolve --approval-id ... --task-id ... --request-id ... --decision granted --reason "..." --dry-run` |
 | `orchestrator.sh` / `loop.sh` | 示意性脚本名，表示未来可能由脚本/自动化工作流编排的调用序列。 | — |
@@ -209,7 +209,7 @@ python -m agent_runtime.cli orchestration run \
   --dry-run
 ```
 
-已存在（commit 第一版 A-only controlled write）：
+已存在（commit A+B controlled write）：
 
 ```bash
 python -m agent_runtime.cli orchestration run \
@@ -221,16 +221,18 @@ python -m agent_runtime.cli orchestration run \
   --target origin/main \
   --commit \
   --expected-plan-hash sha256:... \
-  --output drafts/runtime/task-20260709-001/req-20260709-001.envelope.json
+  --output drafts/runtime/task-20260709-001/req-20260709-001.envelope.json \
+  --events-file tasks/events.jsonl
 ```
 
 边界：
 
 - `--dry-run`：生成 envelope draft、artifact 引用、验证结果，不触发真实外部执行。
-- `--commit`：第一版只做 A（envelope draft export），把已审阅 run plan 沉淀到项目内受控路径；不追加 event ledger、不执行真实 adapter、不访问网络。
-- `--commit` 必须提供 `--expected-plan-hash`；会重新计算当前 plan hash，mismatch 返回 `blocked`，不写。
-- 写入前会重新跑一遍 dry-run/preflight；若 preflight `needs_approval`/`blocked`/`needs_input`/`error`，均不写。
-- `--output` 必须位于 `drafts/runtime/` 下、为 `.json`、不覆盖已存在文件；写入后做 schema/inspect post-check，失败删除新文件回滚。
+- `--commit`：A+B controlled write。A 把已审阅 run plan 沉淀为 envelope draft；B 追加 `run_planned` + `run_draft_exported` lifecycle events 到 event ledger。不执行真实 adapter、不访问网络。
+- `--commit` 必须提供 `--expected-plan-hash` 与 `--events-file`；会重新计算当前 plan hash，mismatch 返回 `blocked`，不写 A/B。
+- 写入前会重新跑一遍 dry-run/preflight；若 preflight `needs_approval`/`blocked`/`needs_input`/`error`，均不写 A/B。
+- `--output` 必须位于 `drafts/runtime/` 下、为 `.json`、不覆盖已存在文件；写入后做 schema/inspect post-check，失败删除新文件并回滚 event ledger。
+- 若 B（event append）失败，A 生成的 envelope draft 会被删除，event ledger 按原始 byte size truncate 回滚。
 - 两者都不访问外部系统、不发送消息、不删除文件。
 
 ### 5. Inspect Run / Report（查看运行与报告）
@@ -384,7 +386,7 @@ python -m agent_runtime.cli orchestration run \
 | `runtime draft export --commit` | 写入 envelope draft 文件 |
 | `runtime event append --commit` | 追加 event ledger 单行 |
 | `runtime event import --commit` | 批量追加 event ledger |
-| `orchestration run --commit` | 第一版 A-only：沉淀 envelope draft；不追加 events、不执行真实 adapter |
+| `orchestration run --commit` | A+B：沉淀 envelope draft 并追加 `run_planned` + `run_draft_exported` lifecycle events；不执行真实 adapter |
 | `orchestration approval resolve --commit` | 追加 `approval_resolved` event 到 event ledger（不执行原请求、不修改输入 envelope） |
 
 ### 仍然故意不做

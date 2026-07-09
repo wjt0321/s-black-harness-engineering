@@ -1362,6 +1362,20 @@
   - `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
 
+## 2026-07-09（续）— Stage 15.9 收口：post-check 语义修正 + release notes
+
+- 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
+- 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
+- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
+- smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
+
 ## 2026-07-09（续）— orchestration preflight 只读 handoff 命令落地
 
 - 新增 `agent_runtime/orchestration_preflight.py`：实现 `PreflightResult` 与 `check_preflight()`。
@@ -1390,6 +1404,20 @@
   - `orchestration approval resolve`（受控写入）。
   - `orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— Stage 15.9 收口：post-check 语义修正 + release notes
+
+- 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
+- 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
+- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
+- smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
 
 ## 2026-07-09（续）— orchestration approval resolve 受控写入命令落地
 
@@ -1429,6 +1457,20 @@
   - envelope-draft-export 方案的 `approval resolve` 产物形态。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
 
+## 2026-07-09（续）— Stage 15.9 收口：post-check 语义修正 + release notes
+
+- 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
+- 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
+- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
+- smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
+
 ## 2026-07-09（续）— Stage 15.5 收口：controlled handoff + approval resolve release notes
 
 - 新增 `docs/57-release-notes-orchestration-controlled-handoff.md`，记录从 56 design gate 到第一批 handoff / controlled-write 命令落地的阶段成果。
@@ -1449,6 +1491,20 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— Stage 15.9 收口：post-check 语义修正 + release notes
+
+- 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
+- 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
+- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
+- smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
 - 不弱化 guardrail，不夸大 run --commit 已实现。
 
 ## 2026-07-09（续）— Stage 15.6：orchestration run 受控执行设计 gate
@@ -1471,6 +1527,20 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— Stage 15.9 收口：post-check 语义修正 + release notes
+
+- 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
+- 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
+- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
+- smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
 - 不弱化 guardrail，不夸大 run --commit 已实现。
 
 ## 2026-07-09（续）— Stage 15.7：orchestration run --dry-run 落地
@@ -1502,6 +1572,20 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— Stage 15.9 收口：post-check 语义修正 + release notes
+
+- 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
+- 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
+- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
+- smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
 - 不弱化 guardrail，`--commit` 仍明确未实现，不触发真实 adapter execution。
 
 ## 2026-07-09（续）— Stage 15.8：orchestration run --commit 第一版 A-only 落地
@@ -1539,6 +1623,20 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— Stage 15.9 收口：post-check 语义修正 + release notes
+
+- 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
+- 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
+- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
+- smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
 - 不弱化 guardrail，`--commit` 仍明确不执行真实 adapter。
 
 ## 2026-07-09（续）— Stage 15.8 收口：docs/59-release-notes-orchestration-run-controlled-execution.md
@@ -1569,6 +1667,20 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— Stage 15.9 收口：post-check 语义修正 + release notes
+
+- 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
+- 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
+- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
+- smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
 - 不说真实 adapter execution 已实现；不弱化 guardrail。
 
 ## 2026-07-09（续）— Stage 15.9：Run Lifecycle Events design gate
@@ -1593,4 +1705,62 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— Stage 15.9 收口：post-check 语义修正 + release notes
+
+- 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
+- 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
+- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
+- smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
 - 不说 B 侧 events 已实现；不说真实 adapter execution 已开放；不弱化 guardrail。
+
+## 2026-07-09（续）— Stage 15.9 实现：Run Lifecycle Events A+B
+
+- 升级 `orchestration run --commit` 从 A-only 到 A+B：
+  - A：envelope draft/export 文件（复用 `runtime draft export --commit` 机制）。
+  - B：追加 `run_planned` + `run_draft_exported` 生命周期事件到 event ledger（复用 `runtime event append` 受控写入机制）。
+  - all-or-nothing：A 成功 B 失败时删除 draft 文件并按原始 byte size truncate 回滚 event ledger。
+- 更新 `tasks/event.schema.json`：`event_type` enum 新增 `run_planned`、`run_draft_exported`、`run_blocked`。
+- 更新 `agent_runtime/orchestration_run_commit.py`：
+  - `commit_run()` 新增 `events_file` 参数，缺失返回 `needs_input`。
+  - 成功路径生成两个 lifecycle event 并 batch append。
+  - `RunCommitResult` 新增 `event_refs`，`write_summary` 增加 events_file / appended_event_count / event post-check 字段。
+- 更新 `agent_runtime/cli.py`：`orchestration run` parser 增加 `--events-file`；commit handler 传递并展示 events_file 和 event_refs。
+- 更新测试：
+  - `tests/test_orchestration_run_commit.py`：所有 commit 测试传入 `events_file`；新增事件顺序、metadata 脱敏、B 失败回滚、CLI `--events-file`、不修改已有合法事件等测试；删除旧 A-only「不追加事件」测试。
+  - `tests/test_task_validation.py`：新增 schema enum 接受 `run_planned` / `run_draft_exported` / `run_blocked` / `approval_resolved` 的参数化测试。
+- 文档同步：
+  - `docs/53-minimal-orchestration-loop-cli-draft.md`：`orchestration run --commit` 从 A-only 改为 A+B。
+  - `docs/58-orchestration-run-controlled-execution-design.md`：标记 B lifecycle events 已落地。
+  - `docs/60-orchestration-run-lifecycle-events-design.md`：标记 schema 与 A+B 实现已落地。
+  - `docs/10-cli-poc-usage.md`：更新 run commit 示例与边界说明，加入 `--events-file`。
+- 硬约束保持：不执行真实 adapter、不访问网络、不发送消息、不写独立 Run storage、不引入 DB/service/UI。
+- 安全边界：event metadata 只存安全摘要；不回显 input/target 原文、raw_ref、decision_ref、payload_refs、evidence descriptions、reason 原文、secret match；使用相对路径。
+- 验证：
+  - `python -m pytest tests/test_orchestration_run_commit.py tests/test_task_validation.py -q`：通过。
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：仅 LF/CRLF 换行警告，无空白错误。
+- 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+
+## 2026-07-09（续）— Stage 15.9 收口：post-check 语义修正 + release notes
+
+- 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
+- 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
+- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
+- smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。

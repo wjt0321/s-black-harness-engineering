@@ -2,17 +2,17 @@
 
 ## 阶段定位
 
-`docs/59-release-notes-orchestration-run-controlled-execution.md` 已经把 `orchestration run --dry-run` 与 `orchestration run --commit` 第一版 A-only 落地：
+`docs/59-release-notes-orchestration-run-controlled-execution.md` 已经把 `orchestration run --dry-run` 落地；本文档所设计的 B 侧 run lifecycle events 也已实现：
 
 - `orchestration run --dry-run`：只读 run plan preview + 稳定 `plan_hash`。
-- `orchestration run --commit` A-only：只生成 envelope draft/export 文件，不追加 event ledger。
+- `orchestration run --commit` A+B：生成 envelope draft/export 文件，并追加 `run_planned` + `run_draft_exported` lifecycle events 到 event ledger，all-or-nothing 回滚。
 
-本文档是进入 **B 侧 run lifecycle events** 实现前的 **design gate**。目标不是放开真实 adapter execution，而是让 run commit 具备可回放、可审计的 event trail，同时保持受控写入边界。
+本文档既是进入 B 侧实现前的 design gate，也作为实现后的设计记录。目标不是放开真实 adapter execution，而是让 run commit 具备可回放、可审计的 event trail，同时保持受控写入边界。
 
 遵循的原则仍然是：
 
 - guardrail 是长期内核，但不阻塞主线。
-- 积木式可插拔：run lifecycle events 只补充 event trail，不替代 A-only envelope draft export，也不改变 dry-run/commit 语义。
+- 积木式可插拔：run lifecycle events 只补充 event trail，不替代 envelope draft export，也不改变 dry-run/commit 语义。
 - 不引入 DB / service / UI；写入仍然受控、显式、可审计、可回滚。
 - 当前阶段 commit 仍不等于真实外部执行；仍然禁止网络访问、消息发送、真实 adapter execution、文件系统写删（受控写入路径除外）。
 
@@ -96,14 +96,14 @@ B 侧优先复用 `runtime event append --commit` / `runtime event import --comm
 
 `run_blocked` 仅在 A/B 写入前被阻断时使用，且只写一条 blocked 事件；不写失败细节 payload。
 
-## 与 A-only commit 的组合策略
+## 与 envelope draft commit 的组合策略
 
-### 当前 A-only（已落地）
+### 当前 A+B
 
-- 只生成 envelope draft/export 文件。
-- 不追加 event ledger。
+- 生成 envelope draft/export 文件（A）。
+- 追加 `run_planned` + `run_draft_exported` lifecycle events 到 event ledger（B）。
 
-### B 实现后升级为 A+B
+### A+B 组合流程
 
 组合 commit 流程：
 
@@ -203,10 +203,13 @@ B 第一版建议要求显式 `--events-file`，避免默认写真实仓库 `tas
 - `docs/58-orchestration-run-controlled-execution-design.md` 定义了 A/B 产物策略；本文档把 B 侧 event append 的 schema、payload、顺序、回滚规则讲清楚。
 - `docs/59-release-notes-orchestration-run-controlled-execution.md` 记录了 A-only 落地；本文档是 B 侧实现的直接前置。
 
+## 实现状态
+
+- `tasks/event.schema.json` 已新增 `run_planned`、`run_draft_exported`、`run_blocked` enum 值，并补测试。
+- `orchestration run --commit` 已按 A+B 实现：先 A（envelope draft export），再 B（lifecycle events batch append），all-or-nothing 回滚。
+- commit 要求显式 `--events-file`，默认不写真实仓库 ledger。
+
 ## 下一步建议
 
-1. review 并确认本文档中的 event types、metadata 字段、event_id 生成与重复 commit 防护策略。
-2. 在 `tasks/event.schema.json` 中新增 `run_planned`、`run_draft_exported`、`run_blocked` enum 值并补测试。
-3. 实现 `orchestration run --commit` A+B：先 A（envelope draft export），再 B（lifecycle events batch append），all-or-nothing 回滚。
-4. 实现时要求显式 `--events-file`，默认不写真实仓库 ledger。
-5. 在此稳定前，不实现 `run_commit_failed` event、retry / fallback 自动化、`orchestration task submit --commit`、真实 adapter execution。
+1. 观察 A+B commit 在实际使用中的稳定性，再决定是否引入 `run_blocked` 事件写入或 `run_commit_failed` 预留讨论。
+2. 在此稳定前，不实现 retry / fallback 自动化、`orchestration task submit --commit`、真实 adapter execution。

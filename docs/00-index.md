@@ -65,6 +65,7 @@
 - `58-orchestration-run-controlled-execution-design.md`
 - `59-release-notes-orchestration-run-controlled-execution.md`
 - `60-orchestration-run-lifecycle-events-design.md`
+- `61-release-notes-orchestration-run-lifecycle-events.md`
 
 适合：想理解项目如何从 guardrail 内核演进成中枢运行台、以及最小执行闭环如何串起 adapter / routing / state 的读者。
 
@@ -82,6 +83,7 @@
 - `58-orchestration-run-controlled-execution-design.md`
 - `59-release-notes-orchestration-run-controlled-execution.md`
 - `60-orchestration-run-lifecycle-events-design.md`
+- `61-release-notes-orchestration-run-lifecycle-events.md`
 
 适合：想知道每一阶段交付了什么、能力如何封版的读者。
 

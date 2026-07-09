@@ -1687,10 +1687,12 @@ def _emit_run_commit_result(result: RunCommitResult, json_output: bool) -> int:
         if write_summary:
             print(
                 f"write: output={write_summary.get('output') or '-'} "
+                f"events_file={write_summary.get('events_file') or '-'} "
                 f"committed={write_summary.get('committed', False)} "
                 f"rolled_back={write_summary.get('rolled_back', False)} "
                 f"post_validate={write_summary.get('post_validate') or '-'} "
-                f"post_inspect={write_summary.get('post_inspect') or '-'}"
+                f"post_inspect={write_summary.get('post_inspect') or '-'} "
+                f"events={write_summary.get('appended_event_count', 0)}"
             )
         if result.artifact_ref:
             ref = result.artifact_ref
@@ -1700,6 +1702,15 @@ def _emit_run_commit_result(result: RunCommitResult, json_output: bool) -> int:
                 f"adapter={ref.get('adapter_id') or '-'} "
                 f"operation={ref.get('operation') or '-'}"
             )
+        if result.event_refs:
+            print("events:")
+            for ref in result.event_refs:
+                print(
+                    f"- {ref.get('event_id')} "
+                    f"type={ref.get('event_type')} "
+                    f"task={ref.get('task_id')} "
+                    f"request={ref.get('request_id')}"
+                )
         if result.findings:
             for finding in result.findings:
                 print(f"- {finding.rule_id}: {finding.message}")
@@ -1748,6 +1759,7 @@ def _cmd_orchestration_run(args: argparse.Namespace) -> int:
             capability=capability,
             output=getattr(args, "output", None),
             expected_plan_hash=getattr(args, "expected_plan_hash", None),
+            events_file=getattr(args, "events_file", None),
             adapter_id=getattr(args, "adapter", None),
             operation=getattr(args, "operation", None),
             target=getattr(args, "target", None),
@@ -2470,6 +2482,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     orchestration_run_parser.add_argument(
         "--expected-plan-hash", default=None, help="Expected plan hash from a prior dry-run (required for --commit)"
+    )
+    orchestration_run_parser.add_argument(
+        "--events-file", default=None, help="Event ledger JSONL path for run lifecycle events (required for --commit)"
     )
     orchestration_run_parser.add_argument(
         "--require-dry-run", action="store_true", help="Require a dry-run review context (must provide expected plan hash)"

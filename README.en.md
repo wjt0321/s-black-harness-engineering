@@ -88,11 +88,12 @@ Current estimate:
 - 🟡 Stage 11 — Capability Routing Model (documented, needs further refinement)
 - 🟡 Stage 12 — Control Plane State Model (documented, needs further refinement)
 - 🟡 Stage 13 — Backend-first API Boundary (documented, protocol choice still deferred)
-- 🟡 Stage 14 — Minimal orchestration-hub execution loop (documents, CLI draft, and run-side A-only commit landed)
+- 🟡 Stage 14 — Minimal orchestration-hub execution loop (documents, CLI draft, and run-side A+B commit landed)
 - 🟡 Stage 15 — Backend preparation before UI / dashboard (read-model CLI first version landed, frontend still deferred)
 - 🟡 Stage 15.5 — Orchestration controlled-write boundary (first controlled handoff / approval resolve landed)
 - ✅ Stage 15.7 — Orchestration Run Dry-run landed
 - ✅ Stage 15.8 — Orchestration Run Commit (A-only) landed
+- ✅ Stage 15.9 — Orchestration Run Lifecycle Events landed
 - ⚪ Stage 16 — UI / Control Panel (future)
 
 ### The Most Accurate Current Read
@@ -127,7 +128,7 @@ Implemented capability highlights:
 - documentation backbone for orchestration-hub vision, adapter interface, capability routing, and control-plane state
 - Stage 15 read-model CLI: `orchestration overview`, `orchestration task list/get`, `orchestration run list/inspect`, `orchestration approval list/get`, `orchestration artifact list/get`, `orchestration report generate`
 - Stage 15.5 controlled handoff: `orchestration route preview`, `orchestration preflight`, controlled-write `orchestration approval resolve` (records decision only, does not execute original request)
-- Stage 15.7/15.8 run controlled execution: `orchestration run --dry-run` (read-only plan preview + plan_hash), controlled-write `orchestration run --commit` (A-only envelope draft export, no real adapter execution, no event append)
+- Stage 15.7/15.8/15.9 run controlled execution: `orchestration run --dry-run` (read-only plan preview + plan_hash), controlled-write `orchestration run --commit` (A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events, no real adapter execution)
 
 ## Current Boundaries
 
@@ -173,8 +174,12 @@ If this is your first time in the repository, read in this order:
 12. `docs/55-release-notes-orchestration-read-models.md`
 13. `docs/56-orchestration-controlled-write-boundary.md`
 14. `docs/57-release-notes-orchestration-controlled-handoff.md`
-15. `docs/10-cli-poc-usage.md`
-16. `docs/21-controlled-write-boundaries.md`
+15. `docs/58-orchestration-run-controlled-execution-design.md`
+16. `docs/59-release-notes-orchestration-run-controlled-execution.md`
+17. `docs/60-orchestration-run-lifecycle-events-design.md`
+18. `docs/61-release-notes-orchestration-run-lifecycle-events.md`
+19. `docs/10-cli-poc-usage.md`
+20. `docs/21-controlled-write-boundaries.md`
 
 The documents `docs/47-orchestration-hub-vision.md` through `docs/54-backend-preparation-before-ui.md` form the orchestration-hub backend backbone; read them in numbered order.
 

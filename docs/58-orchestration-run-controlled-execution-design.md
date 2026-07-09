@@ -8,7 +8,7 @@
 - `orchestration preflight`：只读 routing + guardrail 聚合 handoff。
 - `orchestration approval resolve`：event-ledger append 方案记录审批决议。
 
-本文档是进入 `orchestration run --dry-run / --commit` 写入实现前的 **design gate**。`orchestration run --dry-run` 与 `--commit` 第一版（A-only envelope draft export）已按本文档实现；B（run lifecycle events append）仍待实现。目标不是放开真实 adapter execution，而是先定义：
+本文档是进入 `orchestration run --dry-run / --commit` 写入实现前的 **design gate**。`orchestration run --dry-run` 与 `--commit`（A+B：envelope draft export + run lifecycle events append）已按本文档实现。目标不是放开真实 adapter execution，而是先定义：
 
 1. `orchestration run --dry-run` 输出什么产物、如何生成稳定的 `plan_hash`。
 2. `orchestration run --commit` 把已审阅的 run plan 沉淀到哪些受控存储、失败如何回滚。
@@ -112,7 +112,7 @@ dry-run 输出禁止包含：
 
 `orchestration run --commit` 不执行真实外部 adapter；它只把已审阅的 run plan 沉淀到项目内受控存储。
 
-第一版已按 **A-only** 落地：只生成 envelope draft/export 文件，不追加 run lifecycle events。B（run lifecycle events append）作为 immediate follow-up，仍在设计/实现队列中。
+已按 **A+B** 落地：先生成 envelope draft/export 文件（A），再追加 `run_planned` + `run_draft_exported` run lifecycle events（B），all-or-nothing 回滚。
 
 设计目标建议按 **A + B 组合产物策略** 演进，但做成 all-or-nothing：
 
@@ -153,7 +153,7 @@ event 安全字段：
 3. 若 A 失败，不写 B；若 B 失败，必须回滚 A（删除刚生成的 envelope draft 文件）并按 byte size 回滚 B 已追加的 event ledger 内容。
 4. 成功后返回写入证据：`envelope_path`、`event_ids`、`plan_hash`、`appended_bytes`。
 
-> 第一版已降级为只做 A（envelope draft export），把 B 作为 immediate follow-up。当前实现不追加 event ledger，也不变更 `tasks/event.schema.json`。
+> 已实现 A+B：`run_planned` + `run_draft_exported` 已进入 `tasks/event.schema.json` enum，并在 commit 成功路径批量追加到 event ledger。
 
 ## freeze guard
 
@@ -281,5 +281,5 @@ commit 后至少执行：
 1.  review 并确认本文档中的 A/B 产物策略（建议 A+B，但允许第一版先做 A）。
 2.  若采用 B（event append），先在 `tasks/event.schema.json` 中新增候选 event types 并补测试。
 3.  ~~实现 `orchestration run --dry-run`：只读 plan preview + `plan_hash`。~~ 已落地。
-4.  ~~实现 `orchestration run --commit` A-only：按本文档产物形态沉淀 envelope draft，支持 `--expected-plan-hash` / `--require-dry-run`。~~ 已落地；B（run lifecycle events）仍待实现，详见 `docs/60-orchestration-run-lifecycle-events-design.md`。
+4.  ~~实现 `orchestration run --commit` A+B：按本文档产物形态沉淀 envelope draft 并追加 run lifecycle events，支持 `--expected-plan-hash` / `--require-dry-run` / `--events-file`，all-or-nothing 回滚。~~ 已落地。
 5.  在此稳定前，不实现 `orchestration task submit --commit`、retry / fallback 自动化、真实 adapter execution。

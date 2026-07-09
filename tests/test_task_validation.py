@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from agent_runtime.cli import main
 from agent_runtime.task_validation import validate_records
 
@@ -86,6 +88,20 @@ def test_validate_valid_event_jsonl(tmp_path):
         '{"event_id":"evt-20260703-001","task_id":"task-20260703-001",'
         '"timestamp":"2026-07-03T00:00:00+08:00","actor":"user","event_type":"created",'
         '"message":"created"}\n',
+    )
+    result = validate_records(root, "tasks/events.jsonl", "event")
+    assert result.status == "pass"
+
+
+@pytest.mark.parametrize("event_type", ["run_planned", "run_draft_exported", "run_blocked", "approval_resolved"])
+def test_validate_run_lifecycle_event_types(tmp_path, event_type):
+    root = _prepare_schema_root(tmp_path)
+    _write_record(
+        root,
+        "tasks/events.jsonl",
+        '{"event_id":"evt-20260703-003","task_id":"task-20260703-001",'
+        '"timestamp":"2026-07-03T00:00:00+08:00","actor":"cli",'
+        f'"event_type":"{event_type}","message":"lifecycle event"}}\n',
     )
     result = validate_records(root, "tasks/events.jsonl", "event")
     assert result.status == "pass"

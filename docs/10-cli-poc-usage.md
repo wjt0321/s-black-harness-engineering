@@ -1709,7 +1709,7 @@ python -m agent_runtime.cli orchestration run \
 - 聚合 `orchestration route preview` + `orchestration preflight` + `runtime plan` 的安全摘要，输出候选 envelope/events/artifact/evidence refs 与 `plan_hash`。
 - 不回显完整 input payload、target 原文、`raw_ref`、`decision_ref`、evidence descriptions。
 
-Run commit（受控写入，A-only envelope draft export）：
+Run commit（受控写入，A+B：envelope draft export + lifecycle events append）：
 
 ```bash
 # 1. 先 dry-run 拿到 plan_hash
@@ -1723,7 +1723,7 @@ python -m agent_runtime.cli orchestration run \
   --dry-run \
   --json
 
-# 2. 再用匹配的 plan_hash commit（仅沉淀 envelope draft，不执行 adapter，不追加 events）
+# 2. 再用匹配的 plan_hash commit（沉淀 envelope draft + run lifecycle events，不执行 adapter）
 python -m agent_runtime.cli orchestration run \
   --task-id task-20260703-001 \
   --request-id req-20260703-001 \
@@ -1733,14 +1733,16 @@ python -m agent_runtime.cli orchestration run \
   --target origin/main \
   --commit \
   --expected-plan-hash sha256:... \
-  --output drafts/runtime/task-20260703-001/req-20260703-001.envelope.json
+  --output drafts/runtime/task-20260703-001/req-20260703-001.envelope.json \
+  --events-file tasks/events.jsonl
 ```
 
 说明：
 
-- `--commit` 必须提供 `--expected-plan-hash`；会重新 dry-run 并校验 hash，mismatch 返回 `blocked`，不写。
-- `--output` 必须位于 `drafts/runtime/` 下、为 `.json`、不覆盖已存在文件；写入后做 schema/inspect post-check，失败删除新文件回滚。
-- 第一版不追加 event ledger；若 preflight `needs_approval`/`blocked`/`needs_input`/`error`，均不写。
+- `--commit` 必须提供 `--expected-plan-hash` 与 `--events-file`；会重新 dry-run 并校验 hash，mismatch 返回 `blocked`，不写 A/B。
+- `--output` 必须位于 `drafts/runtime/` 下、为 `.json`、不覆盖已存在文件；写入后做 schema/inspect post-check，失败删除新文件并回滚 event ledger。
+- 成功路径追加 `run_planned` + `run_draft_exported` 两条 lifecycle events；若 B 失败，A 生成的 envelope draft 删除，event ledger 按原始 byte size truncate 回滚。
+- 若 preflight `needs_approval`/`blocked`/`needs_input`/`error`，均不写 A/B。
 - 不执行真实 adapter、不访问网络、不发送消息。
 
 审批决议（受控写入，追加 event ledger）：
@@ -1775,7 +1777,7 @@ python -m agent_runtime.cli orchestration approval resolve \
 - `orchestration report generate` 是对 `runtime report` 的薄包装，每次实时聚合，不沉淀为独立 Report 集合；`report list` / `report get` 尚未实现。
 - `orchestration approval resolve` 与 `orchestration run --commit` 是当前 orchestration 命名空间中的受控写入命令：
   - `approval resolve` 只追加 `approval_resolved` event，不修改输入 envelope，不直接执行原请求。
-  - `run --commit` 第一版只沉淀 envelope draft 文件，不追加 event ledger，不执行真实 adapter。
+  - `run --commit` 沉淀 envelope draft 文件并追加 `run_planned` + `run_draft_exported` lifecycle events，不执行真实 adapter。
   - 两者都需显式 `--commit`、写前/写后校验、失败回滚；granted 后仍需重新发起 preflight/run。
 - 所有命令都支持 `--json`，人类输出保持紧凑并脱敏。
 
@@ -1785,7 +1787,7 @@ python -m agent_runtime.cli orchestration approval resolve \
 - 不访问网络。
 - 不发送消息。
 - 不删除文件。
-- 受控写入命令仅限 `orchestration approval resolve --commit` 与 `orchestration run --commit`：两者都遵循 `--dry-run | --commit` 显式模式、写前/写后校验、失败回滚；`run --commit` 第一版仅沉淀 envelope draft 文件，不追加 event ledger。
+- 受控写入命令仅限 `orchestration approval resolve --commit` 与 `orchestration run --commit`：两者都遵循 `--dry-run | --commit` 显式模式、写前/写后校验、失败回滚；`run --commit` 沉淀 envelope draft 文件并追加 run lifecycle events。
 - 不读取 `.env`、`.env.local` 或密钥文件。
 - 不回显完整 secret match。
 
@@ -1809,7 +1811,7 @@ python tools/public_scan.py
 ## 当前限制
 
 - `check action` 仍然只做 preflight 判断，不执行真实外部动作。
-- `tasks/tasks.jsonl` 目前只支持 CLI 查询；`tasks/events.jsonl` 可通过 `runtime event append --commit`、`runtime event import --commit` 和 `orchestration approval resolve --commit` 受控追加，但必须有显式 `--commit`、写后校验与失败回滚；`orchestration run --commit` 第一版不追加 events，只沉淀 envelope draft 文件。
+- `tasks/tasks.jsonl` 目前只支持 CLI 查询；`tasks/events.jsonl` 可通过 `runtime event append --commit`、`runtime event import --commit`、`orchestration approval resolve --commit` 和 `orchestration run --commit` 受控追加，但必须有显式 `--commit`、写后校验与失败回滚；`orchestration run --commit` 追加 `run_planned` + `run_draft_exported` lifecycle events。
 - 还没有后台服务。
 - 还没有插件系统或真实 adapter 执行。
 

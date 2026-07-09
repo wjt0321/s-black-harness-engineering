@@ -88,11 +88,12 @@
 - 🟡 Stage 11 — Capability Routing Model（文档已起，后续待继续细化）
 - 🟡 Stage 12 — Control Plane State Model（文档已起，后续待继续细化）
 - 🟡 Stage 13 — Backend-first API Boundary（设计文档已落地，协议选择仍暂缓）
-- 🟡 Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A-only commit 已落地）
+- 🟡 Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A+B commit 已落地）
 - 🟡 Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，前端实现仍暂缓）
 - 🟡 Stage 15.5 — Orchestration 受控写入边界（第一批 controlled handoff / approval resolve 已落地）
 - ✅ Stage 15.7 — Orchestration Run Dry-run 落地
 - ✅ Stage 15.8 — Orchestration Run Commit（A-only）落地
+- ✅ Stage 15.9 — Orchestration Run Lifecycle Events 落地
 - ⚪ Stage 16 — UI / Control Panel（远期）
 
 ### 现在最明确的位置
@@ -127,7 +128,7 @@
 - 中枢台总蓝图、adapter 接口、capability routing、control plane state 文档主线
 - Stage 15 read-model CLI：`orchestration overview`、`orchestration task list/get`、`orchestration run list/inspect`、`orchestration approval list/get`、`orchestration artifact list/get`、`orchestration report generate`
 - Stage 15.5 controlled handoff：`orchestration route preview`、`orchestration preflight`、受控写入 `orchestration approval resolve`（只记录 decision，不执行原请求）
-- Stage 15.7/15.8 run controlled execution：`orchestration run --dry-run`（只读 plan preview + plan_hash）、受控写入 `orchestration run --commit`（A-only envelope draft export，不执行真实 adapter，不追加 events）
+- Stage 15.7/15.8/15.9 run controlled execution：`orchestration run --dry-run`（只读 plan preview + plan_hash）、受控写入 `orchestration run --commit`（A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events，不执行真实 adapter）
 
 ## 当前边界
 
@@ -173,8 +174,12 @@ python -m agent_runtime.cli policies list
 12. `docs/55-release-notes-orchestration-read-models.md`
 13. `docs/56-orchestration-controlled-write-boundary.md`
 14. `docs/57-release-notes-orchestration-controlled-handoff.md`
-15. `docs/10-cli-poc-usage.md`
-16. `docs/21-controlled-write-boundaries.md`
+15. `docs/58-orchestration-run-controlled-execution-design.md`
+16. `docs/59-release-notes-orchestration-run-controlled-execution.md`
+17. `docs/60-orchestration-run-lifecycle-events-design.md`
+18. `docs/61-release-notes-orchestration-run-lifecycle-events.md`
+19. `docs/10-cli-poc-usage.md`
+20. `docs/21-controlled-write-boundaries.md`
 
 其中 `docs/47-orchestration-hub-vision.md` 到 `docs/54-backend-preparation-before-ui.md` 是中枢台后端主线，建议按编号顺序阅读。
 
