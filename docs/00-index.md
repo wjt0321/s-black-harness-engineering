@@ -58,6 +58,7 @@
 - `51-backend-first-api-boundary.md`
 - `52-minimal-orchestration-loop.md`
 - `53-minimal-orchestration-loop-cli-draft.md`
+- `54-backend-preparation-before-ui.md`
 
 适合：想理解项目如何从 guardrail 内核演进成中枢运行台、以及最小执行闭环如何串起 adapter / routing / state 的读者。
 

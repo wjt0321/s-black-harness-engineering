@@ -163,10 +163,11 @@ If this is your first time in the repository, read in this order:
 8. `docs/51-backend-first-api-boundary.md`
 9. `docs/52-minimal-orchestration-loop.md`
 10. `docs/53-minimal-orchestration-loop-cli-draft.md`
-11. `docs/10-cli-poc-usage.md`
-12. `docs/21-controlled-write-boundaries.md`
+11. `docs/54-backend-preparation-before-ui.md`
+12. `docs/10-cli-poc-usage.md`
+13. `docs/21-controlled-write-boundaries.md`
 
-The documents `docs/47-orchestration-hub-vision.md` through `docs/53-minimal-orchestration-loop-cli-draft.md` form the orchestration-hub backend backbone; read them in numbered order.
+The documents `docs/47-orchestration-hub-vision.md` through `docs/54-backend-preparation-before-ui.md` form the orchestration-hub backend backbone; read them in numbered order.
 
 If you only want the full progress ledger:
 
