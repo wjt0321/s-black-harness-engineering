@@ -265,10 +265,11 @@
 
 - 资源模型与操作模型已在 51 中定义。
 - 协议（REST / RPC / 本地进程调用）和鉴权细节仍不在本阶段展开。
+- 本阶段仍保持“文档先行”，不进入协议实现。
 
 ---
 
-## Stage 14 — 中枢台最小编排闭环（后续实现阶段）
+## Stage 14 — 中枢台最小编排闭环（设计文档已落地，受控实现仍暂缓）
 
 目标：在后端抽象稳定后，跑通第一个真正体现“中枢台”特征的最小闭环。
 
@@ -298,25 +299,37 @@
 
 ---
 
-## Stage 15 — UI / 看板前的后端准备（设计文档已落地，前端实现仍暂缓）
+## Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，前端实现仍暂缓）
 
 目标：在不急着做前端的前提下，先把未来看板所需后端对象和操作面准备齐。
 
 主要交付物：
 
 - `docs/54-backend-preparation-before-ui.md`
+- `docs/55-release-notes-orchestration-read-models.md`
+- 十只读 `orchestration *` CLI 命令（见 55）
 
 要做的事：
 
 - 梳理“总览页、任务页、执行页、审批页、产物页、报告页”分别需要哪些状态对象
 - 确认 CLI 输出与状态模型的映射关系
-- 确认未来服务化时最小接口边界
+- 为每一类页面提供最小只读 CLI read model
+
+已落地能力：
+
+- 总览页：`orchestration overview`
+- 任务页：`orchestration task list` / `orchestration task get`
+- 执行页：`orchestration run list` / `orchestration run inspect`
+- 审批页：`orchestration approval list` / `orchestration approval get`
+- 产物页：`orchestration artifact list` / `orchestration artifact get`
+- 报告页：`orchestration report generate`
 
 说明：
 
 - 这一阶段仍以“后端先行”为原则
-- 不是现在马上做 Web UI
-- 但必须按未来能长出 UI 的方式组织后端
+- 不是现在马上做 Web UI，也不是做服务/数据库
+- 所有 read model 都是只读 CLI，不写 ledger、不执行 adapter、不访问网络
+- Run / Approval / Artifact 当前为 envelope-scoped；Report 为 runtime-report-backed，均未引入独立持久集合
 
 ---
 

@@ -1603,6 +1603,65 @@ python -m agent_runtime.cli --assignee media-agent policies list
 | `4` | 需要更多输入 |
 | `5` | 校验失败 |
 
+## Orchestration Read-Model CLI
+
+Stage 15 第一版新增了一组 `orchestration` 命名空间的只读命令，作为未来看板各页面的最小 read model 雏形。这些命令都不写 ledger、不执行 adapter、不访问网络。
+
+总览聚合：
+
+```bash
+python -m agent_runtime.cli orchestration overview
+python -m agent_runtime.cli orchestration overview --json
+```
+
+任务页：
+
+```bash
+python -m agent_runtime.cli orchestration task list
+python -m agent_runtime.cli orchestration task list --status running --json
+python -m agent_runtime.cli orchestration task get --task-id task-20260703-001
+python -m agent_runtime.cli orchestration task get --task-id task-20260703-001 --json
+```
+
+执行页（envelope-scoped）：
+
+```bash
+python -m agent_runtime.cli orchestration run list --envelope adapters/execution-envelope.examples.json
+python -m agent_runtime.cli orchestration run list --envelope adapters/execution-envelope.examples.json --task-id task-20260703-001 --json
+python -m agent_runtime.cli orchestration run inspect --task-id task-20260703-001 --request-id req-20260703-002 --envelope adapters/execution-envelope.examples.json
+```
+
+审批页（envelope-scoped）：
+
+```bash
+python -m agent_runtime.cli orchestration approval list --envelope adapters/execution-envelope.examples.json
+python -m agent_runtime.cli orchestration approval list --envelope adapters/execution-envelope.examples.json --status pending --json
+python -m agent_runtime.cli orchestration approval get --approval-id appr-20260703-001 --envelope adapters/execution-envelope.examples.json
+```
+
+产物页（envelope-scoped）：
+
+```bash
+python -m agent_runtime.cli orchestration artifact list --envelope adapters/execution-envelope.examples.json
+python -m agent_runtime.cli orchestration artifact list --envelope adapters/execution-envelope.examples.json --type adapter_request --json
+python -m agent_runtime.cli orchestration artifact get --artifact-id req-20260703-001 --envelope adapters/execution-envelope.examples.json
+```
+
+报告页（runtime-report-backed）：
+
+```bash
+python -m agent_runtime.cli orchestration report generate \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-001 \
+  --envelope adapters/execution-envelope.examples.json
+```
+
+边界说明：
+
+- `orchestration run/approval/artifact list|get` 当前都是 envelope-scoped read model，没有独立 Run / Approval / Artifact 持久集合。
+- `orchestration report generate` 是对 `runtime report` 的薄包装，每次实时聚合，不沉淀为独立 Report 集合；`report list` / `report get` 尚未实现。
+- 所有命令都支持 `--json`，人类输出保持紧凑并脱敏。
+
 ## 当前安全边界
 
 第一版 CLI 保持只读：

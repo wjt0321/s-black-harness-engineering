@@ -1257,3 +1257,44 @@
 - 已跑 `python -m pytest -q`：通过。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
 - 已跑 `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-09 — Stage 15 第一版 read-model CLI 收口
+
+- 实现并验证 Stage 15 六类页面视角的最小只读 CLI read model：
+  - 总览页：`orchestration overview`
+  - 任务页：`orchestration task list` / `orchestration task get`
+  - 执行页：`orchestration run list` / `orchestration run inspect`
+  - 审批页：`orchestration approval list` / `orchestration approval get`
+  - 产物页：`orchestration artifact list` / `orchestration artifact get`
+  - 报告页：`orchestration report generate`
+- 新增对应 Python 模块：
+  - `agent_runtime/orchestration_overview.py`
+  - `agent_runtime/orchestration_tasks.py`
+  - `agent_runtime/orchestration_run.py`
+  - `agent_runtime/orchestration_approval.py`
+  - `agent_runtime/orchestration_artifact.py`
+  - `agent_runtime/orchestration_report.py`
+- 在 `agent_runtime/cli.py` 中注册所有 `orchestration` 子命令，统一支持 `--json` 与项目根目录 `--root`。
+- 新增对应测试文件：
+  - `tests/test_orchestration_overview.py`
+  - `tests/test_orchestration_tasks.py`
+  - `tests/test_orchestration_run_list.py`
+  - `tests/test_orchestration_approval.py`
+  - `tests/test_orchestration_artifact.py`
+  - `tests/test_orchestration_report.py`
+- 所有命令保持只读：不写 ledger/draft/envelope、不执行 adapter、不访问网络、不引入服务/API/数据库/UI。
+- 安全边界：不回显完整 `input` payload、`raw_ref`、`decision_ref`、`payload_refs`、evidence descriptions 或 secret match。
+- 资源边界明确：Run / Approval / Artifact 当前为 envelope-scoped read model；Report 为 runtime-report-backed 实时聚合，未引入独立持久集合。
+- 新增阶段收口文档 `docs/55-release-notes-orchestration-read-models.md`。
+- 更新 `docs/00-index.md`：在中枢台后端主线与发布/阶段收口列表中加入 55，并更新「当前最重要的几份文档」。
+- 更新 `docs/02-roadmap.md`：Stage 15 状态从「设计文档已落地」调整为「read-model CLI 第一版已落地」，补充 Stage 13/14 状态说明，不将 Stage 16 标为开始。
+- 更新 `docs/10-cli-poc-usage.md`：新增「Orchestration Read-Model CLI」章节，给出六类页面命令示例与边界说明。
+- 更新 `README.md` / `README.en.md`：同步 Stage 13-15 状态、调整进度估算、在已落地能力列表中加入 read-model CLI、在推荐阅读中加入 55。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+  - GitHub Actions CI：在 Python 3.11 / 3.12 上 pytest + doctor + ledger smoke checks + public_scan 全部通过。
+- 本阶段不新增受控写入 orchestration 命令（如 `orchestration run`、`orchestration approval resolve`、`orchestration task submit`），这些仍留在 53 的命令草案中，待后续进入 Stage 14 受控实现时再展开。
+- 不引入 Windows 绝对路径、真实 agent id、内部称谓、敏感信息。

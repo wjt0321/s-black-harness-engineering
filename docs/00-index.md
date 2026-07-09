@@ -59,6 +59,7 @@
 - `52-minimal-orchestration-loop.md`
 - `53-minimal-orchestration-loop-cli-draft.md`
 - `54-backend-preparation-before-ui.md`
+- `55-release-notes-orchestration-read-models.md`
 
 适合：想理解项目如何从 guardrail 内核演进成中枢运行台、以及最小执行闭环如何串起 adapter / routing / state 的读者。
 
@@ -71,6 +72,7 @@
 - `18-release-notes-runtime-planning-bridge.md`
 - `20-release-notes-runtime-report.md`
 - `23` ~ `46` 各阶段 release notes
+- `55-release-notes-orchestration-read-models.md`
 
 适合：想知道每一阶段交付了什么、能力如何封版的读者。
 
@@ -81,8 +83,8 @@
 1. `01-vision-and-boundaries.md`
 2. `10-cli-poc-usage.md`
 3. `21-controlled-write-boundaries.md`
-4. `45-runtime-event-import-strict-freeze-mode.md`
-5. `46-release-notes-runtime-event-import-strict-freeze.md`
+4. `47-orchestration-hub-vision.md`
+5. `55-release-notes-orchestration-read-models.md`
 
 ## 其他入口
 
