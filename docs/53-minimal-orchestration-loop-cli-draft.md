@@ -28,6 +28,7 @@
 | `python -m agent_runtime.cli orchestration overview` | 已存在：只读总览聚合。 | `orchestration overview --json` |
 | `python -m agent_runtime.cli orchestration task list` | 已存在：只读任务列表，支持 `--status` 过滤。 | `orchestration task list --json` |
 | `python -m agent_runtime.cli orchestration task get` | 已存在：只读任务详情 + 事件时间线。 | `orchestration task get --task-id ... --json` |
+| `python -m agent_runtime.cli orchestration run inspect` | 已存在：只读 run 检查（当前为 `runtime report` 的薄包装）。 | `orchestration run inspect --task-id ... --request-id ... --envelope ...` |
 | `python -m agent_runtime.cli orchestration <draft> ...` | 为 52 闭环设计的其他候选子命令，**当前尚未实现**，仅作草案参考。 | `orchestration route preview` |
 | `orchestrator.sh` / `loop.sh` | 示意性脚本名，表示未来可能由脚本/自动化工作流编排的调用序列。 | — |
 
@@ -191,6 +192,11 @@ python -m agent_runtime.cli orchestration task get \
   --task-id task-20260709-001 \
   --json
 
+python -m agent_runtime.cli orchestration run inspect \
+  --task-id task-20260709-001 \
+  --request-id req-20260709-001 \
+  --envelope drafts/runtime/task-20260709-001/req-20260709-001.envelope.json
+
 python -m agent_runtime.cli task status task-20260709-001
 python -m agent_runtime.cli task events task-20260709-001
 
@@ -289,6 +295,7 @@ python -m agent_runtime.cli orchestration run \
 | `orchestration overview` | 总览聚合（已存在） |
 | `orchestration task list` | 任务列表（已存在） |
 | `orchestration task get` | 任务详情 + 事件时间线（已存在） |
+| `orchestration run inspect` | run 检查（已存在，`runtime report` 薄包装） |
 | `orchestration route preview`（草案） | 预览 routing 结果 |
 | `orchestration preflight`（草案） | 聚合 preflight |
 | `orchestration inspect / report`（草案） | 查看 run / report |
@@ -392,7 +399,7 @@ python -m agent_runtime.cli orchestration report \
 
 本文不实现：
 
-- 除 `orchestration overview`、`orchestration task list`、`orchestration task get` 之外的任何新的 CLI 子命令。
+- 除 `orchestration overview`、`orchestration task list`、`orchestration task get`、`orchestration run inspect` 之外的任何新的 CLI 子命令。
 - HTTP / RPC / service 接口。
 - 前端或看板。
 - 数据库选型。

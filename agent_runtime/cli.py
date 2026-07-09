@@ -35,6 +35,7 @@ from .runtime_task_create import TaskCreateDryRunResult, create_task, create_tas
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
+from .orchestration_run import RunInspectResult, inspect_run
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -1398,6 +1399,61 @@ def _cmd_orchestration_task_get(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def _cmd_orchestration_run_inspect(args: argparse.Namespace) -> int:
+    """Render a read-only run inspect view (thin wrapper over runtime report)."""
+    root = _root_path(args)
+    result = inspect_run(
+        root,
+        task_id=args.task_id,
+        request_id=args.request_id,
+        envelope_file=args.envelope,
+        tasks_file=getattr(args, "tasks_file", None),
+        events_file=getattr(args, "events_file", None),
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("RUN INSPECT")
+        print(
+            f"task_id={result.task_id} "
+            f"request_id={result.request_id} "
+            f"status={result.status} "
+            f"task_status={result.task_status or '-'}"
+        )
+        if result.envelope_summary is not None:
+            artifact_counts = result.envelope_summary.get("artifact_counts", {})
+            counts = ", ".join(f"{k}={v}" for k, v in artifact_counts.items())
+            print(f"Envelope: {counts or 'no artifacts'}")
+        else:
+            print("Envelope: validation failed")
+
+        if result.gate is not None:
+            print(
+                f"Gate: stage={result.gate.get('stage', '-')}, "
+                f"can_proceed={result.gate.get('can_proceed', False)}"
+            )
+        else:
+            print("Gate: unavailable")
+
+        if result.ledger is not None:
+            counts = result.ledger.get("counts", {})
+            counts_str = ", ".join(f"{k}={v}" for k, v in counts.items())
+            print(f"Ledger: {result.ledger.get('status', '-')} ({counts_str})")
+        else:
+            print("Ledger: unavailable")
+
+        if result.blockers:
+            print("Blockers:")
+            for blocker in result.blockers:
+                print(f"- {blocker}")
+        else:
+            print("Blockers: none")
+
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_task_status(args: argparse.Namespace) -> int:
     root = _root_path(args)
     task = find_task(root, args.task_id)
@@ -1739,6 +1795,35 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_task_get_parser)
     orchestration_task_get_parser.set_defaults(func=_cmd_orchestration_task_get)
+
+    # orchestration run inspect
+    orchestration_run_parser = orchestration_subparsers.add_parser(
+        "run", help="Inspect orchestration runs without executing adapters"
+    )
+    orchestration_run_subparsers = orchestration_run_parser.add_subparsers(
+        dest="run_command", required=True
+    )
+
+    orchestration_run_inspect_parser = orchestration_run_subparsers.add_parser(
+        "inspect", help="Inspect a run via task_id + request_id + envelope (read-only)"
+    )
+    orchestration_run_inspect_parser.add_argument(
+        "--task-id", required=True, help="Task id"
+    )
+    orchestration_run_inspect_parser.add_argument(
+        "--request-id", required=True, help="Adapter request id"
+    )
+    orchestration_run_inspect_parser.add_argument(
+        "--envelope", required=True, help="Path to adapter execution envelope JSON file"
+    )
+    orchestration_run_inspect_parser.add_argument(
+        "--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)"
+    )
+    orchestration_run_inspect_parser.add_argument(
+        "--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)"
+    )
+    _add_global_args(orchestration_run_inspect_parser)
+    orchestration_run_inspect_parser.set_defaults(func=_cmd_orchestration_run_inspect)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

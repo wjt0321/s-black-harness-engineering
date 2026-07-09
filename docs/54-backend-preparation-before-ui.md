@@ -149,11 +149,11 @@
 
 #### 操作入口
 
-| 操作 | 类型 | 对应 51 操作 | 对应 53 草案命令 |
+| 操作 | 类型 | 对应 51 操作 | 对应 53 命令 |
 |:---|:---:|:---|:---|
-| inspect | 只读 | `RunDetail.inspect` | `orchestration inspect` |
-| 重试 | 受控写入 | `TaskAction.retry` | `orchestration run --retry` |
-| 回退 | 受控写入 | `TaskAction.fallback` | `orchestration run --fallback-to` |
+| inspect | 只读 | `RunDetail.inspect` | `orchestration run inspect`（已存在，`runtime report` 薄包装） |
+| 重试 | 受控写入 | `TaskAction.retry` | `orchestration run --retry`（草案） |
+| 回退 | 受控写入 | `TaskAction.fallback` | `orchestration run --fallback-to`（草案） |
 | 取消 | 暂不开放 | — | — |
 
 #### 与 50/51 的关系
@@ -341,6 +341,7 @@
 | 任务列表 | `python -m agent_runtime.cli orchestration task list` |
 | Task 详情 + 事件时间线 | `python -m agent_runtime.cli orchestration task get` |
 | Task 详情 / 事件流（原始） | `python -m agent_runtime.cli task status`、`task events` |
+| Run 检查 / 聚合报告 | `python -m agent_runtime.cli orchestration run inspect` |
 | Run 关联的 envelope 摘要 | `python -m agent_runtime.cli runtime draft inspect` |
 | 聚合报告 | `python -m agent_runtime.cli runtime report` |
 | Approval 状态 | `python -m agent_runtime.cli adapter approval check` |
@@ -350,7 +351,8 @@
 
 | 页面数据 | 53 草案命令 |
 |:---|:---|
-| 执行列表/详情 | `orchestration run list`、`orchestration inspect` |
+| 执行列表 | `orchestration run list` |
+| 重试 / 回退 | `orchestration run --retry`、`orchestration run --fallback-to` |
 | 审批列表/详情 | `orchestration approval list`、`orchestration approval get` |
 | 产物列表/详情 | `orchestration artifact list`、`orchestration artifact get` |
 | 报告列表/生成 | `orchestration report list`、`orchestration report` |
