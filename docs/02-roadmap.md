@@ -556,6 +556,30 @@
 
 ---
 
+## Stage 15.98 — Retry / Fallback Commit 设计（当前阶段）
+
+目标：在 retry / fallback dry-run preview 已落地、且 `v0.12.0-orchestration-foundation` 已冻结完成后，把恢复性分支的 commit 语义补成新的 design gate。
+
+本阶段要做的事：
+
+- 明确 retry commit 与 fallback commit 都继续复用现有 `orchestration run --commit` 的 A+B 事务模型
+- 明确 lineage-aware envelope metadata 与 lifecycle event metadata
+- 明确 retry/fallback commit 对 `--expected-plan-hash`、`--output`、`--events-file` 的更严格要求
+- 明确 source request 存在性校验、重复 commit 防护、approval 重新计算与 rollback 边界
+- 明确第一版是否复用现有 `run_planned` / `run_draft_exported` event_type，还是新增更细 event_type
+
+主要交付物：
+
+- `docs/70-orchestration-run-retry-fallback-commit-design.md`
+
+说明：
+
+- 本阶段仍是 design gate，不直接放开真实 adapter execution。
+- 当前更推荐先复用现有 event_type，在 metadata 中表达 lineage，降低 schema 扩张成本。
+- release notes 与实现收口留到 design gate 通过后再进入。
+
+---
+
 ## Stage 16 — UI / Control Panel（远期）
 
 目标：在后端抽象稳定后，为中枢台提供一个真正可操作、可观察、可审计的前端或看板。

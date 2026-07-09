@@ -61,6 +61,29 @@ def _setup_fake_root(tmp_path: Path) -> Path:
             "postflight_checks": [],
         }
     )
+    adapters_data["adapters"].append(
+        {
+            "id": "dummy-fallback",
+            "name": "Dummy Fallback Reader",
+            "kind": "dummy",
+            "description": "Fallback test adapter for run commit tests.",
+            "enabled": True,
+            "capabilities": ["read_file"],
+            "risk_level": "local",
+            "requires_approval": False,
+            "input_schema": {
+                "type": "object",
+                "required": ["operation", "target"],
+                "properties": {
+                    "operation": {"type": "string"},
+                    "target": {"type": "string"},
+                },
+            },
+            "output_schema": {"type": "object"},
+            "preflight_checks": ["policy_check"],
+            "postflight_checks": [],
+        }
+    )
     (adapters_dir / "adapters.sample.json").write_text(
         json.dumps(adapters_data, ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -609,3 +632,414 @@ def test_commit_does_not_modify_existing_valid_events(tmp_path: Path) -> None:
     events = _read_events(fake_root)
     assert events[0]["event_type"] == "created"
     assert [e["event_type"] for e in events[1:]] == ["run_planned", "run_draft_exported"]
+
+
+def _commit_source_run(
+    fake_root: Path,
+    task_id: str = TASK_ID,
+    request_id: str = REQUEST_ID,
+    capability: str = "read_file",
+    operation: str = "read_file",
+    target: str = "docs/06-adapter-layer.md",
+    output: str = "drafts/runtime/task-001/req-001.envelope.json",
+    events_file: str = EVENTS_FILE,
+) -> str:
+    """Commit a normal run and return its plan_hash."""
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=task_id,
+        request_id=request_id,
+        capability=capability,
+        operation=operation,
+        target=target,
+    )
+    assert dry_run.status == "pass"
+    assert dry_run.plan_hash is not None
+    result = commit_run(
+        fake_root,
+        task_id=task_id,
+        request_id=request_id,
+        capability=capability,
+        operation=operation,
+        target=target,
+        output=output,
+        expected_plan_hash=dry_run.plan_hash,
+        events_file=events_file,
+    )
+    assert result.status == "pass"
+    return dry_run.plan_hash
+
+
+def test_retry_commit_success_writes_lineage_metadata(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    source_hash = _commit_source_run(fake_root)
+
+    new_request_id = "req-20260709-002"
+    output = "drafts/runtime/task-001/req-002.envelope.json"
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=REQUEST_ID,
+    )
+    assert dry_run.status == "pass"
+    assert dry_run.plan_hash != source_hash
+
+    result = commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
+        retry_of=REQUEST_ID,
+    )
+    assert result.status == "pass"
+    assert result.lineage_type == "retry"
+    assert result.retry_of == REQUEST_ID
+
+    written_path = fake_root / output
+    assert written_path.is_file()
+    envelope = json.loads(written_path.read_text(encoding="utf-8"))
+    request = next(
+        a for a in envelope.get("artifacts", []) if a.get("artifact_type") == "adapter_request"
+    )
+    assert request.get("context", {}).get("lineage_type") == "retry"
+    assert request.get("context", {}).get("retry_of") == REQUEST_ID
+
+    events = _read_events(fake_root)
+    retry_events = [e for e in events if e.get("metadata", {}).get("request_id") == new_request_id]
+    assert [e["event_type"] for e in retry_events] == ["run_planned", "run_draft_exported"]
+    for event in retry_events:
+        metadata = event.get("metadata", {})
+        assert metadata.get("lineage_type") == "retry"
+        assert metadata.get("retry_of") == REQUEST_ID
+        assert metadata.get("mode") == "dry-run"
+        assert metadata.get("envelope_path") == output
+
+
+def test_fallback_commit_success_writes_lineage_metadata(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    _commit_source_run(fake_root)
+
+    new_request_id = "req-20260709-003"
+    output = "drafts/runtime/task-001/req-003.envelope.json"
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        fallback_from=REQUEST_ID,
+        fallback_to="dummy-fallback",
+    )
+    assert dry_run.status == "pass"
+    assert dry_run.lineage_type == "fallback"
+    assert dry_run.fallback_from == REQUEST_ID
+    assert dry_run.fallback_to == "dummy-fallback"
+
+    result = commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
+        fallback_from=REQUEST_ID,
+        fallback_to="dummy-fallback",
+    )
+    assert result.status == "pass"
+    assert result.lineage_type == "fallback"
+    assert result.fallback_from == REQUEST_ID
+    assert result.fallback_to == "dummy-fallback"
+
+    written_path = fake_root / output
+    assert written_path.is_file()
+    envelope = json.loads(written_path.read_text(encoding="utf-8"))
+    request = next(
+        a for a in envelope.get("artifacts", []) if a.get("artifact_type") == "adapter_request"
+    )
+    assert request.get("context", {}).get("lineage_type") == "fallback"
+    assert request.get("context", {}).get("fallback_from") == REQUEST_ID
+    assert request.get("context", {}).get("fallback_to") == "dummy-fallback"
+    assert request.get("adapter_id") == "dummy-fallback"
+
+    events = _read_events(fake_root)
+    fallback_events = [e for e in events if e.get("metadata", {}).get("request_id") == new_request_id]
+    assert [e["event_type"] for e in fallback_events] == ["run_planned", "run_draft_exported"]
+    for event in fallback_events:
+        metadata = event.get("metadata", {})
+        assert metadata.get("lineage_type") == "fallback"
+        assert metadata.get("fallback_from") == REQUEST_ID
+        assert metadata.get("fallback_to") == "dummy-fallback"
+        assert metadata.get("adapter_id") == "dummy-fallback"
+
+
+def test_retry_commit_missing_expected_hash_blocked_no_write(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    _commit_source_run(fake_root)
+
+    new_request_id = "req-20260709-002"
+    output = "drafts/runtime/task-001/req-002.envelope.json"
+    result = commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash=None,
+        events_file=EVENTS_FILE,
+        retry_of=REQUEST_ID,
+    )
+    assert result.status == "needs_input"
+    assert "--expected-plan-hash" in result.findings[0].message
+    assert not (fake_root / output).exists()
+    # Only source run events exist.
+    assert len(_read_events(fake_root)) == 2
+
+
+def test_retry_commit_source_request_not_found_blocked_no_write(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    # No source run committed.
+    new_request_id = "req-20260709-002"
+    output = "drafts/runtime/task-001/req-002.envelope.json"
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=REQUEST_ID,
+    )
+    result = commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
+        retry_of=REQUEST_ID,
+    )
+    assert result.status == "validation_failed"
+    assert REQUEST_ID in result.findings[0].message
+    assert not (fake_root / output).exists()
+    assert _read_events(fake_root) == []
+
+
+def test_retry_commit_source_request_belongs_to_other_task_blocked_no_write(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    other_task_id = "task-20260709-999"
+    other_request_id = "req-20260709-999"
+    other_task = {
+        "id": other_task_id,
+        "title": "Other task",
+        "status": "running",
+        "created_at": "2026-07-09T10:00:00+08:00",
+        "updated_at": "2026-07-09T10:00:00+08:00",
+        "created_by": "cli",
+        "source": "cli",
+        "assignee": "orchestrator",
+        "requested_capability": "read_file",
+    }
+    tasks_path = fake_root / "tasks" / "tasks.jsonl"
+    tasks_path.write_text(
+        tasks_path.read_text(encoding="utf-8") + json.dumps(other_task, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    _commit_source_run(
+        fake_root,
+        task_id=other_task_id,
+        request_id=other_request_id,
+        output="drafts/runtime/task-20260709-999/req-20260709-999.envelope.json",
+    )
+
+    new_request_id = "req-20260709-002"
+    output = "drafts/runtime/task-001/req-002.envelope.json"
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=other_request_id,
+    )
+    result = commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
+        retry_of=other_request_id,
+    )
+    assert result.status == "validation_failed"
+    assert other_request_id in result.findings[0].message
+    assert not (fake_root / output).exists()
+    # Only other task events exist.
+    events = _read_events(fake_root)
+    assert all(e.get("task_id") != TASK_ID for e in events)
+
+
+def test_retry_commit_hash_mismatch_blocked_no_write(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    _commit_source_run(fake_root)
+
+    new_request_id = "req-20260709-002"
+    output = "drafts/runtime/task-001/req-002.envelope.json"
+    result = commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash="deadbeef",
+        events_file=EVENTS_FILE,
+        retry_of=REQUEST_ID,
+    )
+    assert result.status == "blocked"
+    assert result.freeze_check == "failed"
+    assert not (fake_root / output).exists()
+    assert len(_read_events(fake_root)) == 2
+
+
+def test_retry_commit_a_success_b_failure_rolls_back_cleanly(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    _commit_source_run(fake_root)
+
+    new_request_id = "req-20260709-002"
+    output = "drafts/runtime/task-001/req-002.envelope.json"
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=REQUEST_ID,
+    )
+    # Pre-seed the events ledger with a malformed line so B post-check fails.
+    events_path = fake_root / EVENTS_FILE
+    original_bytes = events_path.read_bytes()
+    events_path.write_text(original_bytes.decode("utf-8") + "this is not json\n", encoding="utf-8")
+    original_bytes = events_path.read_bytes()
+
+    result = commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
+        retry_of=REQUEST_ID,
+    )
+    assert result.status == "blocked"
+    assert result.write_summary.get("rolled_back") is True
+    assert not (fake_root / output).exists()
+    assert events_path.read_bytes() == original_bytes
+
+
+def test_retry_commit_does_not_expose_sensitive_refs(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    _commit_source_run(fake_root)
+
+    new_request_id = "req-20260709-002"
+    output = "drafts/runtime/task-001/req-002.envelope.json"
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=REQUEST_ID,
+    )
+    result = commit_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        output=output,
+        expected_plan_hash=dry_run.plan_hash,
+        events_file=EVENTS_FILE,
+        retry_of=REQUEST_ID,
+    )
+    d = result.to_dict()
+    dumped = json.dumps(d, ensure_ascii=False)
+    assert "decision_ref" not in dumped
+    assert "payload_refs" not in dumped
+    assert "raw_ref" not in dumped
+    assert "docs/06-adapter-layer.md" not in dumped
+
+    events = _read_events(fake_root)
+    events_dumped = json.dumps(events, ensure_ascii=False)
+    assert "decision_ref" not in events_dumped
+    assert "payload_refs" not in events_dumped
+    assert "raw_ref" not in events_dumped
+
+
+def test_cli_retry_commit_success(capsys, tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    source_hash = _commit_source_run(fake_root)
+
+    new_request_id = "req-20260709-002"
+    output = "drafts/runtime/task-001/req-002.envelope.json"
+    dry_run = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=new_request_id,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=REQUEST_ID,
+    )
+    code = main(
+        [
+            "--root", str(fake_root),
+            "orchestration", "run",
+            "--task-id", TASK_ID,
+            "--request-id", new_request_id,
+            "--capability", "read_file",
+            "--operation", "read_file",
+            "--target", "docs/06-adapter-layer.md",
+            "--retry-of", REQUEST_ID,
+            "--output", output,
+            "--events-file", EVENTS_FILE,
+            "--expected-plan-hash", dry_run.plan_hash,
+            "--commit",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "lineage_type=retry" in captured.out
+    assert f"retry_of={REQUEST_ID}" in captured.out
+    assert (fake_root / output).is_file()
+    events = _read_events(fake_root)
+    retry_events = [e for e in events if e.get("metadata", {}).get("request_id") == new_request_id]
+    assert len(retry_events) == 2

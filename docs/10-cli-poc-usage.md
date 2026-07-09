@@ -1756,7 +1756,7 @@ python -m agent_runtime.cli orchestration run \
 - `--retry-of` 与 `--fallback-from` 不能同时使用；`--fallback-to` 必须与 `--fallback-from` 一起使用。
 - retry / fallback 会生成新的 `request_id`，重新执行 route / preflight / dry-run，不自动复用旧 `plan_hash` 或 approval。
 - 输出包含 `lineage_type`、`retry_of` / `fallback_from` / `fallback_to`，`plan_hash` 会随 lineage 字段变化，避免与普通 dry-run 误用同一 hash。
-- 本阶段只实现 dry-run preview，不实现 retry/fallback 的自动 commit。
+- retry / fallback dry-run 与 commit 都已支持；commit 时 source request 必须已在同一 task 下存在 envelope draft 或 lifecycle event 证据。
 
 Run commit（受控写入，A+B：envelope draft export + lifecycle events append）：
 
@@ -1784,6 +1784,34 @@ python -m agent_runtime.cli orchestration run \
   --expected-plan-hash sha256:... \
   --output drafts/runtime/task-20260703-001/req-20260703-001.envelope.json \
   --events-file tasks/events.jsonl
+
+# retry commit：source request 必须已存在
+python -m agent_runtime.cli orchestration run \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --capability git_push \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --retry-of req-20260703-001 \
+  --commit \
+  --expected-plan-hash sha256:... \
+  --output drafts/runtime/task-20260703-001/req-20260703-002.envelope.json \
+  --events-file tasks/events.jsonl
+
+# fallback commit：切换到 fallback adapter
+python -m agent_runtime.cli orchestration run \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-003 \
+  --capability git_push \
+  --operation git_push \
+  --target origin/main \
+  --fallback-from req-20260703-001 \
+  --fallback-to shell-local \
+  --commit \
+  --expected-plan-hash sha256:... \
+  --output drafts/runtime/task-20260703-001/req-20260703-003.envelope.json \
+  --events-file tasks/events.jsonl
 ```
 
 说明：
@@ -1791,6 +1819,7 @@ python -m agent_runtime.cli orchestration run \
 - `--commit` 必须提供 `--expected-plan-hash` 与 `--events-file`；会重新 dry-run 并校验 hash，mismatch 返回 `blocked`，不写 A/B。
 - `--output` 必须位于 `drafts/runtime/` 下、为 `.json`、不覆盖已存在文件；写入后做 schema/inspect post-check，失败删除新文件并回滚 event ledger。
 - 成功路径追加 `run_planned` + `run_draft_exported` 两条 lifecycle events；若 B 失败，A 生成的 envelope draft 删除，event ledger 按原始 byte size truncate 回滚。
+- retry / fallback commit 要求 source request 在同一 task 下已有 envelope draft 或 lifecycle event 证据，否则返回 `validation_failed`，不写 A/B；lineage 字段写入 envelope adapter_request context 与 lifecycle event metadata。
 - 若 preflight `needs_approval`/`blocked`/`needs_input`/`error`，均不写 A/B。
 - 不执行真实 adapter、不访问网络、不发送消息。
 

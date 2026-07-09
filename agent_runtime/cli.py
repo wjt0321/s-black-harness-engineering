@@ -1754,13 +1754,23 @@ def _emit_run_commit_result(result: RunCommitResult, json_output: bool) -> int:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
         print("RUN COMMIT")
-        print(
+        header = (
             f"task_id={result.task_id} "
             f"request_id={result.request_id} "
             f"capability={result.requested_capability} "
             f"mode={result.mode} "
             f"status={result.status}"
         )
+        print(header)
+        if result.lineage_type:
+            lineage_parts = [f"lineage_type={result.lineage_type}"]
+            if result.retry_of:
+                lineage_parts.append(f"retry_of={result.retry_of}")
+            if result.fallback_from:
+                lineage_parts.append(f"fallback_from={result.fallback_from}")
+            if result.fallback_to:
+                lineage_parts.append(f"fallback_to={result.fallback_to}")
+            print(" ".join(lineage_parts))
         print(
             f"plan_hash={result.plan_hash or '-'} "
             f"expected_plan_hash={result.expected_plan_hash or '-'} "
@@ -1835,6 +1845,10 @@ def _cmd_orchestration_run(args: argparse.Namespace) -> int:
         return _emit_run_dry_run_result(result, json_output=args.json)
 
     if getattr(args, "commit", False):
+        retry_of = getattr(args, "retry_of", None)
+        fallback_from = getattr(args, "fallback_from", None)
+        fallback_to = getattr(args, "fallback_to", None)
+        effective_adapter_id = fallback_to if fallback_to is not None else getattr(args, "adapter", None)
         result = commit_run(
             root,
             task_id=task_id,
@@ -1843,7 +1857,7 @@ def _cmd_orchestration_run(args: argparse.Namespace) -> int:
             output=getattr(args, "output", None),
             expected_plan_hash=getattr(args, "expected_plan_hash", None),
             events_file=getattr(args, "events_file", None),
-            adapter_id=getattr(args, "adapter", None),
+            adapter_id=effective_adapter_id,
             operation=getattr(args, "operation", None),
             target=getattr(args, "target", None),
             require_dry_run=getattr(args, "require_dry_run", False),
@@ -1852,6 +1866,9 @@ def _cmd_orchestration_run(args: argparse.Namespace) -> int:
             actor="cli",
             tasks_file=getattr(args, "tasks_file", None),
             args=args,
+            retry_of=retry_of,
+            fallback_from=fallback_from,
+            fallback_to=fallback_to,
         )
         return _emit_run_commit_result(result, json_output=args.json)
 

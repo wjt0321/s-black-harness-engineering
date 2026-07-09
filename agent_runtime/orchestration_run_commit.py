@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .loader import is_safe_to_read, normalize_path
+from .loader import is_safe_to_read, load_json, load_jsonl, normalize_path
 from .orchestration_run_dry_run import RunDryRunResult, dry_run_run
 from .result import CheckResult, Finding
 from .runtime_draft_export import (
@@ -60,6 +60,10 @@ class RunCommitResult:
     event_refs: list[dict[str, Any]] = field(default_factory=list)
     findings: list[Finding] = field(default_factory=list)
     next_action: str | None = None
+    lineage_type: str | None = None
+    retry_of: str | None = None
+    fallback_from: str | None = None
+    fallback_to: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -82,6 +86,14 @@ class RunCommitResult:
             d["findings"] = [f.to_dict() for f in self.findings]
         if self.next_action is not None:
             d["next_action"] = self.next_action
+        if self.lineage_type is not None:
+            d["lineage_type"] = self.lineage_type
+        if self.retry_of is not None:
+            d["retry_of"] = self.retry_of
+        if self.fallback_from is not None:
+            d["fallback_from"] = self.fallback_from
+        if self.fallback_to is not None:
+            d["fallback_to"] = self.fallback_to
         return d
 
 
@@ -107,12 +119,37 @@ def _dry_run_summary(dry_run: RunDryRunResult) -> dict[str, Any]:
 
 def _artifact_ref(rel_output: str, dry_run: RunDryRunResult) -> dict[str, Any]:
     summary = dry_run.candidate_envelope_summary
-    return {
+    ref: dict[str, Any] = {
         "artifact_type": "envelope_draft",
         "path": rel_output,
         "request_id": dry_run.request_id,
         "adapter_id": summary.get("adapter_id"),
         "operation": summary.get("operation"),
+    }
+    if dry_run.lineage_type is not None:
+        ref["lineage_type"] = dry_run.lineage_type
+    if dry_run.retry_of is not None:
+        ref["retry_of"] = dry_run.retry_of
+    if dry_run.fallback_from is not None:
+        ref["fallback_from"] = dry_run.fallback_from
+    if dry_run.fallback_to is not None:
+        ref["fallback_to"] = dry_run.fallback_to
+    return ref
+
+
+def _lineage_kwargs(dry_run: RunDryRunResult | None) -> dict[str, Any]:
+    """Return lineage keyword args for RunCommitResult from a dry-run result."""
+    if dry_run is None:
+        return {}
+    return {
+        k: v
+        for k, v in {
+            "lineage_type": dry_run.lineage_type,
+            "retry_of": dry_run.retry_of,
+            "fallback_from": dry_run.fallback_from,
+            "fallback_to": dry_run.fallback_to,
+        }.items()
+        if v is not None
     }
 
 
@@ -126,6 +163,100 @@ def _event_ref(event: dict[str, Any]) -> dict[str, Any]:
         "adapter_id": metadata.get("adapter_id"),
         "operation": metadata.get("operation"),
     }
+
+
+def _find_source_request_in_envelopes(
+    root: Path,
+    task_id: str,
+    source_request_id: str,
+) -> bool:
+    """Return True if an existing envelope draft contains the source request."""
+    drafts_dir = root / "drafts" / "runtime" / task_id
+    if not drafts_dir.is_dir():
+        return False
+    for path in drafts_dir.glob("*.envelope.json"):
+        if not is_safe_to_read(path):
+            continue
+        try:
+            envelope = load_json(path)
+        except (OSError, ValueError):
+            continue
+        for artifact in envelope.get("artifacts", []):
+            if (
+                artifact.get("artifact_type") == "adapter_request"
+                and artifact.get("task_id") == task_id
+                and artifact.get("request_id") == source_request_id
+            ):
+                return True
+    return False
+
+
+def _find_source_request_in_events(
+    root: Path,
+    events_file: str,
+    task_id: str,
+    source_request_id: str,
+) -> bool:
+    """Return True if the events ledger contains the source request for this task.
+
+    Malformed lines are skipped so that source-request verification does not
+    short-circuit the later post-check that is responsible for reporting ledger
+    corruption.
+    """
+    path = root / events_file
+    if not path.is_file() or not is_safe_to_read(path):
+        return False
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    continue
+                if event.get("task_id") != task_id:
+                    continue
+                metadata = event.get("metadata", {})
+                if metadata.get("request_id") == source_request_id:
+                    return True
+    except OSError:
+        return False
+    return False
+
+
+def _validate_source_request(
+    root: Path,
+    task_id: str,
+    source_request_id: str,
+    events_file: str,
+) -> CheckResult | None:
+    """Verify a lineage source request exists and belongs to the same task.
+
+    Evidence may come from an existing envelope draft or from the event ledger.
+    Returns None on success, or a CheckResult with findings on failure.
+    """
+    in_envelopes = _find_source_request_in_envelopes(root, task_id, source_request_id)
+    in_events = _find_source_request_in_events(root, events_file, task_id, source_request_id)
+    if in_envelopes or in_events:
+        return None
+    return CheckResult(
+        status="validation_failed",
+        findings=[
+            Finding(
+                rule_id="lineage-source-not-found",
+                severity="block",
+                action="validation_failed",
+                message=(
+                    f"Source request '{source_request_id}' not found for task '{task_id}'. "
+                    "Provide a source request_id that already has an envelope draft or "
+                    "lifecycle event in this task."
+                ),
+            )
+        ],
+        next_action="Run orchestration run inspect to confirm the source request exists.",
+    )
 
 
 def _generate_event_id(
@@ -165,6 +296,10 @@ def _build_lifecycle_event(
     existing_ids: set[str],
     index: int,
     actor: str = "cli",
+    lineage_type: str | None = None,
+    retry_of: str | None = None,
+    fallback_from: str | None = None,
+    fallback_to: str | None = None,
 ) -> dict[str, Any]:
     """Return a safe run lifecycle event dict."""
     event_id = _generate_event_id(existing_ids, event_type, index)
@@ -193,6 +328,14 @@ def _build_lifecycle_event(
         metadata["envelope_path"] = envelope_path
     if artifact_type is not None:
         metadata["artifact_type"] = artifact_type
+    if lineage_type is not None:
+        metadata["lineage_type"] = lineage_type
+    if retry_of is not None:
+        metadata["retry_of"] = retry_of
+    if fallback_from is not None:
+        metadata["fallback_from"] = fallback_from
+    if fallback_to is not None:
+        metadata["fallback_to"] = fallback_to
 
     return {
         "event_id": event_id,
@@ -225,6 +368,11 @@ def _build_lifecycle_events(
     approval_status = "required" if route.get("requires_approval") else "not_required"
     envelope_rel = envelope_path
 
+    lineage_type = dry_run.lineage_type
+    retry_of = dry_run.retry_of
+    fallback_from = dry_run.fallback_from
+    fallback_to = dry_run.fallback_to
+
     events: list[dict[str, Any]] = []
     for idx, event_type in enumerate(["run_planned", "run_draft_exported"]):
         event = _build_lifecycle_event(
@@ -243,6 +391,10 @@ def _build_lifecycle_events(
             existing_ids=base_ids,
             index=idx,
             actor=actor,
+            lineage_type=lineage_type,
+            retry_of=retry_of,
+            fallback_from=fallback_from,
+            fallback_to=fallback_to,
         )
 
         schema_result = _validate_event_schema(root, event)
@@ -373,6 +525,37 @@ def _rollback_ab(
     return findings
 
 
+def _inject_lineage_into_envelope(
+    envelope: dict[str, Any],
+    lineage_type: str | None,
+    retry_of: str | None,
+    fallback_from: str | None,
+    fallback_to: str | None,
+) -> None:
+    """Mutate the envelope's adapter_request context to include lineage fields."""
+    if lineage_type is None:
+        return
+    for artifact in envelope.get("artifacts", []):
+        if artifact.get("artifact_type") == "adapter_request":
+            context = artifact.setdefault("context", {})
+            context["lineage_type"] = lineage_type
+            if retry_of is not None:
+                context["retry_of"] = retry_of
+            if fallback_from is not None:
+                context["fallback_from"] = fallback_from
+            if fallback_to is not None:
+                context["fallback_to"] = fallback_to
+        elif artifact.get("artifact_type") == "execution_event":
+            metadata = artifact.setdefault("metadata", {})
+            metadata["lineage_type"] = lineage_type
+            if retry_of is not None:
+                metadata["retry_of"] = retry_of
+            if fallback_from is not None:
+                metadata["fallback_from"] = fallback_from
+            if fallback_to is not None:
+                metadata["fallback_to"] = fallback_to
+
+
 def commit_run(
     root: Path,
     task_id: str,
@@ -390,6 +573,9 @@ def commit_run(
     actor: str = "cli",
     tasks_file: str | None = None,
     args: Any | None = None,
+    retry_of: str | None = None,
+    fallback_from: str | None = None,
+    fallback_to: str | None = None,
 ) -> RunCommitResult:
     """Persist a run plan as an envelope draft file plus lifecycle events.
 
@@ -420,7 +606,32 @@ def commit_run(
                 )
             ],
             next_action=f"Provide {', '.join(missing)} for commit.",
+            lineage_type="retry" if retry_of is not None else ("fallback" if fallback_from is not None else None),
+            retry_of=retry_of,
+            fallback_from=fallback_from,
+            fallback_to=fallback_to,
         )
+
+    has_lineage = retry_of is not None or fallback_from is not None
+    if has_lineage and events_file is not None:
+        source_request_id = retry_of if retry_of is not None else fallback_from
+        assert source_request_id is not None
+        source_guard = _validate_source_request(root, task_id, source_request_id, events_file)
+        if source_guard is not None:
+            return RunCommitResult(
+                status=source_guard.status,
+                task_id=task_id,
+                request_id=request_id,
+                requested_capability=capability,
+                expected_plan_hash=expected_plan_hash,
+                freeze_check="not_run",
+                findings=list(source_guard.findings),
+                next_action=source_guard.next_action,
+                lineage_type="retry" if retry_of is not None else "fallback",
+                retry_of=retry_of,
+                fallback_from=fallback_from,
+                fallback_to=fallback_to,
+            )
 
     dry_run = dry_run_run(
         root,
@@ -436,6 +647,9 @@ def commit_run(
         actor=actor,
         tasks_file=tasks_file,
         args=args,
+        retry_of=retry_of,
+        fallback_from=fallback_from,
+        fallback_to=fallback_to,
     )
 
     if dry_run.status != "pass":
@@ -451,6 +665,7 @@ def commit_run(
             findings=list(dry_run.findings),
             next_action=dry_run.next_action
             or "Resolve blockers and re-run dry-run before commit.",
+            **_lineage_kwargs(dry_run),
         )
 
     if dry_run.plan_hash != expected_plan_hash:
@@ -472,6 +687,7 @@ def commit_run(
                 )
             ],
             next_action="Re-run orchestration run --dry-run and review the new plan_hash.",
+            **_lineage_kwargs(dry_run),
         )
 
     path_guard = _validate_output_path(root, output)
@@ -489,6 +705,7 @@ def commit_run(
             dry_run_summary=_dry_run_summary(dry_run),
             findings=list(path_guard.findings),
             next_action=path_guard.next_action,
+            **_lineage_kwargs(dry_run),
         )
 
     drafts_guard = _validate_drafts_runtime_path(rel_output)
@@ -504,6 +721,7 @@ def commit_run(
             dry_run_summary=_dry_run_summary(dry_run),
             findings=list(drafts_guard.findings),
             next_action=drafts_guard.next_action,
+            **_lineage_kwargs(dry_run),
         )
 
     envelope = dry_run.envelope_draft
@@ -526,7 +744,16 @@ def commit_run(
                 )
             ],
             next_action="Review the adapter, operation, and target.",
+            **_lineage_kwargs(dry_run),
         )
+
+    _inject_lineage_into_envelope(
+        envelope,
+        dry_run.lineage_type,
+        dry_run.retry_of,
+        dry_run.fallback_from,
+        dry_run.fallback_to,
+    )
 
     scan_findings = _scan_export_content(root, envelope)
     if scan_findings:
@@ -541,6 +768,7 @@ def commit_run(
             dry_run_summary=_dry_run_summary(dry_run),
             findings=scan_findings,
             next_action="Redact sensitive or public-release-risk content before committing.",
+            **_lineage_kwargs(dry_run),
         )
 
     events_path_guard = _resolve_commit_events_path(root, events_file)
@@ -556,6 +784,7 @@ def commit_run(
             dry_run_summary=_dry_run_summary(dry_run),
             findings=list(events_path_guard.findings),
             next_action=events_path_guard.next_action,
+            **_lineage_kwargs(dry_run),
         )
     events_path = events_path_guard
     rel_events_file = normalize_path(events_path.relative_to(root))
@@ -583,6 +812,7 @@ def commit_run(
             dry_run_summary=_dry_run_summary(dry_run),
             findings=findings,
             next_action="Lifecycle event failed schema or security scan; review inputs.",
+            **_lineage_kwargs(dry_run),
         )
     lifecycle_events = built[0]
 
@@ -599,6 +829,7 @@ def commit_run(
             dry_run_summary=_dry_run_summary(dry_run),
             findings=list(write_error.findings),
             next_action=write_error.next_action,
+            **_lineage_kwargs(dry_run),
         )
 
     post = _post_write_check(root, rel_output)
@@ -626,6 +857,7 @@ def commit_run(
             findings=list(post.findings),
             next_action="Draft was rolled back due to post-write check failure. "
             + (post.next_action or ""),
+            **_lineage_kwargs(dry_run),
         )
 
     event_validate, event_ledger_check, appended_count, event_findings = _append_events_block(
@@ -659,6 +891,7 @@ def commit_run(
             },
             findings=all_findings,
             next_action="Lifecycle event append failed; both draft and events ledger were rolled back.",
+            **_lineage_kwargs(dry_run),
         )
 
     artifact_counts = post_summary.get("artifact_counts", {})
@@ -685,4 +918,5 @@ def commit_run(
         artifact_ref=_artifact_ref(rel_output, dry_run),
         event_refs=[_event_ref(e) for e in lifecycle_events],
         next_action="Draft and lifecycle events committed; run runtime gate check before adapter execution.",
+        **_lineage_kwargs(dry_run),
     )

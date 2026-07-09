@@ -247,6 +247,14 @@
 - 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
+## 2026-07-10 — Post-freeze 下一拍：Retry / Fallback Commit 设计
+
+- 进入 post-freeze 后的下一拍 design gate：新增 `docs/70-orchestration-run-retry-fallback-commit-design.md`。
+- 目标不是放开真实 adapter execution，而是把恢复性分支的 commit 语义补齐为新的受控写入设计层：retry commit / fallback commit 继续复用现有 `orchestration run --commit` 的 A+B 事务模型。
+- 设计重点：lineage-aware envelope metadata、lifecycle event metadata、`--expected-plan-hash` 必填、source request 存在性校验、重复 commit 防护、approval 重新 preflight、A/B rollback 不留下半条 lineage。
+- 当前推荐第一版继续复用现有 `run_planned` / `run_draft_exported` event_type，只在 metadata 中表达 `lineage_type`、`retry_of`、`fallback_from`、`fallback_to`，避免过早扩张 schema enum。
+- 已同步更新 `docs/00-index.md`、`docs/02-roadmap.md`、`README.md` 与 `README.en.md`，把 70 号设计文档接入中枢台后端主线阅读路径。
+
 ## 下一步小任务
 
 1. 后续可继续完善 agent 到 policy profile 的自动映射。
