@@ -249,7 +249,7 @@ Task
 task_type: coding_request
 requested_capability: dispatch.agent.coding
 title: 为 workspace 内一个代码修改请求生成 dry-run draft
-workspace: D:/agent-runtime
+workspace: <repo-root>
 execution_mode: dry-run
 ```
 

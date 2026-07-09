@@ -130,4 +130,4 @@ README 当前已经是最适合“快速定位项目位置”的入口页。
 
 你明天新会话可以直接这样开：
 
-> 继续 `D:\agent-runtime`，从 `tasks/handoff-2026-07-07-next-session-entry.md` 恢复。先沿着 47-50 这组中枢台后端文档继续，不着急做 51，也不要先跳 UI。优先保持积木式可插拔和 guardrail 不阻塞主线这两个原则。
+> 继续当前仓库，从 `tasks/handoff-2026-07-07-next-session-entry.md` 恢复。先沿着 47-50 这组中枢台后端文档继续，不着急做 51，也不要先跳 UI。优先保持积木式可插拔和 guardrail 不阻塞主线这两个原则。
