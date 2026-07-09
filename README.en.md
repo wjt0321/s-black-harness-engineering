@@ -160,10 +160,11 @@ If this is your first time in the repository, read in this order:
 5. `docs/48-adapter-runtime-interface.md`
 6. `docs/49-capability-routing-model.md`
 7. `docs/50-control-plane-state-model.md`
-8. `docs/10-cli-poc-usage.md`
-9. `docs/21-controlled-write-boundaries.md`
+8. `docs/52-minimal-orchestration-loop.md`
+9. `docs/10-cli-poc-usage.md`
+10. `docs/21-controlled-write-boundaries.md`
 
-The documents `docs/47-orchestration-hub-vision.md` through `docs/50-control-plane-state-model.md` form the orchestration-hub backend backbone; read them in numbered order.
+The documents `docs/47-orchestration-hub-vision.md` through `docs/52-minimal-orchestration-loop.md` form the orchestration-hub backend backbone; read them in numbered order.
 
 If you only want the full progress ledger:
 

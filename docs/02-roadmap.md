@@ -267,23 +267,28 @@
 
 目标：在后端抽象稳定后，跑通第一个真正体现“中枢台”特征的最小闭环。
 
+主要交付物：
+
+- `docs/52-minimal-orchestration-loop.md`
+
 候选闭环：
 
-- 用户提交一个 coding task
-- 中枢台做 capability routing
-- 选择 Kimi Code 执行
-- 执行前跑 guardrail preflight
-- 落 task / event / run / report
-- 如果需要外发或写入，经过 approval / dry-run / commit
-- 最终形成可审计收口
+- 提交 task intent
+- 中枢台做 capability routing（49）
+- 执行 guardrail preflight（不阻塞闭环设计，只决定执行模式）
+- 按 dry-run / commit 模式执行 adapter（48）
+- 沉淀 task / event / run / artifact / evidence（50）
+- 如需审批，创建 approval request 并暂停等待决议
+- 生成 report，给出 next_action
 
 要求：
 
 - 不破坏现有工作流
-- 有 fallback
+- 有 capability-level fallback
 - 有 report
 - 有 evidence
 - 可回放
+- 不进入真实多系统放权、UI、服务化、数据库选型
 
 ---
 

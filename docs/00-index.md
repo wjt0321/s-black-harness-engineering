@@ -49,7 +49,19 @@
 
 适合：想理解底层 schema、registry、adapter envelope 和 task bridge 的读者。
 
-### 5. 想看发布与阶段收口
+### 5. 想看中枢台后端主线
+
+- `47-orchestration-hub-vision.md`
+- `48-adapter-runtime-interface.md`
+- `49-capability-routing-model.md`
+- `50-control-plane-state-model.md`
+- `52-minimal-orchestration-loop.md`
+
+适合：想理解项目如何从 guardrail 内核演进成中枢运行台、以及最小执行闭环如何串起 adapter / routing / state 的读者。
+
+> 注意：旧 `14-task-runtime-bridge.md` 属于早期 Runtime gate 设计，与高位编号的中枢台后端主线不是同一组文档。
+
+### 6. 想看发布与阶段收口
 
 - `11-release-notes-v0.1.md`
 - `13-release-notes-adapter-envelope.md`
