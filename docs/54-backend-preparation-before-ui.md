@@ -201,7 +201,9 @@
 
 | 操作 | 类型 | 对应 51 操作 | 对应 53 草案命令 |
 |:---|:---:|:---|:---|
-| resolve | 受控写入 | `ApprovalResolution.resolve` | `orchestration approval resolve` |
+| list | 只读 | `ApprovalCollection.list`（当前为 envelope-scoped read model，非持久 Approval 存储） | `orchestration approval list`（已存在） |
+| get | 只读 | `ApprovalDetail.get`（当前为 envelope-scoped read model） | `orchestration approval get`（已存在） |
+| resolve | 受控写入 | `ApprovalResolution.resolve` | `orchestration approval resolve`（草案，未实现） |
 | 查看关联 task/run | 只读 | `TaskDetail.get` / `RunDetail.get` | `orchestration task get` / `orchestration inspect` |
 
 #### 与 50/51 的关系
@@ -355,7 +357,7 @@
 |:---|:---|
 | 执行列表 | `orchestration run list`（已存在，envelope-scoped） |
 | 重试 / 回退 | `orchestration run --retry`、`orchestration run --fallback-to` |
-| 审批列表/详情 | `orchestration approval list`、`orchestration approval get` |
+| 审批列表/详情 | `orchestration approval list`（已存在，envelope-scoped）、`orchestration approval get`（已存在，envelope-scoped） |
 | 产物列表/详情 | `orchestration artifact list`、`orchestration artifact get` |
 | 报告列表/生成 | `orchestration report list`、`orchestration report` |
 

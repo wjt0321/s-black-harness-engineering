@@ -35,6 +35,7 @@ from .runtime_task_create import TaskCreateDryRunResult, create_task, create_tas
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
+from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
@@ -1487,6 +1488,87 @@ def _cmd_orchestration_run_list(args: argparse.Namespace) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _cmd_orchestration_approval_list(args: argparse.Namespace) -> int:
+    """Render a read-only approval list view from an envelope (envelope-scoped read model)."""
+    root = _root_path(args)
+    result = list_approvals(
+        root,
+        envelope_file=args.envelope,
+        status_filter=getattr(args, "status", None),
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("APPROVAL LIST")
+        print(f"envelope={args.envelope}")
+        if getattr(args, "status", None) is not None:
+            print(f"status_filter={args.status}")
+        print(f"approvals={len(result.approvals)}")
+        for approval in result.approvals:
+            print(
+                f"- {approval['approval_id']} "
+                f"request={approval['request_id']} "
+                f"task={approval['task_id']} "
+                f"adapter={approval['adapter_id']} "
+                f"operation={approval['operation']} "
+                f"target={approval['target']} "
+                f"status={approval['status']} "
+                f"requested={approval['requested_at'] or '-'} "
+                f"resolved={approval['resolved_at'] or '-'} "
+                f"resolver={approval['resolver'] or '-'}"
+            )
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_orchestration_approval_get(args: argparse.Namespace) -> int:
+    """Render a read-only approval detail view from an envelope (envelope-scoped read model)."""
+    root = _root_path(args)
+    result = get_approval(
+        root,
+        approval_id=args.approval_id,
+        envelope_file=args.envelope,
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("APPROVAL GET")
+        if result.approval is not None:
+            approval = result.approval
+            scope = approval.get("scope", {})
+            print(
+                f"approval_id={approval.get('approval_id', '-')} "
+                f"request_id={approval.get('request_id', '-')} "
+                f"status={approval.get('status', '-')}"
+            )
+            print(
+                f"scope: task={scope.get('task_id', '-')} "
+                f"adapter={scope.get('adapter_id', '-')} "
+                f"operation={scope.get('operation', '-')} "
+                f"target={scope.get('target', '-')}"
+            )
+            print(f"requested_at={approval.get('requested_at') or '-'}")
+            print(f"resolved_at={approval.get('resolved_at') or '-'}")
+            print(f"resolver={approval.get('resolver') or '-'}")
+        if result.related_request is not None:
+            req = result.related_request
+            print(
+                f"Related request: {req.get('request_id', '-')} "
+                f"task={req.get('task_id', '-')} "
+                f"adapter={req.get('adapter_id', '-')} "
+                f"operation={req.get('operation', '-')} "
+                f"target={req.get('target', '-')} "
+                f"risk={req.get('risk_level', '-')} "
+                f"capability={req.get('capability') or '-'} "
+                f"dry_run={req.get('dry_run', False)} "
+                f"requires_approval={req.get('requires_approval', False)}"
+            )
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_task_status(args: argparse.Namespace) -> int:
     root = _root_path(args)
     task = find_task(root, args.task_id)
@@ -1869,6 +1951,38 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_run_inspect_parser)
     orchestration_run_inspect_parser.set_defaults(func=_cmd_orchestration_run_inspect)
+
+    # orchestration approval list/get
+    orchestration_approval_parser = orchestration_subparsers.add_parser(
+        "approval", help="Query read-only approval data through orchestration namespace"
+    )
+    orchestration_approval_subparsers = orchestration_approval_parser.add_subparsers(
+        dest="approval_command", required=True
+    )
+
+    orchestration_approval_list_parser = orchestration_approval_subparsers.add_parser(
+        "list", help="List approval records from an adapter execution envelope (read-only, envelope-scoped)"
+    )
+    orchestration_approval_list_parser.add_argument(
+        "--envelope", required=True, help="Path to adapter execution envelope JSON file"
+    )
+    orchestration_approval_list_parser.add_argument(
+        "--status", default=None, help="Filter approvals by status"
+    )
+    _add_global_args(orchestration_approval_list_parser)
+    orchestration_approval_list_parser.set_defaults(func=_cmd_orchestration_approval_list)
+
+    orchestration_approval_get_parser = orchestration_approval_subparsers.add_parser(
+        "get", help="Show an approval record with related request summary (read-only, envelope-scoped)"
+    )
+    orchestration_approval_get_parser.add_argument(
+        "--approval-id", required=True, help="Approval id"
+    )
+    orchestration_approval_get_parser.add_argument(
+        "--envelope", required=True, help="Path to adapter execution envelope JSON file"
+    )
+    _add_global_args(orchestration_approval_get_parser)
+    orchestration_approval_get_parser.set_defaults(func=_cmd_orchestration_approval_get)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")
