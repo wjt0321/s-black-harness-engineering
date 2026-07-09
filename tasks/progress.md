@@ -1376,6 +1376,17 @@
   - `git diff --check`：无空白错误。
 - 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
 
+## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
+
+- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
+- 第一版边界：
+  - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
+  - `--dry-run` 只做 schema / duplicate id / secret-public scan / ledger consistency，不写任何 ledger。
+  - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
+  - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
+- 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
+
 ## 2026-07-09（续）— orchestration preflight 只读 handoff 命令落地
 
 - 新增 `agent_runtime/orchestration_preflight.py`：实现 `PreflightResult` 与 `check_preflight()`。
@@ -1418,6 +1429,17 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
+
+## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
+
+- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
+- 第一版边界：
+  - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
+  - `--dry-run` 只做 schema / duplicate id / secret-public scan / ledger consistency，不写任何 ledger。
+  - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
+  - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
+- 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
 
 ## 2026-07-09（续）— orchestration approval resolve 受控写入命令落地
 
@@ -1471,6 +1493,17 @@
   - `git diff --check`：无空白错误。
 - 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
 
+## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
+
+- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
+- 第一版边界：
+  - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
+  - `--dry-run` 只做 schema / duplicate id / secret-public scan / ledger consistency，不写任何 ledger。
+  - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
+  - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
+- 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
+
 ## 2026-07-09（续）— Stage 15.5 收口：controlled handoff + approval resolve release notes
 
 - 新增 `docs/57-release-notes-orchestration-controlled-handoff.md`，记录从 56 design gate 到第一批 handoff / controlled-write 命令落地的阶段成果。
@@ -1505,6 +1538,17 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
+
+## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
+
+- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
+- 第一版边界：
+  - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
+  - `--dry-run` 只做 schema / duplicate id / secret-public scan / ledger consistency，不写任何 ledger。
+  - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
+  - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
+- 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
 - 不弱化 guardrail，不夸大 run --commit 已实现。
 
 ## 2026-07-09（续）— Stage 15.6：orchestration run 受控执行设计 gate
@@ -1541,6 +1585,17 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
+
+## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
+
+- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
+- 第一版边界：
+  - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
+  - `--dry-run` 只做 schema / duplicate id / secret-public scan / ledger consistency，不写任何 ledger。
+  - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
+  - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
+- 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
 - 不弱化 guardrail，不夸大 run --commit 已实现。
 
 ## 2026-07-09（续）— Stage 15.7：orchestration run --dry-run 落地
@@ -1586,6 +1641,17 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
+
+## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
+
+- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
+- 第一版边界：
+  - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
+  - `--dry-run` 只做 schema / duplicate id / secret-public scan / ledger consistency，不写任何 ledger。
+  - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
+  - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
+- 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
 - 不弱化 guardrail，`--commit` 仍明确未实现，不触发真实 adapter execution。
 
 ## 2026-07-09（续）— Stage 15.8：orchestration run --commit 第一版 A-only 落地
@@ -1637,6 +1703,17 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
+
+## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
+
+- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
+- 第一版边界：
+  - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
+  - `--dry-run` 只做 schema / duplicate id / secret-public scan / ledger consistency，不写任何 ledger。
+  - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
+  - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
+- 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
 - 不弱化 guardrail，`--commit` 仍明确不执行真实 adapter。
 
 ## 2026-07-09（续）— Stage 15.8 收口：docs/59-release-notes-orchestration-run-controlled-execution.md
@@ -1681,6 +1758,17 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
+
+## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
+
+- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
+- 第一版边界：
+  - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
+  - `--dry-run` 只做 schema / duplicate id / secret-public scan / ledger consistency，不写任何 ledger。
+  - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
+  - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
+- 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
 - 不说真实 adapter execution 已实现；不弱化 guardrail。
 
 ## 2026-07-09（续）— Stage 15.9：Run Lifecycle Events design gate
@@ -1719,6 +1807,17 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
+
+## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
+
+- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
+- 第一版边界：
+  - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
+  - `--dry-run` 只做 schema / duplicate id / secret-public scan / ledger consistency，不写任何 ledger。
+  - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
+  - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
+- 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
 - 不说 B 侧 events 已实现；不说真实 adapter execution 已开放；不弱化 guardrail。
 
 ## 2026-07-09（续）— Stage 15.9 实现：Run Lifecycle Events A+B
@@ -1764,3 +1863,14 @@
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误。
 - 当前阶段结论：Stage 15.9 已从 design gate 进入实现收口；`orchestration run --commit` 现为 A+B controlled write，但仍不执行真实 adapter、不访问网络、不引入独立 Run storage。
+
+## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
+
+- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
+- 第一版边界：
+  - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
+  - `--dry-run` 只做 schema / duplicate id / secret-public scan / ledger consistency，不写任何 ledger。
+  - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
+  - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
+- 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。

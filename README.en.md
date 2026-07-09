@@ -178,8 +178,9 @@ If this is your first time in the repository, read in this order:
 16. `docs/59-release-notes-orchestration-run-controlled-execution.md`
 17. `docs/60-orchestration-run-lifecycle-events-design.md`
 18. `docs/61-release-notes-orchestration-run-lifecycle-events.md`
-19. `docs/10-cli-poc-usage.md`
-20. `docs/21-controlled-write-boundaries.md`
+19. `docs/62-orchestration-task-submit-controlled-write-design.md`
+20. `docs/10-cli-poc-usage.md`
+21. `docs/21-controlled-write-boundaries.md`
 
 The documents `docs/47-orchestration-hub-vision.md` through `docs/54-backend-preparation-before-ui.md` form the orchestration-hub backend backbone; read them in numbered order.
 

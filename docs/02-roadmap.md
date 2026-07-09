@@ -471,7 +471,7 @@
 
 - `run_blocked` 暂不写入 blocked/needs_approval/hash mismatch 路径。
 - retry / fallback 自动化。
-- `orchestration task submit --commit`。
+- `orchestration task submit --commit`（进入新的独立 design gate：`docs/62-orchestration-task-submit-controlled-write-design.md`）。
 - 真实 adapter execution、网络访问、消息发送、UI/服务/数据库。
 
 说明：

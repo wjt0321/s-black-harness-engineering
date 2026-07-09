@@ -178,8 +178,9 @@ python -m agent_runtime.cli policies list
 16. `docs/59-release-notes-orchestration-run-controlled-execution.md`
 17. `docs/60-orchestration-run-lifecycle-events-design.md`
 18. `docs/61-release-notes-orchestration-run-lifecycle-events.md`
-19. `docs/10-cli-poc-usage.md`
-20. `docs/21-controlled-write-boundaries.md`
+19. `docs/62-orchestration-task-submit-controlled-write-design.md`
+20. `docs/10-cli-poc-usage.md`
+21. `docs/21-controlled-write-boundaries.md`
 
 其中 `docs/47-orchestration-hub-vision.md` 到 `docs/54-backend-preparation-before-ui.md` 是中枢台后端主线，建议按编号顺序阅读。
 
