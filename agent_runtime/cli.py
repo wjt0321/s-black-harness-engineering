@@ -36,6 +36,7 @@ from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
+from .orchestration_artifact import ArtifactDetailResult, ArtifactListResult, get_artifact, list_artifacts
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
@@ -1569,6 +1570,88 @@ def _cmd_orchestration_approval_get(args: argparse.Namespace) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _cmd_orchestration_artifact_list(args: argparse.Namespace) -> int:
+    """Render a read-only artifact list view from an envelope (envelope-scoped read model)."""
+    root = _root_path(args)
+    result = list_artifacts(
+        root,
+        envelope_file=args.envelope,
+        type_filter=getattr(args, "type", None),
+        request_id_filter=getattr(args, "request_id", None),
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("ARTIFACT LIST")
+        print(f"envelope={args.envelope}")
+        if getattr(args, "type", None) is not None:
+            print(f"type_filter={args.type}")
+        if getattr(args, "request_id", None) is not None:
+            print(f"request_id_filter={args.request_id}")
+        print(f"artifacts={len(result.artifacts)}")
+        for artifact in result.artifacts:
+            print(
+                f"- {artifact['artifact_id']} "
+                f"type={artifact['artifact_type']} "
+                f"task={artifact['task_id'] or '-'} "
+                f"request={artifact['request_id'] or '-'} "
+                f"producer={artifact['producer']} "
+                f"timestamp={artifact['timestamp'] or '-'} "
+                f"safe={artifact['safe_to_preview']} "
+                f"summary={artifact['summary']}"
+            )
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_orchestration_artifact_get(args: argparse.Namespace) -> int:
+    """Render a read-only artifact detail view from an envelope (envelope-scoped read model)."""
+    root = _root_path(args)
+    result = get_artifact(
+        root,
+        artifact_id=args.artifact_id,
+        envelope_file=args.envelope,
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("ARTIFACT GET")
+        if result.artifact is not None:
+            artifact = result.artifact
+            print(
+                f"artifact_id={artifact.get('artifact_id', '-')} "
+                f"type={artifact.get('artifact_type', '-')} "
+                f"task={artifact.get('task_id') or '-'} "
+                f"request={artifact.get('request_id') or '-'} "
+                f"producer={artifact.get('producer', '-')} "
+                f"safe={artifact.get('safe_to_preview', False)}"
+            )
+            print(f"timestamp={artifact.get('timestamp') or '-'}")
+            print(f"summary={artifact.get('summary', '-')}")
+            metadata = artifact.get("metadata", {})
+            if metadata:
+                print("metadata:")
+                for key, value in metadata.items():
+                    print(f"  {key}={value}")
+        if result.related_request is not None:
+            req = result.related_request
+            print(
+                f"Related request: {req.get('request_id', '-')} "
+                f"task={req.get('task_id', '-')} "
+                f"adapter={req.get('adapter_id', '-')} "
+                f"operation={req.get('operation', '-')} "
+                f"target={req.get('target', '-')} "
+                f"risk={req.get('risk_level', '-')} "
+                f"capability={req.get('capability') or '-'} "
+                f"dry_run={req.get('dry_run', False)} "
+                f"requires_approval={req.get('requires_approval', False)}"
+            )
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_task_status(args: argparse.Namespace) -> int:
     root = _root_path(args)
     task = find_task(root, args.task_id)
@@ -1983,6 +2066,41 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_approval_get_parser)
     orchestration_approval_get_parser.set_defaults(func=_cmd_orchestration_approval_get)
+
+    # orchestration artifact list/get
+    orchestration_artifact_parser = orchestration_subparsers.add_parser(
+        "artifact", help="Query read-only artifact data through orchestration namespace"
+    )
+    orchestration_artifact_subparsers = orchestration_artifact_parser.add_subparsers(
+        dest="artifact_command", required=True
+    )
+
+    orchestration_artifact_list_parser = orchestration_artifact_subparsers.add_parser(
+        "list", help="List artifacts from an adapter execution envelope (read-only, envelope-scoped)"
+    )
+    orchestration_artifact_list_parser.add_argument(
+        "--envelope", required=True, help="Path to adapter execution envelope JSON file"
+    )
+    orchestration_artifact_list_parser.add_argument(
+        "--type", default=None, help="Filter artifacts by artifact_type"
+    )
+    orchestration_artifact_list_parser.add_argument(
+        "--request-id", default=None, help="Filter artifacts by request_id"
+    )
+    _add_global_args(orchestration_artifact_list_parser)
+    orchestration_artifact_list_parser.set_defaults(func=_cmd_orchestration_artifact_list)
+
+    orchestration_artifact_get_parser = orchestration_artifact_subparsers.add_parser(
+        "get", help="Show an artifact with related request summary (read-only, envelope-scoped)"
+    )
+    orchestration_artifact_get_parser.add_argument(
+        "--artifact-id", required=True, help="Artifact id (native id or artifact-NNNN)"
+    )
+    orchestration_artifact_get_parser.add_argument(
+        "--envelope", required=True, help="Path to adapter execution envelope JSON file"
+    )
+    _add_global_args(orchestration_artifact_get_parser)
+    orchestration_artifact_get_parser.set_defaults(func=_cmd_orchestration_artifact_get)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

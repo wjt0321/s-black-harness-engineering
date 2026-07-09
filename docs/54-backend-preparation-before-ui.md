@@ -246,7 +246,8 @@
 
 | 操作 | 类型 | 对应 51 操作 | 对应 53 草案命令 |
 |:---|:---:|:---|:---|
-| 查看 | 只读 | `ArtifactDetail.get` | `orchestration artifact get` |
+| list | 只读 | `ArtifactCollection.list`（当前为 envelope-scoped read model，非持久 Artifact 存储） | `orchestration artifact list`（已存在） |
+| get | 只读 | `ArtifactDetail.get`（当前为 envelope-scoped read model） | `orchestration artifact get`（已存在） |
 | 导出/持久化 | 受控写入 | `ArtifactAction.export` | `runtime draft export --commit` |
 
 #### 与 50/51 的关系
@@ -358,7 +359,7 @@
 | 执行列表 | `orchestration run list`（已存在，envelope-scoped） |
 | 重试 / 回退 | `orchestration run --retry`、`orchestration run --fallback-to` |
 | 审批列表/详情 | `orchestration approval list`（已存在，envelope-scoped）、`orchestration approval get`（已存在，envelope-scoped） |
-| 产物列表/详情 | `orchestration artifact list`、`orchestration artifact get` |
+| 产物列表/详情 | `orchestration artifact list`（已存在，envelope-scoped）、`orchestration artifact get`（已存在，envelope-scoped） |
 | 报告列表/生成 | `orchestration report list`、`orchestration report` |
 
 说明：
