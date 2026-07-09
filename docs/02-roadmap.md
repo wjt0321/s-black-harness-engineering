@@ -446,6 +446,33 @@
 
 ---
 
+## Stage 15.9 — Orchestration Run Lifecycle Events 设计（design gate，进入 B 侧 event append 前）
+
+目标：在实现 `orchestration run --commit` B 侧 run lifecycle events 之前，先定义 event schema、controlled append、freeze/post-check、与 A-only envelope draft export 的 all-or-nothing 关系。
+
+主要交付物：
+
+- `docs/60-orchestration-run-lifecycle-events-design.md`
+
+要做的事：
+
+- 定义候选 event types：`run_planned`、`run_draft_exported`、`run_blocked`；明确 `run_commit_failed` 暂不进入 schema enum。
+- 定义 event payload 安全字段：基础字段 + metadata 安全子集；禁止 input/target 原文、raw_ref、decision_ref、payload_refs、evidence descriptions、reason 原文、secret match。
+- 定义 B 侧 controlled append 方案：复用 `runtime event append/import --commit`，支持 batch all-or-nothing，失败按 byte size 回滚。
+- 明确 A+B 组合策略：A 成功 B 失败时回滚 A（删除 draft）和 B（truncate）；要求显式 `--events-file`。
+- 明确 freeze guard 与 idempotency：plan_hash 语义不变；event_id 避免冲突；重复 commit blocked。
+- 明确 approval / blocked 分支：preflight needs_approval、hash mismatch、terminal task 均不写 A/B；第一版不写 `run_blocked`。
+- 说明 read-model 影响：`orchestration run list` 可后续考虑纳入 lifecycle events，但不强制；`task events` 自然显示；report 仍 runtime-report-backed。
+
+说明：
+
+- 本阶段是 design gate，不新增代码实现，不改 schema。
+- 若进入实现，先在 `tasks/event.schema.json` 新增 enum 值并补测试。
+- 不实现 `run_commit_failed` event、retry / fallback、`orchestration task submit --commit`、真实 adapter execution。
+- 不标记 Stage 16 开始；Stage 16 仍保持远期。
+
+---
+
 ## Stage 16 — UI / Control Panel（远期）
 
 目标：在后端抽象稳定后，为中枢台提供一个真正可操作、可观察、可审计的前端或看板。

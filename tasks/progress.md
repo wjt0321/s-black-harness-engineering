@@ -1570,3 +1570,27 @@
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
 - 不说真实 adapter execution 已实现；不弱化 guardrail。
+
+## 2026-07-09（续）— Stage 15.9：Run Lifecycle Events design gate
+
+- 新增 `docs/60-orchestration-run-lifecycle-events-design.md`，作为进入 B 侧 run lifecycle events 实现前的 design gate。
+- 文档覆盖：
+  - 阶段定位：59 已完成 A-only commit，60 定义 B 侧 event trail 设计。
+  - 候选 event types：`run_planned`、`run_draft_exported`、`run_blocked` 进入 schema enum；`run_commit_failed` 暂不落地。
+  - event payload 安全字段：基础字段 + metadata 安全子集；禁止 input/target 原文、raw_ref、decision_ref、payload_refs、evidence descriptions、reason 原文、secret match。
+  - B 侧 controlled append：复用 `runtime event append/import --commit`，batch all-or-nothing，失败 byte size truncate 回滚。
+  - A+B 组合策略：A 成功 B 失败时回滚 A（删除 draft）和 B（truncate）；要求显式 `--events-file`。
+  - freeze guard 与 idempotency：plan_hash 语义不变；event_id 避免冲突；重复 commit blocked。
+  - approval/blocked 分支：preflight needs_approval、hash mismatch、terminal task 均不写 A/B；第一版不写 `run_blocked`。
+  - read-model 影响：`orchestration run list` 可后续考虑纳入 lifecycle events；`task events` 自然显示；report 仍 runtime-report-backed。
+  - 验收标准与下一步建议。
+- 更新 `docs/00-index.md`：中枢台后端主线与发布/阶段收口列表加入 60。
+- 更新 `docs/02-roadmap.md`：新增 Stage 15.9（Run Lifecycle Events design gate），不标记 Stage 16 开始。
+- 更新 `docs/58-orchestration-run-controlled-execution-design.md`：下一步建议指向 60。
+- 本次为纯文档改动，不改代码/测试/schema。
+- 验证：
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+- 不说 B 侧 events 已实现；不说真实 adapter execution 已开放；不弱化 guardrail。

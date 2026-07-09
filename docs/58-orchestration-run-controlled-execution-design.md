@@ -281,5 +281,5 @@ commit 后至少执行：
 1.  review 并确认本文档中的 A/B 产物策略（建议 A+B，但允许第一版先做 A）。
 2.  若采用 B（event append），先在 `tasks/event.schema.json` 中新增候选 event types 并补测试。
 3.  ~~实现 `orchestration run --dry-run`：只读 plan preview + `plan_hash`。~~ 已落地。
-4.  ~~实现 `orchestration run --commit` A-only：按本文档产物形态沉淀 envelope draft，支持 `--expected-plan-hash` / `--require-dry-run`。~~ 已落地；B（run lifecycle events）仍待实现。
+4.  ~~实现 `orchestration run --commit` A-only：按本文档产物形态沉淀 envelope draft，支持 `--expected-plan-hash` / `--require-dry-run`。~~ 已落地；B（run lifecycle events）仍待实现，详见 `docs/60-orchestration-run-lifecycle-events-design.md`。
 5.  在此稳定前，不实现 `orchestration task submit --commit`、retry / fallback 自动化、真实 adapter execution。
