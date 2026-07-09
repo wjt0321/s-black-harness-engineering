@@ -8,7 +8,7 @@
 - `orchestration preflight`：只读 routing + guardrail 聚合 handoff。
 - `orchestration approval resolve`：event-ledger append 方案记录审批决议。
 
-本文档是进入 `orchestration run --dry-run / --commit` 写入实现前的 **design gate**。目标不是放开真实 adapter execution，而是先定义：
+本文档是进入 `orchestration run --dry-run / --commit` 写入实现前的 **design gate**。`orchestration run --dry-run` 已按本文档实现；`--commit` 仍待实现。目标不是放开真实 adapter execution，而是先定义：
 
 1. `orchestration run --dry-run` 输出什么产物、如何生成稳定的 `plan_hash`。
 2. `orchestration run --commit` 把已审阅的 run plan 沉淀到哪些受控存储、失败如何回滚。
@@ -278,6 +278,6 @@ commit 后至少执行：
 
 1.  review 并确认本文档中的 A/B 产物策略（建议 A+B，但允许第一版先做 A）。
 2.  若采用 B（event append），先在 `tasks/event.schema.json` 中新增候选 event types 并补测试。
-3.  实现 `orchestration run --dry-run`：只读 plan preview + `plan_hash`。
+3.  ~~实现 `orchestration run --dry-run`：只读 plan preview + `plan_hash`。~~ 已落地。
 4.  实现 `orchestration run --commit`：按本文档产物形态沉淀 draft/event，支持 `--expected-plan-hash` / `--require-dry-run`。
 5.  在此稳定前，不实现 `orchestration task submit --commit`、retry / fallback 自动化、真实 adapter execution。

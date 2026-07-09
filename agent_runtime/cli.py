@@ -42,6 +42,7 @@ from .orchestration_preflight import PreflightResult, check_preflight
 from .orchestration_report import ReportGenerateResult, generate_report
 from .orchestration_route import RoutePreviewResult, preview_route
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
+from .orchestration_run_dry_run import RunDryRunResult, dry_run_run
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -1628,6 +1629,94 @@ def _cmd_orchestration_run_list(args: argparse.Namespace) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _emit_run_dry_run_result(result: RunDryRunResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("RUN")
+        print(
+            f"task_id={result.task_id} "
+            f"request_id={result.request_id} "
+            f"capability={result.requested_capability} "
+            f"mode={result.mode} "
+            f"status={result.status}"
+        )
+        route = result.route
+        print(
+            f"adapter={route.get('selected_adapter_id') or '-'} "
+            f"operation={route.get('operation') or '-'} "
+            f"risk_level={route.get('risk_level') or '-'} "
+            f"requires_approval={route.get('requires_approval', False)}"
+        )
+        if result.plan_hash:
+            print(f"plan_hash={result.plan_hash}")
+        if result.candidate_envelope_summary:
+            summary = result.candidate_envelope_summary
+            print(
+                f"candidate envelope: version={summary.get('version') or '-'} "
+                f"artifacts={summary.get('artifact_count', 0)} "
+                f"approval_required={summary.get('requires_approval', False)}"
+            )
+        if result.findings:
+            for finding in result.findings:
+                print(f"- {finding.rule_id}: {finding.message}")
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_orchestration_run_dry_run(args: argparse.Namespace) -> int:
+    """Render a read-only orchestration run dry-run plan preview."""
+    root = _root_path(args)
+    task_id = getattr(args, "task_id", None)
+    request_id = getattr(args, "request_id", None)
+    capability = getattr(args, "capability", None)
+
+    missing = []
+    if not task_id:
+        missing.append("--task-id")
+    if not request_id:
+        missing.append("--request-id")
+    if not capability:
+        missing.append("--capability")
+    if missing:
+        result = RunDryRunResult(
+            status="needs_input",
+            task_id=task_id or "-",
+            request_id=request_id or "-",
+            requested_capability=capability or "-",
+            findings=[
+                Finding(
+                    rule_id="missing-required-args",
+                    severity="block",
+                    action="needs_input",
+                    message=f"Missing required arguments: {', '.join(missing)}.",
+                )
+            ],
+            next_action=f"Provide {', '.join(missing)}.",
+        )
+        return _emit_run_dry_run_result(result, json_output=args.json)
+
+    requested_mode = "commit" if getattr(args, "commit", False) else "dry-run"
+
+    result = dry_run_run(
+        root,
+        task_id=task_id,
+        request_id=request_id,
+        capability=capability,
+        adapter_id=getattr(args, "adapter", None),
+        operation=getattr(args, "operation", None),
+        target=getattr(args, "target", None),
+        requested_mode=requested_mode,
+        explicit_policy=_explicit_policy(args, root),
+        profile=resolve_profile(args, root),
+        actor="cli",
+        tasks_file=getattr(args, "tasks_file", None),
+        args=args,
+    )
+    return _emit_run_dry_run_result(result, json_output=args.json)
+
+
 def _cmd_orchestration_approval_list(args: argparse.Namespace) -> int:
     """Render a read-only approval list view from an envelope (envelope-scoped read model)."""
     root = _root_path(args)
@@ -2283,12 +2372,43 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(orchestration_task_get_parser)
     orchestration_task_get_parser.set_defaults(func=_cmd_orchestration_task_get)
 
-    # orchestration run inspect
+    # orchestration run (dry-run plan + inspect subcommands)
     orchestration_run_parser = orchestration_subparsers.add_parser(
-        "run", help="Inspect orchestration runs without executing adapters"
+        "run", help="Plan or inspect orchestration runs without executing adapters"
     )
+    orchestration_run_parser.add_argument(
+        "--task-id", default=None, help="Task id for run plan"
+    )
+    orchestration_run_parser.add_argument(
+        "--request-id", default=None, help="Adapter request id for run plan"
+    )
+    orchestration_run_parser.add_argument(
+        "--capability", default=None, help="Requested capability for run plan"
+    )
+    orchestration_run_parser.add_argument(
+        "--adapter", default=None, help="Explicit adapter id"
+    )
+    orchestration_run_parser.add_argument(
+        "--operation", default=None, help="Operation to plan"
+    )
+    orchestration_run_parser.add_argument(
+        "--target", default=None, help="Target for guardrail check"
+    )
+    orchestration_run_parser.add_argument(
+        "--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)"
+    )
+    run_mode_group = orchestration_run_parser.add_mutually_exclusive_group()
+    run_mode_group.add_argument(
+        "--dry-run", action="store_true", help="Run in read-only dry-run mode (default)"
+    )
+    run_mode_group.add_argument(
+        "--commit", action="store_true", help="Persist the run plan (not yet implemented)"
+    )
+    _add_global_args(orchestration_run_parser)
+    orchestration_run_parser.set_defaults(func=_cmd_orchestration_run_dry_run)
+
     orchestration_run_subparsers = orchestration_run_parser.add_subparsers(
-        dest="run_command", required=True
+        dest="run_command", required=False
     )
 
     orchestration_run_list_parser = orchestration_run_subparsers.add_parser(

@@ -1472,3 +1472,34 @@
   - `git diff --check`：无空白错误。
 - 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
 - 不弱化 guardrail，不夸大 run --commit 已实现。
+
+## 2026-07-09（续）— Stage 15.7：orchestration run --dry-run 落地
+
+- 新增 `agent_runtime/orchestration_run_dry_run.py`：
+  - 实现 `RunDryRunResult` 与 `dry_run_run()`。
+  - 复用 `orchestration_preflight.check_preflight()` 做 routing + guardrail 聚合。
+  - 复用 `runtime_plan.plan_runtime_action()` 生成候选 envelope。
+  - 输出 route/preflight/candidate_envelope_summary/candidate_events_summary/artifact_candidate_refs/evidence_candidate_refs/plan_hash/constraints/findings/next_action。
+  - `plan_hash` 覆盖安全字段（task_id、request_id、capability、selected_adapter_id、operation、target safe summary、mode、route、preflight、candidate envelope/event 序列），不包含 timestamp/event_id/input payload/target 原文。
+  - 对 `--commit` 模式返回 `needs_input`；缺失 task/operation/target 时返回稳定状态。
+- 在 `agent_runtime/cli.py` 注册 `orchestration run --dry-run`：
+  - 父 parser 增加 `--task-id`、`--request-id`、`--capability`、`--adapter`、`--operation`、`--target`、`--tasks-file`、`--dry-run`/`--commit`。
+  - `orchestration run` 子命令改为 `required=False`，无子命令时默认执行 dry-run handler。
+  - 新增 `_cmd_orchestration_run_dry_run` 与 `_emit_run_dry_run_result` 人类可读渲染。
+  - `--commit` 仍未实现，传入时返回 `needs_input`。
+- 新增 `tests/test_orchestration_run_dry_run.py`：
+  - 覆盖模块层 dry-run pass/needs_approval/missing operation/missing target/adapter not supported/task not found/plan hash stability/只读不写/输出脱敏。
+  - 覆盖 CLI JSON/人类可读输出。
+  - 修正人类可读 smoke 测试，使其使用 `read_file` capability 以匹配期望 `pass` 状态。
+- 文档同步：
+  - 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration run --dry-run` 标为已存在，`orchestration run --commit` 仍草案。
+  - 更新 `docs/58-orchestration-run-controlled-execution-design.md`：标记 dry-run 已落地，commit 待实现。
+  - 更新 `docs/10-cli-poc-usage.md`：新增 `orchestration run --dry-run` 示例与边界说明。
+- 验证：
+  - `python -m pytest tests/test_orchestration_run_dry_run.py -q`：11 passed。
+  - `python -m pytest tests -q`：全绿。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+- 不引入 Windows 绝对路径、内部身份称谓、真实个人 / agent id、敏感信息。
+- 不弱化 guardrail，`--commit` 仍明确未实现，不触发真实 adapter execution。

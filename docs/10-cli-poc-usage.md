@@ -1681,6 +1681,35 @@ python -m agent_runtime.cli orchestration preflight \
   --mode dry-run
 ```
 
+Run dry-run preview（只读，不写 ledger/envelope/draft）：
+
+```bash
+python -m agent_runtime.cli orchestration run \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-001 \
+  --capability git_push \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --dry-run
+
+python -m agent_runtime.cli orchestration run \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-001 \
+  --capability git_push \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --dry-run \
+  --json
+```
+
+说明：
+
+- 聚合 `orchestration route preview` + `orchestration preflight` + `runtime plan` 的安全摘要，输出候选 envelope/events/artifact/evidence refs 与 `plan_hash`。
+- `--commit` 尚未实现；若传入 `--commit` 会返回 `needs_input` 并提示使用 `--dry-run`。
+- 不回显完整 input payload、target 原文、`raw_ref`、`decision_ref`、evidence descriptions。
+
 审批决议（受控写入，追加 event ledger）：
 
 ```bash

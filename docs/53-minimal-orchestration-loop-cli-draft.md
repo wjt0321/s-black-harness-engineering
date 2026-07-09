@@ -37,6 +37,7 @@
 | `python -m agent_runtime.cli orchestration report generate` | 已存在：只读报告生成（当前为 `runtime report` 的薄包装，runtime-report-backed read model）。 | `orchestration report generate --task-id ... --request-id ... --envelope ...` |
 | `python -m agent_runtime.cli orchestration route preview` | 已存在：只读 capability routing preview，输出安全 routing decision（不写 ledger/envelope）。 | `orchestration route preview --capability git_push --json` |
 | `python -m agent_runtime.cli orchestration preflight` | 已存在：只读 handoff 预检，聚合 routing + guardrail preflight 安全摘要（不写 ledger/envelope）。 | `orchestration preflight --capability git_push --json` |
+| `python -m agent_runtime.cli orchestration run --dry-run` | 已存在：只读 run plan preview，输出 routing/preflight/candidate envelope/events/artifact/evidence refs 安全摘要与 `plan_hash`（不写 ledger/envelope/draft）。 | `orchestration run --task-id ... --request-id ... --capability ... --dry-run` |
 | `python -m agent_runtime.cli orchestration <draft> ...` | 为 52 闭环设计的其他候选子命令，**当前尚未实现**，仅作草案参考。 | `orchestration run --commit`、`orchestration task submit --commit` |
 | `python -m agent_runtime.cli orchestration approval resolve` | 已存在：受控写入审批决议，追加 `approval_resolved` event 到 event ledger（不写原 envelope、不直接执行原请求）。 | `orchestration approval resolve --approval-id ... --task-id ... --request-id ... --decision granted --reason "..." --dry-run` |
 | `orchestrator.sh` / `loop.sh` | 示意性脚本名，表示未来可能由脚本/自动化工作流编排的调用序列。 | — |
@@ -194,18 +195,31 @@ python -m agent_runtime.cli runtime draft export \
   --commit
 ```
 
-候选草案（面向 52 闭环的 run 命令）：
+已存在（只读 plan preview）：
 
 ```bash
 python -m agent_runtime.cli orchestration run \
   --task-id task-20260709-001 \
   --request-id req-20260709-001 \
-  --mode dry-run
+  --capability git_push \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --dry-run
+```
 
+候选草案（commit 尚未实现）：
+
+```bash
+# --commit 仍为草案，不写实现
 python -m agent_runtime.cli orchestration run \
   --task-id task-20260709-001 \
   --request-id req-20260709-001 \
-  --mode commit
+  --capability git_push \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --commit
 ```
 
 边界：
@@ -354,6 +368,7 @@ python -m agent_runtime.cli orchestration run \
 | `orchestration report generate` | 报告生成（已存在，`runtime report` 薄包装） |
 | `orchestration route preview` | capability routing preview（已存在，只读） |
 | `orchestration preflight` | 聚合 routing + guardrail preflight（已存在，只读） |
+| `orchestration run --dry-run` | run plan preview（已存在，只读，输出 plan_hash） |
 | `orchestration inspect / report`（草案） | 查看 run / report |
 
 ### 受控写入命令
@@ -364,7 +379,7 @@ python -m agent_runtime.cli orchestration run \
 | `runtime draft export --commit` | 写入 envelope draft 文件 |
 | `runtime event append --commit` | 追加 event ledger 单行 |
 | `runtime event import --commit` | 批量追加 event ledger |
-| `orchestration run --commit`（草案） | 执行一次受控 run，沉淀 run / event / artifact / evidence |
+| `orchestration run --commit`（草案；`--dry-run` 已存在） | 执行一次受控 run，沉淀 run / event / artifact / evidence |
 | `orchestration approval resolve --commit` | 追加 `approval_resolved` event 到 event ledger（不执行原请求、不修改输入 envelope） |
 
 ### 仍然故意不做
@@ -462,7 +477,7 @@ python -m agent_runtime.cli orchestration report \
 
 本文不实现：
 
-- 除 `orchestration overview`、`orchestration task list`、`orchestration task get`、`orchestration run list`、`orchestration run inspect`、`orchestration approval list`、`orchestration approval get`、`orchestration approval resolve`、`orchestration artifact list`、`orchestration artifact get`、`orchestration report generate`、`orchestration route preview`、`orchestration preflight` 之外的任何新的 CLI 子命令。
+- 除 `orchestration overview`、`orchestration task list`、`orchestration task get`、`orchestration run list`、`orchestration run inspect`、`orchestration run --dry-run`、`orchestration approval list`、`orchestration approval get`、`orchestration approval resolve`、`orchestration artifact list`、`orchestration artifact get`、`orchestration report generate`、`orchestration route preview`、`orchestration preflight` 之外的任何新的 CLI 子命令。
 - HTTP / RPC / service 接口。
 - 前端或看板。
 - 数据库选型。
