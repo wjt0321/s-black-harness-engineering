@@ -35,7 +35,7 @@ from .runtime_task_create import TaskCreateDryRunResult, create_task, create_tas
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
-from .orchestration_run import RunInspectResult, inspect_run
+from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -1454,6 +1454,39 @@ def _cmd_orchestration_run_inspect(args: argparse.Namespace) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _cmd_orchestration_run_list(args: argparse.Namespace) -> int:
+    """Render a read-only run list view from an envelope (envelope-scoped read model)."""
+    root = _root_path(args)
+    result = list_runs(
+        root,
+        envelope_file=args.envelope,
+        task_id_filter=getattr(args, "task_id", None),
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("RUN LIST")
+        print(f"envelope={args.envelope}")
+        if getattr(args, "task_id", None) is not None:
+            print(f"task_id_filter={args.task_id}")
+        print(f"runs={len(result.runs)}")
+        for run in result.runs:
+            print(
+                f"- {run['request_id']} "
+                f"task={run['task_id']} "
+                f"adapter={run['adapter_id']} "
+                f"capability={run['capability'] or '-'} "
+                f"operation={run['operation']} "
+                f"mode={run['mode']} "
+                f"status={run['status']} "
+                f"started={run['started_at'] or '-'} "
+                f"ended={run['ended_at'] or '-'}"
+            )
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_task_status(args: argparse.Namespace) -> int:
     root = _root_path(args)
     task = find_task(root, args.task_id)
@@ -1803,6 +1836,18 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_run_subparsers = orchestration_run_parser.add_subparsers(
         dest="run_command", required=True
     )
+
+    orchestration_run_list_parser = orchestration_run_subparsers.add_parser(
+        "list", help="List runs from an adapter execution envelope (read-only, envelope-scoped)"
+    )
+    orchestration_run_list_parser.add_argument(
+        "--envelope", required=True, help="Path to adapter execution envelope JSON file"
+    )
+    orchestration_run_list_parser.add_argument(
+        "--task-id", default=None, help="Filter runs by task id"
+    )
+    _add_global_args(orchestration_run_list_parser)
+    orchestration_run_list_parser.set_defaults(func=_cmd_orchestration_run_list)
 
     orchestration_run_inspect_parser = orchestration_run_subparsers.add_parser(
         "inspect", help="Inspect a run via task_id + request_id + envelope (read-only)"
