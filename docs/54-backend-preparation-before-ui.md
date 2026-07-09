@@ -95,10 +95,11 @@
 
 #### 操作入口
 
-| 操作 | 类型 | 对应 51 操作 | 对应 53 草案命令 |
+| 操作 | 类型 | 对应 51 操作 | 对应 53 命令 |
 |:---|:---:|:---|:---|
-| 创建任务 | 受控写入 | `TaskCollection.create` | `orchestration task submit` |
-| 预览路由 | 只读 | `TaskDetail.previewRouting` | `orchestration route preview` |
+| 查看任务列表 | 只读 | `TaskCollection.list` | `orchestration task list`（已存在） |
+| 创建任务 | 受控写入 | `TaskCollection.create` | `orchestration task submit`（草案） |
+| 预览路由 | 只读 | `TaskDetail.previewRouting` | `orchestration route preview`（草案） |
 | 执行预检 | 只读 | `TaskDetail.preflight` | `orchestration preflight` |
 | 执行 dry-run / commit | 受控写入 | `TaskAction.run` | `orchestration run` |
 | 重试 | 受控写入 | `TaskAction.retry` | `orchestration run --retry` |
@@ -336,7 +337,8 @@
 | 页面数据 | 现有 CLI 命令 |
 |:---|:---|
 | 总览聚合 | `python -m agent_runtime.cli orchestration overview` |
-| Task 列表/详情 | `python -m agent_runtime.cli task status`、`task events` |
+| 任务列表 | `python -m agent_runtime.cli orchestration task list` |
+| Task 详情 / 事件流 | `python -m agent_runtime.cli task status`、`task events` |
 | Run 关联的 envelope 摘要 | `python -m agent_runtime.cli runtime draft inspect` |
 | 聚合报告 | `python -m agent_runtime.cli runtime report` |
 | Approval 状态 | `python -m agent_runtime.cli adapter approval check` |
@@ -346,7 +348,7 @@
 
 | 页面数据 | 53 草案命令 |
 |:---|:---|
-| 任务列表/详情 | `orchestration task list`、`orchestration task get` |
+| 任务详情 | `orchestration task get` |
 | 执行列表/详情 | `orchestration run list`、`orchestration inspect` |
 | 审批列表/详情 | `orchestration approval list`、`orchestration approval get` |
 | 产物列表/详情 | `orchestration artifact list`、`orchestration artifact get` |

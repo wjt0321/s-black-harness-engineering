@@ -34,6 +34,7 @@ from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_task_create import TaskCreateDryRunResult, create_task, create_task_dry_run
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_overview import OverviewSummary, check_overview
+from .orchestration_tasks import TaskListResult, list_tasks
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -1324,6 +1325,27 @@ def _cmd_orchestration_overview(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def _cmd_orchestration_task_list(args: argparse.Namespace) -> int:
+    """Render a read-only list of task snapshots."""
+    root = _root_path(args)
+    status_filter = getattr(args, "status", None)
+    result = list_tasks(root, status_filter=status_filter)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(f"TASK LIST (count={len(result.tasks)})")
+        for task in result.tasks:
+            capability = task.get("requested_capability") or "-"
+            print(
+                f"- {task['task_id']} "
+                f"{task['status']} "
+                f"{capability} "
+                f"assignee={task['assignee']} "
+                f"updated_at={task['updated_at']}"
+            )
+    return EXIT_PASS
+
+
 def _cmd_task_status(args: argparse.Namespace) -> int:
     root = _root_path(args)
     task = find_task(root, args.task_id)
@@ -1639,6 +1661,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_overview_parser)
     orchestration_overview_parser.set_defaults(func=_cmd_orchestration_overview)
+
+    # orchestration task list
+    orchestration_task_parser = orchestration_subparsers.add_parser(
+        "task", help="Query read-only task ledger data through orchestration namespace"
+    )
+    orchestration_task_subparsers = orchestration_task_parser.add_subparsers(
+        dest="task_command", required=True
+    )
+
+    orchestration_task_list_parser = orchestration_task_subparsers.add_parser(
+        "list", help="List task snapshots"
+    )
+    orchestration_task_list_parser.add_argument(
+        "--status", default=None, help="Filter tasks by status"
+    )
+    _add_global_args(orchestration_task_list_parser)
+    orchestration_task_list_parser.set_defaults(func=_cmd_orchestration_task_list)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")
