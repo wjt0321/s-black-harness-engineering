@@ -34,7 +34,7 @@ from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_task_create import TaskCreateDryRunResult, create_task, create_task_dry_run
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_overview import OverviewSummary, check_overview
-from .orchestration_tasks import TaskListResult, list_tasks
+from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -1346,6 +1346,58 @@ def _cmd_orchestration_task_list(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def _cmd_orchestration_task_get(args: argparse.Namespace) -> int:
+    """Render a read-only task detail view with event timeline."""
+    root = _root_path(args)
+    result = get_task(root, args.task_id)
+    if result.status != "pass":
+        return emit(
+            CheckResult(
+                status=result.status,
+                findings=[],
+                next_action=result.next_action,
+            ),
+            json_output=args.json,
+            no_color=args.no_color,
+        )
+
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        if result.task is not None:
+            print("TASK DETAIL")
+            print(f"Task: {result.task['task_id']}")
+            print(f"Title: {result.task['title']}")
+            print(f"Status: {result.task['status']}")
+            print(f"Assignee: {result.task['assignee']}")
+            if result.task.get("summary"):
+                print(f"Summary: {result.task['summary']}")
+            if result.task.get("requested_capability"):
+                print(f"Capability: {result.task['requested_capability']}")
+            if result.task.get("workspace"):
+                print(f"Workspace: {result.task['workspace']}")
+            if result.task.get("priority"):
+                print(f"Priority: {result.task['priority']}")
+            if result.task.get("labels"):
+                print(f"Labels: {', '.join(str(label) for label in result.task['labels'])}")
+            print(f"Created: {result.task['created_at']}")
+            print(f"Updated: {result.task['updated_at']}")
+        if result.event_timeline:
+            print("Events:")
+            for event in result.event_timeline:
+                transition = ""
+                if event.get("from_status") and event.get("to_status"):
+                    transition = f" {event['from_status']} -> {event['to_status']}"
+                elif event.get("to_status"):
+                    transition = f" -> {event['to_status']}"
+                message = event.get("message")
+                suffix = f" - {message}" if message else ""
+                print(
+                    f"- {event['timestamp']} {event['event_type']}{transition}{suffix}"
+                )
+    return EXIT_PASS
+
+
 def _cmd_task_status(args: argparse.Namespace) -> int:
     root = _root_path(args)
     task = find_task(root, args.task_id)
@@ -1678,6 +1730,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_task_list_parser)
     orchestration_task_list_parser.set_defaults(func=_cmd_orchestration_task_list)
+
+    orchestration_task_get_parser = orchestration_task_subparsers.add_parser(
+        "get", help="Show a task snapshot with event timeline"
+    )
+    orchestration_task_get_parser.add_argument(
+        "--task-id", required=True, help="Task id"
+    )
+    _add_global_args(orchestration_task_get_parser)
+    orchestration_task_get_parser.set_defaults(func=_cmd_orchestration_task_get)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")
