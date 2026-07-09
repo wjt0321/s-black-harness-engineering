@@ -37,6 +37,7 @@ from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
 from .orchestration_artifact import ArtifactDetailResult, ArtifactListResult, get_artifact, list_artifacts
+from .orchestration_report import ReportGenerateResult, generate_report
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
@@ -1652,6 +1653,51 @@ def _cmd_orchestration_artifact_get(args: argparse.Namespace) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _cmd_orchestration_report_generate(args: argparse.Namespace) -> int:
+    """Render a read-only report for a task + request pair (runtime-report-backed read model)."""
+    root = _root_path(args)
+    result = generate_report(
+        root,
+        task_id=args.task_id,
+        request_id=args.request_id,
+        envelope_file=args.envelope,
+        tasks_file=getattr(args, "tasks_file", None),
+        events_file=getattr(args, "events_file", None),
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("REPORT GENERATE")
+        print(
+            f"task_id={result.task_id} "
+            f"request_id={result.request_id} "
+            f"task_status={result.task_status or '-'} "
+            f"report_status={result.status}"
+        )
+        print(f"status_summary={result.status_summary}")
+        if result.key_findings:
+            print("Key findings:")
+            for finding in result.key_findings:
+                print(f"- {finding}")
+        else:
+            print("Key findings: none")
+        if result.event_summary:
+            total = result.event_summary.get("total", 0)
+            type_counts = result.event_summary.get("type_counts", {})
+            counts = ", ".join(f"{k}:{v}" for k, v in type_counts.items())
+            print(f"Events: total={total} type_counts={counts}")
+        if result.gate is not None:
+            print(
+                f"Gate: stage={result.gate.get('stage', '-')} "
+                f"can_proceed={result.gate.get('can_proceed', False)}"
+            )
+        if result.ledger is not None:
+            print(f"Ledger: status={result.ledger.get('status', '-')}")
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_task_status(args: argparse.Namespace) -> int:
     root = _root_path(args)
     task = find_task(root, args.task_id)
@@ -2101,6 +2147,35 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_artifact_get_parser)
     orchestration_artifact_get_parser.set_defaults(func=_cmd_orchestration_artifact_get)
+
+    # orchestration report generate
+    orchestration_report_parser = orchestration_subparsers.add_parser(
+        "report", help="Generate read-only reports through orchestration namespace"
+    )
+    orchestration_report_subparsers = orchestration_report_parser.add_subparsers(
+        dest="report_command", required=True
+    )
+
+    orchestration_report_generate_parser = orchestration_report_subparsers.add_parser(
+        "generate", help="Generate a report for a task + request pair (read-only, runtime-report-backed)"
+    )
+    orchestration_report_generate_parser.add_argument(
+        "--task-id", required=True, help="Task id"
+    )
+    orchestration_report_generate_parser.add_argument(
+        "--request-id", required=True, help="Adapter request id"
+    )
+    orchestration_report_generate_parser.add_argument(
+        "--envelope", required=True, help="Path to adapter execution envelope JSON file"
+    )
+    orchestration_report_generate_parser.add_argument(
+        "--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)"
+    )
+    orchestration_report_generate_parser.add_argument(
+        "--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)"
+    )
+    _add_global_args(orchestration_report_generate_parser)
+    orchestration_report_generate_parser.set_defaults(func=_cmd_orchestration_report_generate)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

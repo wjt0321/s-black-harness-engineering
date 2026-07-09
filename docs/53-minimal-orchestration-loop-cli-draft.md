@@ -34,6 +34,7 @@
 | `python -m agent_runtime.cli orchestration approval get` | 已存在：只读 approval 详情 + 关联 request 安全摘要（envelope-scoped）。 | `orchestration approval get --approval-id ... --envelope ...` |
 | `python -m agent_runtime.cli orchestration artifact list` | 已存在：只读 artifact 列表（envelope-scoped read model，支持 `--type` / `--request-id` 过滤）。 | `orchestration artifact list --envelope ...` |
 | `python -m agent_runtime.cli orchestration artifact get` | 已存在：只读 artifact 详情 + 关联 request 安全摘要（envelope-scoped，不回显 input/raw payload）。 | `orchestration artifact get --artifact-id ... --envelope ...` |
+| `python -m agent_runtime.cli orchestration report generate` | 已存在：只读报告生成（当前为 `runtime report` 的薄包装，runtime-report-backed read model）。 | `orchestration report generate --task-id ... --request-id ... --envelope ...` |
 | `python -m agent_runtime.cli orchestration <draft> ...` | 为 52 闭环设计的其他候选子命令，**当前尚未实现**，仅作草案参考。 | `orchestration route preview` |
 | `orchestrator.sh` / `loop.sh` | 示意性脚本名，表示未来可能由脚本/自动化工作流编排的调用序列。 | — |
 
@@ -306,6 +307,7 @@ python -m agent_runtime.cli orchestration run \
 | `orchestration approval get` | approval 详情（已存在，envelope-scoped） |
 | `orchestration artifact list` | artifact 列表（已存在，envelope-scoped，支持 `--type` / `--request-id` 过滤） |
 | `orchestration artifact get` | artifact 详情（已存在，envelope-scoped） |
+| `orchestration report generate` | 报告生成（已存在，`runtime report` 薄包装） |
 | `orchestration route preview`（草案） | 预览 routing 结果 |
 | `orchestration preflight`（草案） | 聚合 preflight |
 | `orchestration inspect / report`（草案） | 查看 run / report |
@@ -409,7 +411,7 @@ python -m agent_runtime.cli orchestration report \
 
 本文不实现：
 
-- 除 `orchestration overview`、`orchestration task list`、`orchestration task get`、`orchestration run list`、`orchestration run inspect`、`orchestration approval list`、`orchestration approval get`、`orchestration artifact list`、`orchestration artifact get` 之外的任何新的 CLI 子命令。
+- 除 `orchestration overview`、`orchestration task list`、`orchestration task get`、`orchestration run list`、`orchestration run inspect`、`orchestration approval list`、`orchestration approval get`、`orchestration artifact list`、`orchestration artifact get`、`orchestration report generate` 之外的任何新的 CLI 子命令。
 - HTTP / RPC / service 接口。
 - 前端或看板。
 - 数据库选型。

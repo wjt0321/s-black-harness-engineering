@@ -290,8 +290,8 @@
 
 | 操作 | 类型 | 对应 51 操作 | 对应 53 草案命令 |
 |:---|:---:|:---|:---|
-| generate | 只读（聚合计算） | `ReportAction.generate` | `orchestration report` |
-| 查看 | 只读 | `ReportDetail.get` | `orchestration report` |
+| generate | 只读（聚合计算） | `ReportAction.generate` | `orchestration report generate`（已存在，`runtime report` 薄包装） |
+| list / get | 只读 | `ReportCollection.list` / `ReportDetail.get` | `orchestration report list` / `orchestration report get`（草案，未实现；当前无独立 Report 存储） |
 
 #### 与 50/51 的关系
 
@@ -360,7 +360,8 @@
 | 重试 / 回退 | `orchestration run --retry`、`orchestration run --fallback-to` |
 | 审批列表/详情 | `orchestration approval list`（已存在，envelope-scoped）、`orchestration approval get`（已存在，envelope-scoped） |
 | 产物列表/详情 | `orchestration artifact list`（已存在，envelope-scoped）、`orchestration artifact get`（已存在，envelope-scoped） |
-| 报告列表/生成 | `orchestration report list`、`orchestration report` |
+| 报告生成 | `orchestration report generate`（已存在，`runtime report` 薄包装） |
+| 报告列表/按 report_id 查看 | `orchestration report list`、`orchestration report get`（草案，未实现；当前无独立 Report 存储） |
 
 说明：
 
