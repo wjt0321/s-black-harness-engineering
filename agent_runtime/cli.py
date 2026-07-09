@@ -35,6 +35,7 @@ from .runtime_task_create import TaskCreateDryRunResult, create_task, create_tas
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
+from .orchestration_task_submit import submit_task
 from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
 from .orchestration_approval_resolve import ApprovalResolveResult, resolve_approval
 from .orchestration_artifact import ArtifactDetailResult, ArtifactListResult, get_artifact, list_artifacts
@@ -873,6 +874,14 @@ def _emit_runtime_task_create_result(result: CheckResult, json_output: bool) -> 
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _emit_orchestration_task_submit_result(result: CheckResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(_render_runtime_task_create_summary(result))
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_runtime_task_create(args: argparse.Namespace) -> int:
     root = _root_path(args)
     dry_run = getattr(args, "dry_run", False)
@@ -1467,6 +1476,21 @@ def _emit_preflight_result(result: PreflightResult, json_output: bool) -> int:
         if result.next_action:
             print(f"Next: {result.next_action}")
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_orchestration_task_submit(args: argparse.Namespace) -> int:
+    """Submit a task through the orchestration namespace."""
+    root = _root_path(args)
+    result = submit_task(
+        root,
+        file=getattr(args, "file", None),
+        stdin=getattr(args, "stdin", False),
+        dry_run=getattr(args, "dry_run", False),
+        commit=getattr(args, "commit", False),
+        tasks_file=getattr(args, "tasks_file", None),
+        events_file=getattr(args, "events_file", None),
+    )
+    return _emit_orchestration_task_submit_result(result, json_output=args.json)
 
 
 def _cmd_orchestration_task_list(args: argparse.Namespace) -> int:
@@ -2419,13 +2443,26 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(orchestration_preflight_parser)
     orchestration_preflight_parser.set_defaults(func=_cmd_orchestration_preflight)
 
-    # orchestration task list
+    # orchestration task submit/list/get
     orchestration_task_parser = orchestration_subparsers.add_parser(
-        "task", help="Query read-only task ledger data through orchestration namespace"
+        "task", help="Submit or query task ledger data through orchestration namespace"
     )
     orchestration_task_subparsers = orchestration_task_parser.add_subparsers(
         dest="task_command", required=True
     )
+
+    orchestration_task_submit_parser = orchestration_task_subparsers.add_parser(
+        "submit", help="Submit a task through the orchestration namespace"
+    )
+    orchestration_task_submit_source = orchestration_task_submit_parser.add_mutually_exclusive_group(required=True)
+    orchestration_task_submit_source.add_argument("--file", default=None, help="Path to candidate task JSON file")
+    orchestration_task_submit_source.add_argument("--stdin", action="store_true", help="Read candidate task JSON from stdin")
+    orchestration_task_submit_parser.add_argument("--dry-run", action="store_true", help="Simulate task submit without writing")
+    orchestration_task_submit_parser.add_argument("--commit", action="store_true", help="Append exactly one task record to the task ledger")
+    orchestration_task_submit_parser.add_argument("--tasks-file", default=None, help="Path to tasks JSONL file (default: tasks/tasks.jsonl)")
+    orchestration_task_submit_parser.add_argument("--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)")
+    _add_global_args(orchestration_task_submit_parser)
+    orchestration_task_submit_parser.set_defaults(func=_cmd_orchestration_task_submit)
 
     orchestration_task_list_parser = orchestration_task_subparsers.add_parser(
         "list", help="List task snapshots"

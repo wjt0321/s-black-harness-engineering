@@ -1190,10 +1190,25 @@ python -m agent_runtime.cli runtime task create \
   --events-file tasks/events.jsonl
 ```
 
+通过 orchestration 命名空间提交 task：
+
+```bash
+python -m agent_runtime.cli orchestration task submit \
+  --file candidate-task.json \
+  --dry-run
+
+python -m agent_runtime.cli orchestration task submit \
+  --file candidate-task.json \
+  --commit \
+  --tasks-file tasks/tasks.jsonl \
+  --events-file tasks/events.jsonl
+```
+
 Commit 边界：
 
 - 只允许追加 exactly one JSON object as the last line of task ledger JSONL。
 - 不自动写 event ledger；如需 created event，后续显式使用 `runtime event append --commit`。
+- `orchestration task submit --dry-run / --commit` 第一版复用同一边界：只写 task ledger，不自动写 event / route / preflight / run。
 - 目标 task ledger 必须位于项目根内、后缀为 `.jsonl`、不是样本 ledger、不是 git/credential 路径。
 - 父目录必须已存在；现有非空文件必须以换行结尾。
 - 输出只包含 task id、状态、计数和检查状态，不回显 title / summary / evidence description / secret match。

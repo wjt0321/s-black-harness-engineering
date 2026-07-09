@@ -1387,6 +1387,19 @@
   - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
 - 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
 
+## 2026-07-09（续）— Stage 16 前低风险实现：Orchestration Task Submit 第一版
+
+- 新增 `agent_runtime/orchestration_task_submit.py`，把 `orchestration task submit --dry-run / --commit` 落成 control-plane-facing 薄包装，底层复用 `runtime task create` 的 schema 校验、scan、ledger consistency 与 rollback。
+- 更新 `agent_runtime/cli.py`：新增 `orchestration task submit` 子命令，支持 `--file|--stdin`、`--dry-run|--commit`、`--tasks-file`、`--events-file`。
+- 第一版边界保持保守：
+  - `--dry-run` 不写任何 ledger；
+  - `--commit` 只写 task ledger；
+  - 不自动写 `created` event；
+  - 不自动触发 route / preflight / run；
+  - `next_action` 统一引导到 `orchestration route preview` / `orchestration preflight`。
+- 新增测试 `tests/test_orchestration_task_submit.py`：覆盖 dry-run、commit、缺失 mode、CLI JSON 输出，以及 submit -> task list/get smoke。
+- 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
+
 ## 2026-07-09（续）— orchestration preflight 只读 handoff 命令落地
 
 - 新增 `agent_runtime/orchestration_preflight.py`：实现 `PreflightResult` 与 `check_preflight()`。
@@ -1440,6 +1453,19 @@
   - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
   - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
 - 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
+
+## 2026-07-09（续）— Stage 16 前低风险实现：Orchestration Task Submit 第一版
+
+- 新增 `agent_runtime/orchestration_task_submit.py`，把 `orchestration task submit --dry-run / --commit` 落成 control-plane-facing 薄包装，底层复用 `runtime task create` 的 schema 校验、scan、ledger consistency 与 rollback。
+- 更新 `agent_runtime/cli.py`：新增 `orchestration task submit` 子命令，支持 `--file|--stdin`、`--dry-run|--commit`、`--tasks-file`、`--events-file`。
+- 第一版边界保持保守：
+  - `--dry-run` 不写任何 ledger；
+  - `--commit` 只写 task ledger；
+  - 不自动写 `created` event；
+  - 不自动触发 route / preflight / run；
+  - `next_action` 统一引导到 `orchestration route preview` / `orchestration preflight`。
+- 新增测试 `tests/test_orchestration_task_submit.py`：覆盖 dry-run、commit、缺失 mode、CLI JSON 输出，以及 submit -> task list/get smoke。
+- 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 
 ## 2026-07-09（续）— orchestration approval resolve 受控写入命令落地
 
@@ -1504,6 +1530,19 @@
   - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
 - 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
 
+## 2026-07-09（续）— Stage 16 前低风险实现：Orchestration Task Submit 第一版
+
+- 新增 `agent_runtime/orchestration_task_submit.py`，把 `orchestration task submit --dry-run / --commit` 落成 control-plane-facing 薄包装，底层复用 `runtime task create` 的 schema 校验、scan、ledger consistency 与 rollback。
+- 更新 `agent_runtime/cli.py`：新增 `orchestration task submit` 子命令，支持 `--file|--stdin`、`--dry-run|--commit`、`--tasks-file`、`--events-file`。
+- 第一版边界保持保守：
+  - `--dry-run` 不写任何 ledger；
+  - `--commit` 只写 task ledger；
+  - 不自动写 `created` event；
+  - 不自动触发 route / preflight / run；
+  - `next_action` 统一引导到 `orchestration route preview` / `orchestration preflight`。
+- 新增测试 `tests/test_orchestration_task_submit.py`：覆盖 dry-run、commit、缺失 mode、CLI JSON 输出，以及 submit -> task list/get smoke。
+- 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
+
 ## 2026-07-09（续）— Stage 15.5 收口：controlled handoff + approval resolve release notes
 
 - 新增 `docs/57-release-notes-orchestration-controlled-handoff.md`，记录从 56 design gate 到第一批 handoff / controlled-write 命令落地的阶段成果。
@@ -1549,6 +1588,19 @@
   - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
   - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
 - 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
+
+## 2026-07-09（续）— Stage 16 前低风险实现：Orchestration Task Submit 第一版
+
+- 新增 `agent_runtime/orchestration_task_submit.py`，把 `orchestration task submit --dry-run / --commit` 落成 control-plane-facing 薄包装，底层复用 `runtime task create` 的 schema 校验、scan、ledger consistency 与 rollback。
+- 更新 `agent_runtime/cli.py`：新增 `orchestration task submit` 子命令，支持 `--file|--stdin`、`--dry-run|--commit`、`--tasks-file`、`--events-file`。
+- 第一版边界保持保守：
+  - `--dry-run` 不写任何 ledger；
+  - `--commit` 只写 task ledger；
+  - 不自动写 `created` event；
+  - 不自动触发 route / preflight / run；
+  - `next_action` 统一引导到 `orchestration route preview` / `orchestration preflight`。
+- 新增测试 `tests/test_orchestration_task_submit.py`：覆盖 dry-run、commit、缺失 mode、CLI JSON 输出，以及 submit -> task list/get smoke。
+- 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 不弱化 guardrail，不夸大 run --commit 已实现。
 
 ## 2026-07-09（续）— Stage 15.6：orchestration run 受控执行设计 gate
@@ -1596,6 +1648,19 @@
   - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
   - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
 - 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
+
+## 2026-07-09（续）— Stage 16 前低风险实现：Orchestration Task Submit 第一版
+
+- 新增 `agent_runtime/orchestration_task_submit.py`，把 `orchestration task submit --dry-run / --commit` 落成 control-plane-facing 薄包装，底层复用 `runtime task create` 的 schema 校验、scan、ledger consistency 与 rollback。
+- 更新 `agent_runtime/cli.py`：新增 `orchestration task submit` 子命令，支持 `--file|--stdin`、`--dry-run|--commit`、`--tasks-file`、`--events-file`。
+- 第一版边界保持保守：
+  - `--dry-run` 不写任何 ledger；
+  - `--commit` 只写 task ledger；
+  - 不自动写 `created` event；
+  - 不自动触发 route / preflight / run；
+  - `next_action` 统一引导到 `orchestration route preview` / `orchestration preflight`。
+- 新增测试 `tests/test_orchestration_task_submit.py`：覆盖 dry-run、commit、缺失 mode、CLI JSON 输出，以及 submit -> task list/get smoke。
+- 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 不弱化 guardrail，不夸大 run --commit 已实现。
 
 ## 2026-07-09（续）— Stage 15.7：orchestration run --dry-run 落地
@@ -1652,6 +1717,19 @@
   - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
   - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
 - 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
+
+## 2026-07-09（续）— Stage 16 前低风险实现：Orchestration Task Submit 第一版
+
+- 新增 `agent_runtime/orchestration_task_submit.py`，把 `orchestration task submit --dry-run / --commit` 落成 control-plane-facing 薄包装，底层复用 `runtime task create` 的 schema 校验、scan、ledger consistency 与 rollback。
+- 更新 `agent_runtime/cli.py`：新增 `orchestration task submit` 子命令，支持 `--file|--stdin`、`--dry-run|--commit`、`--tasks-file`、`--events-file`。
+- 第一版边界保持保守：
+  - `--dry-run` 不写任何 ledger；
+  - `--commit` 只写 task ledger；
+  - 不自动写 `created` event；
+  - 不自动触发 route / preflight / run；
+  - `next_action` 统一引导到 `orchestration route preview` / `orchestration preflight`。
+- 新增测试 `tests/test_orchestration_task_submit.py`：覆盖 dry-run、commit、缺失 mode、CLI JSON 输出，以及 submit -> task list/get smoke。
+- 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 不弱化 guardrail，`--commit` 仍明确未实现，不触发真实 adapter execution。
 
 ## 2026-07-09（续）— Stage 15.8：orchestration run --commit 第一版 A-only 落地
@@ -1714,6 +1792,19 @@
   - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
   - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
 - 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
+
+## 2026-07-09（续）— Stage 16 前低风险实现：Orchestration Task Submit 第一版
+
+- 新增 `agent_runtime/orchestration_task_submit.py`，把 `orchestration task submit --dry-run / --commit` 落成 control-plane-facing 薄包装，底层复用 `runtime task create` 的 schema 校验、scan、ledger consistency 与 rollback。
+- 更新 `agent_runtime/cli.py`：新增 `orchestration task submit` 子命令，支持 `--file|--stdin`、`--dry-run|--commit`、`--tasks-file`、`--events-file`。
+- 第一版边界保持保守：
+  - `--dry-run` 不写任何 ledger；
+  - `--commit` 只写 task ledger；
+  - 不自动写 `created` event；
+  - 不自动触发 route / preflight / run；
+  - `next_action` 统一引导到 `orchestration route preview` / `orchestration preflight`。
+- 新增测试 `tests/test_orchestration_task_submit.py`：覆盖 dry-run、commit、缺失 mode、CLI JSON 输出，以及 submit -> task list/get smoke。
+- 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 不弱化 guardrail，`--commit` 仍明确不执行真实 adapter。
 
 ## 2026-07-09（续）— Stage 15.8 收口：docs/59-release-notes-orchestration-run-controlled-execution.md
@@ -1769,6 +1860,19 @@
   - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
   - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
 - 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
+
+## 2026-07-09（续）— Stage 16 前低风险实现：Orchestration Task Submit 第一版
+
+- 新增 `agent_runtime/orchestration_task_submit.py`，把 `orchestration task submit --dry-run / --commit` 落成 control-plane-facing 薄包装，底层复用 `runtime task create` 的 schema 校验、scan、ledger consistency 与 rollback。
+- 更新 `agent_runtime/cli.py`：新增 `orchestration task submit` 子命令，支持 `--file|--stdin`、`--dry-run|--commit`、`--tasks-file`、`--events-file`。
+- 第一版边界保持保守：
+  - `--dry-run` 不写任何 ledger；
+  - `--commit` 只写 task ledger；
+  - 不自动写 `created` event；
+  - 不自动触发 route / preflight / run；
+  - `next_action` 统一引导到 `orchestration route preview` / `orchestration preflight`。
+- 新增测试 `tests/test_orchestration_task_submit.py`：覆盖 dry-run、commit、缺失 mode、CLI JSON 输出，以及 submit -> task list/get smoke。
+- 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 不说真实 adapter execution 已实现；不弱化 guardrail。
 
 ## 2026-07-09（续）— Stage 15.9：Run Lifecycle Events design gate
@@ -1818,6 +1922,19 @@
   - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
   - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
 - 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
+
+## 2026-07-09（续）— Stage 16 前低风险实现：Orchestration Task Submit 第一版
+
+- 新增 `agent_runtime/orchestration_task_submit.py`，把 `orchestration task submit --dry-run / --commit` 落成 control-plane-facing 薄包装，底层复用 `runtime task create` 的 schema 校验、scan、ledger consistency 与 rollback。
+- 更新 `agent_runtime/cli.py`：新增 `orchestration task submit` 子命令，支持 `--file|--stdin`、`--dry-run|--commit`、`--tasks-file`、`--events-file`。
+- 第一版边界保持保守：
+  - `--dry-run` 不写任何 ledger；
+  - `--commit` 只写 task ledger；
+  - 不自动写 `created` event；
+  - 不自动触发 route / preflight / run；
+  - `next_action` 统一引导到 `orchestration route preview` / `orchestration preflight`。
+- 新增测试 `tests/test_orchestration_task_submit.py`：覆盖 dry-run、commit、缺失 mode、CLI JSON 输出，以及 submit -> task list/get smoke。
+- 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 不说 B 侧 events 已实现；不说真实 adapter execution 已开放；不弱化 guardrail。
 
 ## 2026-07-09（续）— Stage 15.9 实现：Run Lifecycle Events A+B
@@ -1874,3 +1991,16 @@
   - `--commit` 只写 task ledger，不自动写 `created` event，不自动触发 route / preflight / run。
   - 输出面向 orchestration 语义，`next_action` 对齐 route preview / preflight / run 主线。
 - 继续保持：不执行真实 adapter、不访问网络、不发送消息、不引入独立 Task queue / DB / service / UI。
+
+## 2026-07-09（续）— Stage 16 前低风险实现：Orchestration Task Submit 第一版
+
+- 新增 `agent_runtime/orchestration_task_submit.py`，把 `orchestration task submit --dry-run / --commit` 落成 control-plane-facing 薄包装，底层复用 `runtime task create` 的 schema 校验、scan、ledger consistency 与 rollback。
+- 更新 `agent_runtime/cli.py`：新增 `orchestration task submit` 子命令，支持 `--file|--stdin`、`--dry-run|--commit`、`--tasks-file`、`--events-file`。
+- 第一版边界保持保守：
+  - `--dry-run` 不写任何 ledger；
+  - `--commit` 只写 task ledger；
+  - 不自动写 `created` event；
+  - 不自动触发 route / preflight / run；
+  - `next_action` 统一引导到 `orchestration route preview` / `orchestration preflight`。
+- 新增测试 `tests/test_orchestration_task_submit.py`：覆盖 dry-run、commit、缺失 mode、CLI JSON 输出，以及 submit -> task list/get smoke。
+- 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
