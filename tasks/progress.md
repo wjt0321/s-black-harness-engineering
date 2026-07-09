@@ -1298,3 +1298,34 @@
   - GitHub Actions CI：在 Python 3.11 / 3.12 上 pytest + doctor + ledger smoke checks + public_scan 全部通过。
 - 本阶段不新增受控写入 orchestration 命令（如 `orchestration run`、`orchestration approval resolve`、`orchestration task submit`），这些仍留在 53 的命令草案中，待后续进入 Stage 14 受控实现时再展开。
 - 不引入 Windows 绝对路径、真实 agent id、内部称谓、敏感信息。
+
+## 2026-07-09（续）— Orchestration 受控写入边界设计
+
+- 新增 `docs/56-orchestration-controlled-write-boundary.md`：作为进入第一批 orchestration 写入命令前的 safety / design gate。
+- 明确第一批写入命令优先级：
+  - 先实现只读 handoff：`orchestration route preview`、`orchestration preflight`。
+  - 再实现第一个受控写入：`orchestration approval resolve`。
+  - 暂缓：`orchestration run --commit`、`orchestration task submit --commit`、retry / fallback 自动化。
+- 统一 dry-run / commit 语义：
+  - dry-run 只产出 plan/preview，不写 ledger/envelope。
+  - commit 只在现有 controlled-write 机制内 append/export，必须 preflight reload、post-check、失败回滚。
+  - commit 仍不等于真实外部执行；禁止网络/消息/真实 adapter execution。
+  - 支持 expected plan hash / require-dry-run freeze guard。
+- 定义 capability routing handoff：
+  - routing 输出包含 selected_adapter_id、capability、operation、mode、risk_level、requires_approval、requires_dry_run、fallback_candidates、routing_reason、constraints。
+  - 禁止输出完整 input payload、secret、raw adapter metadata。
+  - routing 结果作为 `runtime plan` / `adapter plan` 的输入；routing 只做选择，不绕过 guardrail。
+- 定义 approval resolve 安全语义：
+  - 只记录 decision，不直接执行原请求。
+  - granted 后必须重新发起 run/preflight，不能复用旧 preflight 直接 commit。
+  - rejected 生成拒绝 event/report，不删除原 approval。
+  - decision 绑定 approval_id + task_id + request_id + envelope/ledger context。
+  - reason 做长度/内容限制，decision_ref 输出不回显完整值。
+- 状态与产物边界：
+  - 不引入 DB/service/UI/独立 Run/Approval/Artifact/Report storage。
+  - 写 ledger 优先 append-only event；改 envelope 优先生成新 draft/export，不原地修改输入 envelope。
+- 验收标准：每个新增写入命令必须有 JSON/human 测试、只读不写或 commit 回滚测试、脱敏检查、通过 pytest/doctor/public_scan/diff check。
+- 更新 `docs/00-index.md`：在中枢台后端主线列表中加入 56。
+- 更新 `docs/02-roadmap.md`：在 Stage 15 与 Stage 16 之间新增 Stage 15.5 safety gate 说明，不标记 Stage 16 开始。
+- 本阶段不新增代码、不改测试、不改 README。
+- 不引入 Windows 绝对路径、内部身份称谓、真实 agent id、敏感信息。

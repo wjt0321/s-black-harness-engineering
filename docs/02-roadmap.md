@@ -333,6 +333,30 @@
 
 ---
 
+## Stage 15.5 — Orchestration 受控写入边界（safety gate，设计先行）
+
+目标：在进入第一批 orchestration 写入命令前，先把 dry-run / commit 语义、capability routing handoff、approval resolve 安全边界定清楚，避免在未明确写入规则时匆忙实现 `orchestration run --commit` 等命令。
+
+主要交付物：
+
+- `docs/56-orchestration-controlled-write-boundary.md`
+
+要做的事：
+
+- 明确第一批写入命令优先级：`route preview` / `preflight`（只读 handoff）优先，`approval resolve`（受控写入）次之。
+- 统一 dry-run / commit 语义：dry-run 只产 plan/preview，commit 只在现有 controlled-write 机制内 append/export。
+- 定义 capability routing handoff：routing 输出哪些安全字段、如何成为 `runtime plan` / `adapter plan` 的输入。
+- 定义 approval resolve 安全语义：只记录 decision、不直接执行原请求、granted 后仍需重新 preflight、rejected 生成拒绝 event。
+- 明确状态与产物边界：不引入 DB/service/UI，优先 append-only event 或生成新 envelope draft。
+
+说明：
+
+- 本阶段是 design gate，不新增代码实现。
+- 不标记 Stage 16 开始；Stage 16 仍保持远期。
+- 完成 56 后，再按需回到 Stage 14 的受控实现，或继续补齐 Stage 10-12 的后端抽象。
+
+---
+
 ## Stage 16 — UI / Control Panel（远期）
 
 目标：在后端抽象稳定后，为中枢台提供一个真正可操作、可观察、可审计的前端或看板。
