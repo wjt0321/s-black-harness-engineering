@@ -147,7 +147,7 @@ def test_docs_context_missing_sources_warns(capsys, tmp_path):
     assert code == 0
     result = json.loads(captured.out)
     assert result["status"] == "warn"
-    assert any("docs/00-index.md" in f for f in result["findings"])
+    assert result["findings"]
 
 
 def test_docs_context_does_not_write_files(capsys, tmp_path):
@@ -178,3 +178,120 @@ def test_get_docs_context_module_api(tmp_path):
     assert d["status"] == "pass"
     assert d["milestone"]["tag"] == "v0.99.0-test"
     assert d["current_stage"]["stage"] == "Stage 5"
+
+
+def _write_stage_digest(fake_root: Path) -> None:
+    digest = fake_root / "docs" / "72-stage-digest.md"
+    digest.write_text(
+        "# Stage Digest\n\n"
+        "## 当前稳定基线\n\n"
+        "- 里程碑：`v0.99.0-test-digest`\n"
+        "- 冻结 commit：`c0ffee0`\n\n"
+        "## 当前阶段\n\n"
+        "- **Stage 9.9 — Digest Recovery Model**\n\n"
+        "## 最近完成的 3 个阶段/里程碑\n\n"
+        "1. **Stage 9.8** — Previous step\n"
+        "2. **Stage 9.7** — Earlier step\n\n"
+        "## 推荐恢复顺序\n\n"
+        "1. `docs/72-stage-digest.md` — digest summary\n"
+        "2. `docs/02-roadmap.md` — roadmap view\n"
+        "3. `docs/00-index.md` — index\n\n"
+        "## 下一步推荐入口\n\n"
+        "- **Stage 20 — Future Design**（下一步）\n"
+        "- 入口文档：`docs/99-future.md`\n"
+        "- 重点：future work\n",
+        encoding="utf-8",
+    )
+
+
+def test_docs_context_uses_stage_digest_when_present(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_readme(fake_root)
+    _write_index(fake_root)
+    _write_roadmap(fake_root)
+    _write_progress(fake_root)
+    _write_handoff(fake_root)
+    _write_extra_docs(fake_root)
+    _write_stage_digest(fake_root)
+    (fake_root / "docs" / "99-future.md").write_text("# future\n", encoding="utf-8")
+
+    code = main(["--root", str(fake_root), "docs", "context", "--json"])
+    captured = capsys.readouterr()
+    assert code == 0
+    result = json.loads(captured.out)
+
+    # Digest values override README/roadmap values.
+    assert result["milestone"]["tag"] == "v0.99.0-test-digest"
+    assert result["milestone"]["commit"] == "c0ffee0"
+    assert result["current_stage"]["stage"] == "Stage 9.9"
+    assert result["current_stage"]["description"] == "Digest Recovery Model"
+    assert result["next_design_entry"]["stage"] == "Stage 20"
+    assert result["next_design_entry"]["path"] == "docs/99-future.md"
+
+    # Digest is in recommended list.
+    paths = [d["path"] for d in result["recommended"]]
+    assert "docs/72-stage-digest.md" in paths
+    assert result["docs_summary"]["digest_available"] is True
+
+
+def test_docs_context_falls_back_when_digest_missing(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_readme(fake_root)
+    _write_index(fake_root)
+    _write_roadmap(fake_root)
+    _write_progress(fake_root)
+    _write_handoff(fake_root)
+    _write_extra_docs(fake_root)
+
+    code = main(["--root", str(fake_root), "docs", "context", "--json"])
+    captured = capsys.readouterr()
+    assert code == 0
+    result = json.loads(captured.out)
+
+    # Fallback to README/roadmap parsing.
+    assert result["milestone"]["tag"] == "v0.99.0-test"
+    assert result["current_stage"]["stage"] == "Stage 5"
+    assert result["next_design_entry"]["stage"] == "Stage 10"
+    assert result["docs_summary"]["digest_available"] is False
+
+    # No digest in recommended list.
+    paths = [d["path"] for d in result["recommended"]]
+    assert "docs/72-stage-digest.md" not in paths
+
+
+def test_docs_context_digest_skips_nonexistent_entries(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_readme(fake_root)
+    _write_index(fake_root)
+    _write_roadmap(fake_root)
+    _write_progress(fake_root)
+    _write_handoff(fake_root)
+    _write_extra_docs(fake_root)
+    digest = fake_root / "docs" / "72-stage-digest.md"
+    digest.write_text(
+        "# Stage Digest\n\n"
+        "## 当前稳定基线\n\n"
+        "- 里程碑：`v0.99.0-test`\n"
+        "- 冻结 commit：`c0ffee0`\n\n"
+        "## 当前阶段\n\n"
+        "- **Stage 9.9 — Test**\n\n"
+        "## 推荐恢复顺序\n\n"
+        "1. `docs/72-stage-digest.md` — digest\n"
+        "2. `docs/99-missing.md` — missing placeholder\n"
+        "3. `python -m agent_runtime.cli docs context` — command\n"
+        "4. `docs/02-roadmap.md` — roadmap\n\n"
+        "## 下一步推荐入口\n\n"
+        "- **Stage 10 — Future**\n"
+        "- 入口文档：`docs/48-adapter-interface.md`\n",
+        encoding="utf-8",
+    )
+
+    code = main(["--root", str(fake_root), "docs", "context", "--json"])
+    captured = capsys.readouterr()
+    assert code == 0
+    result = json.loads(captured.out)
+    paths = [d["path"] for d in result["recommended"]]
+    assert "docs/72-stage-digest.md" in paths
+    assert "docs/02-roadmap.md" in paths
+    assert "docs/99-missing.md" not in paths
+    assert "python -m agent_runtime.cli docs context" not in paths

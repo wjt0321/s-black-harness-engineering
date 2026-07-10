@@ -191,28 +191,163 @@ def _extract_next_design_entry(roadmap_text: str | None) -> dict[str, Any]:
     return {}
 
 
+def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
+    """Parse the compact stage digest file if present.
+
+    Returns a dict with milestone, current_stage, recent_completed,
+    recovery_order, next_design_entry. Returns None if the file does not look
+    like a valid stage digest.
+
+    Parsing is line-based and tolerant to markdown variations; it only relies
+    on section headings and list markers defined by the digest template.
+    """
+    if not text:
+        return None
+    if "当前稳定基线" not in text or "当前阶段" not in text:
+        return None
+
+    # Split into sections by '## ' headings.
+    sections: dict[str, list[str]] = {}
+    current_heading: str | None = None
+    for line in text.splitlines():
+        if line.startswith("## "):
+            current_heading = line[3:].strip()
+            sections[current_heading] = []
+        elif current_heading is not None:
+            sections[current_heading].append(line)
+
+    def section_lines(prefix: str) -> list[str]:
+        for heading, lines in sections.items():
+            if heading.startswith(prefix):
+                return lines
+        return []
+
+    digest: dict[str, Any] = {}
+
+    baseline_lines = section_lines("当前稳定基线")
+    milestone: dict[str, Any] = {}
+    for line in baseline_lines:
+        tag_match = re.search(r"[里里]程碑[：:]\s*`?([^`\n]+)`?", line)
+        if tag_match:
+            milestone["tag"] = tag_match.group(1).strip()
+        commit_match = re.search(r"commit[：:]\s*`?([0-9a-f]{7,40})`?", line)
+        if commit_match:
+            milestone["commit"] = commit_match.group(1)
+    digest["milestone"] = milestone
+
+    stage_lines = section_lines("当前阶段")
+    for line in stage_lines:
+        stage_match = re.search(r"\*\*([^*]*Stage\s+[\d.]+[^*]*)\*\*", line)
+        if stage_match:
+            stage_text = stage_match.group(1).strip()
+            m = re.match(r"(Stage\s+[\d.]+)\s*[—-]\s*(.+)", stage_text)
+            if m:
+                digest["current_stage"] = {
+                    "stage": m.group(1).strip(),
+                    "status": "in_progress",
+                    "description": m.group(2).strip(),
+                }
+            else:
+                digest["current_stage"] = {
+                    "stage": stage_text,
+                    "status": "in_progress",
+                    "description": "",
+                }
+            break
+
+    recent: list[dict[str, Any]] = []
+    for line in section_lines("最近完成的"):
+        match = re.search(r"\*\*(Stage\s+[\d.]+)\*\*\s*[—-]\s*(.+)", line)
+        if match:
+            recent.append(
+                {
+                    "stage": match.group(1).strip(),
+                    "description": match.group(2).strip(),
+                }
+            )
+    digest["recent_completed"] = recent
+
+    recovery_order: list[dict[str, Any]] = []
+    for line in section_lines("推荐恢复顺序"):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        # Extract backtick-wrapped path if present; otherwise take the first token.
+        entry_match = re.search(r"`([^`]+)`", stripped)
+        if entry_match:
+            entry = entry_match.group(1).strip()
+            purpose = stripped.split("`", 2)[-1].strip()
+            # Drop leading dash/em-dash and spaces.
+            purpose = re.sub(r"^[\s—-]+", "", purpose)
+        else:
+            match = re.match(r"\d+\.\s+(\S+)\s*[—-]\s*(.+)", stripped)
+            if not match:
+                continue
+            entry = match.group(1).strip()
+            purpose = match.group(2).strip()
+        recovery_order.append({"entry": entry, "purpose": purpose})
+    digest["recovery_order"] = recovery_order
+
+    next_lines = section_lines("下一步推荐入口")
+    next_entry: dict[str, Any] = {}
+    for line in next_lines:
+        stage_match = re.search(r"\*\*([^*]*Stage\s+\d+[^*]*)\*\*", line)
+        if stage_match:
+            stage_text = stage_match.group(1).strip()
+            m = re.match(r"(Stage\s+\d+)\s*[—-]\s*(.+)", stage_text)
+            if m:
+                next_entry["stage"] = m.group(1).strip()
+                next_entry["title"] = m.group(2).strip()
+            else:
+                next_entry["stage"] = stage_text
+        doc_match = re.search(r"入口文档[：:]\s*`([^`]+)`", line)
+        if doc_match:
+            next_entry["path"] = doc_match.group(1)
+        focus_match = re.search(r"重点[：:]\s*(.+)", line)
+        if focus_match:
+            next_entry["focus"] = [focus_match.group(1).strip()]
+    digest["next_design_entry"] = next_entry
+
+    return digest
+
+
 def get_docs_context(root: Path) -> DocsContextResult:
     """Build a compact project context recovery summary.
 
     Reads only safe markdown files from the project root. No network access,
     no credential files, no LLM generation.
+
+    If ``docs/72-stage-digest.md`` exists, its compact fields take priority for
+    milestone, current stage, next design entry and recovery order. Missing or
+    partial digest values fall back to parsing README / index / roadmap.
     """
     root = root.resolve()
     findings: list[str] = []
+
+    digest_text = _read_text(root, "docs/72-stage-digest.md")
+    digest = _parse_stage_digest(digest_text)
+    digest_available = digest is not None
 
     readme = _read_text(root, "README.md")
     index = _read_text(root, "docs/00-index.md")
     roadmap = _read_text(root, "docs/02-roadmap.md")
     progress = _read_text(root, "tasks/progress.md")
 
-    if readme is None:
-        findings.append("README.md not available; milestone and stage info may be incomplete.")
-    if index is None:
-        findings.append("docs/00-index.md not available; recommended doc list may be incomplete.")
+    if digest_available:
+        milestone = digest.get("milestone", {})
+        current_stage = digest.get("current_stage", {})
+        next_design_entry = digest.get("next_design_entry", {})
+        recovery_order = digest.get("recovery_order", [])
+    else:
+        milestone = _extract_milestone(readme)
+        current_stage = _extract_current_stage(readme)
+        next_design_entry = _extract_next_design_entry(roadmap)
+        recovery_order = []
 
-    milestone = _extract_milestone(readme)
-    current_stage = _extract_current_stage(readme)
-    next_design_entry = _extract_next_design_entry(roadmap)
+    if not milestone:
+        findings.append("Milestone info not available; check README.md or docs/72-stage-digest.md.")
+    if not current_stage:
+        findings.append("Current stage info not available; check README.md or docs/72-stage-digest.md.")
 
     # Build recommended reading list.
     recommended: list[dict[str, Any]] = []
@@ -229,14 +364,35 @@ def get_docs_context(root: Path) -> DocsContextResult:
     add("README.md", "project-overview")
     add("docs/10-cli-poc-usage.md", "cli-usage")
 
-    # 2. Session continuity: latest handoff and progress ledger.
+    # 2. Digest-driven recovery order (if present).
+    if digest_available:
+        add("docs/72-stage-digest.md", "stage-digest")
+        for entry in recovery_order:
+            entry_path = entry.get("entry", "")
+            # Skip non-concrete entries (commands, wildcards, explanations).
+            if not entry_path:
+                continue
+            if " " in entry_path or "*" in entry_path or entry_path.endswith(".py"):
+                continue
+            if entry_path == "docs context":
+                continue
+            # Normalize bare filenames to docs/ paths.
+            if not entry_path.startswith(("docs/", "tasks/", "README")):
+                entry_path = f"docs/{entry_path}"
+            # Skip placeholder digest entries that do not exist as files
+            # (e.g. "tasks/handoff-latest.md" standing for the latest handoff).
+            if not (root / entry_path).is_file():
+                continue
+            add(entry_path, entry.get("purpose") or "digest-recovery-order")
+
+    # 3. Session continuity: latest handoff and progress ledger.
     handoff = _latest_handoff(root)
     if handoff:
         add(handoff, "latest-handoff")
     if progress is not None:
         add("tasks/progress.md", "progress-ledger")
 
-    # 3. Latest release notes for continuity.
+    # 4. Latest release notes for continuity.
     release_note_docs = []
     for name in (root / "docs").glob("*.md"):
         if not is_safe_to_read(name):
@@ -249,7 +405,7 @@ def get_docs_context(root: Path) -> DocsContextResult:
         release_note_docs.sort(key=lambda x: x[0])
         add(f"docs/{release_note_docs[-1][1]}", "latest-release-notes")
 
-    # 4. Index top docs.
+    # 5. Index top docs (fallback enrichment).
     for doc in _extract_index_top_docs(index):
         add(doc["path"], doc["reason"])
 
@@ -257,6 +413,7 @@ def get_docs_context(root: Path) -> DocsContextResult:
     recommended = recommended[:10]
 
     docs_summary = _docs_summary(root)
+    docs_summary["digest_available"] = digest_available
     if handoff:
         docs_summary["latest_handoff"] = handoff
 
