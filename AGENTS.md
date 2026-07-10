@@ -376,53 +376,23 @@ CLI 采用分层设计：
 
 ## 设计文档索引
 
-核心设计都落在 `docs/` 中，按编号顺序阅读最清晰：
+> **智能体新会话先读 `docs/000-stage-digest.md`，再按需下钻。**
+> 文档维护规则见 `docs/MAINTENANCE.md`。
 
-1. `docs/01-vision-and-boundaries.md`：愿景与边界。
-2. `docs/02-roadmap.md`：路线图。
-3. `docs/03-policy-schema.md`：通用 Policy Schema。
-4. `docs/04-task-state-model.md`：任务状态模型。
-5. `docs/05-agent-registry.md`：Agent 注册表。
-6. `docs/06-adapter-layer.md`：工具适配器层。
-7. `docs/07-policy-task-bridge.md`：Policy 与 Task 状态衔接。
-8. `docs/08-minimal-cli-design.md`：最小 CLI 设计。
-9. `docs/09-policy-checker-poc-plan.md`：Policy Checker POC 计划。
-10. `docs/10-cli-poc-usage.md`：CLI POC 使用说明。
-11. `docs/11-release-notes-v0.1.md`：v0.1 Release Notes。
-12. `docs/12-adapter-execution-envelope.md`：Adapter Execution Envelope 设计。
-13. `docs/13-release-notes-adapter-envelope.md`
-14. `docs/14-task-runtime-bridge.md`
-15. `docs/15-runtime-ledger-audit.md`
-16. `docs/16-runtime-plan.md`
-17. `docs/17-runtime-planning-bridge.md`
-18. `docs/18-release-notes-runtime-planning-bridge.md`
-19. `docs/19-runtime-report.md`
-20. `docs/20-release-notes-runtime-report.md`
-21. `docs/21-controlled-write-boundaries.md`
-22. `docs/22-runtime-draft-export-dry-run.md`
-23. `docs/23-release-notes-runtime-draft-export-dry-run.md`
-24. `docs/24-runtime-draft-export-commit.md`
-25. `docs/25-release-notes-runtime-draft-export-commit.md`
-26. `docs/26-runtime-event-append-dry-run.md`
-27. `docs/27-release-notes-runtime-event-append-dry-run.md`
-28. `docs/28-runtime-event-append-commit.md`
-29. `docs/29-release-notes-runtime-event-append-commit.md`
-30. `docs/30-runtime-event-append-smoke.md`
-31. `docs/31-runtime-task-create-dry-run.md`
-32. `docs/32-release-notes-runtime-task-create-dry-run.md`
-33. `docs/33-runtime-task-create-commit.md`
-34. `docs/34-release-notes-runtime-task-create-commit.md`
-35. `docs/35-runtime-task-create-smoke.md`
-36. `docs/36-controlled-write-regression.md`
-37. `docs/37-runtime-event-import-dry-run.md`
-38. `docs/38-release-notes-runtime-event-import-dry-run.md`
-39. `docs/39-runtime-event-import-commit-design.md`
-40. `docs/40-release-notes-runtime-event-import-commit.md`
-41. `docs/41-runtime-event-import-consistency-freeze.md`
-42. `docs/42-release-notes-runtime-event-import-consistency-freeze.md`
-43. `docs/43-controlled-write-regression-event-import.md`
-44. `docs/44-release-notes-v0.11-runtime-event-import.md`
-45. `docs/45-runtime-event-import-strict-freeze-mode.md`
+活跃文档详见 `docs/00-index.md`，核心入口：
+
+| 入口 | 文件 |
+|:---|:---|
+| 最小上下文恢复 | `docs/000-stage-digest.md` |
+| 文档导航地图 | `docs/00-index.md` |
+| 愿景与边界 | `docs/01-vision-and-boundaries.md` |
+| 路线图 | `docs/02-roadmap.md` |
+| CLI 用法 | `docs/10-cli-poc-usage.md` |
+| 受控写入边界 | `docs/21-controlled-write-boundaries.md` |
+| 版本治理 | `docs/64-versioning-governance.md` |
+| 文档维护规则 | `docs/MAINTENANCE.md` |
+
+历史阶段交付物已归档至 `docs/archive/`（release-notes / dry-runs / smoke-regression）。
 
 进度与交接：
 

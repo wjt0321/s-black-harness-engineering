@@ -2,6 +2,13 @@
 
 > **新会话先读这份，不要先翻整仓文档。**
 
+## 文档池规模
+
+- docs/ 活跃文档：~35 个
+- 归档文档：`docs/archive/`（release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：~140 个
+- **文档维护规则：`docs/MAINTENANCE.md`**
+
 ## 当前基线
 
 - 稳定基线：`v0.12.0-orchestration-foundation`
@@ -23,7 +30,7 @@
 
 ## 下次恢复顺序
 
-1. 先读：`docs/000-stage-digest.md`
+1. 先读：`docs/000-stage-digest.md`（本文件）
 2. 再跑：`python -m agent_runtime.cli docs context`
 3. 再读：`docs/02-roadmap.md`
 4. 如需接续上轮会话：读最新 `tasks/handoff-*.md`
