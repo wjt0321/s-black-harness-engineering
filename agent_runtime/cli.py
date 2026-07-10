@@ -14,6 +14,7 @@ from .adapter_plan import PlanResult, plan_adapter_action
 from .adapter_response import ResponseCheckResult, check_adapter_response
 from .adapter_validation import inspect_envelope_file, validate_envelope_file
 from .doctor import run_doctor
+from .docs_context import DocsContextResult, get_docs_context
 from .loader import load_adapters, load_agents, load_policies, discover_policies, normalize_path
 from .policy import check_action, check_path, check_text
 from .policy_profile import resolve_profile
@@ -96,6 +97,74 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
     root = _root_path(args)
     result = run_doctor(root)
     return emit(result, json_output=args.json, no_color=args.no_color)
+
+
+def _emit_docs_context_result(result: DocsContextResult, json_output: bool) -> int:
+    if json_output:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("DOCS CONTEXT")
+        milestone = result.milestone
+        print(
+            f"milestone={milestone.get('tag') or '-'} "
+            f"commit={milestone.get('commit') or '-'}"
+        )
+        stage = result.current_stage
+        if stage:
+            print(
+                f"current_stage={stage.get('stage') or '-'} "
+                f"status={stage.get('status') or '-'}"
+            )
+            description = stage.get("description")
+            if description:
+                print(f"  {description}")
+        else:
+            print("current_stage=-")
+
+        entry = result.next_design_entry
+        if entry:
+            print(
+                f"next_design_entry={entry.get('stage') or '-'}: "
+                f"{entry.get('title') or '-'}"
+            )
+            path = entry.get("path")
+            if path:
+                print(f"  doc={path}")
+            focus = entry.get("focus")
+            if focus:
+                for item in focus:
+                    print(f"  - {item}")
+        else:
+            print("next_design_entry=-")
+
+        print(f"recommended={len(result.recommended)}")
+        for doc in result.recommended:
+            print(f"- {doc['path']} ({doc['reason']})")
+
+        summary = result.docs_summary
+        print(
+            f"docs_summary: total={summary.get('total_docs', 0)} "
+            f"range={summary.get('numbered_range') or '-'} "
+            f"latest={', '.join(summary.get('latest_docs', [])) or '-'}"
+        )
+        handoff = summary.get("latest_handoff")
+        if handoff:
+            print(f"latest_handoff={handoff}")
+
+        if result.findings:
+            print("Findings:")
+            for finding in result.findings:
+                print(f"- {finding}")
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_docs_context(args: argparse.Namespace) -> int:
+    """Render a compact project documentation context recovery summary."""
+    root = _root_path(args)
+    result = get_docs_context(root)
+    return _emit_docs_context_result(result, json_output=args.json)
 
 
 def _read_text_source(args: argparse.Namespace) -> str:
@@ -2258,6 +2327,18 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_parser = subparsers.add_parser("doctor", help="Validate project structure and samples")
     _add_global_args(doctor_parser)
     doctor_parser.set_defaults(func=_cmd_doctor)
+
+    # docs context recovery
+    docs_parser = subparsers.add_parser(
+        "docs", help="Documentation context recovery helpers"
+    )
+    docs_subparsers = docs_parser.add_subparsers(dest="docs_command", required=True)
+
+    docs_context_parser = docs_subparsers.add_parser(
+        "context", help="Show compact project context recovery summary"
+    )
+    _add_global_args(docs_context_parser)
+    docs_context_parser.set_defaults(func=_cmd_docs_context)
 
     # check
     check_parser = subparsers.add_parser("check", help="Run read-only checks")

@@ -49,6 +49,29 @@ Next: All checks passed.
 - JSONL 样例是否逐行合法。
 - 仓库文本文件是否命中公开发布风险扫描。
 
+## 恢复上下文
+
+当文档越来越多、需要快速恢复项目状态时，先读这个命令的输出，而不是从头翻所有 docs：
+
+```bash
+python -m agent_runtime.cli docs context
+python -m agent_runtime.cli docs context --json
+```
+
+输出包含：
+
+- 当前里程碑基线（tag / commit）
+- 当前阶段与状态（来自 README 阶段进度）
+- 推荐恢复阅读列表（top 5~10，来自 index、roadmap、最新 release notes、progress、最新 handoff）
+- 下一步设计入口（来自 roadmap 中下一个高优先级阶段）
+- 文档总量安全摘要（总数、编号范围、最近 3 份编号文档、最新 handoff）
+
+说明：
+
+- 只读本地 markdown，不联网、不用 LLM、不读 credential。
+- 输出紧凑，不回显完整 roadmap/progress 长文本。
+- 如果 `README.md` / `docs/00-index.md` 等来源缺失，会返回 `warn` 并提示缺少哪些文件。
+
 ## 文本密钥扫描
 
 ```bash
