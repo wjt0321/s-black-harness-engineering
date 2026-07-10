@@ -207,8 +207,9 @@ python -m agent_runtime.cli policies list
 25. `docs/68-orchestration-foundation-milestone-freeze-checklist.md`
 26. `docs/69-orchestration-foundation-freeze-execution-plan.md`
 27. `docs/70-orchestration-run-retry-fallback-commit-design.md`
-28. `docs/10-cli-poc-usage.md`
-29. `docs/21-controlled-write-boundaries.md`
+28. `docs/71-release-notes-run-lineage-read-models.md`
+29. `docs/10-cli-poc-usage.md`
+30. `docs/21-controlled-write-boundaries.md`
 
 其中 `docs/47-orchestration-hub-vision.md` 到 `docs/54-backend-preparation-before-ui.md` 是中枢台后端主线，建议按编号顺序阅读。
 

@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .orchestration_run import _extract_lineage_for_request
 from .runtime_report import RuntimeReportResult, check_runtime_report
 
 
@@ -34,6 +35,10 @@ class ReportGenerateResult:
     ledger: dict[str, Any] | None = None
     artifact_refs: list[str] = field(default_factory=list)
     evidence_refs: list[str] = field(default_factory=list)
+    lineage_type: str | None = None
+    retry_of: str | None = None
+    fallback_from: str | None = None
+    fallback_to: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -59,6 +64,14 @@ class ReportGenerateResult:
             d["ledger"] = self.ledger
         d["artifact_refs"] = self.artifact_refs
         d["evidence_refs"] = self.evidence_refs
+        if self.lineage_type is not None:
+            d["lineage_type"] = self.lineage_type
+        if self.retry_of is not None:
+            d["retry_of"] = self.retry_of
+        if self.fallback_from is not None:
+            d["fallback_from"] = self.fallback_from
+        if self.fallback_to is not None:
+            d["fallback_to"] = self.fallback_to
         return d
 
 
@@ -85,8 +98,12 @@ def generate_report(
         events_file=events_file,
     )
 
+    lineage = _extract_lineage_for_request(report.envelope_summary, request_id)
+
     # Build a concise status summary for report-page consumption.
     status_summary = f"task_id={report.task_id} task={report.task_status or '-'} report={report.status}"
+    if lineage.get("lineage_type"):
+        status_summary += f" lineage_type={lineage['lineage_type']}"
     if report.blockers:
         status_summary += f" blockers={len(report.blockers)}"
 
@@ -110,4 +127,5 @@ def generate_report(
         ledger=report.ledger,
         artifact_refs=[],
         evidence_refs=[],
+        **lineage,
     )

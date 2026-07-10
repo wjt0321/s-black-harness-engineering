@@ -1637,6 +1637,15 @@ def _cmd_orchestration_run_inspect(args: argparse.Namespace) -> int:
             f"status={result.status} "
             f"task_status={result.task_status or '-'}"
         )
+        if result.lineage_type:
+            lineage_parts = [f"lineage_type={result.lineage_type}"]
+            if result.retry_of:
+                lineage_parts.append(f"retry_of={result.retry_of}")
+            if result.fallback_from:
+                lineage_parts.append(f"fallback_from={result.fallback_from}")
+            if result.fallback_to:
+                lineage_parts.append(f"fallback_to={result.fallback_to}")
+            print(" ".join(lineage_parts))
         if result.envelope_summary is not None:
             artifact_counts = result.envelope_summary.get("artifact_counts", {})
             counts = ", ".join(f"{k}={v}" for k, v in artifact_counts.items())
@@ -1688,17 +1697,27 @@ def _cmd_orchestration_run_list(args: argparse.Namespace) -> int:
             print(f"task_id_filter={args.task_id}")
         print(f"runs={len(result.runs)}")
         for run in result.runs:
-            print(
-                f"- {run['request_id']} "
-                f"task={run['task_id']} "
-                f"adapter={run['adapter_id']} "
-                f"capability={run['capability'] or '-'} "
-                f"operation={run['operation']} "
-                f"mode={run['mode']} "
-                f"status={run['status']} "
-                f"started={run['started_at'] or '-'} "
-                f"ended={run['ended_at'] or '-'}"
-            )
+            parts = [
+                f"- {run['request_id']}",
+                f"task={run['task_id']}",
+                f"adapter={run['adapter_id']}",
+                f"capability={run['capability'] or '-'}",
+                f"operation={run['operation']}",
+                f"mode={run['mode']}",
+                f"status={run['status']}",
+                f"started={run['started_at'] or '-'}",
+                f"ended={run['ended_at'] or '-'}",
+            ]
+            if run.get("lineage_type"):
+                lineage_parts = [f"lineage_type={run['lineage_type']}"]
+                if run.get("retry_of"):
+                    lineage_parts.append(f"retry_of={run['retry_of']}")
+                if run.get("fallback_from"):
+                    lineage_parts.append(f"fallback_from={run['fallback_from']}")
+                if run.get("fallback_to"):
+                    lineage_parts.append(f"fallback_to={run['fallback_to']}")
+                parts.append(" ".join(lineage_parts))
+            print(" ".join(parts))
         if result.next_action:
             print(f"Next: {result.next_action}")
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
@@ -2136,6 +2155,15 @@ def _cmd_orchestration_report_generate(args: argparse.Namespace) -> int:
             f"task_status={result.task_status or '-'} "
             f"report_status={result.status}"
         )
+        if result.lineage_type:
+            lineage_parts = [f"lineage_type={result.lineage_type}"]
+            if result.retry_of:
+                lineage_parts.append(f"retry_of={result.retry_of}")
+            if result.fallback_from:
+                lineage_parts.append(f"fallback_from={result.fallback_from}")
+            if result.fallback_to:
+                lineage_parts.append(f"fallback_to={result.fallback_to}")
+            print(" ".join(lineage_parts))
         print(f"status_summary={result.status_summary}")
         if result.key_findings:
             print("Key findings:")

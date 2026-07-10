@@ -75,6 +75,7 @@
 - `68-orchestration-foundation-milestone-freeze-checklist.md`
 - `69-orchestration-foundation-freeze-execution-plan.md`
 - `70-orchestration-run-retry-fallback-commit-design.md`
+- `71-release-notes-run-lineage-read-models.md`
 
 适合：想理解项目如何从 guardrail 内核演进成中枢运行台、以及最小执行闭环如何串起 adapter / routing / state 的读者。
 

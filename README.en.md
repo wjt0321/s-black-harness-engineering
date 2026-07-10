@@ -207,8 +207,9 @@ If this is your first time in the repository, read in this order:
 25. `docs/68-orchestration-foundation-milestone-freeze-checklist.md`
 26. `docs/69-orchestration-foundation-freeze-execution-plan.md`
 27. `docs/70-orchestration-run-retry-fallback-commit-design.md`
-28. `docs/10-cli-poc-usage.md`
-29. `docs/21-controlled-write-boundaries.md`
+28. `docs/71-release-notes-run-lineage-read-models.md`
+29. `docs/10-cli-poc-usage.md`
+30. `docs/21-controlled-write-boundaries.md`
 
 The documents `docs/47-orchestration-hub-vision.md` through `docs/54-backend-preparation-before-ui.md` form the orchestration-hub backend backbone; read them in numbered order.
 

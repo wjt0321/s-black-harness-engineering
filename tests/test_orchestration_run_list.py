@@ -239,3 +239,142 @@ def test_run_list_does_not_write_files(capsys, tmp_path):
     ])
     assert code == 0
     assert envelope_path.read_bytes() == envelope_before
+
+
+def _make_envelope_with_lineage() -> dict[str, Any]:
+    """Build an envelope with normal, retry, and fallback runs."""
+    return {
+        "version": 1,
+        "description": "Run list lineage test envelope",
+        "artifacts": [
+            {
+                "artifact_type": "adapter_request",
+                "request_id": "req-20260709-001",
+                "task_id": "task-20260709-001",
+                "adapter_id": "shell-local",
+                "operation": "read_file",
+                "actor": "test",
+                "target": "docs/06-adapter-layer.md",
+                "input": {"path": "docs/06-adapter-layer.md"},
+                "context": {
+                    "source": "cli",
+                    "policy_profile": "s-black",
+                    "risk_level": "local",
+                    "dry_run": True,
+                    "requires_approval": False,
+                    "approval_id": None,
+                    "payload_refs": [],
+                    "capability": "inspect.repo",
+                },
+                "preflight": {"status": "pass", "findings": []},
+                "created_at": "2026-07-09T10:00:00+08:00",
+            },
+            {
+                "artifact_type": "adapter_request",
+                "request_id": "req-20260709-002",
+                "task_id": "task-20260709-001",
+                "adapter_id": "github-cli",
+                "operation": "git_push",
+                "actor": "test",
+                "target": "origin/main",
+                "input": {"remote": "origin", "branch": "main"},
+                "context": {
+                    "source": "cli",
+                    "policy_profile": "s-black",
+                    "risk_level": "external",
+                    "dry_run": True,
+                    "requires_approval": False,
+                    "approval_id": None,
+                    "payload_refs": [],
+                    "lineage_type": "retry",
+                    "retry_of": "req-20260709-001",
+                },
+                "preflight": {"status": "pass", "findings": []},
+                "created_at": "2026-07-09T10:10:00+08:00",
+            },
+            {
+                "artifact_type": "adapter_request",
+                "request_id": "req-20260709-003",
+                "task_id": "task-20260709-001",
+                "adapter_id": "dummy-fallback",
+                "operation": "read_file",
+                "actor": "test",
+                "target": "docs/06-adapter-layer.md",
+                "input": {"path": "docs/06-adapter-layer.md"},
+                "context": {
+                    "source": "cli",
+                    "policy_profile": "s-black",
+                    "risk_level": "local",
+                    "dry_run": True,
+                    "requires_approval": False,
+                    "approval_id": None,
+                    "payload_refs": [],
+                    "lineage_type": "fallback",
+                    "fallback_from": "req-20260709-001",
+                    "fallback_to": "dummy-fallback",
+                },
+                "preflight": {"status": "pass", "findings": []},
+                "created_at": "2026-07-09T10:20:00+08:00",
+            },
+        ],
+    }
+
+
+def test_run_list_lineage_json(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    envelope = _make_envelope_with_lineage()
+    envelope_path = fake_root / "drafts" / "runtime" / "run-list-lineage.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    code = main([
+        "--root", str(fake_root),
+        "orchestration", "run", "list",
+        "--envelope", str(envelope_path),
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    assert code == 0
+    result = json.loads(captured.out)
+    by_id = {run["request_id"]: run for run in result["runs"]}
+
+    normal = by_id["req-20260709-001"]
+    assert "lineage_type" not in normal
+    assert "retry_of" not in normal
+    assert "fallback_from" not in normal
+
+    retry = by_id["req-20260709-002"]
+    assert retry["lineage_type"] == "retry"
+    assert retry["retry_of"] == "req-20260709-001"
+    assert "fallback_from" not in retry
+
+    fallback = by_id["req-20260709-003"]
+    assert fallback["lineage_type"] == "fallback"
+    assert fallback["fallback_from"] == "req-20260709-001"
+    assert fallback["fallback_to"] == "dummy-fallback"
+    assert "retry_of" not in fallback
+
+    # Targets must not leak in list output.
+    assert "origin/main" not in captured.out
+
+
+def test_run_list_lineage_human(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    envelope = _make_envelope_with_lineage()
+    envelope_path = fake_root / "drafts" / "runtime" / "run-list-lineage.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    code = main([
+        "--root", str(fake_root),
+        "orchestration", "run", "list",
+        "--envelope", str(envelope_path),
+    ])
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "lineage_type=retry" in captured.out
+    assert "retry_of=req-20260709-001" in captured.out
+    assert "lineage_type=fallback" in captured.out
+    assert "fallback_from=req-20260709-001" in captured.out
+    assert "fallback_to=dummy-fallback" in captured.out
+    assert "origin/main" not in captured.out

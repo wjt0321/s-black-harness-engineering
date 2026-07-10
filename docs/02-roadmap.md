@@ -556,27 +556,44 @@
 
 ---
 
-## Stage 15.98 — Retry / Fallback Commit 设计（当前阶段）
+## Stage 15.98 — Retry / Fallback Commit 落地
 
-目标：在 retry / fallback dry-run preview 已落地、且 `v0.12.0-orchestration-foundation` 已冻结完成后，把恢复性分支的 commit 语义补成新的 design gate。
+目标：在 retry / fallback dry-run preview 已落地、且 `v0.12.0-orchestration-foundation` 已冻结完成后，把恢复性分支的 commit 语义正式落成 lineage-aware 的受控写入能力。
 
-本阶段要做的事：
+已完成范围：
 
-- 明确 retry commit 与 fallback commit 都继续复用现有 `orchestration run --commit` 的 A+B 事务模型
-- 明确 lineage-aware envelope metadata 与 lifecycle event metadata
-- 明确 retry/fallback commit 对 `--expected-plan-hash`、`--output`、`--events-file` 的更严格要求
-- 明确 source request 存在性校验、重复 commit 防护、approval 重新计算与 rollback 边界
-- 明确第一版是否复用现有 `run_planned` / `run_draft_exported` event_type，还是新增更细 event_type
-
-主要交付物：
-
-- `docs/70-orchestration-run-retry-fallback-commit-design.md`
+- retry commit 与 fallback commit 继续复用现有 `orchestration run --commit` 的 A+B 事务模型
+- envelope metadata 与 lifecycle event metadata 已支持 `lineage_type`、`retry_of`、`fallback_from`、`fallback_to`
+- retry/fallback commit 对 `--expected-plan-hash`、`--output`、`--events-file` 采用更严格要求
+- 已补 source request 存在性校验、同 task 归属校验、重复 commit 防护与 rollback 边界
+- 第一版复用现有 `run_planned` / `run_draft_exported` event_type，仅在 metadata 中表达 lineage
+- 阶段设计与收口文档：`docs/70-orchestration-run-retry-fallback-commit-design.md`
 
 说明：
 
-- 本阶段仍是 design gate，不直接放开真实 adapter execution。
-- 当前更推荐先复用现有 event_type，在 metadata 中表达 lineage，降低 schema 扩张成本。
-- release notes 与实现收口留到 design gate 通过后再进入。
+- 本阶段实现的仍是受控写入，不是真实 adapter execution。
+- lineage 已能被写入 envelope / lifecycle event metadata。
+- 下一步自然转向 read model 对 lineage 的可见性与 recovery 聚合，而不是立刻进入真实执行。
+
+---
+
+## Stage 15.99 — Run Lineage / Recovery Read Model（当前阶段）
+
+目标：让 retry / fallback lineage 不只是被写进去，还能被现有 orchestration read models 以安全、紧凑的方式读出来。
+
+已完成范围：
+
+- `orchestration run inspect` 已能输出 `lineage_type`、`retry_of`、`fallback_from`、`fallback_to`
+- `orchestration run list` 已能在每条 run 摘要中显示紧凑 lineage 标识
+- `orchestration report generate` 已补 lineage 安全摘要
+- lineage 提取优先复用 envelope `adapter_request.context`，不引入新存储
+- 阶段收口文档：`docs/71-release-notes-run-lineage-read-models.md`
+
+说明：
+
+- 本阶段仍不放开真实 adapter execution、独立 Run storage、DB、service 或 UI。
+- recovery lineage 现在已形成“可写 + 可读”的最小闭环。
+- 下一步更适合进入 recovery lineage 聚合视图设计，而不是跳去真实执行。
 
 ---
 

@@ -22,6 +22,18 @@ from .adapter_validation import validate_envelope_file
 from .runtime_report import RuntimeReportResult, check_runtime_report
 
 
+_LINEAGE_KEYS = ("lineage_type", "retry_of", "fallback_from", "fallback_to")
+
+
+def _lineage_fields(source: dict[str, Any]) -> dict[str, Any]:
+    """Return lineage keys from ``source`` when their values are present.
+
+    Keeps retry/fallback lineage compact: absent or ``None`` values are omitted
+    so normal runs do not carry empty lineage fields.
+    """
+    return {k: v for k, v in source.items() if k in _LINEAGE_KEYS and v is not None}
+
+
 @dataclass
 class RunInspectResult:
     """Result of an orchestration run inspect."""
@@ -37,6 +49,10 @@ class RunInspectResult:
     next_action: str | None = None
     event_summary: dict[str, Any] = field(default_factory=dict)
     task_snapshot: dict[str, Any] = field(default_factory=dict)
+    lineage_type: str | None = None
+    retry_of: str | None = None
+    fallback_from: str | None = None
+    fallback_to: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -60,7 +76,27 @@ class RunInspectResult:
             d["event_summary"] = self.event_summary
         if self.task_snapshot:
             d["task_snapshot"] = self.task_snapshot
+        if self.lineage_type is not None:
+            d["lineage_type"] = self.lineage_type
+        if self.retry_of is not None:
+            d["retry_of"] = self.retry_of
+        if self.fallback_from is not None:
+            d["fallback_from"] = self.fallback_from
+        if self.fallback_to is not None:
+            d["fallback_to"] = self.fallback_to
         return d
+
+
+def _extract_lineage_for_request(
+    envelope_summary: dict[str, Any] | None, request_id: str
+) -> dict[str, Any]:
+    """Return lineage fields for ``request_id`` from an envelope summary."""
+    if envelope_summary is None:
+        return {}
+    for request_summary in envelope_summary.get("requests", []):
+        if request_summary.get("request_id") == request_id:
+            return _lineage_fields(request_summary)
+    return {}
 
 
 def inspect_run(
@@ -85,6 +121,7 @@ def inspect_run(
         tasks_file=tasks_file,
         events_file=events_file,
     )
+    lineage = _extract_lineage_for_request(report.envelope_summary, request_id)
     return RunInspectResult(
         status=report.status,
         task_id=report.task_id,
@@ -97,6 +134,7 @@ def inspect_run(
         next_action=report.next_action,
         event_summary=report.event_summary,
         task_snapshot=report.task_snapshot,
+        **lineage,
     )
 
 
@@ -172,19 +210,19 @@ def list_runs(
 
         mode = "dry-run" if context.get("dry_run") else "commit"
 
-        runs.append(
-            {
-                "request_id": request_id,
-                "task_id": task_id,
-                "adapter_id": artifact.get("adapter_id", ""),
-                "capability": context.get("capability", ""),
-                "operation": artifact.get("operation", ""),
-                "mode": mode,
-                "status": status,
-                "started_at": artifact.get("created_at", ""),
-                "ended_at": response.get("finished_at", "") if response else "",
-            }
-        )
+        run: dict[str, Any] = {
+            "request_id": request_id,
+            "task_id": task_id,
+            "adapter_id": artifact.get("adapter_id", ""),
+            "capability": context.get("capability", ""),
+            "operation": artifact.get("operation", ""),
+            "mode": mode,
+            "status": status,
+            "started_at": artifact.get("created_at", ""),
+            "ended_at": response.get("finished_at", "") if response else "",
+        }
+        run.update(_lineage_fields(context))
+        runs.append(run)
 
     # Preserve request order from the envelope.
     return RunListResult(

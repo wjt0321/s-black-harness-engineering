@@ -1674,6 +1674,29 @@ python -m agent_runtime.cli orchestration report generate \
   --envelope adapters/execution-envelope.examples.json
 ```
 
+Run lineage 在 read model 中的呈现（Stage 15.99）：
+
+```bash
+# retry/fallback commit 后，inspect / list / report 会 compact 展示 lineage
+python -m agent_runtime.cli orchestration run inspect \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json
+
+python -m agent_runtime.cli orchestration run list \
+  --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json
+
+python -m agent_runtime.cli orchestration report generate \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json
+```
+
+说明：
+
+- 当 envelope 的 `adapter_request.context` 包含 `lineage_type`、`retry_of`、`fallback_from`、`fallback_to` 时，上述 read model 会在 JSON / human 输出中展示；普通 run 不强制输出空字段，保持兼容。
+- 输出仍不回显完整 `target`/`input`/`raw_ref`/`decision_ref`/`payload_refs`/evidence descriptions。
+
 Routing handoff 预览（只读）：
 
 ```bash

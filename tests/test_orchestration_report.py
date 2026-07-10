@@ -273,3 +273,78 @@ def test_report_generate_does_not_write_files(capsys, tmp_path):
     # Runtime report returns needs_approval (exit 3) because approval is pending.
     assert code == 3
     assert envelope_path.read_bytes() == envelope_before
+
+
+def _make_envelope_with_lineage(lineage: dict[str, Any]) -> dict[str, Any]:
+    """Build a minimal envelope with lineage in adapter_request.context."""
+    envelope = _make_envelope()
+    request = envelope["artifacts"][0]
+    request["request_id"] = "req-20260703-002"
+    request["context"].update(lineage)
+    # Make the request pass so the report status is not dominated by approval.
+    request["context"]["requires_approval"] = False
+    request["preflight"]["status"] = "pass"
+    request["preflight"]["findings"] = []
+    # Remove the approval_record since it is no longer needed.
+    envelope["artifacts"] = [a for a in envelope["artifacts"] if a["artifact_type"] != "approval_record"]
+    return envelope
+
+
+def test_report_generate_retry_lineage_json(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root)
+    _write_events(fake_root)
+    envelope = _make_envelope_with_lineage(
+        {"lineage_type": "retry", "retry_of": "req-20260703-001"}
+    )
+    envelope_path = fake_root / "drafts" / "runtime" / "report-retry.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    code = main([
+        "--root", str(fake_root),
+        "orchestration", "report", "generate",
+        "--task-id", "task-20260703-001",
+        "--request-id", "req-20260703-002",
+        "--envelope", str(envelope_path),
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    assert code in (0, 4)
+    result = json.loads(captured.out)
+    assert result["lineage_type"] == "retry"
+    assert result["retry_of"] == "req-20260703-001"
+    assert "lineage_type=retry" in result["status_summary"]
+    assert "origin/main" not in captured.out
+
+
+def test_report_generate_fallback_lineage_json(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root)
+    _write_events(fake_root)
+    envelope = _make_envelope_with_lineage(
+        {
+            "lineage_type": "fallback",
+            "fallback_from": "req-20260703-001",
+            "fallback_to": "dummy-fallback",
+        }
+    )
+    envelope_path = fake_root / "drafts" / "runtime" / "report-fallback.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    code = main([
+        "--root", str(fake_root),
+        "orchestration", "report", "generate",
+        "--task-id", "task-20260703-001",
+        "--request-id", "req-20260703-002",
+        "--envelope", str(envelope_path),
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    assert code in (0, 4)
+    result = json.loads(captured.out)
+    assert result["lineage_type"] == "fallback"
+    assert result["fallback_from"] == "req-20260703-001"
+    assert result["fallback_to"] == "dummy-fallback"
+    assert "lineage_type=fallback" in result["status_summary"]

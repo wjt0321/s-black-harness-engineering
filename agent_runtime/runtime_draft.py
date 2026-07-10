@@ -257,7 +257,7 @@ def _artifact_summary(artifact: dict[str, Any]) -> dict[str, Any]:
     if artifact_type == "adapter_request":
         context = artifact.get("context", {})
         preflight = artifact.get("preflight", {})
-        return {
+        summary: dict[str, Any] = {
             "request_id": artifact.get("request_id"),
             "adapter_id": artifact.get("adapter_id"),
             "operation": artifact.get("operation"),
@@ -265,6 +265,14 @@ def _artifact_summary(artifact: dict[str, Any]) -> dict[str, Any]:
             "requires_approval": bool(context.get("requires_approval")),
             "risk_level": context.get("risk_level"),
         }
+        # Surface retry/fallback lineage when present in adapter_request.context.
+        # These fields are written by orchestration run --commit and are safe to
+        # expose because they contain only request ids, not targets or payloads.
+        for key in ("lineage_type", "retry_of", "fallback_from", "fallback_to"):
+            value = context.get(key)
+            if value is not None:
+                summary[key] = value
+        return summary
     if artifact_type == "approval_record":
         return {
             "approval_id": artifact.get("approval_id"),

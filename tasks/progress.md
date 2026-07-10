@@ -247,13 +247,23 @@
 - 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
-## 2026-07-10 — Post-freeze 下一拍：Retry / Fallback Commit 设计
+## 2026-07-10 — Post-freeze 下一拍：Retry / Fallback Commit 设计与落地
 
 - 进入 post-freeze 后的下一拍 design gate：新增 `docs/70-orchestration-run-retry-fallback-commit-design.md`。
 - 目标不是放开真实 adapter execution，而是把恢复性分支的 commit 语义补齐为新的受控写入设计层：retry commit / fallback commit 继续复用现有 `orchestration run --commit` 的 A+B 事务模型。
 - 设计重点：lineage-aware envelope metadata、lifecycle event metadata、`--expected-plan-hash` 必填、source request 存在性校验、重复 commit 防护、approval 重新 preflight、A/B rollback 不留下半条 lineage。
-- 当前推荐第一版继续复用现有 `run_planned` / `run_draft_exported` event_type，只在 metadata 中表达 `lineage_type`、`retry_of`、`fallback_from`、`fallback_to`，避免过早扩张 schema enum。
+- 第一版继续复用现有 `run_planned` / `run_draft_exported` event_type，只在 metadata 中表达 `lineage_type`、`retry_of`、`fallback_from`、`fallback_to`，避免过早扩张 schema enum。
+- 后续已完成实现并 push：retry / fallback commit 第一版已落地，commit 为 `ac83ccf`（`Add retry and fallback run commit flow`）。
 - 已同步更新 `docs/00-index.md`、`docs/02-roadmap.md`、`README.md` 与 `README.en.md`，把 70 号设计文档接入中枢台后端主线阅读路径。
+
+## 2026-07-10 — Run Lineage / Recovery Read Model 第一版
+
+- 在 retry / fallback commit 已落地后，继续补 read model 可见性：新增 `docs/71-release-notes-run-lineage-read-models.md`。
+- `orchestration run inspect` 已支持输出 `lineage_type`、`retry_of`、`fallback_from`、`fallback_to`。
+- `orchestration run list` 已支持在每条 run 摘要中显示紧凑 lineage 标识，普通 run 不误标。
+- `orchestration report generate` 已补 lineage 安全摘要。
+- lineage 提取优先复用 envelope `adapter_request.context`，不引入独立 Run storage，不扩 event schema enum。
+- 已同步更新 `docs/00-index.md`、`docs/02-roadmap.md`、`README.md`、`README.en.md` 与 `docs/10-cli-poc-usage.md`，把 71 号 release notes 和 read-model 用法接入主线。
 
 ## 下一步小任务
 
