@@ -61,7 +61,7 @@ python -m agent_runtime.cli docs context --json
 输出包含：
 
 - 当前里程碑基线（tag / commit）
-- 当前阶段与状态（优先来自 `docs/72-stage-digest.md`，缺失时回退到 README 阶段进度）
+- 当前阶段与状态（优先来自 `docs/000-stage-digest.md`，缺失时回退到 README 阶段进度）
 - 推荐恢复阅读列表（top 5~10，优先使用 digest 的恢复顺序，再补充 index、roadmap、最新 release notes、progress、最新 handoff）
 - 下一步设计入口（优先来自 digest，缺失时来自 roadmap 中下一个高优先级阶段）
 - 文档总量安全摘要（总数、编号范围、最近 3 份编号文档、最新 handoff、`digest_available` 标志）
@@ -70,7 +70,7 @@ python -m agent_runtime.cli docs context --json
 
 - 只读本地 markdown，不联网、不用 LLM、不读 credential。
 - 输出紧凑，不回显完整 roadmap/progress/digest 长文本。
-- 如果存在 `docs/72-stage-digest.md`，会优先消费其中的紧凑字段；digest 缺失或字段不全时自动回退到 `README.md` / `docs/00-index.md` / `docs/02-roadmap.md` / `tasks/progress.md` 的解析。
+- 如果存在 `docs/000-stage-digest.md`，会优先消费其中的紧凑字段；digest 缺失或字段不全时自动回退到 `README.md` / `docs/00-index.md` / `docs/02-roadmap.md` / `tasks/progress.md` 的解析。
 - 如果关键来源缺失，会返回 `warn` 并提示缺少哪些文件。
 
 ## 文本密钥扫描

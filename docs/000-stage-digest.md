@@ -23,7 +23,7 @@
 
 ## 推荐恢复顺序
 
-1. `docs/72-stage-digest.md` — 快速确认当前基线与阶段
+1. `docs/000-stage-digest.md` — 快速确认当前基线与阶段
 2. `docs/02-roadmap.md` — 看双主线大图与下一阶段
 3. `docs/00-index.md` — 按主题选读
 4. `tasks/handoff-latest.md` — 接续上回会话上下文（实际文件名为 `tasks/handoff-YYYY-MM-DD-*.md` 最新一份）

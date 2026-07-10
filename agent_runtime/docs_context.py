@@ -317,14 +317,14 @@ def get_docs_context(root: Path) -> DocsContextResult:
     Reads only safe markdown files from the project root. No network access,
     no credential files, no LLM generation.
 
-    If ``docs/72-stage-digest.md`` exists, its compact fields take priority for
+    If ``docs/000-stage-digest.md`` exists, its compact fields take priority for
     milestone, current stage, next design entry and recovery order. Missing or
     partial digest values fall back to parsing README / index / roadmap.
     """
     root = root.resolve()
     findings: list[str] = []
 
-    digest_text = _read_text(root, "docs/72-stage-digest.md")
+    digest_text = _read_text(root, "docs/000-stage-digest.md")
     digest = _parse_stage_digest(digest_text)
     digest_available = digest is not None
 
@@ -345,9 +345,9 @@ def get_docs_context(root: Path) -> DocsContextResult:
         recovery_order = []
 
     if not milestone:
-        findings.append("Milestone info not available; check README.md or docs/72-stage-digest.md.")
+        findings.append("Milestone info not available; check README.md or docs/000-stage-digest.md.")
     if not current_stage:
-        findings.append("Current stage info not available; check README.md or docs/72-stage-digest.md.")
+        findings.append("Current stage info not available; check README.md or docs/000-stage-digest.md.")
 
     # Build recommended reading list.
     recommended: list[dict[str, Any]] = []
@@ -366,7 +366,7 @@ def get_docs_context(root: Path) -> DocsContextResult:
 
     # 2. Digest-driven recovery order (if present).
     if digest_available:
-        add("docs/72-stage-digest.md", "stage-digest")
+        add("docs/000-stage-digest.md", "stage-digest")
         for entry in recovery_order:
             entry_path = entry.get("entry", "")
             # Skip non-concrete entries (commands, wildcards, explanations).
