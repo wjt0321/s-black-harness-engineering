@@ -2308,3 +2308,88 @@
 - 验证：
   - 聚焦测试：`tests/test_orchestration_routing_snapshot.py` 22 passed。
   - 全量测试、doctor、public_scan、diff check 通过。
+
+## 2026-07-11 — Stage 12：Routing Snapshot → Run Preview 安全引用第一拍
+
+- 目标：在 `orchestration run --dry-run` 中加入对 Stage 12 `RoutingDecisionSnapshot` 的安全引用，保持只读、不持久化、不执行真实 adapter。
+- 修改文件：
+  - `agent_runtime/orchestration_run_dry_run.py`：
+    - `RunDryRunResult` 新增 `routing_snapshot_id` 字段，条件输出。
+    - `dry_run_run` 新增 `routing_snapshot_id` 参数，入口校验 `^sha256:[a-f0-9]{64}$`；非法返回 `needs_input`。
+    - `_compute_plan_hash` 纳入 `routing_snapshot_id`；`_build_candidate_events_summary` 在 `run_planned` metadata keys 中追加；`_build_artifact_candidate_refs` 为每个 ref 追加。
+  - `agent_runtime/orchestration_run_commit.py`：`commit_run` 新增 `routing_snapshot_id` 参数并透传给 `dry_run_run`，保证 commit 路径 plan hash 一致。[已撤回]
+  - `agent_runtime/cli.py`：`orchestration run` parser 新增 `--routing-snapshot-id`；`_cmd_orchestration_run` 透传给 dry-run/commit；human 输出条件打印。
+  - `tests/test_orchestration_run_dry_run.py`：新增 11 个测试，覆盖引用注入、默认兼容、plan hash 稳定与差异、非法格式/路径、retry/fallback 引用、CLI JSON/human 输出。
+  - `docs/50-control-plane-state-model.md`：新增 Routing Decision Snapshot → Run Preview 安全引用小节。
+  - `docs/52-minimal-orchestration-loop.md`：在 Adapter Dry-run / Commit 步骤说明 `--routing-snapshot-id` 引用语义。
+  - `docs/10-cli-poc-usage.md`：Run dry-run preview 段增加带 snapshot id 的示例与说明。
+  - `docs/000-stage-digest.md`：新增“Routing Snapshot → Run Preview 安全引用第一拍”小节，更新“现在已经能做什么”与“下一步做什么”。
+  - `docs/02-roadmap.md`：Stage 12 已落地第一拍追加安全引用说明。
+- 明确边界：
+  - 只接受 `sha256:<64 lowercase hex>`，非法值返回 `needs_input`，不读取任意路径或 JSON。
+  - 不校验 snapshot 磁盘存在性；它是 content-addressed reference contract，不是假装持久化。
+  - 默认不传时旧输出与旧 `plan_hash` 兼容。
+  - retry / fallback dry-run 同样支持引用，lineage 与 routing snapshot 各自独立。
+- 未实现：snapshot 与持久化 Run/Event 对象的真实衔接；独立 Run storage；真实 adapter execution。
+- 未声称 Stage 12 完成；未 commit/push。
+
+## 2026-07-11 — Stage 12：Routing Snapshot → Run Preview 安全引用审查返工
+
+- 返工点 1：严格限定 `--routing-snapshot-id` 仅支持 `--dry-run` preview。
+  - 移除 `agent_runtime/orchestration_run_commit.py` 中的 `routing_snapshot_id` 参数与透传。
+  - `agent_runtime/cli.py` 在 `--commit` 分支检测到 `--routing-snapshot-id` 时直接返回 `blocked`（rule_id=`routing-snapshot-id-not-supported-in-commit`），不进入 `commit_run`、不写 envelope/ledger。
+  - 新增 CLI 测试 `test_cli_commit_with_routing_snapshot_id_blocked_and_no_writes`：验证返回 `blocked` 且 tasks/events/drafts 均无变化。
+- 返工点 2：非法格式 finding 不再回显原始输入。
+  - `agent_runtime/orchestration_run_dry_run.py` 中 `invalid-routing-snapshot-id` 的 message 改为固定文本 `--routing-snapshot-id must match 'sha256:<64 lowercase hex chars>'.`，不再包含 `received value`。
+  - 新增测试 `test_dry_run_invalid_routing_snapshot_id_does_not_echo_raw_value`：使用类 token 字符串验证 JSON 输出中不包含原值。
+- 返工点 3：文档口径校正。
+  - `docs/50-control-plane-state-model.md`、`docs/52-minimal-orchestration-loop.md`、`docs/10-cli-poc-usage.md` 明确说明 `--commit` 传入该引用会被拒绝、本拍仅 `--dry-run` 支持。
+  - `tasks/progress.md` 追加本返工条目，替换之前“commit 路径透传”的越界描述。
+- 未修改其余设计；未 commit/push。
+
+## 2026-07-11 — Stage 12：Run Preview → Event / Report 只读投影闭环
+
+- 目标：在 `orchestration run --dry-run` 基础上新增 `--snapshot`，基于真实 `RunDryRunResult` 一次性构造 `OrchestrationReadLoopSnapshot` 只读闭环 snapshot，包含 Run Preview + candidate Event summaries + Report Preview；不写 ledger、不生成持久 Run/Event/Report、不执行 adapter。
+- 设计要点：
+  - 新增 `agent_runtime/orchestration_read_loop_snapshot.py`：定义 `OrchestrationReadLoopSnapshot`、`build_read_loop_snapshot`、`_canonical_json`、`_compute_snapshot_id`。
+  - `snapshot_id` 直接 hash 最终安全 payload（去掉 `snapshot_id`），无时间戳/随机数/进程状态；相同输入 byte-equivalent。
+  - Run 层：`pass` / `needs_approval` 时 `run.status` 映射为 `"planned"`，其余状态原样传播；包含 `plan_hash`、可选 `routing_snapshot_id`、lineage。
+  - Event 层：从 `candidate_events_summary` 投影 `event_type`、`status=planned`、`metadata_keys`；不伪造 `event_id`/`timestamp`。
+  - Report 层：`status=preview`，输出 candidate event/artifact 计数与类型分布、`requires_approval`、`next_action`、仅 `rule_ids` 的 finding 摘要；无 `report_id`。
+  - 错误/阻断/需要输入状态仍生成 snapshot，但 candidate events 为空、report 计数为零。
+- 修改文件：
+  - `agent_runtime/orchestration_read_loop_snapshot.py`：新增 read-loop snapshot 模块。
+  - `agent_runtime/cli.py`：`orchestration run` parser 新增 `--snapshot` flag；新增 `_emit_read_loop_snapshot`；`_cmd_orchestration_run` 在 dry-run 分支 `--snapshot` 时输出 snapshot，commit 分支 `--snapshot` 时返回 `blocked`。
+  - `tests/test_orchestration_read_loop_snapshot.py`：新增 18 个测试，覆盖结构、needs_approval、blocked/needs_input、确定性、snapshot_id hash、source mutation、无敏感载荷、routing_snapshot_id、lineage、CLI JSON/human、默认兼容、commit 拒绝与无写入、round-trip 数据契约。
+  - `docs/50-control-plane-state-model.md`：新增 Run Preview → Event / Report Read-Loop Snapshot 小节。
+  - `docs/51-backend-first-api-boundary.md`：Task 操作表后说明 `--dry-run --snapshot` 产生 ephemeral read model。
+  - `docs/52-minimal-orchestration-loop.md`：Adapter Dry-run / Commit 步骤补充 `--snapshot` 语义。
+  - `docs/53-minimal-orchestration-loop-cli-draft.md`：`orchestration run --dry-run` 说明追加 `--snapshot`。
+  - `docs/10-cli-poc-usage.md`：新增 run dry-run `--snapshot` 示例与说明。
+  - `docs/000-stage-digest.md`：新增“Run Preview → Event / Report 只读投影闭环”小节；更新“现在已经能做什么”。
+  - `docs/02-roadmap.md`：Stage 12 已落地第一拍追加 read-loop snapshot 闭环说明。
+  - `tasks/progress.md`：追加本条目。
+- 明确边界：
+  - 默认 `--dry-run` 输出与 `plan_hash` 严格兼容；传入 `--snapshot` 仅新增 snapshot 字段。
+  - `--commit` 模式下 `--snapshot` 与 `--routing-snapshot-id` 均被明确拒绝，不写任何文件/ledger。
+  - 不持久化 snapshot，不写入 task/event/run ledger，不生成独立 Report 集合，不执行真实 adapter。
+- 未实现：snapshot 与持久化 Run/Event 对象的真实衔接；独立 Run storage；真实 adapter execution。
+- 未声称 Stage 12 完成；未 commit/push。
+- 临时产物：任务结束后按规则迁移 `.superpowers/` 到项目外临时备份目录（`stage12-read-loop-snapshot-20260711` 子目录）。
+
+## 2026-07-11 — Stage 12 第二拍沉淀审查返工
+
+- 审查返工 1：`run.gate_status` / `report.gate_status` 稳定分层；`pass` → `ready`，`needs_approval` → `pending_approval`，其余状态原样传播；`report.status_summary` 同步输出。测试覆盖 needs_approval 不会被误判为 ready。
+- 审查返工 2：candidate events 保持 `status=planned`，测试锁住无 `event_id` / `timestamp`；`approval_requested` 明确为候选预览。
+- 审查返工 3：`tasks/progress.md` 中“`agent_runtime/orchestration_run_commit.py` 透传 `routing_snapshot_id`”的原条目已标记 `[已撤回]`。
+- 审查返工 4：按 `docs/MAINTENANCE.md` 规则，将阶段收口 release notes 从 `docs/72-release-notes-read-loop-snapshot.md` 迁移到 `docs/archive/release-notes/72-release-notes-read-loop-snapshot.md`；更新 `docs/00-index.md`、`docs/000-stage-digest.md`、handoff 中所有引用路径；`docs/` 根目录不再保留 72 release notes。
+- 审查返工 5：handoff 明确候选基线为当前 HEAD `bba0ced` + 本轮未提交变更。
+- 审查返工 6：`docs/02-roadmap.md` Stage 12 标题更新为“read-only loop 第一版已落地，持续巩固”，不声称完整 Stage 12 完成。
+- 建议 tag 保持候选：`v0.12.1-orchestration-read-loop-snapshot`，未打 tag。
+- 验证：
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK。
+  - `bash .githooks/pre-commit`（临时 staging 后运行）：✅ docs maintenance check passed。
+  - `git diff --check`：无空白错误（仅 Git LF/CRLF 设置提示）。
+- 未 commit/push。

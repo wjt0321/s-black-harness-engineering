@@ -276,7 +276,7 @@
 
 ---
 
-## Stage 12 — Control Plane State Model（下一步高优先级）
+## Stage 12 — Control Plane State Model（read-only loop 第一版已落地，持续巩固）
 
 目标：把未来 CLI、UI、自动化共同依赖的状态对象讲清楚，并把路由/preflight 决策沉淀为可消费的控制面状态。
 
@@ -292,6 +292,8 @@
 - `snapshot_id` 由 canonical safe payload 的 SHA-256 哈希确定性生成。
 - CLI：`orchestration route snapshot` 与 `orchestration preflight --snapshot`。
 - routing 状态与 guardrail 状态在 snapshot 中分层表达。
+- Routing Snapshot → Run Preview 安全引用：`orchestration run --dry-run` 支持 `--routing-snapshot-id sha256:<64hex>`，引用进入结果、artifact refs、event metadata 与 `plan_hash`；不读取磁盘、不持久化 snapshot、非法格式返回 `needs_input`。
+- Run Preview → Event / Report 只读投影闭环：`orchestration run --dry-run --snapshot` 基于真实 `RunDryRunResult` 一次性构造 `OrchestrationReadLoopSnapshot`，包含 Run Preview、candidate Event summaries、Report Preview；不写 ledger、不生成持久对象、不执行 adapter。
 
 仍后续：
 

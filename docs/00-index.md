@@ -64,7 +64,7 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/release-notes/` | 各阶段 release notes（21 个） |
+| `archive/release-notes/` | 各阶段 release notes（含最新 `72-release-notes-read-loop-snapshot.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 

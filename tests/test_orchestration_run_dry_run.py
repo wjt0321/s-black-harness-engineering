@@ -570,3 +570,248 @@ def test_fallback_to_overrides_adapter_id_in_direct_call(tmp_path: Path) -> None
     assert d["lineage_type"] == "fallback"
     assert d["fallback_to"] == "dummy-local"
     assert d["route"]["selected_adapter_id"] == "dummy-local"
+
+
+VALID_SNAPSHOT_ID = "sha256:" + "a" * 64
+OTHER_SNAPSHOT_ID = "sha256:" + "b" * 64
+
+
+def test_dry_run_with_routing_snapshot_id_injects_reference(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        routing_snapshot_id=VALID_SNAPSHOT_ID,
+    )
+    d = result.to_dict()
+    assert d["status"] == "pass"
+    assert d["routing_snapshot_id"] == VALID_SNAPSHOT_ID
+    # Candidate run artifact/refs carry the snapshot id.
+    for ref in d["artifact_candidate_refs"]:
+        assert ref["routing_snapshot_id"] == VALID_SNAPSHOT_ID
+    # run_planned candidate event metadata keys include the snapshot id.
+    run_planned = next(
+        (e for e in d["candidate_events_summary"] if e["event_type"] == "run_planned"), None
+    )
+    assert run_planned is not None
+    assert "routing_snapshot_id" in run_planned["metadata_keys"]
+
+
+def test_dry_run_without_routing_snapshot_id_remains_compatible(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+    )
+    d = result.to_dict()
+    assert d["status"] == "pass"
+    assert "routing_snapshot_id" not in d
+    run_planned = next(
+        (e for e in d["candidate_events_summary"] if e["event_type"] == "run_planned"), None
+    )
+    assert run_planned is not None
+    assert "routing_snapshot_id" not in run_planned["metadata_keys"]
+    for ref in d["artifact_candidate_refs"]:
+        assert "routing_snapshot_id" not in ref
+
+
+def test_dry_run_plan_hash_differs_with_routing_snapshot_id(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    base = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+    )
+    with_snapshot = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        routing_snapshot_id=VALID_SNAPSHOT_ID,
+    )
+    assert base.plan_hash != with_snapshot.plan_hash
+
+
+def test_dry_run_plan_hash_stable_with_same_routing_snapshot_id(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result1 = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        routing_snapshot_id=VALID_SNAPSHOT_ID,
+    )
+    result2 = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        routing_snapshot_id=VALID_SNAPSHOT_ID,
+    )
+    assert result1.plan_hash == result2.plan_hash
+
+
+def test_dry_run_invalid_routing_snapshot_id_returns_needs_input(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        routing_snapshot_id="not-a-valid-id",
+    )
+    assert result.status == "needs_input"
+    assert result.findings[0].rule_id == "invalid-routing-snapshot-id"
+    assert result.plan_hash is None
+
+
+def test_dry_run_routing_snapshot_id_rejects_path_like_value(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        routing_snapshot_id="drafts/runtime/task-001/snapshot.json",
+    )
+    assert result.status == "needs_input"
+    assert result.findings[0].rule_id == "invalid-routing-snapshot-id"
+
+
+def test_dry_run_invalid_routing_snapshot_id_does_not_echo_raw_value(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    sensitive_id = "ghp_" + "X" * 36
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        routing_snapshot_id=sensitive_id,
+    )
+    assert result.status == "needs_input"
+    output = json.dumps(result.to_dict(), ensure_ascii=False)
+    assert sensitive_id not in output
+    assert "ghp_" not in output
+    assert result.findings[0].message == "--routing-snapshot-id must match 'sha256:<64 lowercase hex chars>'."
+
+
+def test_retry_dry_run_with_routing_snapshot_id(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=RETRY_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        retry_of=SOURCE_REQUEST_ID,
+        routing_snapshot_id=VALID_SNAPSHOT_ID,
+    )
+    d = result.to_dict()
+    assert d["status"] == "pass"
+    assert d["lineage_type"] == "retry"
+    assert d["routing_snapshot_id"] == VALID_SNAPSHOT_ID
+
+
+def test_fallback_dry_run_with_routing_snapshot_id(tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    result = dry_run_run(
+        fake_root,
+        task_id=TASK_ID,
+        request_id=FALLBACK_REQUEST_ID,
+        capability="read_file",
+        operation="read_file",
+        target="docs/06-adapter-layer.md",
+        fallback_from=SOURCE_REQUEST_ID,
+        fallback_to="dummy-local",
+        routing_snapshot_id=VALID_SNAPSHOT_ID,
+    )
+    d = result.to_dict()
+    assert d["status"] == "pass"
+    assert d["lineage_type"] == "fallback"
+    assert d["routing_snapshot_id"] == VALID_SNAPSHOT_ID
+
+
+def test_cli_dry_run_with_routing_snapshot_id_json(capsys, tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    code = main(
+        _base_args(fake_root, capability="read_file", operation="read_file", target="docs/06-adapter-layer.md")
+        + ["--routing-snapshot-id", VALID_SNAPSHOT_ID, "--json"]
+    )
+    captured = capsys.readouterr()
+    result = json.loads(captured.out)
+    assert code == 0
+    assert result["status"] == "pass"
+    assert result["routing_snapshot_id"] == VALID_SNAPSHOT_ID
+    assert "plan_hash" in result
+
+
+def test_cli_dry_run_with_routing_snapshot_id_human(capsys, tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    code = main(
+        _base_args(fake_root, capability="read_file", operation="read_file", target="docs/06-adapter-layer.md")
+        + ["--routing-snapshot-id", VALID_SNAPSHOT_ID]
+    )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert f"routing_snapshot_id={VALID_SNAPSHOT_ID}" in captured.out
+    assert "plan_hash=" in captured.out
+
+
+def test_cli_commit_with_routing_snapshot_id_blocked_and_no_writes(capsys, tmp_path: Path) -> None:
+    fake_root = _setup_fake_root(tmp_path)
+    args = [
+        "--root", str(fake_root),
+        "orchestration", "run",
+        "--task-id", TASK_ID,
+        "--request-id", REQUEST_ID,
+        "--capability", "read_file",
+        "--operation", "read_file",
+        "--target", "docs/06-adapter-layer.md",
+        "--commit",
+        "--output", "drafts/runtime/task-001/test.envelope.json",
+        "--expected-plan-hash", "sha256:any",
+        "--events-file", "tasks/events.jsonl",
+        "--routing-snapshot-id", VALID_SNAPSHOT_ID,
+        "--json",
+    ]
+    before_tasks = (fake_root / "tasks" / "tasks.jsonl").read_bytes()
+    drafts_dir = fake_root / "drafts"
+    before_events = (fake_root / "tasks" / "events.jsonl").read_bytes() if (fake_root / "tasks" / "events.jsonl").exists() else b""
+
+    code = main(args)
+    captured = capsys.readouterr()
+    result = json.loads(captured.out)
+
+    assert code == 2  # blocked
+    assert result["status"] == "blocked"
+    assert result["findings"][0]["rule_id"] == "routing-snapshot-id-not-supported-in-commit"
+    assert (fake_root / "tasks" / "tasks.jsonl").read_bytes() == before_tasks
+    assert not drafts_dir.exists() or list(drafts_dir.rglob("*.json")) == []
+    assert (
+        not (fake_root / "tasks" / "events.jsonl").exists()
+        or (fake_root / "tasks" / "events.jsonl").read_bytes() == before_events
+    )

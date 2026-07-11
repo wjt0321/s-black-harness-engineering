@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -43,6 +44,7 @@ class RunDryRunResult:
     retry_of: str | None = None
     fallback_from: str | None = None
     fallback_to: str | None = None
+    routing_snapshot_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -73,6 +75,8 @@ class RunDryRunResult:
             d["fallback_from"] = self.fallback_from
         if self.fallback_to is not None:
             d["fallback_to"] = self.fallback_to
+        if self.routing_snapshot_id is not None:
+            d["routing_snapshot_id"] = self.routing_snapshot_id
         return d
 
 
@@ -98,6 +102,7 @@ def _compute_plan_hash(
     retry_of: str | None = None,
     fallback_from: str | None = None,
     fallback_to: str | None = None,
+    routing_snapshot_id: str | None = None,
 ) -> str:
     """Compute a stable plan hash from safe, deterministic fields.
 
@@ -138,6 +143,8 @@ def _compute_plan_hash(
         payload["fallback_from"] = fallback_from
     if fallback_to is not None:
         payload["fallback_to"] = fallback_to
+    if routing_snapshot_id is not None:
+        payload["routing_snapshot_id"] = routing_snapshot_id
     canonical = json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
@@ -208,7 +215,10 @@ def _build_event_summary(
 
 
 def _build_candidate_events_summary(
-    envelope: dict[str, Any], provided_request_id: str, task_id: str
+    envelope: dict[str, Any],
+    provided_request_id: str,
+    task_id: str,
+    routing_snapshot_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Return candidate event summaries for the dry-run preview.
 
@@ -235,24 +245,29 @@ def _build_candidate_events_summary(
         )
 
     # Always include a run_planned candidate.
+    run_planned_keys = [
+        "plan_hash",
+        "mode",
+        "adapter_id",
+        "operation",
+        "capability",
+    ]
+    if routing_snapshot_id is not None:
+        run_planned_keys.append("routing_snapshot_id")
     events.append(
         _build_event_summary(
             event_type="run_planned",
             request_id=provided_request_id,
             task_id=task_id,
-            metadata_keys=[
-                "plan_hash",
-                "mode",
-                "adapter_id",
-                "operation",
-                "capability",
-            ],
+            metadata_keys=run_planned_keys,
         )
     )
     return events
 
 
-def _build_artifact_candidate_refs(envelope: dict[str, Any]) -> list[dict[str, Any]]:
+def _build_artifact_candidate_refs(
+    envelope: dict[str, Any], routing_snapshot_id: str | None = None
+) -> list[dict[str, Any]]:
     """Return safe artifact references from a generated envelope."""
     refs: list[dict[str, Any]] = []
     for artifact in envelope.get("artifacts", []):
@@ -269,6 +284,8 @@ def _build_artifact_candidate_refs(envelope: dict[str, Any]) -> list[dict[str, A
             ref["event_id"] = artifact.get("event_id")
             ref["event_type"] = artifact.get("event_type")
             ref["request_id"] = artifact.get("request_id")
+        if routing_snapshot_id is not None:
+            ref["routing_snapshot_id"] = routing_snapshot_id
         refs.append(ref)
     return refs
 
@@ -299,6 +316,7 @@ def dry_run_run(
     retry_of: str | None = None,
     fallback_from: str | None = None,
     fallback_to: str | None = None,
+    routing_snapshot_id: str | None = None,
 ) -> RunDryRunResult:
     """Generate a read-only run dry-run preview.
 
@@ -307,6 +325,25 @@ def dry_run_run(
     plan_hash for future freeze guards. This function does not execute adapters,
     write ledgers or envelopes, or access networks.
     """
+    if routing_snapshot_id is not None:
+        if not re.fullmatch(r"sha256:[a-f0-9]{64}", routing_snapshot_id):
+            return RunDryRunResult(
+                status="needs_input",
+                task_id=task_id,
+                request_id=request_id,
+                requested_capability=capability,
+                mode="dry-run",
+                findings=[
+                    Finding(
+                        rule_id="invalid-routing-snapshot-id",
+                        severity="block",
+                        action="needs_input",
+                        message="--routing-snapshot-id must match 'sha256:<64 lowercase hex chars>'.",
+                    )
+                ],
+                next_action="Provide a valid content-addressed routing snapshot id, or omit the flag.",
+            )
+
     if requested_mode != "dry-run":
         return _error_result(
             task_id=task_id,
@@ -436,6 +473,7 @@ def dry_run_run(
             constraints=preflight.constraints,
             findings=list(preflight.findings),
             next_action=preflight.next_action,
+            routing_snapshot_id=routing_snapshot_id,
         )
 
     selected_adapter_id = route_summary.get("selected_adapter_id")
@@ -452,6 +490,7 @@ def dry_run_run(
             constraints=preflight.constraints,
             findings=list(preflight.findings),
             next_action="Provide --operation for the selected adapter.",
+            routing_snapshot_id=routing_snapshot_id,
         )
 
     target_missing = target is None or target.strip() == ""
@@ -467,6 +506,7 @@ def dry_run_run(
             constraints=preflight.constraints,
             findings=list(preflight.findings),
             next_action="Provide --target for the selected operation/adapter.",
+            routing_snapshot_id=routing_snapshot_id,
         )
 
     plan_result = plan_runtime_action(
@@ -492,6 +532,7 @@ def dry_run_run(
             constraints=preflight.constraints,
             findings=list(plan_result.findings),
             next_action=plan_result.next_action,
+            routing_snapshot_id=routing_snapshot_id,
         )
 
     envelope = plan_result.envelope_draft
@@ -506,8 +547,12 @@ def dry_run_run(
         )
 
     envelope_summary = _build_envelope_summary(envelope, request_id)
-    events_summary = _build_candidate_events_summary(envelope, request_id, task_id)
-    artifact_refs = _build_artifact_candidate_refs(envelope)
+    events_summary = _build_candidate_events_summary(
+        envelope, request_id, task_id, routing_snapshot_id=routing_snapshot_id
+    )
+    artifact_refs = _build_artifact_candidate_refs(
+        envelope, routing_snapshot_id=routing_snapshot_id
+    )
     evidence_refs = _build_evidence_candidate_refs()
 
     plan_hash = _compute_plan_hash(
@@ -527,6 +572,7 @@ def dry_run_run(
         retry_of=retry_of,
         fallback_from=fallback_from,
         fallback_to=fallback_to,
+        routing_snapshot_id=routing_snapshot_id,
     )
 
     if preflight.status == "pass":
@@ -558,4 +604,5 @@ def dry_run_run(
         retry_of=retry_of,
         fallback_from=fallback_from,
         fallback_to=fallback_to,
+        routing_snapshot_id=routing_snapshot_id,
     )

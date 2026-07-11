@@ -100,9 +100,9 @@
 - ✅ Stage 7 — 受控写入基础
 - ✅ Stage 8 — Runtime Event Import 能力包（v0.11）
 - ✅ Stage 9 — 中枢台定位校正与总蓝图
-- 🟡 Stage 10 — Adapter Runtime Interface（文档已起，后续待继续细化）
-- 🟡 Stage 11 — Capability Routing Model（文档已起，后续待继续细化）
-- 🟡 Stage 12 — Control Plane State Model（文档已起，后续待继续细化）
+- 🟡 Stage 10 — Adapter Runtime Interface（source-backed registry 投影第一版已落地，持续巩固）
+- 🟡 Stage 11 — Capability Routing Model（约束路由 + decision trace 第一版已落地，持续巩固）
+- 🟡 Stage 12 — Control Plane State Model（Routing Decision Snapshot + Read-Loop Snapshot 第一版已落地，持续巩固）
 - 🟡 Stage 13 — Backend-first API Boundary（设计文档已落地，协议选择仍暂缓）
 - 🟡 Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A+B commit 已落地）
 - 🟡 Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，前端实现仍暂缓）

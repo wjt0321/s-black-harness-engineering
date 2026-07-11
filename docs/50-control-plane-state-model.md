@@ -139,7 +139,51 @@ Run 解决的问题是：
 - `orchestration route snapshot` 调用 `preview_route`，将 `RoutePreviewResult` 直接投影为 `RoutingDecisionSnapshot`。
 - `orchestration preflight --snapshot` 调用 `check_preflight`，将 `PreflightResult` 直接投影为 `RoutingDecisionSnapshot`，并附加 guardrail 层。
 
+### Routing Decision Snapshot → Run Preview 安全引用
+
+Stage 12 第一拍的 snapshot 虽然是 ephemeral read model，但已经可以为下游 `Run` 预览提供安全、确定性的内容寻址引用：
+
+- `orchestration run --dry-run` 支持可选 `--routing-snapshot-id sha256:<64hex>`。
+- 该 id 只作为 content-addressed reference contract 被写入 `RunDryRunResult`、candidate artifact refs、`run_planned` candidate event metadata 与 `plan_hash` canonical payload。
+- CLI / runtime **不**尝试根据该 id 读取磁盘上的 snapshot 文件，也不把任意路径或 JSON 当作参数接受；非法格式直接返回 `needs_input`。
+- `--commit` 模式下若传入该引用会被明确拒绝（`blocked`），本拍仅支持 `--dry-run` preview 引用。
+- 这样 `Run` preview 可以声明“本次计划是基于哪一份 routing decision”生成的，而无需持久化 snapshot 或引入第二事实源。
+
+这是 snapshot 从“只读控制面状态对象”走向“可被下游 run/event 引用”的最小第一拍，仍不实现独立 Run 持久集合或真实 adapter execution。
+
 安全边界：snapshot 不暴露完整 input/output schema、原始 target、policy 原文、finding message 或凭据；guardrail 只保留规则 id 列表与计数。
+
+### Run Preview → Event / Report Read-Loop Snapshot
+
+`OrchestrationReadLoopSnapshot` 是 Stage 12 控制面状态模型的第二拍：它把 `orchestration run --dry-run` 的真实结果进一步投影为一个稳定、compact、只读的闭环 snapshot，同时承载 Run Preview、candidate Event summaries 与 Report Preview。
+
+它**不是**持久化对象，也不写入 task/event/run ledger；当前只是 ephemeral read model。它的作用是：
+
+- 让上层不需要再解析 `orchestration run --dry-run` 的 stdout 就能拿到结构化的 Run/Event/Report 闭环视图。
+- 为未来 UI / API 提供与 CLI 一致的 run preview read model。
+- 明确 Run Preview、candidate Event、Report Preview 三者的安全边界与字段契约。
+
+核心字段：
+
+- `schema_version`: `"control-plane/read-loop/v1"`
+- `snapshot_id`: 对 canonical safe payload 的 SHA-256 内容哈希，确定性生成。
+- `status`: dry-run 结果状态（`pass` / `blocked` / `needs_input` / `needs_approval` / `error` / `validation_failed`）。
+- `run`: Run Preview，包含 `task_id`、`request_id`、`adapter_id`、`capability`、`operation`、`mode`、`risk_level`、`requires_approval`、`requires_dry_run`、`plan_hash`、可选 `routing_snapshot_id`、可选 lineage（`retry_of` / `fallback_from` / `fallback_to`）。`pass` / `needs_approval` 时 `run.status` 映射为 `"planned"`，其他状态原样传播。
+- `events`: candidate Event summaries，仅含 `event_type`、`status=planned`、`metadata_keys`；不伪造 `event_id` 或 `timestamp`。
+- `report`: Report Preview，`status=preview`，包含 candidate event/artifact 计数与类型分布、`requires_approval`、`next_action`、仅 rule_ids 的 finding 摘要；无 `report_id`。
+- `source`: `task_id`、`request_id`、`requested_capability` 等安全标识。
+
+生成方式：
+
+- `orchestration run --dry-run --snapshot` 调用 `dry_run_run`，得到 `RunDryRunResult` 后直接投影为 `OrchestrationReadLoopSnapshot`。
+- snapshot 必须由真实 dry-run 结果构造，不得重算 route/preflight/plan。
+
+边界：
+
+- 默认 `orchestration run --dry-run` 输出严格不变；只有显式传入 `--snapshot` 时才输出 read-loop snapshot。
+- `--commit` 模式下传入 `--snapshot` 会被明确拒绝（`blocked`），本拍仅支持 `--dry-run` preview。
+- 不写入 ledger、不生成持久 Run/Event/Report、不执行真实 adapter、不访问网络。
+- 不回显完整 input/output schema、原始 target、policy 原文、finding message 或凭据。
 
 ### 5. Approval Request
 

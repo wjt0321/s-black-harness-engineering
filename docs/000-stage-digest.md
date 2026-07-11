@@ -42,12 +42,32 @@
 - CLI：`orchestration route snapshot` 与 `orchestration preflight --snapshot`。
 - snapshot 包含分层的 routing 状态与 guardrail 状态（preflight snapshot），不写 ledger、不生成持久 Run、不执行真实 adapter。
 
+### 新进落地：Routing Snapshot → Run Preview 安全引用第一拍
+
+- `orchestration run --dry-run` 新增可选 `--routing-snapshot-id sha256:<64hex>`。
+- 引用只接受 `sha256:<64 lowercase hex>` 格式；非法值返回 `needs_input`，绝不读取任意路径或把 JSON 当参数。
+- 引用进入 `RunDryRunResult`、candidate artifact refs、`run_planned` candidate event metadata keys 与 `plan_hash` canonical payload。
+- 默认不传时旧输出与 `plan_hash` 完全兼容；传入时相同输入重复运行产生 byte-equivalent JSON，`plan_hash` 随 snapshot id 变化。
+- retry / fallback dry-run 同样支持引用，lineage 与 routing snapshot 各自独立。
+- 不校验 snapshot 是否存在于磁盘，明确其为 content-addressed reference contract，不是持久化产物假装已落地。
+- 文档已更新：`docs/50-control-plane-state-model.md`、`docs/52-minimal-orchestration-loop.md`、`docs/02-roadmap.md`、`docs/10-cli-poc-usage.md`。
+
 - preflight 将 routing decision passthrough 到 guardrail，不越界替 guardrail 做阻断判断。
 - cost / latency / availability / 在线状态仍未实现，保留给后续阶段。
-- 文档已更新：`docs/49-capability-routing-model.md`、`docs/02-roadmap.md`、`docs/10-cli-poc-usage.md`。
+
+### 新进落地：Run Preview → Event / Report 只读投影闭环
+
+- `orchestration run --dry-run --snapshot` 基于真实 `RunDryRunResult` 一次性构造 `OrchestrationReadLoopSnapshot` 只读闭环 snapshot。
+- snapshot 包含 Run Preview（`status=planned/preview`）、candidate Event summaries（`status=planned`，不伪造 event_id/timestamp）、Report Preview（`status=preview`，无持久 report_id）。
+- `snapshot_id` 由最终安全 payload（去掉 `snapshot_id`）的 canonical SHA-256 哈希确定性生成，无时间戳/随机数/进程状态。
+- 默认不传 `--snapshot` 时，`orchestration run --dry-run` 旧输出与 `plan_hash` 严格兼容；传入时仅新增 snapshot 字段。
+- `--commit` 模式下传入 `--snapshot` 会被明确拒绝（`blocked`），本拍仅 `--dry-run` preview 支持。
+- 不写入 ledger、不生成持久 Run/Event/Report、不执行真实 adapter；明确为 ephemeral read model。
+- Routing Snapshot → Run Preview → Event/Report read-only loop 已闭合，但仍明确非持久/非执行。
 
 ## 现在已经能做什么
 
+- `orchestration run --dry-run` 可安全引用 `orchestration route snapshot` / `orchestration preflight --snapshot` 的内容寻址 snapshot id
 - retry / fallback commit 第一版已落地
 - `orchestration run inspect` 可见 lineage
 - `orchestration run list` 可见紧凑 lineage 标识
@@ -64,9 +84,10 @@
 
 ## 下一步做什么
 
-- **优先方向：Stage 11 — Capability Routing Model（约束路由第一版已落地，继续巩固）**
-- 入口文档：`docs/49-capability-routing-model.md`
-- 目标：在 source-backed registry 投影与 constraint filter + preference rank 已对齐的基础上，继续巩固 Stage 11；不急着跳真实执行
+- **本拍已完成**：Routing Snapshot → Run Preview → Event/Report Read Loop 只读闭环已闭合；阶段收口 release notes 与 handoff 已准备（`docs/archive/release-notes/72-release-notes-read-loop-snapshot.md`、`tasks/handoff-2026-07-11-read-loop-snapshot-stage-acceptance.md`）。
+- **当前决策**：评估是否将本阶段冻结为 `v0.12.1-orchestration-read-loop-snapshot`（候选 tag），或继续推进 recovery lineage 聚合视图后再统一 milestone。
+- **若继续推进**：优先把 read-loop snapshot / lineage 与 recovery 聚合 read model 做扎实；入口文档：`docs/50-control-plane-state-model.md`、`docs/52-minimal-orchestration-loop.md`、最新 handoff。
+- **边界不变**：不进入真实 adapter execution、UI、service、DB。
 
 ## 重要约束
 

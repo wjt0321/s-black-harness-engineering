@@ -1817,10 +1817,59 @@ python -m agent_runtime.cli orchestration run \
   --json
 ```
 
+带 routing snapshot 引用的 dry-run preview（Stage 12 → Run Preview 安全引用第一拍）：
+
+```bash
+SNAPSHOT_ID=$(python -m agent_runtime.cli orchestration route snapshot \
+  --capability git_push \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-001 \
+  --json | python -c "import sys,json; print(json.load(sys.stdin)['snapshot_id'])")
+
+python -m agent_runtime.cli orchestration run \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-001 \
+  --capability git_push \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --dry-run \
+  --routing-snapshot-id "$SNAPSHOT_ID" \
+  --json
+```
+
 说明：
 
 - 聚合 `orchestration route preview` + `orchestration preflight` + `runtime plan` 的安全摘要，输出候选 envelope/events/artifact/evidence refs 与 `plan_hash`。
+- `--routing-snapshot-id` 只接受 `sha256:<64 lowercase hex>` 格式；非法值返回 `needs_input`，绝不读取任意路径或把 JSON 当参数；命中非法值时输出不会回显原始输入。
+- 传入的 snapshot id 会进入 `RunDryRunResult`、candidate artifact refs、`run_planned` candidate event metadata 与 `plan_hash` canonical payload，使相同输入的 plan hash 随 snapshot id 变化；默认不传时旧输出与旧 plan hash 保持兼容。
+- `--commit` 模式下传入 `--routing-snapshot-id` 会被明确拒绝（`blocked`），本拍仅 `--dry-run` preview 支持该引用。
+- 不校验 snapshot 是否存在于磁盘；它是 content-addressed reference contract，不是持久化产物。
 - 不回显完整 input payload、target 原文、`raw_ref`、`decision_ref`、evidence descriptions。
+
+Run dry-run read-loop snapshot preview（只读，不写 ledger/envelope/draft/Run/Event/Report）：
+
+```bash
+python -m agent_runtime.cli orchestration run \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-001 \
+  --capability git_push \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --dry-run \
+  --snapshot \
+  --json
+```
+
+说明：
+
+- `--snapshot` 基于真实 `RunDryRunResult` 一次性投影 `OrchestrationReadLoopSnapshot`，包含 Run Preview、candidate Event summaries 与 Report Preview。
+- snapshot `snapshot_id` 由最终安全 payload 的 canonical SHA-256 哈希确定性生成，无时间戳；相同输入重复运行产生 byte-equivalent JSON。
+- `events` 层只输出 `event_type`、`status=planned`、`metadata_keys`，不伪造 `event_id` 或 `timestamp`。
+- `report` 层 `status=preview`，输出 candidate event/artifact 计数与类型分布、`requires_approval`、`next_action`、仅 rule_ids 的 finding 摘要；无持久 `report_id`。
+- `--commit` 模式下传入 `--snapshot` 会被明确拒绝（`blocked`），本拍仅 `--dry-run` preview 支持。
+- 不回显完整 input/output schema、原始 target、policy 原文、finding message 或凭据。
 
 Run retry / fallback dry-run preview（只读，不写 ledger/envelope/draft）：
 

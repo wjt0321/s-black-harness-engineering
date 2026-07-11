@@ -82,6 +82,8 @@
 | fallback | `TaskAction.fallback` | 受控写入 | `task_id` / target adapter | 新 Run（`fallback_from`） | 7. Fallback / Retry | `orchestration run --fallback-to` | `Run`、`Event` |
 | report | `TaskDetail.report` | 只读 | `task_id` | Report 摘要或详情 | 7. Generate Report | `orchestration report` | `Report` |
 
+说明：`orchestration run --dry-run --snapshot` 在 `TaskAction.run` 的只读 preview 路径上额外产生一个 ephemeral `OrchestrationReadLoopSnapshot` read model，包含 Run Preview、candidate Event summaries 与 Report Preview；它不是持久化资源，不写入 ledger，仅作为控制面状态投影供 CLI / 未来 API 消费。
+
 ### Run 上的操作
 
 | 操作 | 伪接口名 | 类型 | 输入摘要 | 输出摘要 | 对应 52 步骤 | 对应 53 草案命令 | 对应 50 对象 |

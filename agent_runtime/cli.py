@@ -49,6 +49,10 @@ from .orchestration_routing_snapshot import (
     build_preflight_snapshot,
     build_routing_snapshot,
 )
+from .orchestration_read_loop_snapshot import (
+    OrchestrationReadLoopSnapshot,
+    build_read_loop_snapshot,
+)
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
 from .orchestration_run_dry_run import RunDryRunResult, dry_run_run
 from .orchestration_run_commit import RunCommitResult, commit_run
@@ -2005,6 +2009,8 @@ def _emit_run_dry_run_result(result: RunDryRunResult, json_output: bool) -> int:
         )
         if result.plan_hash:
             print(f"plan_hash={result.plan_hash}")
+        if result.routing_snapshot_id:
+            print(f"routing_snapshot_id={result.routing_snapshot_id}")
         if result.candidate_envelope_summary:
             summary = result.candidate_envelope_summary
             print(
@@ -2083,6 +2089,75 @@ def _emit_run_commit_result(result: RunCommitResult, json_output: bool) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _emit_read_loop_snapshot(
+    snapshot: OrchestrationReadLoopSnapshot, json_output: bool
+) -> int:
+    """Render a read-loop snapshot in JSON or compact human-readable form."""
+    if json_output:
+        print(json.dumps(snapshot.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("READ LOOP SNAPSHOT")
+        print(f"schema_version={snapshot.schema_version}")
+        print(f"snapshot_id={snapshot.snapshot_id}")
+        print(f"status={snapshot.status}")
+        run = snapshot.run
+        print(
+            f"run: task_id={run.get('task_id')} "
+            f"request_id={run.get('request_id')} "
+            f"adapter={run.get('adapter_id') or '-'} "
+            f"capability={run.get('capability')} "
+            f"operation={run.get('operation') or '-'} "
+            f"run_status={run.get('status')} "
+            f"gate_status={run.get('gate_status')}"
+        )
+        print(
+            f"run: mode={run.get('mode')} "
+            f"risk={run.get('risk_level') or '-'} "
+            f"requires_approval={run.get('requires_approval')} "
+            f"requires_dry_run={run.get('requires_dry_run')}"
+        )
+        if run.get("plan_hash"):
+            print(f"run: plan_hash={run['plan_hash']}")
+        if run.get("routing_snapshot_id"):
+            print(f"run: routing_snapshot_id={run['routing_snapshot_id']}")
+        if run.get("lineage_type"):
+            lineage_parts = [f"lineage_type={run['lineage_type']}"]
+            if run.get("retry_of"):
+                lineage_parts.append(f"retry_of={run['retry_of']}")
+            if run.get("fallback_from"):
+                lineage_parts.append(f"fallback_from={run['fallback_from']}")
+            if run.get("fallback_to"):
+                lineage_parts.append(f"fallback_to={run['fallback_to']}")
+            print("run: " + " ".join(lineage_parts))
+        print(f"events: count={len(snapshot.events)}")
+        for event in snapshot.events:
+            print(f"- event_type={event.get('event_type')} status={event.get('status')}")
+        report = snapshot.report
+        print(
+            f"report: status={report.get('status')} "
+            f"gate_status={report.get('gate_status')} "
+            f"candidate_event_count={report.get('candidate_event_count')} "
+            f"artifact_candidate_count={report.get('artifact_candidate_count')} "
+            f"requires_approval={report.get('requires_approval')}"
+        )
+        if report.get("status_summary"):
+            print(f"report: status_summary={report['status_summary']}")
+        if report.get("candidate_event_types"):
+            types = ", ".join(f"{k}:{v}" for k, v in report["candidate_event_types"].items())
+            print(f"report: candidate_event_types={types}")
+        if report.get("artifact_candidate_type_counts"):
+            types = ", ".join(f"{k}:{v}" for k, v in report["artifact_candidate_type_counts"].items())
+            print(f"report: artifact_candidate_type_counts={types}")
+        if report.get("finding_count"):
+            print(
+                f"report: finding_count={report['finding_count']} "
+                f"finding_rule_ids={','.join(report.get('finding_rule_ids', []))}"
+            )
+        if report.get("next_action"):
+            print(f"Next: {report['next_action']}")
+    return _STATUS_TO_EXIT.get(snapshot.status, EXIT_ERROR)
+
+
 def _cmd_orchestration_run(args: argparse.Namespace) -> int:
     """Render a read-only run dry-run preview or commit an envelope draft."""
     root = _root_path(args)
@@ -2116,6 +2191,42 @@ def _cmd_orchestration_run(args: argparse.Namespace) -> int:
         return _emit_run_dry_run_result(result, json_output=args.json)
 
     if getattr(args, "commit", False):
+        if getattr(args, "snapshot", False):
+            result = RunCommitResult(
+                status="blocked",
+                task_id=task_id,
+                request_id=request_id,
+                requested_capability=capability,
+                findings=[
+                    Finding(
+                        rule_id="snapshot-not-supported-in-commit",
+                        severity="block",
+                        action="blocked",
+                        message="--snapshot is only supported for --dry-run preview; remove it for --commit.",
+                    )
+                ],
+                next_action="Re-run with --dry-run --snapshot to preview the read-loop snapshot, or omit --snapshot for commit.",
+            )
+            return _emit_run_commit_result(result, json_output=args.json)
+
+        if getattr(args, "routing_snapshot_id", None) is not None:
+            result = RunCommitResult(
+                status="blocked",
+                task_id=task_id,
+                request_id=request_id,
+                requested_capability=capability,
+                findings=[
+                    Finding(
+                        rule_id="routing-snapshot-id-not-supported-in-commit",
+                        severity="block",
+                        action="blocked",
+                        message="--routing-snapshot-id is only supported for --dry-run preview; remove it for --commit.",
+                    )
+                ],
+                next_action="Re-run with --dry-run to preview the routing snapshot reference, or omit --routing-snapshot-id for commit.",
+            )
+            return _emit_run_commit_result(result, json_output=args.json)
+
         retry_of = getattr(args, "retry_of", None)
         fallback_from = getattr(args, "fallback_from", None)
         fallback_to = getattr(args, "fallback_to", None)
@@ -2165,7 +2276,11 @@ def _cmd_orchestration_run(args: argparse.Namespace) -> int:
         retry_of=retry_of,
         fallback_from=fallback_from,
         fallback_to=fallback_to,
+        routing_snapshot_id=getattr(args, "routing_snapshot_id", None),
     )
+    if getattr(args, "snapshot", False):
+        snapshot = build_read_loop_snapshot(result)
+        return _emit_read_loop_snapshot(snapshot, json_output=args.json)
     return _emit_run_dry_run_result(result, json_output=args.json)
 
 
@@ -3066,6 +3181,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     orchestration_run_parser.add_argument(
         "--require-dry-run", action="store_true", help="Require a dry-run review context (must provide expected plan hash)"
+    )
+    orchestration_run_parser.add_argument(
+        "--routing-snapshot-id", default=None, help="Content-addressed routing snapshot id (sha256:<64 hex>)"
+    )
+    orchestration_run_parser.add_argument(
+        "--snapshot", action="store_true", help="Render a deterministic read-loop snapshot instead of the default run dry-run summary"
     )
     _add_global_args(orchestration_run_parser)
     orchestration_run_parser.set_defaults(func=_cmd_orchestration_run)
