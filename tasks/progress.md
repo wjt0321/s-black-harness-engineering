@@ -2419,3 +2419,11 @@
 - `orchestration run inspect` 新增显式 `--aggregate-lineage`；默认输出兼容，多 leaf 返回 `needs_input`，missing/cross-task parent、cycle 与重复 metadata 冲突返回 `validation_failed`。
 - 新增 `tests/test_orchestration_recovery.py`，并扩展 `tests/test_orchestration_run_inspect.py` 的 JSON/human/default compatibility/validation failure 覆盖。
 - 边界保持：只读、不扫描 drafts、不增加 event type、不写 ledger、不执行 adapter、不访问网络。
+
+## 2026-07-12 — Recovery Lineage Aggregation 文档收口与下一轮上下文
+
+- `README.md` / `README.en.md` 移除已过期的“下一步进入 retry/fallback commit”表述，更新为 aggregation stage acceptance。
+- `docs/00-index.md` 的当前最重要文档改为 digest → 73 design → roadmap → CLI usage → 最新 handoff。
+- `docs/73-recovery-lineage-aggregation-read-model.md` 吸收实现状态、commit、测试入口与下一轮验收清单，成为单一设计事实源。
+- 删除已完成且内容已被 73 design / handoff 吸收的临时 implementation plan，减少重复文档。
+- `tasks/handoff-2026-07-12-recovery-lineage-aggregation.md` 补实现 commit、恢复顺序与“不要重复实现”的边界。

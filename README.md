@@ -103,7 +103,7 @@
 - ✅ Stage 9 — 中枢台定位校正与总蓝图
 - 🟡 Stage 10 — Adapter Runtime Interface（source-backed registry 投影第一版已落地，持续巩固）
 - 🟡 Stage 11 — Capability Routing Model（约束路由 + decision trace 第一版已落地，持续巩固）
-- 🟡 Stage 12 — Control Plane State Model（read-only loop 第一版已冻结为 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`，持续巩固 recovery lineage 聚合 read model）
+- 🟡 Stage 12 — Control Plane State Model（read-only loop 第一版已冻结为 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`；recovery lineage 聚合 read model 第一版已落地，进入阶段验收）
 - 🟡 Stage 13 — Backend-first API Boundary（设计文档已落地，协议选择仍暂缓）
 - 🟡 Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A+B commit 已落地）
 - 🟡 Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，前端实现仍暂缓）
@@ -114,6 +114,8 @@
 - ✅ Stage 15.95 — Orchestration Task Submit Created Event 落地
 - ✅ Stage 15.96 — Orchestration Run Retry / Fallback Dry-run 落地
 - ✅ Stage 15.97 — Orchestration Foundation Freeze 完成（基线：`38b4b69` / `v0.12.0-orchestration-foundation`）
+- ✅ Stage 15.98 — Orchestration Run Retry / Fallback Commit 落地
+- ✅ Stage 15.99 — Run Lineage / Recovery 单条只读模型落地
 - ⚪ Stage 16 — UI / Control Panel（远期）
 
 ### 现在最明确的位置
@@ -121,18 +123,18 @@
 可以把当前状态理解成：
 
 - **门禁 / ledger / controlled write 这一层，已经不是草稿，而是一个成型的安全内核**
-- **中枢台后端主线，已经完成了方向校正和第一批核心文档**
-- **真正的统一接入、路由、控制面操作边界，还没进入实现闭环**
+- **中枢台后端主线已经具备 source-backed registry、约束路由、read-loop snapshot 与 recovery lineage aggregation 第一版**
+- **真实 adapter execution、长期服务/API、UI 和 DB 仍未进入实现范围**
 
 ### 接下来的方向
 
 下一步最自然的方向不是继续盲目加功能，而是：
 
-1. 继续把 **Stage 10-12** 这三层后端抽象打细
-2. 保留 **Stage 13** 上下文，但暂不急着展开
-3. 在 freeze 之后先整理 post-freeze 文档口径与下一拍入口
-4. 再决定是否进入 retry / fallback commit 设计等新的 orchestration backend 阶段
-5. guardrail 若在新阶段中暴露缺口，再边做边回补
+1. 先验收 **Stage 12 recovery lineage aggregation** 第一版的数据契约、异常语义与默认兼容
+2. 验收通过后，再决定是否将同一聚合摘要复用到 `orchestration run list` / `orchestration report generate`
+3. 保留 **Stage 13** 上下文，但暂不进入 HTTP / RPC / UI / DB
+4. 继续维持只读、受控写入和无真实 adapter execution 的安全边界
+5. guardrail 若在后续切片中暴露缺口，再边做边回补
 
 已落地的主线能力包括：
 
@@ -150,6 +152,7 @@
 - Stage 15 read-model CLI：`orchestration overview`、`orchestration task list/get`、`orchestration run list/inspect`、`orchestration approval list/get`、`orchestration artifact list/get`、`orchestration report generate`
 - Stage 15.5 controlled handoff：`orchestration route preview`、`orchestration preflight`、受控写入 `orchestration approval resolve`（只记录 decision，不执行原请求）
 - Stage 15.7/15.8/15.9 run controlled execution：`orchestration run --dry-run`（只读 plan preview + plan_hash）、受控写入 `orchestration run --commit`（A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events，不执行真实 adapter）
+- Stage 12 post-freeze recovery read model：`orchestration run inspect --aggregate-lineage`（基于现有 lifecycle events 聚合 root/latest/leaves、attempt count 与 effective plan hash，只读、不扫描 drafts）
 
 ## 当前边界
 
@@ -173,6 +176,7 @@ python -m agent_runtime.cli check path ./docs/06-adapter-layer.md --read
 python -m agent_runtime.cli agents list
 python -m agent_runtime.cli adapters list
 python -m agent_runtime.cli policies list
+python -m agent_runtime.cli orchestration run inspect --task-id <task-id> --request-id <request-id> --envelope <envelope.json> --events-file tasks/events.jsonl --aggregate-lineage --json
 ```
 
 更多 CLI 用法见 `docs/10-cli-poc-usage.md`。

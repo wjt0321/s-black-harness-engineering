@@ -101,9 +101,9 @@ The repository formalizes this through `docs/64-versioning-governance.md`. `v0.1
 - ✅ Stage 7 — Controlled-write foundation
 - ✅ Stage 8 — Runtime Event Import capability pack (v0.11)
 - ✅ Stage 9 — Orchestration-hub positioning reset and blueprint
-- 🟡 Stage 10 — Adapter Runtime Interface (documented, needs further refinement)
-- 🟡 Stage 11 — Capability Routing Model (documented, needs further refinement)
-- 🟡 Stage 12 — Control Plane State Model (read-only loop first version frozen as `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`; consolidating recovery lineage aggregation read model)
+- 🟡 Stage 10 — Adapter Runtime Interface (source-backed registry projection v1 landed; continuing refinement)
+- 🟡 Stage 11 — Capability Routing Model (constraint routing + decision trace v1 landed; continuing refinement)
+- 🟡 Stage 12 — Control Plane State Model (read-only loop first version frozen as `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`; recovery lineage aggregation v1 landed and is entering stage acceptance)
 - 🟡 Stage 13 — Backend-first API Boundary (documented, protocol choice still deferred)
 - 🟡 Stage 14 — Minimal orchestration-hub execution loop (documents, CLI draft, and run-side A+B commit landed)
 - 🟡 Stage 15 — Backend preparation before UI / dashboard (read-model CLI first version landed, frontend still deferred)
@@ -114,6 +114,8 @@ The repository formalizes this through `docs/64-versioning-governance.md`. `v0.1
 - ✅ Stage 15.95 — Orchestration Task Submit Created Event landed
 - ✅ Stage 15.96 — Orchestration Run Retry / Fallback Dry-run landed
 - ✅ Stage 15.97 — Orchestration Foundation Freeze completed (baseline: `38b4b69` / `v0.12.0-orchestration-foundation`)
+- ✅ Stage 15.98 — Orchestration Run Retry / Fallback Commit landed
+- ✅ Stage 15.99 — Run Lineage / Recovery single-run read models landed
 - ⚪ Stage 16 — UI / Control Panel (future)
 
 ### The Most Accurate Current Read
@@ -121,18 +123,18 @@ The repository formalizes this through `docs/64-versioning-governance.md`. `v0.1
 The current state is best understood as:
 
 - **guardrails / ledgers / controlled writes are no longer a sketch; they are already a formed security core**
-- **the orchestration-hub backend line has completed its positioning reset and first batch of core documents**
-- **true unified integration, routing, and control-plane operating boundaries have not yet entered an execution loop**
+- **the orchestration backend now has source-backed registry, constraint routing, read-loop snapshots, and recovery lineage aggregation v1**
+- **real adapter execution, long-running services/APIs, UI, and DB remain out of implementation scope**
 
 ### What Comes Next
 
 The most natural next direction is not to keep adding scattered features, but to:
 
-1. keep refining the backend abstractions in **Stage 10-12**
-2. keep **Stage 13** as prepared context, but not expand it yet
-3. use the post-freeze window to align documentation wording and next-step entry points
-4. then decide whether to enter retry / fallback commit design or another orchestration-backend design step
-5. backfill guardrail gaps when new stages expose them
+1. accept the first **Stage 12 recovery lineage aggregation** contract, failure semantics, and default compatibility
+2. after acceptance, decide whether to reuse the same aggregation summary in `orchestration run list` / `orchestration report generate`
+3. keep **Stage 13** as prepared context without entering HTTP / RPC / UI / DB yet
+4. preserve the read-only, controlled-write, and no-real-adapter-execution boundaries
+5. backfill guardrail gaps only when later slices expose them
 
 Implemented capability highlights:
 
@@ -150,6 +152,7 @@ Implemented capability highlights:
 - Stage 15 read-model CLI: `orchestration overview`, `orchestration task list/get`, `orchestration run list/inspect`, `orchestration approval list/get`, `orchestration artifact list/get`, `orchestration report generate`
 - Stage 15.5 controlled handoff: `orchestration route preview`, `orchestration preflight`, controlled-write `orchestration approval resolve` (records decision only, does not execute original request)
 - Stage 15.7/15.8/15.9 run controlled execution: `orchestration run --dry-run` (read-only plan preview + plan_hash), controlled-write `orchestration run --commit` (A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events, no real adapter execution)
+- Stage 12 post-freeze recovery read model: `orchestration run inspect --aggregate-lineage` (aggregates root/latest/leaves, attempt count, and effective plan hash from existing lifecycle events; read-only and does not scan drafts)
 
 ## Current Boundaries
 
@@ -173,6 +176,7 @@ python -m agent_runtime.cli check path ./docs/06-adapter-layer.md --read
 python -m agent_runtime.cli agents list
 python -m agent_runtime.cli adapters list
 python -m agent_runtime.cli policies list
+python -m agent_runtime.cli orchestration run inspect --task-id <task-id> --request-id <request-id> --envelope <envelope.json> --events-file tasks/events.jsonl --aggregate-lineage --json
 ```
 
 For more CLI usage, see `docs/10-cli-poc-usage.md`.

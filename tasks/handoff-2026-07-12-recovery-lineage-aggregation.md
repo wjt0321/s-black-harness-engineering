@@ -4,6 +4,7 @@
 
 - 上游冻结基线：`v0.12.1-orchestration-read-loop-snapshot`（`0419a04`）。
 - 开发起点：`9dbb9ee`。
+- 实现 commit：`6ccd8a9`（已 fast-forward 合并到本地 `main`）。
 - 本切片：Stage 12 post-freeze recovery lineage aggregation 第一版。
 
 ## 已完成
@@ -38,7 +39,14 @@
 - `python tools/public_scan.py`：OK。
 - `python -m compileall -q agent_runtime tests`：通过。
 - `git diff --check`：通过（仅 Git LF/CRLF 设置提示）。
-- `.githooks/pre-commit`：当前 PowerShell 环境无 bash，未直接执行；等价文档规则已人工核对，73 文档已加入 `docs/00-index.md`，根目录文档数低于阈值。
+- `.githooks/pre-commit`：通过（使用 Git for Windows bash）。
+
+## 下一轮恢复顺序
+
+1. `docs/000-stage-digest.md`
+2. `docs/73-recovery-lineage-aggregation-read-model.md`
+3. `python -m agent_runtime.cli docs context --json`
+4. 本 handoff
 
 ## 下一步建议
 
@@ -49,3 +57,4 @@
   - 默认 inspect 是否 byte-compatible。
 - 验收通过后再决定是否把同一 aggregation 复用到 `orchestration run list` / `orchestration report generate`。
 - 不进入真实 adapter execution、UI、service 或 DB。
+- 不重复创建新的 recovery 聚合模块；优先复用 `agent_runtime/orchestration_recovery.py`。

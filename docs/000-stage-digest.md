@@ -112,7 +112,7 @@
 
 - 仍然**不做真实 adapter execution**
 - 仍然**不做 UI / service / DB**
-- 编码默认继续交给 Kimi；主控负责审核、文档、提交、push
+- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、73 设计文档与最新 handoff，并保持验证/提交边界
 
 ## 一句话理解当前项目
 

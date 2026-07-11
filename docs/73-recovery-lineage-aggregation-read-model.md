@@ -88,3 +88,23 @@ orchestration run inspect --aggregate-lineage
 ## 测试门禁
 
 至少覆盖普通 run、retry、fallback、多级链、分支、缺失 parent、跨 task parent、cycle、重复一致事件、重复冲突事件、CLI JSON/human、默认兼容、不写文件与脱敏输出。
+
+## 落地状态（2026-07-12）
+
+- 实现 commit：`6ccd8a9`。
+- 核心模块：`agent_runtime/orchestration_recovery.py`。
+- CLI：`orchestration run inspect --aggregate-lineage`。
+- 测试：`tests/test_orchestration_recovery.py` 与 `tests/test_orchestration_run_inspect.py`。
+- 默认 inspect 保持兼容；聚合仅在显式 flag 下生成。
+
+## 下一轮验收入口
+
+下一轮不要重新设计或重复实现第一版，直接从以下检查开始：
+
+1. 审查 lifecycle duplicate merge 的关键字段一致性规则。
+2. 复核 branch / missing parent / cross-task parent / cycle 的状态与 issue code。
+3. 复核 JSON/human 输出不泄露 target、payload、raw context 或凭据。
+4. 运行全量测试、doctor、public scan 与 docs maintenance hook。
+5. 验收通过后，再决定是否复用到 `run list` / `report generate`；默认不进入真实执行。
+
+最新交接：`tasks/handoff-2026-07-12-recovery-lineage-aggregation.md`。

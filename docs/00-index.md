@@ -71,11 +71,11 @@
 
 ## 当前最重要 5 份文档
 
-1. `01-vision-and-boundaries.md`
-2. `10-cli-poc-usage.md`
-3. `21-controlled-write-boundaries.md`
-4. `47-orchestration-hub-vision.md`
-5. 最新 milestone 文档（当前为归档 `72-release-notes-read-loop-snapshot.md`，对应 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`）
+1. `000-stage-digest.md`
+2. `73-recovery-lineage-aggregation-read-model.md`
+3. `02-roadmap.md`
+4. `10-cli-poc-usage.md`
+5. 最新 handoff：`tasks/handoff-2026-07-12-recovery-lineage-aggregation.md`
 
 ## 其他入口
 
