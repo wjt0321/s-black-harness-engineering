@@ -2240,3 +2240,27 @@
 - 未新增文档、未修改 schema、未声称 Stage 11 全部完成。
 - 验证：
   - `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-11 — Stage 11：路由决策解释 / decision trace 第一版
+
+- 目标：在不破坏现有 route preview / preflight 默认输出的前提下，新增 `--explain` 结构化决策 trace，为 Stage 12 状态模型做准备。
+- 设计要点：
+  - 采用方案 A：`--explain` 显式开启；默认输出严格不变。
+  - `decision_trace` 由 `preview_route` 内部真实中间结果构造，CLI 不复算；preflight 通过 `_route_summary` 复用同一份 trace。
+  - trace 仅暴露 `adapter_id`、`source_index`、`risk_level`、`reason`，不泄露完整 schema 或敏感载荷。
+- 修改文件：
+  - `agent_runtime/orchestration_route.py`：新增 `CandidateRef`、`RejectedCandidate`、`SelectedCandidate`、`RouteDecisionTrace` dataclasses；`RoutePreviewResult` 新增 `decision_trace`；`preview_route` 增加 `explain` 参数并在所有分支填充 trace。
+  - `agent_runtime/orchestration_preflight.py`：`check_preflight` 增加 `explain` 参数并透传；`_route_summary` 在存在 trace 时包含 `decision_trace`。
+  - `agent_runtime/cli.py`：route preview / preflight parser 与命令函数增加 `--explain`；新增 `_render_decision_trace` 人类可读渲染；emit 函数在 `--explain` 时追加 trace 输出。
+  - `tests/test_orchestration_route_decision_trace.py`：新增 13 个测试，覆盖默认无 trace、trace 结构、max_risk 拒绝、preferred 降级、显式 adapter 阻塞、无匹配 capability、preflight 复用、source mutation、无 schema dump、disabled 过滤、readonly、人类可读输出。
+  - `docs/49-capability-routing-model.md`：新增“路由决策解释（Decision Trace）”小节。
+  - `docs/000-stage-digest.md`：Stage 11 小节追加 `--explain` trace 说明。
+  - `docs/10-cli-poc-usage.md`：route preview / preflight 示例追加 `--explain`。
+  - `docs/02-roadmap.md`：Stage 11 已落地能力追加 decision trace。
+  - `tasks/progress.md`：追加本条目。
+- 未实现 / 仍后续：cost / latency / availability 在线打分；真实 runner 在线状态；自动 fallback / retry 执行。
+- 未修改 schema；未进入 Stage 12 实现；未声称 Stage 11 全部完成。
+- 临时产物：`.superpowers/specs/2026-07-11-route-decision-trace-design.md`、`.superpowers/plans/2026-07-11-route-decision-trace.md`，任务结束后按新规则迁移到项目外临时备份目录（`stage11-route-decision-trace-20260711` 子目录）。
+- 验证：
+  - `python -m pytest tests/test_orchestration_route_decision_trace.py -q`：通过。
+  - 聚焦与全量测试、doctor、public_scan、diff check 结果见任务最终汇报。

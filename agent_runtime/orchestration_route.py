@@ -37,6 +37,79 @@ class RouteConstraints:
         }
 
 
+@dataclass(frozen=True)
+class CandidateRef:
+    """Reference to an adapter candidate in a decision trace."""
+
+    adapter_id: str
+    source_index: int
+    risk_level: str
+    reason: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "adapter_id": self.adapter_id,
+            "source_index": self.source_index,
+            "risk_level": self.risk_level,
+            "reason": self.reason,
+        }
+
+
+@dataclass(frozen=True)
+class RejectedCandidate:
+    """An adapter rejected by constraints, with deterministic reasons."""
+
+    adapter_id: str
+    reasons: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "adapter_id": self.adapter_id,
+            "reasons": list(self.reasons),
+        }
+
+
+@dataclass(frozen=True)
+class SelectedCandidate:
+    """The selected adapter and the deterministic reason for selection."""
+
+    adapter_id: str
+    reason: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "adapter_id": self.adapter_id,
+            "reason": self.reason,
+        }
+
+
+@dataclass(frozen=True)
+class RouteDecisionTrace:
+    """Structured, deterministic trace of a routing decision.
+
+    Exposes the intermediate results of capability match, constraint filter,
+    preference rank, and fallback selection without leaking full schemas or
+    sensitive payloads.
+    """
+
+    capability: str
+    matched_candidates: list[CandidateRef]
+    rejected_candidates: list[RejectedCandidate]
+    eligible_candidates: list[CandidateRef]
+    selected: SelectedCandidate
+    fallback_candidates: list[CandidateRef]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "capability": self.capability,
+            "matched_candidates": [c.to_dict() for c in self.matched_candidates],
+            "rejected_candidates": [c.to_dict() for c in self.rejected_candidates],
+            "eligible_candidates": [c.to_dict() for c in self.eligible_candidates],
+            "selected": self.selected.to_dict(),
+            "fallback_candidates": [c.to_dict() for c in self.fallback_candidates],
+        }
+
+
 @dataclass
 class RoutePreviewResult:
     """Result of an orchestration route preview."""
@@ -55,6 +128,7 @@ class RoutePreviewResult:
     fallback_candidates: list[dict[str, Any]] = field(default_factory=list)
     routing_reason: str = ""
     constraints: dict[str, Any] = field(default_factory=dict)
+    decision_trace: RouteDecisionTrace | None = None
     findings: list[Finding] = field(default_factory=list)
     next_action: str | None = None
 
@@ -82,6 +156,8 @@ class RoutePreviewResult:
             d["routing_reason"] = self.routing_reason
         if self.constraints:
             d["constraints"] = self.constraints
+        if self.decision_trace is not None:
+            d["decision_trace"] = self.decision_trace.to_dict()
         if self.findings:
             d["findings"] = [f.to_dict() for f in self.findings]
         if self.next_action is not None:
@@ -194,6 +270,65 @@ def _is_high_risk(risk_level: str | None) -> bool:
     return risk_level in {"external", "destructive", "privileged"}
 
 
+def _build_decision_trace(
+    capability: str,
+    matching: list[AdapterMetadata],
+    rejected: list[dict[str, Any]],
+    eligible: list[AdapterMetadata],
+    selected: AdapterMetadata | None,
+    remaining: list[AdapterMetadata],
+    selection_reason: str,
+) -> RouteDecisionTrace:
+    """Build a deterministic decision trace from routing intermediates."""
+    matched_candidates = [
+        CandidateRef(
+            adapter_id=a.adapter_id,
+            source_index=a.source_index,
+            risk_level=a.risk_level,
+            reason=f"declares capability '{capability}' and is enabled",
+        )
+        for a in matching
+    ]
+    rejected_candidates = [
+        RejectedCandidate(
+            adapter_id=r["adapter_id"],
+            reasons=list(r["reasons"]),
+        )
+        for r in rejected
+    ]
+    constraint_active = bool(rejected)
+    eligible_candidates = [
+        CandidateRef(
+            adapter_id=a.adapter_id,
+            source_index=a.source_index,
+            risk_level=a.risk_level,
+            reason="passes all constraints" if constraint_active else "no constraints applied",
+        )
+        for a in eligible
+    ]
+    selected_candidate = SelectedCandidate(
+        adapter_id=selected.adapter_id if selected is not None else "",
+        reason=selection_reason,
+    )
+    fallback_candidates = [
+        CandidateRef(
+            adapter_id=a.adapter_id,
+            source_index=a.source_index,
+            risk_level=a.risk_level,
+            reason="passes all constraints" if constraint_active else "no constraints applied",
+        )
+        for a in remaining
+    ]
+    return RouteDecisionTrace(
+        capability=capability,
+        matched_candidates=matched_candidates,
+        rejected_candidates=rejected_candidates,
+        eligible_candidates=eligible_candidates,
+        selected=selected_candidate,
+        fallback_candidates=fallback_candidates,
+    )
+
+
 def preview_route(
     root: Path,
     capability: str,
@@ -201,6 +336,7 @@ def preview_route(
     adapter_id: str | None = None,
     requested_mode: str = "dry-run",
     constraints: RouteConstraints | None = None,
+    explain: bool = False,
 ) -> RoutePreviewResult:
     """Preview capability routing without executing or writing anything.
 
@@ -235,11 +371,21 @@ def preview_route(
     )
 
     if not matching:
+        decision_trace = _build_decision_trace(
+            capability,
+            matching=[],
+            rejected=[],
+            eligible=[],
+            selected=None,
+            remaining=[],
+            selection_reason=f"no enabled adapter supports capability '{capability}'",
+        ) if explain else None
         return RoutePreviewResult(
             status="needs_input",
             requested_capability=capability,
             task_id=task_id,
             routing_reason=f"No enabled adapter supports capability '{capability}'.",
+            decision_trace=decision_trace,
             next_action="Register an adapter for this capability or check the capability name.",
         )
 
@@ -249,6 +395,15 @@ def preview_route(
             selected = next((a for a in matching if a.adapter_id == adapter_id), None)
             if selected is None:
                 supported = [a.adapter_id for a in matching]
+                decision_trace = _build_decision_trace(
+                    capability,
+                    matching=matching,
+                    rejected=[],
+                    eligible=[],
+                    selected=None,
+                    remaining=[],
+                    selection_reason=f"explicit adapter '{adapter_id}' does not support capability '{capability}'",
+                ) if explain else None
                 return RoutePreviewResult(
                     status="blocked",
                     requested_capability=capability,
@@ -261,6 +416,7 @@ def preview_route(
                         {"adapter_id": a.adapter_id, "reason": "supports requested capability"}
                         for a in matching
                     ],
+                    decision_trace=decision_trace,
                     next_action="Choose an adapter that supports the capability or omit --adapter.",
                 )
         else:
@@ -298,6 +454,21 @@ def preview_route(
         if task_context is not None:
             constraints_out["task_context"] = task_context
 
+        selection_reason = (
+            f"explicit --adapter '{selected.adapter_id}'"
+            if adapter_id is not None
+            else "first eligible candidate by source order"
+        )
+        decision_trace = _build_decision_trace(
+            capability,
+            matching=matching,
+            rejected=[],
+            eligible=matching,
+            selected=selected,
+            remaining=remaining,
+            selection_reason=selection_reason,
+        ) if explain else None
+
         next_action = "Use orchestration preflight to aggregate routing with guardrail checks."
 
         return RoutePreviewResult(
@@ -315,6 +486,7 @@ def preview_route(
             fallback_candidates=fallback_candidates,
             routing_reason=routing_reason,
             constraints=constraints_out,
+            decision_trace=decision_trace,
             next_action=next_action,
         )
 
@@ -322,6 +494,15 @@ def preview_route(
     eligible, rejected, preferred_rejection = _apply_constraints(matching, route_constraints)
 
     if not eligible:
+        decision_trace = _build_decision_trace(
+            capability,
+            matching=matching,
+            rejected=rejected,
+            eligible=[],
+            selected=None,
+            remaining=[],
+            selection_reason="no adapter satisfies constraints",
+        ) if explain else None
         return RoutePreviewResult(
             status="blocked",
             requested_capability=capability,
@@ -333,6 +514,7 @@ def preview_route(
                 "rejected_candidates": rejected,
                 "preferred_adapter_rejected": preferred_rejection,
             },
+            decision_trace=decision_trace,
             next_action="Relax constraints or register an adapter that satisfies them.",
         )
 
@@ -348,6 +530,15 @@ def preview_route(
     if adapter_id is not None:
         selected = next((a for a in eligible if a.adapter_id == adapter_id), None)
         if selected is None:
+            decision_trace = _build_decision_trace(
+                capability,
+                matching=matching,
+                rejected=rejected,
+                eligible=eligible,
+                selected=None,
+                remaining=eligible,
+                selection_reason=f"explicit adapter '{adapter_id}' was rejected by constraints or does not support capability",
+            ) if explain else None
             return RoutePreviewResult(
                 status="blocked",
                 requested_capability=capability,
@@ -361,6 +552,7 @@ def preview_route(
                     for a in eligible
                 ],
                 constraints=base_constraints,
+                decision_trace=decision_trace,
                 next_action="Choose an adapter that passes constraints or omit --adapter.",
             )
         remaining = [a for a in eligible if a.adapter_id != selected.adapter_id]
@@ -414,6 +606,25 @@ def preview_route(
             f"based on source order and capability match."
         )
 
+    selection_reason = (
+        f"preferred adapter '{selected.adapter_id}'"
+        if route_constraints.preferred_adapter == selected.adapter_id
+        else (
+            f"explicit --adapter '{selected.adapter_id}'"
+            if adapter_id is not None
+            else "first eligible candidate by source order"
+        )
+    )
+    decision_trace = _build_decision_trace(
+        capability,
+        matching=matching,
+        rejected=rejected,
+        eligible=eligible,
+        selected=selected,
+        remaining=remaining,
+        selection_reason=selection_reason,
+    ) if explain else None
+
     if task_context is not None:
         constraints_out["task_context"] = task_context
 
@@ -434,5 +645,6 @@ def preview_route(
         fallback_candidates=fallback_candidates,
         routing_reason=routing_reason,
         constraints=constraints_out,
+        decision_trace=decision_trace,
         next_action=next_action,
     )

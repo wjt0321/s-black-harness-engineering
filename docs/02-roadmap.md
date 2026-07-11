@@ -265,6 +265,7 @@
 - constraint filter + preference rank 第一版。
 - CLI flags：`--preferred-adapter`、`--require-background`、`--require-artifacts`、`--max-risk`。
 - `orchestration route preview` 与 `orchestration preflight` 已消费 `RouteConstraints` 并返回带约束的 routing decision。
+- 新增 `--explain` 决策解释 trace：暴露 capability-matched / rejected / eligible / selected / fallback 候选与 deterministic reason，trace 由 routing 内部中间结果直接构造，preflight 复用不复算，为 Stage 12 状态模型提供可消费输入。
 - preflight 把 routing 决策 passthrough 到下游 guardrail / runtime plan，保持 routing 与 guardrail 边界清晰。
 
 仍后续：

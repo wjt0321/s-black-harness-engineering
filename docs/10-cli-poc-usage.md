@@ -1752,9 +1752,10 @@ python -m agent_runtime.cli orchestration route preview \
   --mode dry-run
 python -m agent_runtime.cli orchestration route preview --capability light_coding --preferred-adapter kimi-code-acp
 python -m agent_runtime.cli orchestration route preview --capability git_push --max-risk local
+python -m agent_runtime.cli orchestration route preview --capability light_coding --explain --json
 ```
 
-说明：`orchestration route preview` 现在直接消费 Stage 10 source-backed adapter registry 投影作为候选集，不再依赖独立内置 registry。第一版支持 `--preferred-adapter`、`--max-risk`、`--require-background`、`--require-artifacts` 约束过滤与偏好排序。
+说明：`orchestration route preview` 现在直接消费 Stage 10 source-backed adapter registry 投影作为候选集，不再依赖独立内置 registry。第一版支持 `--preferred-adapter`、`--max-risk`、`--require-background`、`--require-artifacts` 约束过滤与偏好排序。追加 `--explain` 可在默认输出不变的前提下，额外输出结构化的 `decision_trace`（matched / rejected / eligible / selected / fallback），为 Stage 12 状态模型提供可消费的路由解释。
 
 Preflight handoff 聚合（只读）：
 
@@ -1768,9 +1769,10 @@ python -m agent_runtime.cli orchestration preflight \
   --target origin/main \
   --mode dry-run
 python -m agent_runtime.cli orchestration preflight --capability light_coding --require-background --preferred-adapter kimi-code-acp
+python -m agent_runtime.cli orchestration preflight --capability light_coding --max-risk local --explain --json
 ```
 
-说明：`orchestration preflight` 现在同样消费该 source-backed registry 投影，并在投影元数据之上叠加 guardrail 判断。路由约束标志同样生效；preflight 将 routing decision passthrough 到 guardrail，不越界替 guardrail 做阻断判断。
+说明：`orchestration preflight` 现在同样消费该 source-backed registry 投影，并在投影元数据之上叠加 guardrail 判断。路由约束标志同样生效；preflight 将 routing decision passthrough 到 guardrail，不越界替 guardrail 做阻断判断。`--explain` 会让 preflight 复用 route 的 `decision_trace`，不做二次计算。
 
 Run dry-run preview（只读，不写 ledger/envelope/draft）：
 

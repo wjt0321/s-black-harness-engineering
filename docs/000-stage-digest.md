@@ -33,6 +33,7 @@
 - 支持约束：`--preferred-adapter`、`--max-risk`、`--require-background`、`--require-artifacts`。
 - 路由流程：capability match → constraint filter → preference rank。
 - 默认未传约束参数时，route/preflight 保持原有输出字段不变；仅在显式使用约束 flag 时才输出 `routing_constraints` / `rejected_candidates` 等新增字段。
+- 新增 `--explain` 决策解释 trace：暴露 capability-matched / constraint-rejected / eligible / selected / fallback 候选及 deterministic reason，trace 由 `preview_route` 内部中间结果直接构造，preflight 复用不复算，为 Stage 12 状态模型做准备。
 - preflight 将 routing decision passthrough 到 guardrail，不越界替 guardrail 做阻断判断。
 - cost / latency / availability / 在线状态仍未实现，保留给后续阶段。
 - 文档已更新：`docs/49-capability-routing-model.md`、`docs/02-roadmap.md`、`docs/10-cli-poc-usage.md`。

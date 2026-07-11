@@ -59,7 +59,7 @@ class PreflightResult:
 
 def _route_summary(route_result: Any) -> dict[str, Any]:
     """Return a value-safe summary of a RoutePreviewResult."""
-    return {
+    d: dict[str, Any] = {
         "status": route_result.status,
         "selected_adapter_id": route_result.selected_adapter_id,
         "capability": route_result.capability,
@@ -70,6 +70,9 @@ def _route_summary(route_result: Any) -> dict[str, Any]:
         "fallback_candidates": route_result.fallback_candidates,
         "routing_reason": route_result.routing_reason,
     }
+    if route_result.decision_trace is not None:
+        d["decision_trace"] = route_result.decision_trace.to_dict()
+    return d
 
 
 def _guardrail_summary(guardrail_result: Any) -> dict[str, Any]:
@@ -112,6 +115,7 @@ def check_preflight(
     explicit_policy: Path | None = None,
     profile: str | None = None,
     constraints: RouteConstraints | None = None,
+    explain: bool = False,
 ) -> PreflightResult:
     """Run a read-only orchestration preflight handoff check.
 
@@ -146,6 +150,7 @@ def check_preflight(
         adapter_id=adapter_id,
         requested_mode=requested_mode,
         constraints=constraints,
+        explain=explain,
     )
 
     findings: list[Finding] = list(route.findings)

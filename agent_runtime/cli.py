@@ -1505,8 +1505,45 @@ def _cmd_orchestration_route_preview(args: argparse.Namespace) -> int:
         adapter_id=getattr(args, "adapter", None),
         requested_mode=requested_mode,
         constraints=route_constraints,
+        explain=getattr(args, "explain", False),
     )
     return _emit_route_preview_result(result, json_output=args.json)
+
+
+def _render_decision_trace(trace: dict[str, Any]) -> str:
+    """Render a decision trace as a compact human-readable block."""
+    lines = ["DECISION TRACE"]
+    lines.append(f"  capability: {trace['capability']}")
+    if trace["matched_candidates"]:
+        lines.append("  matched candidates:")
+        for c in trace["matched_candidates"]:
+            lines.append(
+                f"    - {c['adapter_id']} (idx={c['source_index']}, "
+                f"risk={c['risk_level']}): {c['reason']}"
+            )
+    if trace["rejected_candidates"]:
+        lines.append("  rejected candidates:")
+        for c in trace["rejected_candidates"]:
+            lines.append(f"    - {c['adapter_id']}: {', '.join(c['reasons'])}")
+    if trace["eligible_candidates"]:
+        lines.append("  eligible candidates:")
+        for c in trace["eligible_candidates"]:
+            lines.append(
+                f"    - {c['adapter_id']} (idx={c['source_index']}, "
+                f"risk={c['risk_level']}): {c['reason']}"
+            )
+    selected = trace["selected"]
+    lines.append(
+        f"  selected: {selected['adapter_id'] or '(none)'} — {selected['reason']}"
+    )
+    if trace["fallback_candidates"]:
+        lines.append("  fallback candidates:")
+        for c in trace["fallback_candidates"]:
+            lines.append(
+                f"    - {c['adapter_id']} (idx={c['source_index']}, "
+                f"risk={c['risk_level']})"
+            )
+    return "\n".join(lines)
 
 
 def _emit_route_preview_result(result: RoutePreviewResult, json_output: bool) -> int:
@@ -1540,6 +1577,8 @@ def _emit_route_preview_result(result: RoutePreviewResult, json_output: bool) ->
             )
         if result.next_action:
             print(f"Next: {result.next_action}")
+        if result.decision_trace is not None:
+            print(_render_decision_trace(result.decision_trace.to_dict()))
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
@@ -1593,6 +1632,7 @@ def _cmd_orchestration_preflight(args: argparse.Namespace) -> int:
         explicit_policy=_explicit_policy(args, root),
         profile=resolve_profile(args, root),
         constraints=route_constraints,
+        explain=getattr(args, "explain", False),
     )
     return _emit_preflight_result(result, json_output=args.json)
 
@@ -1625,6 +1665,9 @@ def _emit_preflight_result(result: PreflightResult, json_output: bool) -> int:
                 print(f"- {finding.rule_id}: {finding.message}")
         if result.next_action:
             print(f"Next: {result.next_action}")
+        route_trace = result.route.get("decision_trace")
+        if route_trace is not None:
+            print(_render_decision_trace(route_trace))
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
@@ -2732,6 +2775,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--max-risk", default=None, choices=["local", "external", "destructive", "privileged"],
         help="Maximum acceptable risk level (inclusive)"
     )
+    orchestration_route_preview_parser.add_argument(
+        "--explain", action="store_true", help="Include a structured decision trace in the output"
+    )
     _add_global_args(orchestration_route_preview_parser)
     orchestration_route_preview_parser.set_defaults(func=_cmd_orchestration_route_preview)
 
@@ -2769,6 +2815,9 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_preflight_parser.add_argument(
         "--max-risk", default=None, choices=["local", "external", "destructive", "privileged"],
         help="Maximum acceptable risk level (inclusive)"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--explain", action="store_true", help="Include a structured decision trace in the route summary"
     )
     _add_global_args(orchestration_preflight_parser)
     orchestration_preflight_parser.set_defaults(func=_cmd_orchestration_preflight)

@@ -184,6 +184,43 @@ CLI 通过以下标志传入：
 
 若约束过滤后无候选，则 `status` 为 `blocked`，`selected_adapter_id` 被显式输出为 `null`；不存在单独的 `blocked_reason` 字段，原因由 `routing_reason` 给出，被拒绝的候选详情位于 `constraints.rejected_candidates`（若指定了 `--preferred-adapter` 且被拒绝，还会包含 `constraints.preferred_adapter_rejected`）。
 
+## 路由决策解释（Decision Trace）
+
+为了把路由决策沉淀为 Stage 12 Control Plane State Model 的可消费状态，Stage 11 第一版新增了 `--explain` 标志。它不改变默认输出，仅在显式开启时追加一个结构化的 `decision_trace`：
+
+- `matched_candidates`：声明支持该 capability 且 enabled 的 adapter（source order）。
+- `rejected_candidates`：被约束过滤掉的 adapter，以及具体原因。
+- `eligible_candidates`：通过约束的 adapter（source order）。
+- `selected`：最终选中的 adapter 与选择原因。
+- `fallback_candidates`：未选中的 eligible adapter，作为 retry / escalation 链。
+
+trace 由 `preview_route` 内部的真实中间结果直接构造，CLI 与 preflight 不复算，因此解释与决策不会漂移。trace 只暴露 `adapter_id`、`source_index`、`risk_level` 和 `reason`，不泄露完整 input/output schema 或敏感载荷。
+
+示例（`--explain --json`）：
+
+```json
+{
+  "decision_trace": {
+    "capability": "light_coding",
+    "matched_candidates": [
+      {"adapter_id": "kimi-code-acp", "source_index": 1, "risk_level": "external",
+       "reason": "declares capability 'light_coding' and is enabled"}
+    ],
+    "rejected_candidates": [
+      {"adapter_id": "claude-code-acp", "reasons": [
+        "risk_level 'external' exceeds max_risk 'local'"
+      ]}
+    ],
+    "eligible_candidates": [
+      {"adapter_id": "omp-acp", "source_index": 3, "risk_level": "local",
+       "reason": "passes all constraints"}
+    ],
+    "selected": {"adapter_id": "omp-acp", "reason": "first eligible candidate by source order"},
+    "fallback_candidates": []
+  }
+}
+```
+
 ## 路由示例
 
 ### 示例 1：中度编程任务
