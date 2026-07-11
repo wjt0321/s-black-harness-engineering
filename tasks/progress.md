@@ -2122,3 +2122,95 @@
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+
+## 2026-07-11 — Stage 10 第一版：Adapter Capability Registry 内置落地
+
+- 按 `docs/000-stage-digest.md` 优先方向进入 Stage 10 — Adapter Runtime Interface。
+- 新增 `agent_runtime/adapter_registry.py`：
+  - 结构化 adapter metadata 模型 `AdapterMetadata` + `TimeoutProfile`（frozen dataclass）。
+  - 严格校验函数 `validate_adapter_metadata`，覆盖 `adapter_id` 格式、`adapter_type` 枚举、`risk_level` 枚举、`capabilities` 非空唯一、`timeout_profile` 边界、`input_schema_ref` / `output_schema_ref` 必填。
+  - 确定性内置 registry `AdapterRegistry`，覆盖 5 个代表 adapter：`kimi-code-acp`、`qwenpaw-agent-api`、`shell-local`、`github-cli`、`lark-cli`。
+  - 稳定排序、类型/风险/capability 过滤、`capability_index` 能力倒排索引。
+- 新增 `agent_runtime/orchestration_adapter.py`：
+  - 只读 read model `list_adapters` / `get_adapter`。
+  - 未知 adapter_id 返回 `needs_input`，与现有 `orchestration task get` 等 CLI 错误语义一致。
+  - 输出 compact、安全、不回显凭据或运行时状态。
+- 更新 `agent_runtime/cli.py`：
+  - 新增 `orchestration adapter list` 子命令，支持 `--type`、`--risk`、`--capability` 过滤与 `--json`。
+  - 新增 `orchestration adapter inspect <adapter_id>` 子命令，支持 `--json`。
+- 新增测试：
+  - `tests/test_adapter_registry.py`：覆盖模型校验、内置 registry 加载、稳定排序、过滤、key 不匹配校验、非法 entry 校验、确定性 to_dict。
+  - `tests/test_orchestration_adapter.py`：覆盖 JSON 结构、人类可读输出、稳定排序、type/risk/capability 过滤、inspect、未知 ID、不写文件。
+- 更新文档：
+  - `docs/48-adapter-runtime-interface.md`：新增"内置 Registry 实现"小节，说明模块、CLI、内置 5 个 adapter、与旧 registry 关系。
+  - `docs/10-cli-poc-usage.md`：在 Orchestration Read-Model CLI 章节新增 `orchestration adapter list/inspect` 示例与边界说明。
+  - `docs/000-stage-digest.md`：标记 Stage 10 第一版已落地，更新"现在已经能做什么"。
+  - `docs/02-roadmap.md`：更新 Stage 10 状态为"第一版已落地，持续巩固"。
+- 设计选择说明：
+  - 保留 Stage 4 遗留的 `adapters/adapters.sample.json` 与 `adapters/adapter.schema.json`，不破坏现有 `adapters list` CLI。
+  - 新 registry 是 Stage 10 的 backend-first read model，与旧 registry 并行；未来可评估合并。
+  - `risk_level` 沿用仓库现有枚举 `local/external/destructive/privileged`，而非 Stage 10 示例中的 `medium`，以保持一致性。
+  - `input_schema_ref` / `output_schema_ref` 使用指向 `adapters/schemas/` 的稳定引用字符串，当前阶段不强制对应文件存在。
+- 验证：
+  - `python -m pytest tests/test_adapter_registry.py tests/test_orchestration_adapter.py -q`：通过。
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误。
+
+## 2026-07-11（续）— Stage 10 返工：单一事实源 + 规范化投影
+
+- 代码审查指出第一阶段实现存在双重事实源：硬编码 5 个 adapter 与现有 `adapters/adapters.sample.json` 并行，会导致 routing 与 registry 查询漂移；`input/output_schema_ref` 指向不存在的文件，制造虚假契约。
+- 重构 `agent_runtime/adapter_registry.py`：
+  - 删除硬编码内置 registry，改为从 `adapters/adapters.sample.json` 加载（复用 `loader.load_adapters`）。
+  - 新增确定性投影层 `project_adapter(entry)`，把 legacy 字段映射为 Stage 10 元数据。
+  - `adapter_type` 由 `kind` 映射：`qwenpaw_agent_api`/`acp_runner` → `agent`；`lark` → `service`；其余 → `tool`。
+  - `supports_*` 与 `timeout_profile` 按规则 derived/defaulted，并在 `derived` 字段中记录来源。
+  - `input_schema_ref` / `output_schema_ref` 改为指向真实存在的 `adapters/adapter.schema.json#/$defs/adapter/properties/input_schema|output_schema`。
+  - `load_adapter_registry(root)` 统一处理：缺文件、非法 JSON、schema 不匹配、`adapters` 字段非列表、单条投影失败，均返回安全 findings 与 next_action，不 traceback。
+- 更新 `agent_runtime/orchestration_adapter.py`：
+  - `list_adapters` / `get_adapter` 改为从 root 加载投影 registry。
+  - 加载失败返回 `error`，未知 ID 返回 `needs_input`，与现有 CLI 错误语义一致。
+- 更新 `agent_runtime/cli.py`：
+  - `orchestration adapter inspect` 人类输出新增 `derived:` 段落，清楚展示每个非源字段的推导说明。
+- 重写测试：
+  - `tests/test_adapter_registry.py`：覆盖从真实 root 加载、tmp root source mutation 反射、source IDs/capabilities/risk 与投影对齐、缺文件、非法 JSON、schema 失败、malformed adapters 字段、投影规则验证。
+  - `tests/test_orchestration_adapter.py`：覆盖 JSON/人类输出、过滤、稳定排序、未知 ID、source mutation 反射、缺文件/非法 JSON、不写文件。
+- 更新文档：
+  - `docs/48-adapter-runtime-interface.md`：重写“内置 Registry 实现”小节，明确单一事实源、投影规则表、derived 字段、与 `adapters list` 的关系；删除“双 registry 并行/未来合并”表述。
+  - `docs/000-stage-digest.md` / `docs/02-roadmap.md`：更新 Stage 10 描述，强调单一事实源与真实 schema ref。
+- 设计选择说明：
+  - 保留 `adapters/adapters.sample.json` 作为唯一事实源，不引入第二份 adapter 清单。
+  - schema ref 不假装每个 adapter 有独立 schema 文件，而是引用真实存在的 `adapters/adapter.schema.json` 中 input_schema/output_schema 定义。
+  - `derived` 字段让调用方清楚知道哪些值是原始字段、哪些是投影层推导/默认值。
+- 验证：
+  - `python -m pytest tests/test_adapter_registry.py tests/test_orchestration_adapter.py -q`：通过。
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误（仅 Git LF/CRLF 转换提示）。
+
+## 2026-07-11（续）— Stage 10 第二轮审查收口
+
+- 审查反馈：CLI help / docs 仍残留旧实现的"built-in / 内置 / 5 个"表述；`input/output_schema_ref` 指向 `adapters/adapter.schema.json` 的元定义，不是具体 adapter 的真实 schema；需确认 disabled entry 不过滤。
+- 修正 CLI help：`orchestration adapter list/inspect` 的 help 从 "built-in capability registry" 改为 "source-backed capability registry"。
+- 修正 `agent_runtime/adapter_registry.py`：
+  - `input_schema_ref` / `output_schema_ref` 改为真实 JSON Pointer：`adapters/adapters.sample.json#/adapters/<index>/input_schema` / `output_schema`。
+  - projection 时传入 `source_index`，`AdapterMetadata` 增加 `source_index` 与 `enabled` 字段。
+  - `derived` 文案改为 "pointer to adapters/adapters.sample.json entry N input_schema/output_schema"。
+  - 投影层不再过滤 disabled entries，与 `loader.load_adapters` 同批条目语义一致；routing 等消费方自行过滤。
+- 修正 `agent_runtime/orchestration_adapter.py`：list summary 增加 `enabled` 字段。
+- 修正 `agent_runtime/cli.py`：list 人类输出增加 `enabled=` 列；inspect 人类输出继续显示 derived 段落。
+- 更新文档：
+  - `docs/48-adapter-runtime-interface.md`：标题改为 "Source-Backed Registry 投影"；删除"内置"和"5 个"表述；更新投影规则表说明 JSON Pointer 与 enabled 字段不过滤。
+  - `docs/10-cli-poc-usage.md`：改为 "source-backed registry 投影"；删除"当前内置 5 个"；说明 JSON Pointer。
+  - `docs/000-stage-digest.md`、`docs/02-roadmap.md`：同步更新表述。
+- 更新测试：
+  - `tests/test_adapter_registry.py`：新增 `test_schema_refs_point_to_source_entry_schemas` 解析 pointer 并比对 source entry 的 input/output schema；新增 `test_disabled_entries_are_not_filtered`；更新 `test_load_from_project_root_matches_sample` 与 loader 比对 IDs；修复因 schema ref 变化而失效的断言。
+  - `tests/test_orchestration_adapter.py`：新增 `test_adapter_list_matches_loader_entries`、`test_adapter_inspect_schema_refs_resolve_to_source_schemas`、`test_adapter_list_includes_disabled_entries`；修复 schema ref 断言。
+- 验证：
+  - `python -m pytest tests/test_adapter_registry.py tests/test_orchestration_adapter.py -q`：通过。
+  - `python -m pytest tests -q`：通过。
+  - `python -m agent_runtime.cli doctor`：PASS。
+  - `python tools/public_scan.py`：OK public scan。
+  - `git diff --check`：无空白错误（仅 Git LF/CRLF 设置提示）。

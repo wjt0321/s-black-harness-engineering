@@ -19,6 +19,13 @@
 
 - **Stage 15.99 — Run Lineage / Recovery Read Model 第一版**
 - 当前成果：retry / fallback lineage 已经形成 **可写 + 可读** 的最小闭环
+- **新进落地：Stage 10 — Adapter Runtime Interface Registry 投影第一版**
+  - `agent_runtime/adapter_registry.py`：从现有 `adapters/adapters.sample.json` 投影出 Stage 10 元数据，单一事实源
+  - `agent_runtime/orchestration_adapter.py`：只读 read model
+  - CLI：`orchestration adapter list` / `orchestration adapter inspect <adapter_id>`
+  - 投影字段清楚标识 derived/defaulted；schema ref 为指向该 entry 内嵌 schema 的真实 JSON Pointer
+  - 不过滤 disabled entries，与 `loader.load_adapters` 同批条目语义一致
+  - 测试覆盖：source 变更反射、schema pointer 解析、disabled entry 保留、loader 一致性、模型校验、列表稳定排序、inspect、JSON、人类可读输出、未知 ID、缺文件/非法 JSON/schema 错误
 
 ## 现在已经能做什么
 
@@ -27,6 +34,7 @@
 - `orchestration run list` 可见紧凑 lineage 标识
 - `orchestration report generate` 可见 lineage 安全摘要
 - `python -m agent_runtime.cli docs context` 可输出恢复入口
+- `orchestration adapter list` / `inspect` 可查询内置 adapter capability registry
 
 ## 下次恢复顺序
 
@@ -37,9 +45,9 @@
 
 ## 下一步做什么
 
-- **优先方向：Stage 10 — Adapter Runtime Interface**
+- **优先方向：Stage 10 — Adapter Runtime Interface（已落地第一版，继续巩固）**
 - 入口文档：`docs/48-adapter-runtime-interface.md`
-- 目标：把中枢台后端主线继续往前推，不急着跳真实执行
+- 目标：把中枢台后端主线继续往前推，不急着跳真实执行；后续可把 registry 与 `orchestration route preview` / `orchestration preflight` 进一步打通
 
 ## 重要约束
 

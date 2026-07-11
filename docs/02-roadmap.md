@@ -206,7 +206,7 @@
 
 ---
 
-## Stage 10 — Adapter Runtime Interface（下一步高优先级）
+## Stage 10 — Adapter Runtime Interface（第一版已落地，持续巩固）
 
 目标：定义中枢台如何以“积木式可插拔”方式统一接入 Agent、工具和外部系统，而不是每个工具各写一套调用方式。
 
@@ -220,8 +220,27 @@
 
 主要交付物：
 
-- `docs/48-adapter-runtime-interface.md`
-- 后续可能补 adapter capability registry 设计稿
+- `docs/48-adapter-runtime-interface.md`（已更新 registry 投影落地说明）
+- `agent_runtime/adapter_registry.py`：从现有 `adapters/adapters.sample.json` 投影 Stage 10 元数据
+- `agent_runtime/orchestration_adapter.py`：只读 read model
+- CLI：`orchestration adapter list` / `orchestration adapter inspect <adapter_id>`
+- 测试：`tests/test_adapter_registry.py`、`tests/test_orchestration_adapter.py`
+
+已落地能力：
+
+- **单一事实源**：`orchestration adapter list/inspect` 与 `orchestration route preview` / `orchestration preflight` / `runtime plan` / `adapters list` 共用同一 `adapters/adapters.sample.json`。
+- 从 legacy registry 确定性投影 Stage 10 字段，并清楚标识 derived/defaulted 来源。
+- `input_schema_ref` / `output_schema_ref` 为指向该 entry 内嵌 schema 的真实 JSON Pointer（`adapters/adapters.sample.json#/adapters/<index>/input_schema|output_schema`）。
+- 不过滤 disabled entries，与 `loader.load_adapters` 同批条目语义一致。
+- 列表稳定排序、支持按 `type` / `risk` / `capability` 过滤。
+- inspect 输出完整元数据（含 derived 映射与 source_index），未知 ID 返回 `needs_input`。
+- 缺文件、非法 JSON、schema 不匹配、结构损坏均以安全 findings 返回，不 traceback。
+- 保持只读、确定性、无真实 adapter execution、无网络/凭据/UI/DB。
+
+仍后续：
+
+- 与 `orchestration route preview` / `orchestration preflight` 打通，让 routing 直接消费 registry 投影。
+- 若未来为每个 adapter 补齐独立 input/output schema 文件，再更新 schema ref 指向这些真实文件。
 
 ---
 

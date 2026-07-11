@@ -288,12 +288,81 @@ Adapter 输出不应只有文本结果，还应能产出结构化 artifact。
 
 也就是说，48 负责定义“每个积木长什么样”，49 负责“按意图挑选积木”，50 负责“把挑选和执行过程沉淀成状态”。
 
+## Source-Backed Registry 投影
+
+为把上述抽象固化为可校验、可查询的后端 read model，仓库已实现一个**最小、只读、确定性**的 Stage 10 Adapter Capability Registry 投影层：
+
+- 投影模块：`agent_runtime/adapter_registry.py`
+- Read model：`agent_runtime/orchestration_adapter.py`
+- CLI：`orchestration adapter list` / `orchestration adapter inspect <adapter_id>`
+- **单一事实源**：`adapters/adapters.sample.json`（与 `orchestration route preview`、`orchestration preflight`、`runtime plan`、`adapters list` 共用同一文件）
+
+投影层不自行过滤 `enabled`/`disabled` entries，以保持与 `loader.load_adapters` 的同批条目语义；routing 等消费方按需自行过滤。
+
+### 投影规则
+
+`agent_runtime/adapter_registry.py` 从 `adapters/adapters.sample.json` 读取原始条目，然后确定性投影为 Stage 10 元数据：
+
+| Stage 10 字段 | 来源 |
+|:---|:---|
+| `adapter_id` | 原始 `id` |
+| `display_name` | 原始 `name` |
+| `enabled` | 原始 `enabled`（默认 `True`） |
+| `adapter_type` | 由 `kind` 映射：agent 类（`qwenpaw_agent_api` / `acp_runner`）→ `agent`；服务类（`lark`）→ `service`；其余 → `tool` |
+| `capabilities` | 原始 `capabilities` |
+| `risk_level` | 原始 `risk_level` |
+| `supports_session` | derived：agent 为 `True`，其余为 `False` |
+| `supports_background` | derived：agent 且 capabilities 含 `background_task` 为 `True` |
+| `supports_approval_roundtrip` | derived：`requires_approval == True` 或 `risk_level` 为 external/destructive/privileged |
+| `supports_artifacts` | derived：tool/service 为 `True`，agent 为 `False` |
+| `supports_cancel` | derived：agent 或 `kind == "shell"` 为 `True` |
+| `timeout_profile` | defaulted by `adapter_type`（agent 300/1800s，service 120/900s，tool 60/600s） |
+| `input_schema_ref` | JSON Pointer 指向该 entry 内嵌 schema：`adapters/adapters.sample.json#/adapters/<index>/input_schema` |
+| `output_schema_ref` | JSON Pointer 指向该 entry 内嵌 schema：`adapters/adapters.sample.json#/adapters/<index>/output_schema` |
+
+`derived` 字段会在 `orchestration adapter inspect --json` 中输出，清楚说明每个非源字段的推导/默认值来源。
+
+### CLI 用法
+
+列出 source registry 中当前全部 enabled entries（含 disabled，显示 `enabled` 字段）：
+
+```bash
+python -m agent_runtime.cli orchestration adapter list
+python -m agent_runtime.cli orchestration adapter list --json
+```
+
+按类型、风险等级或 capability 过滤：
+
+```bash
+python -m agent_runtime.cli orchestration adapter list --type tool
+python -m agent_runtime.cli orchestration adapter list --risk local
+python -m agent_runtime.cli orchestration adapter list --capability local_command
+```
+
+查看单个 adapter 完整元数据（含 derived 说明与真实 source pointer）：
+
+```bash
+python -m agent_runtime.cli orchestration adapter inspect shell-local
+python -m agent_runtime.cli orchestration adapter inspect shell-local --json
+```
+
+边界：
+
+- 只读：不执行真实 adapter、不访问网络、不读取 credential、不写 ledger/draft。
+- 确定性：相同 source 文件每次调用返回相同条目和稳定排序。
+- 安全：输出仅包含元数据，不包含凭据、input payload 或运行时状态。
+- 错误处理：缺文件、非法 JSON、schema 不匹配、结构损坏均以 `error`/`needs_input` 状态返回安全 findings，不 traceback。
+
+### 与 `adapters list` 的关系
+
+`adapters list` 直接输出原始 registry 条目；`orchestration adapter list/inspect` 输出同一 source 的 Stage 10 规范化投影。两者看到同一批 adapter、capabilities 和 risk，因此 routing 与 registry 查询不会漂移。
+
 ## 下一步衔接
 
 本文之后应继续：
 
-- `49 — Capability Routing Model`
-- `50 — Control Plane State Model`
-- `51 — Backend-first API Boundary`
+- `49 — Capability Routing Model`：把 registry 投影作为路由候选集。
+- `50 — Control Plane State Model`：把 adapter request/response/artifact/evidence 沉淀为状态对象。
+- `51 — Backend-first API Boundary`：把 registry 查询暴露为未来 UI/CLI 共同依赖的 API。
 
 这样才能把“接进来”进一步推进到“如何路由”和“如何被未来 UI 操作”。

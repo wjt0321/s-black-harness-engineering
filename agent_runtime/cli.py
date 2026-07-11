@@ -34,6 +34,7 @@ from .runtime_event_import import (
 from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_task_create import TaskCreateDryRunResult, create_task, create_task_dry_run
 from .runtime_report import RuntimeReportResult, check_runtime_report
+from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .orchestration_task_submit import submit_task, TaskSubmitResult
@@ -2203,6 +2204,86 @@ def _cmd_orchestration_artifact_get(args: argparse.Namespace) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _cmd_orchestration_adapter_list(args: argparse.Namespace) -> int:
+    """Render a read-only adapter capability registry list."""
+    root = _root_path(args)
+    result = list_adapters(
+        root,
+        type_filter=getattr(args, "type", None),
+        risk_filter=getattr(args, "risk", None),
+        capability_filter=getattr(args, "capability", None),
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("ADAPTER LIST")
+        if getattr(args, "type", None) is not None:
+            print(f"type_filter={args.type}")
+        if getattr(args, "risk", None) is not None:
+            print(f"risk_filter={args.risk}")
+        if getattr(args, "capability", None) is not None:
+            print(f"capability_filter={args.capability}")
+        print(f"adapters={len(result.adapters)}")
+        for adapter in result.adapters:
+            print(
+                f"- {adapter['adapter_id']:<16} "
+                f"type={adapter['adapter_type']:<8} "
+                f"risk={adapter['risk_level']:<12} "
+                f"enabled={adapter['enabled']:<5} "
+                f"caps={adapter['capability_count']} "
+                f"session={adapter['supports_session']} "
+                f"background={adapter['supports_background']} "
+                f"approval={adapter['supports_approval_roundtrip']} "
+                f"artifacts={adapter['supports_artifacts']} "
+                f"cancel={adapter['supports_cancel']}"
+            )
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_orchestration_adapter_inspect(args: argparse.Namespace) -> int:
+    """Render a read-only adapter capability registry inspect view."""
+    root = _root_path(args)
+    result = get_adapter(root, adapter_id=args.adapter_id)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("ADAPTER INSPECT")
+        if result.adapter is not None:
+            adapter = result.adapter
+            print(f"adapter_id={adapter['adapter_id']}")
+            print(f"display_name={adapter['display_name']}")
+            print(f"adapter_type={adapter['adapter_type']}")
+            print(f"risk_level={adapter['risk_level']}")
+            print(f"capabilities={', '.join(adapter['capabilities'])}")
+            print(
+                f"supports: "
+                f"session={adapter['supports_session']} "
+                f"background={adapter['supports_background']} "
+                f"approval_roundtrip={adapter['supports_approval_roundtrip']} "
+                f"artifacts={adapter['supports_artifacts']} "
+                f"cancel={adapter['supports_cancel']}"
+            )
+            timeout = adapter.get("timeout_profile", {})
+            print(
+                f"timeout_profile: default={timeout.get('default_seconds', '-')}s "
+                f"max={timeout.get('max_seconds', '-')}s"
+            )
+            print(f"input_schema_ref={adapter['input_schema_ref']}")
+            print(f"output_schema_ref={adapter['output_schema_ref']}")
+            derived = adapter.get("derived", {})
+            if derived:
+                print("derived:")
+                for key, note in derived.items():
+                    print(f"  {key}: {note}")
+        for finding in result.findings:
+            print(f"- {finding.rule_id}: {finding.message}")
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_orchestration_report_generate(args: argparse.Namespace) -> int:
     """Render a read-only report for a task + request pair (runtime-report-backed read model)."""
     root = _root_path(args)
@@ -2900,6 +2981,38 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_report_generate_parser)
     orchestration_report_generate_parser.set_defaults(func=_cmd_orchestration_report_generate)
+
+    # orchestration adapter list/inspect
+    orchestration_adapter_parser = orchestration_subparsers.add_parser(
+        "adapter", help="Query read-only adapter capability registry through orchestration namespace"
+    )
+    orchestration_adapter_subparsers = orchestration_adapter_parser.add_subparsers(
+        dest="adapter_command", required=True
+    )
+
+    orchestration_adapter_list_parser = orchestration_adapter_subparsers.add_parser(
+        "list", help="List adapters from the source-backed capability registry"
+    )
+    orchestration_adapter_list_parser.add_argument(
+        "--type", default=None, choices=["agent", "tool", "service"], help="Filter by adapter type"
+    )
+    orchestration_adapter_list_parser.add_argument(
+        "--risk", default=None, choices=["local", "external", "destructive", "privileged"], help="Filter by risk level"
+    )
+    orchestration_adapter_list_parser.add_argument(
+        "--capability", default=None, help="Filter by supported capability"
+    )
+    _add_global_args(orchestration_adapter_list_parser)
+    orchestration_adapter_list_parser.set_defaults(func=_cmd_orchestration_adapter_list)
+
+    orchestration_adapter_inspect_parser = orchestration_adapter_subparsers.add_parser(
+        "inspect", help="Inspect a single adapter from the source-backed capability registry"
+    )
+    orchestration_adapter_inspect_parser.add_argument(
+        "adapter_id", help="Adapter id"
+    )
+    _add_global_args(orchestration_adapter_inspect_parser)
+    orchestration_adapter_inspect_parser.set_defaults(func=_cmd_orchestration_adapter_inspect)
 
     # task queries
     task_parser = subparsers.add_parser("task", help="Query read-only task ledger data")

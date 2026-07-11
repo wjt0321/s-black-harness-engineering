@@ -1656,6 +1656,25 @@ python -m agent_runtime.cli orchestration overview
 python -m agent_runtime.cli orchestration overview --json
 ```
 
+Adapter Capability Registry（Stage 10 source-backed registry 投影，只读）：
+
+```bash
+python -m agent_runtime.cli orchestration adapter list
+python -m agent_runtime.cli orchestration adapter list --json
+python -m agent_runtime.cli orchestration adapter list --type tool
+python -m agent_runtime.cli orchestration adapter list --risk local
+python -m agent_runtime.cli orchestration adapter list --capability local_command
+python -m agent_runtime.cli orchestration adapter inspect shell-local
+python -m agent_runtime.cli orchestration adapter inspect shell-local --json
+```
+
+说明：
+
+- 这是 Stage 10 Adapter Runtime Interface 的 source-backed read model，从 `adapters/adapters.sample.json` 投影，返回 `adapter_id`、`display_name`、`adapter_type`、`capabilities`、`risk_level`、`enabled`、`supports_*`、`timeout_profile`、`input_schema_ref`、`output_schema_ref` 等结构化元数据。
+- 只读、确定性、不执行真实 adapter、不访问网络、不写 ledger。
+- `input_schema_ref` / `output_schema_ref` 是指向该 entry 内嵌 schema 的真实 JSON Pointer（如 `adapters/adapters.sample.json#/adapters/4/input_schema`）。
+- 不过滤 disabled entries，与 `loader.load_adapters` 同批条目语义一致。
+
 任务页：
 
 ```bash
