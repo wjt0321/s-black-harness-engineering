@@ -43,7 +43,7 @@ from .orchestration_approval_resolve import ApprovalResolveResult, resolve_appro
 from .orchestration_artifact import ArtifactDetailResult, ArtifactListResult, get_artifact, list_artifacts
 from .orchestration_preflight import PreflightResult, check_preflight
 from .orchestration_report import ReportGenerateResult, generate_report
-from .orchestration_route import RoutePreviewResult, preview_route
+from .orchestration_route import RouteConstraints, RoutePreviewResult, preview_route
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
 from .orchestration_run_dry_run import RunDryRunResult, dry_run_run
 from .orchestration_run_commit import RunCommitResult, commit_run
@@ -1484,12 +1484,27 @@ def _cmd_orchestration_route_preview(args: argparse.Namespace) -> int:
         )
         return _emit_route_preview_result(result, json_output=args.json)
 
+    route_constraints: RouteConstraints | None = None
+    if (
+        getattr(args, "preferred_adapter", None) is not None
+        or getattr(args, "max_risk", None) is not None
+        or getattr(args, "require_background", False)
+        or getattr(args, "require_artifacts", False)
+    ):
+        route_constraints = RouteConstraints(
+            preferred_adapter=getattr(args, "preferred_adapter", None),
+            require_background=getattr(args, "require_background", False),
+            require_artifacts=getattr(args, "require_artifacts", False),
+            max_risk=getattr(args, "max_risk", None),
+        )
+
     result = preview_route(
         root,
         capability=capability,
         task_id=getattr(args, "task_id", None),
         adapter_id=getattr(args, "adapter", None),
         requested_mode=requested_mode,
+        constraints=route_constraints,
     )
     return _emit_route_preview_result(result, json_output=args.json)
 
@@ -1553,6 +1568,20 @@ def _cmd_orchestration_preflight(args: argparse.Namespace) -> int:
         )
         return _emit_preflight_result(result, json_output=args.json)
 
+    route_constraints: RouteConstraints | None = None
+    if (
+        getattr(args, "preferred_adapter", None) is not None
+        or getattr(args, "max_risk", None) is not None
+        or getattr(args, "require_background", False)
+        or getattr(args, "require_artifacts", False)
+    ):
+        route_constraints = RouteConstraints(
+            preferred_adapter=getattr(args, "preferred_adapter", None),
+            require_background=getattr(args, "require_background", False),
+            require_artifacts=getattr(args, "require_artifacts", False),
+            max_risk=getattr(args, "max_risk", None),
+        )
+
     result = check_preflight(
         root,
         capability=capability,
@@ -1563,6 +1592,7 @@ def _cmd_orchestration_preflight(args: argparse.Namespace) -> int:
         requested_mode=requested_mode,
         explicit_policy=_explicit_policy(args, root),
         profile=resolve_profile(args, root),
+        constraints=route_constraints,
     )
     return _emit_preflight_result(result, json_output=args.json)
 
@@ -2689,6 +2719,19 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_route_preview_parser.add_argument(
         "--mode", default="dry-run", choices=["dry-run", "commit"], help="Requested execution mode"
     )
+    orchestration_route_preview_parser.add_argument(
+        "--preferred-adapter", default=None, help="Preferred adapter id (must still pass constraints)"
+    )
+    orchestration_route_preview_parser.add_argument(
+        "--require-background", action="store_true", help="Require adapter to support background execution"
+    )
+    orchestration_route_preview_parser.add_argument(
+        "--require-artifacts", action="store_true", help="Require adapter to support artifacts"
+    )
+    orchestration_route_preview_parser.add_argument(
+        "--max-risk", default=None, choices=["local", "external", "destructive", "privileged"],
+        help="Maximum acceptable risk level (inclusive)"
+    )
     _add_global_args(orchestration_route_preview_parser)
     orchestration_route_preview_parser.set_defaults(func=_cmd_orchestration_route_preview)
 
@@ -2713,6 +2756,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     orchestration_preflight_parser.add_argument(
         "--mode", default="dry-run", choices=["dry-run", "commit"], help="Requested execution mode"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--preferred-adapter", default=None, help="Preferred adapter id (must still pass constraints)"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--require-background", action="store_true", help="Require adapter to support background execution"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--require-artifacts", action="store_true", help="Require adapter to support artifacts"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--max-risk", default=None, choices=["local", "external", "destructive", "privileged"],
+        help="Maximum acceptable risk level (inclusive)"
     )
     _add_global_args(orchestration_preflight_parser)
     orchestration_preflight_parser.set_defaults(func=_cmd_orchestration_preflight)

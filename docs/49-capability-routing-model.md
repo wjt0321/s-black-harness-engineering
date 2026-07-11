@@ -113,6 +113,77 @@ Routing 的输出不只是“选中了谁”，还应包括选择理由和后续
 - 当前 runner 是否可用
 - 是否已有活跃会话
 
+## 已实现的第一版约束路由（Stage 11）
+
+当前已实现 capability routing 的第一版，作为 Stage 11 的最小落地。它只扩展路由决策的输入面，不执行真实 adapter、不访问网络、不写 ledger。
+
+### 处理流程
+
+第一版仍按三层模型执行，但把第二层从“设计意图”变成可配置约束：
+
+1. **Capability Match**：从 source-backed adapter registry 投影中找出声明支持该 capability 的 adapter。
+2. **Constraint Filter**：根据 CLI / policy 传入的约束过滤候选集。
+3. **Preference Rank**：若存在显式 `preferred_adapter` 则优先置顶；其余候选保持 registry 原始顺序作为 fallback 链。
+
+### 已支持的约束
+
+CLI 通过以下标志传入：
+
+| 标志 | 作用 |
+|:---|:---|
+| `--preferred-adapter <id>` | 将指定 adapter 排在首位；若其不满足 capability 或功能/风险约束，则降级到 source-order 的下一个可用候选，并在 `constraints.preferred_adapter_rejected` 中说明原因。 |
+| `--max-risk <local\|external\|destructive\|privileged>` | 只保留 risk_level 不超过该级别的候选。 |
+| `--require-background` | 只保留声明支持 `supports_background: true` 的候选。 |
+| `--require-artifacts` | 只保留声明支持 artifact（`supports_artifacts: true`）的候选。 |
+
+这些约束通过 `RouteConstraints` 对象传给 routing 函数，并在 `orchestration route preview` 与 `orchestration preflight` 中生效。
+
+### 第一版未实现的内容
+
+以下排序/可用性维度目前**未实现**，保留给后续阶段：
+
+- 成本（cost）评分
+- 延迟（latency）评分
+- 可用性 / 健康度（availability）打分
+- 在线状态 / 活跃会话感知
+- 真实并发调度
+
+### 示例输出形状
+
+```json
+{
+  "status": "pass",
+  "requested_capability": "light_coding",
+  "capability": "light_coding",
+  "selected_adapter_id": "kimi-code-acp",
+  "operation": "light_coding",
+  "requested_mode": "dry-run",
+  "selected_mode": "dry-run",
+  "risk_level": "external",
+  "requires_approval": true,
+  "requires_dry_run": true,
+  "fallback_candidates": [
+    {"adapter_id": "omp-acp", "reason": "passes constraints and supports capability"}
+  ],
+  "routing_reason": "Selected adapter 'kimi-code-acp' for capability 'light_coding' based on preferred adapter and capability match.",
+  "constraints": {
+    "adapter_kind": "acp_runner",
+    "risk_level": "external",
+    "requires_approval": true,
+    "requires_dry_run": true,
+    "preflight_checks": ["policy_check", "scope_confirmed"],
+    "routing_constraints": {
+      "preferred_adapter": "kimi-code-acp",
+      "require_background": false,
+      "require_artifacts": false,
+      "max_risk": "external"
+    }
+  }
+}
+```
+
+若约束过滤后无候选，则 `status` 为 `blocked`，`selected_adapter_id` 被显式输出为 `null`；不存在单独的 `blocked_reason` 字段，原因由 `routing_reason` 给出，被拒绝的候选详情位于 `constraints.rejected_candidates`（若指定了 `--preferred-adapter` 且被拒绝，还会包含 `constraints.preferred_adapter_rejected`）。
+
 ## 路由示例
 
 ### 示例 1：中度编程任务

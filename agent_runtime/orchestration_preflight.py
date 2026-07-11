@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from .adapter_registry import load_adapter_registry
-from .orchestration_route import preview_route
+from .orchestration_route import RouteConstraints, preview_route
 from .policy import check_action
 from .result import Finding, coalesce_status
 
@@ -111,6 +111,7 @@ def check_preflight(
     requested_mode: str = "dry-run",
     explicit_policy: Path | None = None,
     profile: str | None = None,
+    constraints: RouteConstraints | None = None,
 ) -> PreflightResult:
     """Run a read-only orchestration preflight handoff check.
 
@@ -144,6 +145,7 @@ def check_preflight(
         task_id=task_id,
         adapter_id=adapter_id,
         requested_mode=requested_mode,
+        constraints=constraints,
     )
 
     findings: list[Finding] = list(route.findings)

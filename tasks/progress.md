@@ -2226,3 +2226,17 @@
 - 未新增文档、未修改 schema、未声称 Stage 11/14 完成。
 - 验证：
   - `python tools/public_scan.py`：OK public scan。
+
+## 2026-07-11 — Stage 11：Capability Routing Model 约束路由第一版文档更新
+
+- 任务：Task 5 / 6，更新最小文档以反映路由约束第一版。
+- 修改文件：
+  - `docs/49-capability-routing-model.md`：在“三层路由模型”后新增“已实现的第一版约束路由（Stage 11）”小节，说明 capability match → constraint filter → preference rank 流程、已支持约束、未实现维度与示例输出形状。
+  - `docs/02-roadmap.md`：Stage 11 增加“已落地能力”与“仍后续”，记录 constraint filter + preference rank 第一版与 CLI flags，保留 cost/latency/availability 打分后续。
+  - `docs/000-stage-digest.md`：将“新进落地”更新为 Stage 11 约束路由第一版。
+  - `docs/10-cli-poc-usage.md`：在 `orchestration route preview` / `orchestration preflight` 示例后补充带 `--preferred-adapter`、`--max-risk`、`--require-background` 的新示例。
+  - `tasks/progress.md`：追加本条目。
+- 明确未实现：cost / latency / availability / 在线状态 / 真实并发调度。
+- 未新增文档、未修改 schema、未声称 Stage 11 全部完成。
+- 验证：
+  - `python tools/public_scan.py`：OK public scan。

@@ -19,14 +19,23 @@
 
 - **Stage 15.99 — Run Lineage / Recovery Read Model 第一版**
 - 当前成果：retry / fallback lineage 已经形成 **可写 + 可读** 的最小闭环
-- **新进落地：Stage 10 — Adapter Runtime Interface Registry 投影第一版**
-  - `agent_runtime/adapter_registry.py`：从现有 `adapters/adapters.sample.json` 投影出 Stage 10 元数据，单一事实源
-  - `agent_runtime/orchestration_adapter.py`：只读 read model
-  - CLI：`orchestration adapter list` / `orchestration adapter inspect <adapter_id>`
-  - 投影字段清楚标识 derived/defaulted；schema ref 为指向该 entry 内嵌 schema 的真实 JSON Pointer
-  - 不过滤 disabled entries，与 `loader.load_adapters` 同批条目语义一致
-  - `orchestration route preview` / `orchestration preflight` 现在直接消费同一 source-backed projection，保证 routing 候选集与 registry 查询同源
-  - 测试覆盖：source 变更反射、schema pointer 解析、disabled entry 保留、loader 一致性、模型校验、列表稳定排序、inspect、JSON、人类可读输出、未知 ID、缺文件/非法 JSON/schema 错误
+
+### Stage 10 基线（保留）
+
+- `adapters/adapters.sample.json` 是 adapter/capability/risk 的单一事实源。
+- `agent_runtime.adapter_registry` 提供 source-backed 投影，供 `orchestration adapter list/inspect`、route preview、preflight 共同消费。
+- 投影字段包括 adapter_id、display_name、kind、capabilities、risk_level、enabled、功能开关（background/artifacts/approval_roundtrip 等）、timeout_profile、指向该 entry 真实 input/output schema 的 JSON Pointer。
+- route preview 与 preflight 基于此投影生成路由决策，避免查询 registry 与路由 registry 漂移。
+
+### 新进落地：Stage 11 — Capability Routing Model 约束路由第一版
+
+- `RouteConstraints` 已接入 `orchestration route preview` / `orchestration preflight`。
+- 支持约束：`--preferred-adapter`、`--max-risk`、`--require-background`、`--require-artifacts`。
+- 路由流程：capability match → constraint filter → preference rank。
+- 默认未传约束参数时，route/preflight 保持原有输出字段不变；仅在显式使用约束 flag 时才输出 `routing_constraints` / `rejected_candidates` 等新增字段。
+- preflight 将 routing decision passthrough 到 guardrail，不越界替 guardrail 做阻断判断。
+- cost / latency / availability / 在线状态仍未实现，保留给后续阶段。
+- 文档已更新：`docs/49-capability-routing-model.md`、`docs/02-roadmap.md`、`docs/10-cli-poc-usage.md`。
 
 ## 现在已经能做什么
 
@@ -46,9 +55,9 @@
 
 ## 下一步做什么
 
-- **优先方向：Stage 10 — Adapter Runtime Interface（已落地第一版，继续巩固）**
-- 入口文档：`docs/48-adapter-runtime-interface.md`
-- 目标：在 source-backed registry 投影已与 route preview / preflight 对齐的基础上，继续巩固 Stage 10，并为 Stage 11 capability routing model 做准备；不急着跳真实执行
+- **优先方向：Stage 11 — Capability Routing Model（约束路由第一版已落地，继续巩固）**
+- 入口文档：`docs/49-capability-routing-model.md`
+- 目标：在 source-backed registry 投影与 constraint filter + preference rank 已对齐的基础上，继续巩固 Stage 11；不急着跳真实执行
 
 ## 重要约束
 

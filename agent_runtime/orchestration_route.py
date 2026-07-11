@@ -18,6 +18,25 @@ from .result import Finding
 from .tasks import find_task
 
 
+RISK_ORDER = ["local", "external", "destructive", "privileged"]
+
+
+@dataclass(frozen=True)
+class RouteConstraints:
+    preferred_adapter: str | None = None
+    require_background: bool = False
+    require_artifacts: bool = False
+    max_risk: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "preferred_adapter": self.preferred_adapter,
+            "require_background": self.require_background,
+            "require_artifacts": self.require_artifacts,
+            "max_risk": self.max_risk,
+        }
+
+
 @dataclass
 class RoutePreviewResult:
     """Result of an orchestration route preview."""
@@ -70,6 +89,78 @@ class RoutePreviewResult:
         return d
 
 
+def _risk_level_index(risk_level: str) -> int:
+    try:
+        return RISK_ORDER.index(risk_level)
+    except ValueError:
+        return len(RISK_ORDER)
+
+
+def _apply_constraints(
+    adapters: list[AdapterMetadata],
+    constraints: RouteConstraints,
+) -> tuple[list[AdapterMetadata], list[dict[str, Any]], dict[str, Any] | None]:
+    """Return (passed, rejected_with_reasons, preferred_rejection).
+
+    passed: adapters that satisfy all constraints, in input order.
+    rejected_with_reasons: one entry per rejected adapter.
+    preferred_rejection: if a preferred_adapter was supplied and not in passed,
+                         a dict explaining why; otherwise None.
+    """
+    passed: list[AdapterMetadata] = []
+    rejected: list[dict[str, Any]] = []
+    preferred_rejection: dict[str, Any] | None = None
+
+    for adapter in adapters:
+        reasons: list[str] = []
+        if constraints.max_risk is not None:
+            if _risk_level_index(adapter.risk_level) > _risk_level_index(constraints.max_risk):
+                reasons.append(
+                    f"risk_level '{adapter.risk_level}' exceeds max_risk '{constraints.max_risk}'"
+                )
+        if constraints.require_background and not adapter.supports_background:
+            reasons.append("does not support background execution")
+        if constraints.require_artifacts and not adapter.supports_artifacts:
+            reasons.append("does not support artifacts")
+
+        if reasons:
+            rejected.append({
+                "adapter_id": adapter.adapter_id,
+                "reasons": reasons,
+            })
+            if constraints.preferred_adapter == adapter.adapter_id:
+                preferred_rejection = {
+                    "adapter_id": adapter.adapter_id,
+                    "reasons": reasons,
+                }
+        else:
+            passed.append(adapter)
+
+    if constraints.preferred_adapter is not None and preferred_rejection is None:
+        # preferred adapter not even among capability-matched candidates
+        preferred_ids = {a.adapter_id for a in adapters}
+        if constraints.preferred_adapter not in preferred_ids:
+            preferred_rejection = {
+                "adapter_id": constraints.preferred_adapter,
+                "reasons": ["does not support the requested capability"],
+            }
+
+    return passed, rejected, preferred_rejection
+
+
+def _select_by_preference(
+    adapters: list[AdapterMetadata],
+    preferred_adapter: str | None,
+) -> tuple[AdapterMetadata, list[AdapterMetadata]]:
+    """Return (selected, remaining) honoring preferred adapter if present."""
+    if preferred_adapter is not None:
+        preferred = next((a for a in adapters if a.adapter_id == preferred_adapter), None)
+        if preferred is not None:
+            remaining = [a for a in adapters if a.adapter_id != preferred_adapter]
+            return preferred, remaining
+    return adapters[0], adapters[1:]
+
+
 def _build_task_context(task: dict[str, Any] | None) -> dict[str, Any] | None:
     """Return a value-safe summary of a task for routing context."""
     if task is None:
@@ -109,6 +200,7 @@ def preview_route(
     task_id: str | None = None,
     adapter_id: str | None = None,
     requested_mode: str = "dry-run",
+    constraints: RouteConstraints | None = None,
 ) -> RoutePreviewResult:
     """Preview capability routing without executing or writing anything.
 
@@ -151,32 +243,134 @@ def preview_route(
             next_action="Register an adapter for this capability or check the capability name.",
         )
 
-    selected: Any | None = None
+    if constraints is None:
+        selected: Any | None = None
+        if adapter_id is not None:
+            selected = next((a for a in matching if a.adapter_id == adapter_id), None)
+            if selected is None:
+                supported = [a.adapter_id for a in matching]
+                return RoutePreviewResult(
+                    status="blocked",
+                    requested_capability=capability,
+                    task_id=task_id,
+                    routing_reason=(
+                        f"Adapter '{adapter_id}' does not support capability '{capability}'. "
+                        f"Supported adapters: {', '.join(supported)}."
+                    ),
+                    fallback_candidates=[
+                        {"adapter_id": a.adapter_id, "reason": "supports requested capability"}
+                        for a in matching
+                    ],
+                    next_action="Choose an adapter that supports the capability or omit --adapter.",
+                )
+        else:
+            selected = matching[0]
+
+        remaining = [a for a in matching if a.adapter_id != selected.adapter_id]
+        fallback_candidates = [
+            {"adapter_id": a.adapter_id, "reason": "supports requested capability"}
+            for a in remaining
+        ]
+
+        risk_level = selected.risk_level
+        requires_approval = bool(selected.requires_approval)
+        requires_dry_run = _is_high_risk(risk_level) or requires_approval
+
+        selected_mode = requested_mode
+        if requested_mode == "commit" and requires_dry_run:
+            selected_mode = "dry-run"
+
+        operation = _select_operation(selected, capability)
+
+        constraints_out = {
+            "adapter_kind": selected.kind,
+            "risk_level": risk_level,
+            "requires_approval": requires_approval,
+            "requires_dry_run": requires_dry_run,
+            "preflight_checks": list(selected.preflight_checks),
+        }
+
+        routing_reason = (
+            f"Selected adapter '{selected.adapter_id}' for capability '{capability}' "
+            f"based on source order and capability match."
+        )
+
+        if task_context is not None:
+            constraints_out["task_context"] = task_context
+
+        next_action = "Use orchestration preflight to aggregate routing with guardrail checks."
+
+        return RoutePreviewResult(
+            status="pass",
+            requested_capability=capability,
+            task_id=task_id,
+            selected_adapter_id=selected.adapter_id,
+            capability=capability,
+            operation=operation,
+            requested_mode=requested_mode,
+            selected_mode=selected_mode,
+            risk_level=risk_level,
+            requires_approval=requires_approval,
+            requires_dry_run=requires_dry_run,
+            fallback_candidates=fallback_candidates,
+            routing_reason=routing_reason,
+            constraints=constraints_out,
+            next_action=next_action,
+        )
+
+    route_constraints = constraints
+    eligible, rejected, preferred_rejection = _apply_constraints(matching, route_constraints)
+
+    if not eligible:
+        return RoutePreviewResult(
+            status="blocked",
+            requested_capability=capability,
+            task_id=task_id,
+            routing_reason=f"All adapters for capability '{capability}' were rejected by constraints.",
+            fallback_candidates=[],
+            constraints={
+                "routing_constraints": route_constraints.to_dict(),
+                "rejected_candidates": rejected,
+                "preferred_adapter_rejected": preferred_rejection,
+            },
+            next_action="Relax constraints or register an adapter that satisfies them.",
+        )
+
+    base_constraints: dict[str, Any] = {
+        "routing_constraints": route_constraints.to_dict(),
+        "rejected_candidates": rejected,
+    }
+    if preferred_rejection is not None:
+        base_constraints["preferred_adapter_rejected"] = preferred_rejection
+
+    selected = None
+    remaining: list[AdapterMetadata] = []
     if adapter_id is not None:
-        selected = next((a for a in matching if a.adapter_id == adapter_id), None)
+        selected = next((a for a in eligible if a.adapter_id == adapter_id), None)
         if selected is None:
-            supported = [a.adapter_id for a in matching]
             return RoutePreviewResult(
                 status="blocked",
                 requested_capability=capability,
                 task_id=task_id,
                 routing_reason=(
-                    f"Adapter '{adapter_id}' does not support capability '{capability}'. "
-                    f"Supported adapters: {', '.join(supported)}."
+                    f"Adapter '{adapter_id}' does not support capability '{capability}' "
+                    f"or was rejected by constraints."
                 ),
                 fallback_candidates=[
-                    {"adapter_id": a.adapter_id, "reason": "supports requested capability"}
-                    for a in matching
+                    {"adapter_id": a.adapter_id, "reason": "passes constraints and supports capability"}
+                    for a in eligible
                 ],
-                next_action="Choose an adapter that supports the capability or omit --adapter.",
+                constraints=base_constraints,
+                next_action="Choose an adapter that passes constraints or omit --adapter.",
             )
+        remaining = [a for a in eligible if a.adapter_id != selected.adapter_id]
     else:
-        selected = matching[0]
+        selected, remaining = _select_by_preference(
+            eligible, route_constraints.preferred_adapter
+        )
 
-    # Build fallback candidates from remaining matching adapters.
-    remaining = [a for a in matching if a.adapter_id != selected.adapter_id]
     fallback_candidates = [
-        {"adapter_id": a.adapter_id, "reason": "supports requested capability"}
+        {"adapter_id": a.adapter_id, "reason": "passes constraints and supports capability"}
         for a in remaining
     ]
 
@@ -184,28 +378,44 @@ def preview_route(
     requires_approval = bool(selected.requires_approval)
     requires_dry_run = _is_high_risk(risk_level) or requires_approval
 
-    # selected_mode is the most conservative of requested_mode and adapter constraints.
     selected_mode = requested_mode
     if requested_mode == "commit" and requires_dry_run:
         selected_mode = "dry-run"
 
     operation = _select_operation(selected, capability)
 
-    constraints = {
+    constraints_out = {
         "adapter_kind": selected.kind,
         "risk_level": risk_level,
         "requires_approval": requires_approval,
         "requires_dry_run": requires_dry_run,
         "preflight_checks": list(selected.preflight_checks),
+        "routing_constraints": route_constraints.to_dict(),
+        "rejected_candidates": rejected,
     }
+    if preferred_rejection is not None:
+        constraints_out["preferred_adapter_rejected"] = preferred_rejection
 
-    routing_reason = (
-        f"Selected adapter '{selected.adapter_id}' for capability '{capability}' "
-        f"based on source order and capability match."
-    )
+    if route_constraints.preferred_adapter == selected.adapter_id:
+        routing_reason = (
+            f"Selected adapter '{selected.adapter_id}' for capability '{capability}' "
+            f"based on preferred adapter and capability match."
+        )
+    elif route_constraints.preferred_adapter is not None and preferred_rejection is not None:
+        routing_reason = (
+            f"Selected adapter '{selected.adapter_id}' for capability '{capability}' "
+            f"based on source order; preferred adapter "
+            f"'{route_constraints.preferred_adapter}' rejected: "
+            f"{preferred_rejection['reasons'][0]}."
+        )
+    else:
+        routing_reason = (
+            f"Selected adapter '{selected.adapter_id}' for capability '{capability}' "
+            f"based on source order and capability match."
+        )
 
     if task_context is not None:
-        constraints["task_context"] = task_context
+        constraints_out["task_context"] = task_context
 
     next_action = "Use orchestration preflight to aggregate routing with guardrail checks."
 
@@ -223,6 +433,6 @@ def preview_route(
         requires_dry_run=requires_dry_run,
         fallback_candidates=fallback_candidates,
         routing_reason=routing_reason,
-        constraints=constraints,
+        constraints=constraints_out,
         next_action=next_action,
     )

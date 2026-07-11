@@ -1750,9 +1750,11 @@ python -m agent_runtime.cli orchestration route preview \
   --capability git_push \
   --adapter github-cli \
   --mode dry-run
+python -m agent_runtime.cli orchestration route preview --capability light_coding --preferred-adapter kimi-code-acp
+python -m agent_runtime.cli orchestration route preview --capability git_push --max-risk local
 ```
 
-说明：`orchestration route preview` 现在直接消费 Stage 10 source-backed adapter registry 投影作为候选集，不再依赖独立内置 registry。
+说明：`orchestration route preview` 现在直接消费 Stage 10 source-backed adapter registry 投影作为候选集，不再依赖独立内置 registry。第一版支持 `--preferred-adapter`、`--max-risk`、`--require-background`、`--require-artifacts` 约束过滤与偏好排序。
 
 Preflight handoff 聚合（只读）：
 
@@ -1765,9 +1767,10 @@ python -m agent_runtime.cli orchestration preflight \
   --operation git_push \
   --target origin/main \
   --mode dry-run
+python -m agent_runtime.cli orchestration preflight --capability light_coding --require-background --preferred-adapter kimi-code-acp
 ```
 
-说明：`orchestration preflight` 现在同样消费该 source-backed registry 投影，并在投影元数据之上叠加 guardrail 判断。
+说明：`orchestration preflight` 现在同样消费该 source-backed registry 投影，并在投影元数据之上叠加 guardrail 判断。路由约束标志同样生效；preflight 将 routing decision passthrough 到 guardrail，不越界替 guardrail 做阻断判断。
 
 Run dry-run preview（只读，不写 ledger/envelope/draft）：
 

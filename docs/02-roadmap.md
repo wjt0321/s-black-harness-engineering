@@ -260,6 +260,19 @@
 
 - `docs/49-capability-routing-model.md`
 
+已落地能力：
+
+- constraint filter + preference rank 第一版。
+- CLI flags：`--preferred-adapter`、`--require-background`、`--require-artifacts`、`--max-risk`。
+- `orchestration route preview` 与 `orchestration preflight` 已消费 `RouteConstraints` 并返回带约束的 routing decision。
+- preflight 把 routing 决策 passthrough 到下游 guardrail / runtime plan，保持 routing 与 guardrail 边界清晰。
+
+仍后续：
+
+- cost / latency / availability 在线打分。
+- 真实 runner 在线状态感知。
+- 自动化 fallback / retry 执行（当前仅输出 fallback 链，不自动切换）。
+
 ---
 
 ## Stage 12 — Control Plane State Model（下一步高优先级）
