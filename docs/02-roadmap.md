@@ -278,13 +278,25 @@
 
 ## Stage 12 — Control Plane State Model（下一步高优先级）
 
-目标：把未来 CLI、UI、自动化共同依赖的状态对象讲清楚。
+目标：把未来 CLI、UI、自动化共同依赖的状态对象讲清楚，并把路由/preflight 决策沉淀为可消费的控制面状态。
 
 要做的事：
 
 - 定义 task / event / run / approval / artifact / evidence / report 等对象关系
 - 明确哪些是顶层对象，哪些是附属对象
 - 明确这些对象如何支撑审计、回放、观察和 future UI
+
+已落地第一拍：
+
+- `RoutingDecisionSnapshot` 只读投影：由 `RoutePreviewResult` / `PreflightResult` 直接构造，不写 ledger，不生成持久 Run。
+- `snapshot_id` 由 canonical safe payload 的 SHA-256 哈希确定性生成。
+- CLI：`orchestration route snapshot` 与 `orchestration preflight --snapshot`。
+- routing 状态与 guardrail 状态在 snapshot 中分层表达。
+
+仍后续：
+
+- 把 snapshot 与持久化 Run/Event 对象衔接（当前仍只是 ephemeral read model）。
+- 定义 Task / Run / Approval / Artifact / Evidence / Report 的完整字段与生命周期。
 
 主要交付物：
 

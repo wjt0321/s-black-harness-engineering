@@ -44,6 +44,11 @@ from .orchestration_artifact import ArtifactDetailResult, ArtifactListResult, ge
 from .orchestration_preflight import PreflightResult, check_preflight
 from .orchestration_report import ReportGenerateResult, generate_report
 from .orchestration_route import RouteConstraints, RoutePreviewResult, preview_route
+from .orchestration_routing_snapshot import (
+    RoutingDecisionSnapshot,
+    build_preflight_snapshot,
+    build_routing_snapshot,
+)
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
 from .orchestration_run_dry_run import RunDryRunResult, dry_run_run
 from .orchestration_run_commit import RunCommitResult, commit_run
@@ -92,6 +97,23 @@ def _explicit_policy(args: argparse.Namespace, root: Path) -> Path | None:
     if args.policy is None:
         return None
     return (root / args.policy).resolve()
+
+
+def _build_route_constraints_from_args(args: argparse.Namespace) -> RouteConstraints | None:
+    """Return RouteConstraints only when the user explicitly passed any flag."""
+    if (
+        getattr(args, "preferred_adapter", None) is not None
+        or getattr(args, "max_risk", None) is not None
+        or getattr(args, "require_background", False)
+        or getattr(args, "require_artifacts", False)
+    ):
+        return RouteConstraints(
+            preferred_adapter=getattr(args, "preferred_adapter", None),
+            require_background=getattr(args, "require_background", False),
+            require_artifacts=getattr(args, "require_artifacts", False),
+            max_risk=getattr(args, "max_risk", None),
+        )
+    return None
 
 
 def _cmd_doctor(args: argparse.Namespace) -> int:
@@ -1510,6 +1532,47 @@ def _cmd_orchestration_route_preview(args: argparse.Namespace) -> int:
     return _emit_route_preview_result(result, json_output=args.json)
 
 
+def _cmd_orchestration_route_snapshot(args: argparse.Namespace) -> int:
+    """Render a deterministic routing decision snapshot (read-only)."""
+    root = _root_path(args)
+    capability = args.capability
+    requested_mode = getattr(args, "mode", "dry-run")
+    task_id = getattr(args, "task_id", None)
+    request_id = getattr(args, "request_id", None)
+    if requested_mode not in {"dry-run", "commit"}:
+        snapshot = RoutingDecisionSnapshot(
+            schema_version="control-plane/routing-decision/v1",
+            snapshot_id="",
+            status="error",
+            routing={
+                "requested_capability": capability,
+                "requested_mode": requested_mode,
+            },
+            constraints={},
+            source={"task_id": task_id, "request_id": request_id},
+        )
+        return _emit_routing_snapshot(snapshot, json_output=args.json)
+
+    route_constraints = _build_route_constraints_from_args(args)
+
+    route = preview_route(
+        root,
+        capability=capability,
+        task_id=task_id,
+        adapter_id=getattr(args, "adapter", None),
+        requested_mode=requested_mode,
+        constraints=route_constraints,
+        explain=getattr(args, "explain", False),
+    )
+    snapshot = build_routing_snapshot(
+        route,
+        task_id=task_id,
+        request_id=request_id,
+        explain=getattr(args, "explain", False),
+    )
+    return _emit_routing_snapshot(snapshot, json_output=args.json)
+
+
 def _render_decision_trace(trace: dict[str, Any]) -> str:
     """Render a decision trace as a compact human-readable block."""
     lines = ["DECISION TRACE"]
@@ -1582,6 +1645,44 @@ def _emit_route_preview_result(result: RoutePreviewResult, json_output: bool) ->
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _emit_routing_snapshot(snapshot: RoutingDecisionSnapshot, json_output: bool) -> int:
+    """Render a routing decision snapshot in JSON or compact human-readable form."""
+    if json_output:
+        print(json.dumps(snapshot.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("ROUTING DECISION SNAPSHOT")
+        print(f"schema_version={snapshot.schema_version}")
+        print(f"snapshot_id={snapshot.snapshot_id}")
+        print(f"status={snapshot.status}")
+        routing = snapshot.routing
+        print(
+            f"adapter={routing.get('selected_adapter_id') or '-'} "
+            f"capability={routing.get('requested_capability')} "
+            f"operation={routing.get('operation') or '-'}"
+        )
+        print(
+            f"mode={routing.get('requested_mode')} "
+            f"risk={routing.get('risk_level') or '-'} "
+            f"requires_approval={routing.get('requires_approval')} "
+            f"requires_dry_run={routing.get('requires_dry_run')}"
+        )
+        if routing.get("routing_reason"):
+            print(f"reason: {routing['routing_reason']}")
+        if routing.get("fallback_adapter_ids"):
+            print(f"fallback: {', '.join(routing['fallback_adapter_ids'])}")
+        if snapshot.guardrail is not None:
+            guardrail = snapshot.guardrail
+            blocking = ",".join(guardrail.get("blocking_rule_ids", [])) or "-"
+            print(
+                f"guardrail_status={guardrail.get('status') or '-'} "
+                f"finding_count={guardrail.get('finding_count', 0)} "
+                f"blocking_rule_ids={blocking}"
+            )
+        if snapshot.trace is not None:
+            print("trace: present")
+    return _STATUS_TO_EXIT.get(snapshot.status, EXIT_ERROR)
+
+
 def _cmd_orchestration_preflight(args: argparse.Namespace) -> int:
     """Render a read-only orchestration preflight handoff check."""
     root = _root_path(args)
@@ -1634,6 +1735,14 @@ def _cmd_orchestration_preflight(args: argparse.Namespace) -> int:
         constraints=route_constraints,
         explain=getattr(args, "explain", False),
     )
+    if getattr(args, "snapshot", False):
+        snapshot = build_preflight_snapshot(
+            result,
+            task_id=getattr(args, "task_id", None),
+            request_id=getattr(args, "request_id", None),
+            explain=getattr(args, "explain", False),
+        )
+        return _emit_routing_snapshot(snapshot, json_output=args.json)
     return _emit_preflight_result(result, json_output=args.json)
 
 
@@ -2781,6 +2890,44 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(orchestration_route_preview_parser)
     orchestration_route_preview_parser.set_defaults(func=_cmd_orchestration_route_preview)
 
+    # orchestration route snapshot
+    orchestration_route_snapshot_parser = orchestration_route_subparsers.add_parser(
+        "snapshot", help="Render a deterministic routing decision snapshot (read-only)"
+    )
+    orchestration_route_snapshot_parser.add_argument(
+        "--capability", required=True, help="Requested capability"
+    )
+    orchestration_route_snapshot_parser.add_argument(
+        "--task-id", default=None, help="Optional task id for context"
+    )
+    orchestration_route_snapshot_parser.add_argument(
+        "--request-id", default=None, help="Optional request id for source identity"
+    )
+    orchestration_route_snapshot_parser.add_argument(
+        "--adapter", default=None, help="Explicit adapter id to validate against capability"
+    )
+    orchestration_route_snapshot_parser.add_argument(
+        "--mode", default="dry-run", choices=["dry-run", "commit"], help="Requested execution mode"
+    )
+    orchestration_route_snapshot_parser.add_argument(
+        "--preferred-adapter", default=None, help="Preferred adapter id (must still pass constraints)"
+    )
+    orchestration_route_snapshot_parser.add_argument(
+        "--require-background", action="store_true", help="Require adapter to support background execution"
+    )
+    orchestration_route_snapshot_parser.add_argument(
+        "--require-artifacts", action="store_true", help="Require adapter to support artifacts"
+    )
+    orchestration_route_snapshot_parser.add_argument(
+        "--max-risk", default=None, choices=["local", "external", "destructive", "privileged"],
+        help="Maximum acceptable risk level (inclusive)"
+    )
+    orchestration_route_snapshot_parser.add_argument(
+        "--explain", action="store_true", help="Include a structured decision trace in the snapshot"
+    )
+    _add_global_args(orchestration_route_snapshot_parser)
+    orchestration_route_snapshot_parser.set_defaults(func=_cmd_orchestration_route_snapshot)
+
     # orchestration preflight
     orchestration_preflight_parser = orchestration_subparsers.add_parser(
         "preflight", help="Run read-only orchestration preflight (routing + guardrail)"
@@ -2790,6 +2937,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     orchestration_preflight_parser.add_argument(
         "--task-id", default=None, help="Optional task id for context"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--request-id", default=None, help="Optional request id for source identity"
     )
     orchestration_preflight_parser.add_argument(
         "--adapter", default=None, help="Explicit adapter id to validate against capability"
@@ -2818,6 +2968,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     orchestration_preflight_parser.add_argument(
         "--explain", action="store_true", help="Include a structured decision trace in the route summary"
+    )
+    orchestration_preflight_parser.add_argument(
+        "--snapshot", action="store_true", help="Render a deterministic preflight decision snapshot instead of the default summary"
     )
     _add_global_args(orchestration_preflight_parser)
     orchestration_preflight_parser.set_defaults(func=_cmd_orchestration_preflight)

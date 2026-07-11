@@ -2264,3 +2264,47 @@
 - 验证：
   - `python -m pytest tests/test_orchestration_route_decision_trace.py -q`：通过。
   - 聚焦与全量测试、doctor、public_scan、diff check 结果见任务最终汇报。
+
+## 2026-07-11 — Stage 12：Control Plane State Model 第一拍 — Routing Decision Snapshot
+
+- 目标：把 Stage 11 route/preflight 决策投影为稳定、compact、只读的控制面状态对象 `RoutingDecisionSnapshot`，不写 ledger、不生成持久 Run、不执行真实 adapter。
+- 设计要点：
+  - `snapshot_id` 由 canonical safe payload 的 SHA-256 内容哈希确定性生成；无时间戳、随机数、进程状态。
+  - snapshot 必须由真实 `preview_route` / `check_preflight` 结果投影，不得重算路由。
+  - routing 状态与 guardrail 状态分层：`routing.status` vs `guardrail.status`（仅 preflight snapshot）。
+  - 默认旧命令 `route preview` / `preflight` 输出严格不变。
+- 修改文件：
+  - `agent_runtime/orchestration_routing_snapshot.py`：新增 `RoutingDecisionSnapshot` dataclass、`_compute_snapshot_id`、`_canonical_json`、`build_routing_snapshot`、`build_preflight_snapshot`。
+  - `agent_runtime/cli.py`：
+    - 新增 `_build_route_constraints_from_args` 全局 helper。
+    - 新增 `_emit_routing_snapshot` emitter。
+    - 新增 `_cmd_orchestration_route_snapshot` 命令与 parser。
+    - `orchestration preflight` 增加 `--request-id`、`--snapshot` flag；`_cmd_orchestration_preflight` 在 `--snapshot` 时输出 snapshot。
+  - `tests/test_orchestration_routing_snapshot.py`：新增 15 个测试，覆盖结构、确定性、guardrail、blocked/needs_input、trace 可选、route/preflight 一致性、无敏感载荷、source mutation、readonly、人类可读输出、默认兼容。
+  - `docs/50-control-plane-state-model.md`：新增 `RoutingDecisionSnapshot` 小节。
+  - `docs/51-backend-first-api-boundary.md`：操作模型表增加 `routing_snapshot` / `preflight_snapshot`。
+  - `docs/000-stage-digest.md`：新增 Stage 12 第一拍小节。
+  - `docs/10-cli-poc-usage.md`：新增 snapshot 示例。
+  - `docs/02-roadmap.md`：Stage 12 增加已落地第一拍与仍后续。
+  - `tasks/progress.md`：追加本条目。
+- 明确未实现：snapshot 与持久化 Run/Event 对象的衔接；Task/Run/Approval/Artifact/Evidence/Report 完整字段与生命周期。
+- 未声称 Stage 12 完成；未修改 schema；未 commit/push。
+- 临时产物：`.superpowers/specs/2026-07-11-routing-decision-snapshot-design.md`、`.superpowers/plans/2026-07-11-routing-decision-snapshot.md`，任务结束后迁移到项目外临时备份目录（`stage12-routing-decision-snapshot-20260711` 子目录）。
+- 验证：
+  - `python -m pytest tests/test_orchestration_routing_snapshot.py -q`：通过。
+  - 聚焦与全量测试、doctor、public_scan、diff check 结果见任务最终汇报。
+
+## 2026-07-11 — Stage 12：Routing Decision Snapshot 审查返工
+
+- 修复点 1：`routing` 对象中稳定加入 `status` 字段，表达路由层自身状态；preflight snapshot 中顶层 `status`、routing.status、guardrail.status 三层正确分层。
+- 修复点 2：`build_preflight_snapshot` 不再通过 `base.to_dict()` 携带中间 `snapshot_id` 计算最终哈希；改为直接构造最终 canonical payload（schema_version/status/routing/constraints/source/可选 trace/guardrail），再计算 `snapshot_id`。
+- 修复点 3：新增测试覆盖：
+  - `routing.status` 在 route snapshot / blocked route / preflight 三种场景正确。
+  - routing pass + guardrail needs_approval/blocked 时三层状态分层正确。
+  - route snapshot 与 preflight snapshot 的 `snapshot_id` 均等于最终 payload（去掉 `snapshot_id`）的 canonical SHA-256 哈希。
+- 修改文件：
+  - `agent_runtime/orchestration_routing_snapshot.py`：新增 `_build_payload` helper；`_routing_layer` 增加 `status`；`build_preflight_snapshot` 直接构造最终 payload。
+  - `tests/test_orchestration_routing_snapshot.py`：新增 6 个测试。
+- 验证：
+  - 聚焦测试：`tests/test_orchestration_routing_snapshot.py` 22 passed。
+  - 全量测试、doctor、public_scan、diff check 通过。

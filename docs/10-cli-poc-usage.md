@@ -1774,6 +1774,26 @@ python -m agent_runtime.cli orchestration preflight --capability light_coding --
 
 说明：`orchestration preflight` 现在同样消费该 source-backed registry 投影，并在投影元数据之上叠加 guardrail 判断。路由约束标志同样生效；preflight 将 routing decision passthrough 到 guardrail，不越界替 guardrail 做阻断判断。`--explain` 会让 preflight 复用 route 的 `decision_trace`，不做二次计算。
 
+Routing decision snapshot（只读，不写 ledger，不生成持久 Run）：
+
+```bash
+python -m agent_runtime.cli orchestration route snapshot --capability light_coding --json
+python -m agent_runtime.cli orchestration route snapshot \
+  --capability light_coding \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-001 \
+  --explain --json
+python -m agent_runtime.cli orchestration preflight \
+  --capability git_push \
+  --adapter github-cli \
+  --operation git_push \
+  --target origin/main \
+  --mode dry-run \
+  --snapshot --json
+```
+
+说明：`route snapshot` 与 `preflight --snapshot` 把 routing/preflight 决策投影为 `RoutingDecisionSnapshot` 控制面状态对象。`snapshot_id` 由内容哈希确定性生成，无时间戳；默认不持久化、不写 ledger；preflight snapshot 额外包含分层的 guardrail 摘要（仅规则 id 与计数）。
+
 Run dry-run preview（只读，不写 ledger/envelope/draft）：
 
 ```bash

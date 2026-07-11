@@ -74,7 +74,9 @@
 | get | `TaskDetail.get` | 只读 | `task_id` | Task 详情 + 最新状态 | — | `orchestration task get` | `Task` |
 | create | `TaskCollection.create` | 受控写入 | task intent | 新 Task + 初始 Event | 1. Submit Task | `orchestration task submit` | `Task`、`Event` |
 | preview_routing | `TaskDetail.previewRouting` | 只读 | `task_id` / capability / mode | routing 结果摘要 | 2. Capability Routing | `orchestration route preview` | — |
+| routing_snapshot | `TaskDetail.routingSnapshot` | 只读 | `task_id` / capability / mode | `RoutingDecisionSnapshot` | 2. Capability Routing | `orchestration route snapshot` | `RoutingDecisionSnapshot` |
 | preflight | `TaskDetail.preflight` | 只读 | `task_id` / candidate run | preflight 结果 | 3. Guardrail Preflight | `orchestration preflight` | — |
+| preflight_snapshot | `TaskDetail.preflightSnapshot` | 只读 | `task_id` / candidate run | 带 guardrail 的 `RoutingDecisionSnapshot` | 3. Guardrail Preflight | `orchestration preflight --snapshot` | `RoutingDecisionSnapshot` |
 | run | `TaskAction.run` | 受控写入 | `task_id` / mode / input context | 新 Run + 初始 Event | 4. Adapter Dry-run / Commit | `orchestration run` | `Run`、`Event` |
 | retry | `TaskAction.retry` | 受控写入 | `task_id` / `run_id` | 新 Run（`retry_of`） | 7. Fallback / Retry | `orchestration run --retry` | `Run`、`Event` |
 | fallback | `TaskAction.fallback` | 受控写入 | `task_id` / target adapter | 新 Run（`fallback_from`） | 7. Fallback / Retry | `orchestration run --fallback-to` | `Run`、`Event` |

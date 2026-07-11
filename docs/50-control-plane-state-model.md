@@ -113,7 +113,35 @@ Run 解决的问题是：
 - 这次执行成功、失败、超时还是被取消
 - 是否是 fallback 或 retry
 
-### 4. Approval Request
+### 4. Routing Decision Snapshot（Stage 12 第一版）
+
+`RoutingDecisionSnapshot` 是 Stage 12 控制面状态模型的最小第一拍：它把 Stage 11 的 route/preflight 决策投影成一个稳定、只读、可消费的状态对象，供未来 `Run` / `Event` / API 使用。
+
+它**不是**持久化对象，也不写入 task/event/run ledger；当前只是 ephemeral read model。它的作用是：
+
+- 让上层不需要再解析 `route preview` / `preflight` 的 stdout 就能拿到结构化决策。
+- 为 future UI / API 提供与 CLI 一致的 routing decision 视图。
+- 明确 routing 状态与 guardrail 状态的分层（`routing.status` vs `guardrail.status`）。
+
+核心字段：
+
+- `schema_version`: `"control-plane/routing-decision/v1"`
+- `snapshot_id`: 对 canonical safe payload 的 SHA-256 内容哈希，确定性生成。
+- `status`: routing 结果状态（`pass` / `blocked` / `needs_input` / `needs_approval` / `error`）。
+- `routing`: 请求 capability/mode、选中 adapter/operation、risk、approval/dry-run 约束、routing reason、fallback adapter ids。
+- `constraints`: adapter kind、preflight checks、可选 `routing_constraints`。
+- `trace`: 可选 compact decision trace（`--explain` 时包含）。
+- `guardrail`: preflight snapshot 特有的 guardrail 摘要（status / finding_count / blocking_rule_ids）；route snapshot 为 null。
+- `source`: `task_id`、`request_id` 等安全标识。
+
+生成方式：
+
+- `orchestration route snapshot` 调用 `preview_route`，将 `RoutePreviewResult` 直接投影为 `RoutingDecisionSnapshot`。
+- `orchestration preflight --snapshot` 调用 `check_preflight`，将 `PreflightResult` 直接投影为 `RoutingDecisionSnapshot`，并附加 guardrail 层。
+
+安全边界：snapshot 不暴露完整 input/output schema、原始 target、policy 原文、finding message 或凭据；guardrail 只保留规则 id 列表与计数。
+
+### 5. Approval Request
 
 Approval Request 用于承接需要人工确认的动作。
 
