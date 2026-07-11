@@ -295,3 +295,138 @@ def test_docs_context_digest_skips_nonexistent_entries(capsys, tmp_path):
     assert "docs/02-roadmap.md" in paths
     assert "docs/99-missing.md" not in paths
     assert "python -m agent_runtime.cli docs context" not in paths
+
+
+def _write_real_format_stage_digest(fake_root: Path) -> None:
+    """Write a digest matching the real docs/000-stage-digest.md conventions."""
+    digest = fake_root / "docs" / "000-stage-digest.md"
+    digest.write_text(
+        "# 000 — Stage Digest\n\n"
+        "> **新会话先读这份，不要先翻整仓文档。**\n\n"
+        "## 文档池规模\n\n"
+        "- docs/ 活跃文档：~35 个\n\n"
+        "## 当前基线\n\n"
+        "- 稳定基线：`v0.12.0-orchestration-foundation`\n"
+        "- 冻结 commit：`38b4b69`\n"
+        "- 当前 HEAD：以 `git rev-parse --short HEAD` 为准\n\n"
+        "## 当前阶段\n\n"
+        "- **Stage 15.99 — Run Lineage / Recovery Read Model 第一版**\n"
+        "- 当前成果：retry / fallback lineage 已经形成 **可写 + 可读** 的最小闭环\n\n"
+        "## 现在已经能做什么\n\n"
+        "- retry / fallback commit 第一版已落地\n\n"
+        "## 下次恢复顺序\n\n"
+        "1. 先读：`docs/000-stage-digest.md`（本文件）\n"
+        "2. 再跑：`python -m agent_runtime.cli docs context`\n"
+        "3. 再读：`docs/02-roadmap.md`\n"
+        "4. 如需接续上轮会话：读最新 `tasks/handoff-*.md`\n\n"
+        "## 下一步做什么\n\n"
+        "- **优先方向：Stage 10 — Adapter Runtime Interface**\n"
+        "- 入口文档：`docs/48-adapter-runtime-interface.md`\n"
+        "- 目标：把中枢台后端主线继续往前推\n",
+        encoding="utf-8",
+    )
+
+
+def test_docs_context_real_digest_format(capsys, tmp_path):
+    """Regression: digest must be recognized with '当前基线' heading."""
+    fake_root = _setup_fake_root(tmp_path)
+    _write_readme(fake_root)
+    _write_index(fake_root)
+    _write_roadmap(fake_root)
+    _write_progress(fake_root)
+    _write_handoff(fake_root)
+    _write_extra_docs(fake_root)
+    _write_real_format_stage_digest(fake_root)
+
+    code = main(["--root", str(fake_root), "docs", "context", "--json"])
+    captured = capsys.readouterr()
+    assert code == 0
+    result = json.loads(captured.out)
+
+    assert result["docs_summary"]["digest_available"] is True
+    assert result["current_stage"]["stage"] == "Stage 15.99"
+    assert "Recovery Read Model" in result["current_stage"]["description"]
+    assert result["milestone"]["tag"] == "v0.12.0-orchestration-foundation"
+    assert result["milestone"]["commit"] == "38b4b69"
+
+    paths = [d["path"] for d in result["recommended"]]
+    assert "docs/000-stage-digest.md" in paths
+    assert "docs/02-roadmap.md" in paths
+    # The wildcard handoff pointer is not a concrete file and should be skipped.
+    assert "tasks/handoff-*.md" not in paths
+
+
+def test_docs_context_latest_handoff_date_based(capsys, tmp_path):
+    """Regression: latest handoff must follow embedded date, not lexicographic order."""
+    fake_root = _setup_fake_root(tmp_path)
+    _write_readme(fake_root)
+    _write_index(fake_root)
+    _write_roadmap(fake_root)
+    _write_progress(fake_root)
+    _write_extra_docs(fake_root)
+    _write_real_format_stage_digest(fake_root)
+
+    tasks_dir = fake_root / "tasks"
+    (tasks_dir / "handoff-2026-07-02.md").write_text("# old\n", encoding="utf-8")
+    # Lexicographically largest but older date; must NOT win.
+    (tasks_dir / "handoff-2026-07-08-zzz-final.md").write_text("# zzz\n", encoding="utf-8")
+    # Latest date; should win even though its suffix is long.
+    (tasks_dir / "handoff-2026-07-09-stage-digest-priority.md").write_text("# digest note\n", encoding="utf-8")
+    # Invalid/non-standard date formatting that happens to sort high lexicographically.
+    # A date-based selector must ignore this and not be misled.
+    (tasks_dir / "handoff-2026-7-10.md").write_text("# misleading\n", encoding="utf-8")
+
+    code = main(["--root", str(fake_root), "docs", "context", "--json"])
+    captured = capsys.readouterr()
+    assert code == 0
+    result = json.loads(captured.out)
+
+    assert result["docs_summary"]["latest_handoff"] == "tasks/handoff-2026-07-09-stage-digest-priority.md"
+
+
+def test_docs_context_latest_handoff_prefers_primary_for_same_date(capsys, tmp_path):
+    """Same-date handoffs: prefer the primary (shortest name) over topic notes."""
+    fake_root = _setup_fake_root(tmp_path)
+    _write_readme(fake_root)
+    _write_index(fake_root)
+    _write_roadmap(fake_root)
+    _write_progress(fake_root)
+    _write_extra_docs(fake_root)
+    _write_real_format_stage_digest(fake_root)
+
+    tasks_dir = fake_root / "tasks"
+    (tasks_dir / "handoff-2026-07-09-topic-a.md").write_text("# a\n", encoding="utf-8")
+    (tasks_dir / "handoff-2026-07-09.md").write_text("# main\n", encoding="utf-8")
+    (tasks_dir / "handoff-2026-07-09-topic-b.md").write_text("# b\n", encoding="utf-8")
+
+    code = main(["--root", str(fake_root), "docs", "context", "--json"])
+    captured = capsys.readouterr()
+    assert code == 0
+    result = json.loads(captured.out)
+
+    assert result["docs_summary"]["latest_handoff"] == "tasks/handoff-2026-07-09.md"
+
+
+def test_docs_context_latest_handoff_ignores_invalid_calendar_dates(capsys, tmp_path):
+    """Zero-padded but impossible calendar dates must be ignored, not win."""
+    fake_root = _setup_fake_root(tmp_path)
+    _write_readme(fake_root)
+    _write_index(fake_root)
+    _write_roadmap(fake_root)
+    _write_progress(fake_root)
+    _write_extra_docs(fake_root)
+    _write_real_format_stage_digest(fake_root)
+
+    tasks_dir = fake_root / "tasks"
+    (tasks_dir / "handoff-2026-07-09-valid.md").write_text("# valid\n", encoding="utf-8")
+    # Impossible dates that pass the digit regex; must be rejected.
+    (tasks_dir / "handoff-2026-99-99.md").write_text("# invalid\n", encoding="utf-8")
+    (tasks_dir / "handoff-2026-02-30.md").write_text("# invalid leap\n", encoding="utf-8")
+    (tasks_dir / "handoff-2026-13-01.md").write_text("# invalid month\n", encoding="utf-8")
+
+    code = main(["--root", str(fake_root), "docs", "context", "--json"])
+    captured = capsys.readouterr()
+    assert code == 0
+    result = json.loads(captured.out)
+
+    assert result["docs_summary"]["latest_handoff"] == "tasks/handoff-2026-07-09-valid.md"

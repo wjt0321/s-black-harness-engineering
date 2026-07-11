@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -133,12 +134,37 @@ def _extract_index_top_docs(text: str | None) -> list[dict[str, Any]]:
 
 
 def _latest_handoff(root: Path) -> str | None:
-    """Return the relative path of the newest tasks/handoff-*.md file."""
-    handoffs = sorted((root / "tasks").glob("handoff-*.md"))
-    for path in reversed(handoffs):
-        if is_safe_to_read(path):
-            return str(path.relative_to(root)).replace("\\", "/")
-    return None
+    """Return the relative path of the newest tasks/handoff-*.md file.
+
+    Handoffs are expected to follow ``handoff-YYYY-MM-DD.md`` or
+    ``handoff-YYYY-MM-DD-<topic>.md``.  The date prefix is parsed, validated
+    as a real calendar date with the standard library, and sorted
+    chronologically; lexicographic filename order is intentionally not used,
+    because topic suffixes can mislead simple string sorting.  For the same
+    date, the shortest filename (the "primary" handoff) is preferred over
+    longer topic-specific notes.
+    """
+    handoffs: list[tuple[date, int, str, Path]] = []
+    for path in (root / "tasks").glob("handoff-*.md"):
+        if not is_safe_to_read(path):
+            continue
+        match = re.match(r"handoff-(\d{4})-(\d{2})-(\d{2})(?:-(.*))?\.md$", path.name)
+        if not match:
+            continue
+        year, month, day = int(match.group(1)), int(match.group(2)), int(match.group(3))
+        try:
+            handoff_date = date(year, month, day)
+        except ValueError:
+            # Ignore zero-padded but impossible calendar dates.
+            continue
+        suffix = match.group(4) or ""
+        handoffs.append((handoff_date, len(suffix), suffix, path))
+    if not handoffs:
+        return None
+    # Sort by date descending, then suffix length ascending (primary first),
+    # then suffix lexicographically for deterministic tie-breaking.
+    handoffs.sort(key=lambda item: (-item[0].toordinal(), item[1], item[2]))
+    return str(handoffs[0][3].relative_to(root)).replace("\\", "/")
 
 
 def _docs_summary(root: Path) -> dict[str, Any]:
@@ -198,12 +224,15 @@ def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
     recovery_order, next_design_entry. Returns None if the file does not look
     like a valid stage digest.
 
-    Parsing is line-based and tolerant to markdown variations; it only relies
-    on section headings and list markers defined by the digest template.
+    Parsing is line-based and tolerant to markdown variations; it accepts the
+    heading variants used in both the canonical template and the real
+    ``docs/000-stage-digest.md`` file.
     """
     if not text:
         return None
-    if "当前稳定基线" not in text or "当前阶段" not in text:
+    if "当前阶段" not in text:
+        return None
+    if "当前基线" not in text and "当前稳定基线" not in text:
         return None
 
     # Split into sections by '## ' headings.
@@ -216,18 +245,21 @@ def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
         elif current_heading is not None:
             sections[current_heading].append(line)
 
-    def section_lines(prefix: str) -> list[str]:
+    def section_lines(prefixes: str | list[str]) -> list[str]:
+        if isinstance(prefixes, str):
+            prefixes = [prefixes]
         for heading, lines in sections.items():
-            if heading.startswith(prefix):
+            if any(heading.startswith(prefix) for prefix in prefixes):
                 return lines
         return []
 
     digest: dict[str, Any] = {}
 
-    baseline_lines = section_lines("当前稳定基线")
+    baseline_lines = section_lines(["当前稳定基线", "当前基线"])
     milestone: dict[str, Any] = {}
     for line in baseline_lines:
-        tag_match = re.search(r"[里里]程碑[：:]\s*`?([^`\n]+)`?", line)
+        # Accept either "稳定基线：..." or "里程碑：..." as the tag line.
+        tag_match = re.search(r"(?:稳定基线|里程碑)[：:]\s*`?([^`\n]+)`?", line)
         if tag_match:
             milestone["tag"] = tag_match.group(1).strip()
         commit_match = re.search(r"commit[：:]\s*`?([0-9a-f]{7,40})`?", line)
@@ -240,7 +272,7 @@ def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
         stage_match = re.search(r"\*\*([^*]*Stage\s+[\d.]+[^*]*)\*\*", line)
         if stage_match:
             stage_text = stage_match.group(1).strip()
-            m = re.match(r"(Stage\s+[\d.]+)\s*[—-]\s*(.+)", stage_text)
+            m = re.match(r"(?:优先方向[：:]\s*)?(Stage\s+[\d.]+)\s*[—-]\s*(.+)", stage_text)
             if m:
                 digest["current_stage"] = {
                     "stage": m.group(1).strip(),
@@ -268,7 +300,7 @@ def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
     digest["recent_completed"] = recent
 
     recovery_order: list[dict[str, Any]] = []
-    for line in section_lines("推荐恢复顺序"):
+    for line in section_lines(["推荐恢复顺序", "下次恢复顺序"]):
         stripped = line.strip()
         if not stripped:
             continue
@@ -288,13 +320,13 @@ def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
         recovery_order.append({"entry": entry, "purpose": purpose})
     digest["recovery_order"] = recovery_order
 
-    next_lines = section_lines("下一步推荐入口")
+    next_lines = section_lines(["下一步推荐入口", "下一步做什么"])
     next_entry: dict[str, Any] = {}
     for line in next_lines:
         stage_match = re.search(r"\*\*([^*]*Stage\s+\d+[^*]*)\*\*", line)
         if stage_match:
             stage_text = stage_match.group(1).strip()
-            m = re.match(r"(Stage\s+\d+)\s*[—-]\s*(.+)", stage_text)
+            m = re.match(r"(?:优先方向[：:]\s*)?(Stage\s+\d+)\s*[—-]\s*(.+)", stage_text)
             if m:
                 next_entry["stage"] = m.group(1).strip()
                 next_entry["title"] = m.group(2).strip()
@@ -303,7 +335,7 @@ def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
         doc_match = re.search(r"入口文档[：:]\s*`([^`]+)`", line)
         if doc_match:
             next_entry["path"] = doc_match.group(1)
-        focus_match = re.search(r"重点[：:]\s*(.+)", line)
+        focus_match = re.search(r"(?:重点|目标)[：:]\s*(.+)", line)
         if focus_match:
             next_entry["focus"] = [focus_match.group(1).strip()]
     digest["next_design_entry"] = next_entry
