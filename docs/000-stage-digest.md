@@ -11,14 +11,15 @@
 
 ## 当前基线
 
-- 稳定基线：`v0.12.0-orchestration-foundation`
-- 冻结 commit：`38b4b69`
-- 当前 HEAD：以 `git rev-parse --short HEAD` 为准
+- 当前稳定基线：`v0.12.1-orchestration-read-loop-snapshot`
+- 冻结 commit：`0419a04`
+- 上一 foundation 基线：`v0.12.0-orchestration-foundation`（commit `38b4b69`）
+- 当前 HEAD：以 `git rev-parse --short HEAD` 为准；`0419a04` 是本里程碑冻结代码基线，后续仅文档收口提交可位于其后
 
 ## 当前阶段
 
-- **Stage 15.99 — Run Lineage / Recovery Read Model 第一版**
-- 当前成果：retry / fallback lineage 已经形成 **可写 + 可读** 的最小闭环
+- **Stage 12 — Control Plane State Model（read-only loop 第一版已冻结）**
+- 当前成果：Registry → Routing → Constraints/Trace → Routing Snapshot → Run Preview → Event/Report Read Loop 已闭合为 **只读 / ephemeral / 非执行** 的 read model 链路
 
 ### Stage 10 基线（保留）
 
@@ -67,6 +68,7 @@
 
 ## 现在已经能做什么
 
+- 已冻结里程碑 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`），包含 Stage 10–12 的 registry/routing/state read model 闭环。
 - `orchestration run --dry-run` 可安全引用 `orchestration route snapshot` / `orchestration preflight --snapshot` 的内容寻址 snapshot id
 - retry / fallback commit 第一版已落地
 - `orchestration run inspect` 可见 lineage
@@ -84,9 +86,17 @@
 
 ## 下一步做什么
 
-- **本拍已完成**：Routing Snapshot → Run Preview → Event/Report Read Loop 只读闭环已闭合；阶段收口 release notes 与 handoff 已准备（`docs/archive/release-notes/72-release-notes-read-loop-snapshot.md`、`tasks/handoff-2026-07-11-read-loop-snapshot-stage-acceptance.md`）。
-- **当前决策**：评估是否将本阶段冻结为 `v0.12.1-orchestration-read-loop-snapshot`（候选 tag），或继续推进 recovery lineage 聚合视图后再统一 milestone。
-- **若继续推进**：优先把 read-loop snapshot / lineage 与 recovery 聚合 read model 做扎实；入口文档：`docs/50-control-plane-state-model.md`、`docs/52-minimal-orchestration-loop.md`、最新 handoff。
+- **已冻结**：`v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，annotated tag 已创建并 push）。工作树干净，post-freeze 文档口径已同步。
+- **下一拍（post-freeze）**：优先把 read-loop snapshot / lineage 与 **recovery lineage aggregation read model** 做扎实。
+  - 目标：在现有 `orchestration run inspect` / `orchestration run list` / `orchestration report generate` 的 lineage 字段基础上，为同一 task 的 retry/fallback 链提供聚合只读视图（例如 root request、latest attempt、fallback chain、当前有效 plan_hash）。
+  - 输入：`tasks/events.jsonl` 中的 `run_planned` / `run_draft_exported` 事件与 envelope draft 的 lineage metadata。
+  - 输出：新的只读 CLI read model（如 `orchestration run lineage --task-id <id>`）或扩展现有 `run inspect` 的聚合摘要；明确不持久化、不执行 adapter。
+  - 边界：只读、无网络、无凭据、无 UI/service/DB；若需新事件类型或索引，先走 design doc。
+  - 首个建议实现切片：在 `orchestration run inspect` 中新增可选 `--aggregate-lineage` 模式，按 task_id 聚合同一 lineage 链上的全部 request_ids 与状态。
+- **入口文档**：`docs/50-control-plane-state-model.md`、`docs/52-minimal-orchestration-loop.md`、最新 `tasks/handoff-2026-07-11-read-loop-snapshot-stage-acceptance.md`。
+- **优先方向：Stage 12 — Recovery Lineage Aggregation Read Model**
+  - 入口文档：`docs/50-control-plane-state-model.md`
+  - 重点：在 read-loop snapshot 冻结基线之上，把 retry/fallback lineage 聚合为 recovery 只读视图，不持久化、不执行 adapter。
 - **边界不变**：不进入真实 adapter execution、UI、service、DB。
 
 ## 重要约束

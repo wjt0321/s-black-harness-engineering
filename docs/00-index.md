@@ -74,7 +74,7 @@
 2. `10-cli-poc-usage.md`
 3. `21-controlled-write-boundaries.md`
 4. `47-orchestration-hub-vision.md`
-5. 最新 milestone 文档（当前为 `68` / `69`）
+5. 最新 milestone 文档（当前为归档 `72-release-notes-read-loop-snapshot.md`，对应 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`）
 
 ## 其他入口
 

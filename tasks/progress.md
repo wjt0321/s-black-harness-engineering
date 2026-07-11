@@ -2393,3 +2393,21 @@
   - `bash .githooks/pre-commit`（临时 staging 后运行）：✅ docs maintenance check passed。
   - `git diff --check`：无空白错误（仅 Git LF/CRLF 设置提示）。
 - 未 commit/push。
+
+## 2026-07-11 — v0.12.1-orchestration-read-loop-snapshot 冻结完成（post-freeze 文档同步）
+
+- 实际冻结 commit：`0419a04`。
+- annotated tag：`v0.12.1-orchestration-read-loop-snapshot` 已创建并 push。
+- 同步更新的文档：
+  - `README.md` / `README.en.md`：最新里程碑基线改为 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`，保留 `v0.12.0-orchestration-foundation` / `38b4b69` 历史说明。
+  - `AGENTS.md`：当前阶段改为 Stage 12 read-only loop 已冻结，基线同步。
+  - `docs/000-stage-digest.md`：当前基线、当前阶段、下一步改为 recovery lineage aggregation read model。
+  - `docs/02-roadmap.md`：顶部版本治理说明与 Stage 12 冻结状态补充。
+  - `docs/64-versioning-governance.md`：追加 `v0.12.1` 实际冻结事实。
+  - `docs/archive/release-notes/72-release-notes-read-loop-snapshot.md`：追加后续状态补充。
+  - `tasks/handoff-2026-07-11-read-loop-snapshot-stage-acceptance.md`：更新为完成态，指向 `0419a04` 与已推送 tag。
+  - `tasks/progress.md`：追加本条目。
+  - `docs/00-index.md`：最新 milestone 文档指向归档 `72-release-notes-read-loop-snapshot.md`。
+- 下一步：recovery lineage aggregation read model（post-freeze），入口 `docs/50-control-plane-state-model.md` / `docs/52-minimal-orchestration-loop.md` / 最新 handoff。
+- 边界不变：只读、无网络、无凭据、无 UI/service/DB。
+- 未 commit/push（由主控决定）。

@@ -2,9 +2,9 @@
 
 ## 当前基线
 
-- 候选基线：当前 HEAD `bba0ced` + 本轮未提交变更（未 commit）。
-- 上游冻结基线：`v0.12.0-orchestration-foundation`（commit `38b4b69`，已 push）。
-- 当前工作树包含 Stage 12 第二拍（Read-Loop Snapshot）及其审查返工，尚未提交。
+- 冻结基线：`v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，annotated tag 已创建并 push）。
+- 上游 foundation 基线：`v0.12.0-orchestration-foundation`（commit `38b4b69`，已 push）。
+- 冻结代码基线为 `0419a04`；当前 HEAD 与工作树状态以 Git 实际输出为准，后续允许仅包含文档同步的收口提交位于该基线之后。
 
 ## 本阶段已闭合链路
 
@@ -45,10 +45,12 @@ Registry → Routing → Constraints/Trace → Routing Snapshot → Run Preview 
 
 ## 下一步建议
 
-1. 主控审核阶段沉淀素材（`docs/archive/release-notes/72-release-notes-read-loop-snapshot.md`、handoff、README/roadmap/digest 更新）。
-2. 决定是否冻结为 `v0.12.1-orchestration-read-loop-snapshot` 或继续推进 recovery lineage 聚合视图后再统一 milestone。
-3. 若冻结，执行 tag / annotated tag（需主控确认）。
-4. 下一拍候选：把 read-loop snapshot 与 recovery lineage 聚合视图衔接，或继续夯实 control-plane state model 与持久化语义设计。
+- **post-freeze 唯一方向**：把 read-loop snapshot / lineage 与 **recovery lineage aggregation read model** 衔接。
+  - 目标：为同一 task 的 retry/fallback 链提供聚合只读视图（root request、latest attempt、fallback chain、effective plan_hash）。
+  - 入口：`docs/50-control-plane-state-model.md`、`docs/52-minimal-orchestration-loop.md`、本 handoff。
+  - 边界：只读、无网络、无凭据、无 UI/service/DB；若涉及新事件类型或索引，先走 design doc。
+  - 首个切片：在 `orchestration run inspect` 新增 `--aggregate-lineage` 模式，按 task_id 聚合同一线路链上的 request_ids 与状态。
+- 当前里程碑 `v0.12.1-orchestration-read-loop-snapshot`（`0419a04`）已冻结，不再重复冻结。
 
 ## 临时产物
 

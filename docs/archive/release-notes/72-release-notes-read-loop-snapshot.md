@@ -77,3 +77,10 @@ Registry → Routing → Constraints/Trace → Routing Snapshot → Run Preview 
 ## 一句话总结
 
 Stage 12 控制面状态模型已把“路由决策 → Run 预览 → Event/Report 预览”串成一条只读、确定性、可消费的 read-loop snapshot；下一步才考虑与持久化 Run/Event 集合的衔接，而不是跳到真实执行。
+
+## 后续状态补充
+
+- 实际冻结 commit：`0419a04`。
+- 实际 tag：`v0.12.1-orchestration-read-loop-snapshot`（annotated tag，已 push）。
+- 冻结后已完成 README、AGENTS.md、Stage Digest、Roadmap、Versioning Governance、handoff、progress 等文档口径同步。
+- 当前工作树干净，下一拍为 post-freeze recovery lineage aggregation read model。

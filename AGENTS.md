@@ -10,7 +10,7 @@
 
 **s-black harness engineering**（仓库内也称 `agent_runtime`）是一个轻量的 Agent Runtime / Harness Orchestrator 长期工程。目标是逐步把 Agent 调度、规则门禁、任务账本、工具适配器和完成验证流程，从单一宿主框架中抽象成一套小型、可审计、可迁移的运行层，并进一步演进为面向多 Agent、多工具、多渠道的**中枢运行台（Orchestration Hub / Control Plane）**。
 
-当前阶段：**Runtime 受控写入内核 + 中枢台编排基础已成型**。最新稳定基线为 `v0.12.0-orchestration-foundation`（冻结 commit `38b4b69`），当前活跃阶段为 **Stage 15.99 — Run Lineage / Recovery Read Model 第一版**。当前实现仍只做文档、协议、schema、样例、检查链路与受控写入，**不接入真实执行链路**，也不会替代 [QwenPaw](https://github.com/agentscope-ai/QwenPaw)。QwenPaw 被视为未来可接入的宿主/适配器之一。
+当前阶段：**Stage 12 — Control Plane State Model（read-only loop 第一版已冻结为 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`）**。上一 foundation 基线为 `v0.12.0-orchestration-foundation`（冻结 commit `38b4b69`）。当前实现仍只做文档、协议、schema、样例、检查链路与受控写入，**不接入真实执行链路**，也不会替代 [QwenPaw](https://github.com/agentscope-ai/QwenPaw)。QwenPaw 被视为未来可接入的宿主/适配器之一。
 
 ### 当前已实现能力
 

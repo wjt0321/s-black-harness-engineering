@@ -74,19 +74,20 @@ Current estimate:
 
 ### Versioning Note
 
-The latest milestone baseline is now `v0.12.0-orchestration-foundation` (commit `38b4b69`, already pushed).
+The latest milestone baseline is now `v0.12.1-orchestration-read-loop-snapshot` (commit `0419a04`, already pushed). The previous foundation baseline remains `v0.12.0-orchestration-foundation` (commit `38b4b69`).
 
-After `v0.11.0-runtime-event-import`, the project entered the orchestration line and effectively switched to **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, `65`, and `67`. That means:
+After `v0.11.0-runtime-event-import`, the project entered the orchestration line and effectively switched to **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, `65`, `67`, and `72`. That means:
 
 - stage closure did continue;
 - semver / tags no longer advanced stage-by-stage;
 - versioning moved to a "stage progression + release-notes closure + milestone tags" model.
 
-The repository formalizes this through `docs/64-versioning-governance.md`, and `v0.12.0-orchestration-foundation` is now the first fully frozen milestone under that policy:
+The repository formalizes this through `docs/64-versioning-governance.md`. `v0.12.0-orchestration-foundation` was the first fully frozen milestone under that policy, and `v0.12.1-orchestration-read-loop-snapshot` is the current frozen milestone:
 
 - stage numbers continue to represent internal progression order;
 - release-notes documents close individual stages;
-- semver / Git tags are reserved for milestone-level freeze points rather than every stage.
+- semver / Git tags are reserved for milestone-level freeze points rather than every stage;
+- the current freeze baseline is `v0.12.1-orchestration-read-loop-snapshot` (`0419a04`), adding Stage 10–12 source-backed registry, constrained routing, decision trace, routing snapshot, and read-loop snapshot read models on top of `v0.12.0-orchestration-foundation`.
 
 ### Stage Closure Progress
 
@@ -102,7 +103,7 @@ The repository formalizes this through `docs/64-versioning-governance.md`, and `
 - ✅ Stage 9 — Orchestration-hub positioning reset and blueprint
 - 🟡 Stage 10 — Adapter Runtime Interface (documented, needs further refinement)
 - 🟡 Stage 11 — Capability Routing Model (documented, needs further refinement)
-- 🟡 Stage 12 — Control Plane State Model (documented, needs further refinement)
+- 🟡 Stage 12 — Control Plane State Model (read-only loop first version frozen as `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`; consolidating recovery lineage aggregation read model)
 - 🟡 Stage 13 — Backend-first API Boundary (documented, protocol choice still deferred)
 - 🟡 Stage 14 — Minimal orchestration-hub execution loop (documents, CLI draft, and run-side A+B commit landed)
 - 🟡 Stage 15 — Backend preparation before UI / dashboard (read-model CLI first version landed, frontend still deferred)

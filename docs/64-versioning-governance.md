@@ -208,3 +208,9 @@ Release notes 是阶段收口文档，不自动等于 tag 候选。
 - 先不为 62 打 tag；
 - 继续推进 task submit；
 - 等 orchestration 入口与 run 主线形成更完整里程碑后，再统一决定下一个 semver tag。
+
+## 后续状态补充（post-freeze）
+
+- 已实际冻结 `v0.12.0-orchestration-foundation`（commit `38b4b69`，annotated tag 已 push）。
+- 已实际冻结 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，annotated tag 已 push），覆盖 Stage 10–12 的 source-backed registry、约束路由、decision trace、routing snapshot 与 read-loop snapshot 只读 read model。
+- 后续 semver tag 仍只在里程碑级冻结点创建，不逐阶段补 tag。

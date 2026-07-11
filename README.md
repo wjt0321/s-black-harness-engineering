@@ -74,19 +74,20 @@
 
 ### 版本号说明
 
-当前仓库最新里程碑基线已经是 `v0.12.0-orchestration-foundation`（commit `38b4b69`，已 push）。
+当前仓库最新里程碑基线已经更新为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，已 push）。上一 foundation 基线仍是 `v0.12.0-orchestration-foundation`（commit `38b4b69`）。
 
-在 `v0.11.0-runtime-event-import` 之后，项目进入 orchestration 主线，实际改用“**阶段编号 + release notes 文档**”做阶段收口，例如 `55`、`57`、`59`、`61`、`65`、`67`。这代表：
+在 `v0.11.0-runtime-event-import` 之后，项目进入 orchestration 主线，实际改用“**阶段编号 + release notes 文档**”做阶段收口，例如 `55`、`57`、`59`、`61`、`65`、`67`、`72`。这代表：
 
 - 阶段收口一直在继续；
 - semver / tag 不再按每个阶段同步增长；
 - 版本治理改为“阶段推进 + release notes 收口 + 里程碑打 tag”。
 
-当前已通过 `docs/64-versioning-governance.md` 正式定义该策略，并已在 `v0.12.0-orchestration-foundation` 完成一次实际冻结：
+当前已通过 `docs/64-versioning-governance.md` 正式定义该策略，并已在 `v0.12.0-orchestration-foundation` 与 `v0.12.1-orchestration-read-loop-snapshot` 两次实际冻结：
 
 - 阶段编号继续用于推进顺序；
 - release notes 用于单阶段收口；
-- semver / Git tag 只用于里程碑级冻结点，不再逐阶段补 tag。
+- semver / Git tag 只用于里程碑级冻结点，不再逐阶段补 tag；
+- 当前最新冻结里程碑为 `v0.12.1-orchestration-read-loop-snapshot`（`0419a04`），在 `v0.12.0-orchestration-foundation` 基础上补齐了 Stage 10–12 的 source-backed registry、约束路由、decision trace、routing snapshot 与 read-loop snapshot 只读 read model。
 
 ### 阶段闭环进度
 
@@ -102,7 +103,7 @@
 - ✅ Stage 9 — 中枢台定位校正与总蓝图
 - 🟡 Stage 10 — Adapter Runtime Interface（source-backed registry 投影第一版已落地，持续巩固）
 - 🟡 Stage 11 — Capability Routing Model（约束路由 + decision trace 第一版已落地，持续巩固）
-- 🟡 Stage 12 — Control Plane State Model（Routing Decision Snapshot + Read-Loop Snapshot 第一版已落地，持续巩固）
+- 🟡 Stage 12 — Control Plane State Model（read-only loop 第一版已冻结为 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`，持续巩固 recovery lineage 聚合 read model）
 - 🟡 Stage 13 — Backend-first API Boundary（设计文档已落地，协议选择仍暂缓）
 - 🟡 Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A+B commit 已落地）
 - 🟡 Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，前端实现仍暂缓）
