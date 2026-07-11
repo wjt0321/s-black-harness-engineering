@@ -9,12 +9,11 @@ networks.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .loader import load_adapters
+from .adapter_registry import AdapterMetadata, load_adapter_registry
 from .result import Finding
 from .tasks import find_task
 
@@ -83,20 +82,14 @@ def _build_task_context(task: dict[str, Any] | None) -> dict[str, Any] | None:
     }
 
 
-def _adapter_has_capability(adapter: dict[str, Any], capability: str) -> bool:
-    """Return True if the adapter lists the requested capability."""
-    capabilities = adapter.get("capabilities", [])
-    return capability in capabilities
-
-
-def _select_operation(adapter: dict[str, Any], capability: str) -> str | None:
+def _select_operation(metadata: AdapterMetadata, capability: str) -> str | None:
     """Derive a safe operation name from adapter metadata.
 
     If the adapter's input schema requires an "operation" field and the
     capability itself is a plausible operation value, use it. Otherwise return
     None rather than guessing.
     """
-    input_schema = adapter.get("input_schema", {})
+    input_schema = metadata.input_schema
     properties = input_schema.get("properties", {})
     required = input_schema.get("required", [])
     if "operation" in required and "operation" in properties:
@@ -119,10 +112,10 @@ def preview_route(
 ) -> RoutePreviewResult:
     """Preview capability routing without executing or writing anything.
 
-    Loads the adapter registry, selects the first enabled adapter that supports
-    the requested capability, and returns a value-safe routing decision. If an
-    explicit adapter_id is provided, it must support the capability or the
-    result will be blocked/needs_input.
+    Loads the adapter registry projection, selects the first enabled adapter
+    that supports the requested capability, and returns a value-safe routing
+    decision. If an explicit adapter_id is provided, it must support the
+    capability or the result will be blocked/needs_input.
 
     This function is read-only: it does not execute adapters, write ledgers,
     or access networks.
@@ -133,27 +126,21 @@ def preview_route(
         if task is not None:
             task_context = _build_task_context(task)
 
-    try:
-        registry = load_adapters(root)
-    except (OSError, json.JSONDecodeError) as exc:
+    registry, findings, next_action = load_adapter_registry(root)
+    if registry is None:
         return RoutePreviewResult(
             status="error",
             requested_capability=capability,
             task_id=task_id,
-            findings=[
-                Finding(
-                    rule_id="adapter-registry-load-failed",
-                    severity="error",
-                    action="error",
-                    message=f"Could not load adapter registry: {exc}",
-                )
-            ],
-            next_action="Check adapters/adapters.sample.json is present and valid.",
+            findings=findings,
+            next_action=next_action,
         )
 
-    adapters = registry.get("adapters", [])
-    enabled_adapters = [a for a in adapters if a.get("enabled", True)]
-    matching = [a for a in enabled_adapters if _adapter_has_capability(a, capability)]
+    enabled_adapters = [a for a in registry.list_adapters() if a.enabled]
+    matching = sorted(
+        [a for a in enabled_adapters if capability in a.capabilities],
+        key=lambda a: a.source_index,
+    )
 
     if not matching:
         return RoutePreviewResult(
@@ -164,11 +151,11 @@ def preview_route(
             next_action="Register an adapter for this capability or check the capability name.",
         )
 
-    selected: dict[str, Any] | None = None
+    selected: Any | None = None
     if adapter_id is not None:
-        selected = next((a for a in matching if a.get("id") == adapter_id), None)
+        selected = next((a for a in matching if a.adapter_id == adapter_id), None)
         if selected is None:
-            supported = [a.get("id", "") for a in matching]
+            supported = [a.adapter_id for a in matching]
             return RoutePreviewResult(
                 status="blocked",
                 requested_capability=capability,
@@ -178,7 +165,7 @@ def preview_route(
                     f"Supported adapters: {', '.join(supported)}."
                 ),
                 fallback_candidates=[
-                    {"adapter_id": a.get("id", ""), "reason": "supports requested capability"}
+                    {"adapter_id": a.adapter_id, "reason": "supports requested capability"}
                     for a in matching
                 ],
                 next_action="Choose an adapter that supports the capability or omit --adapter.",
@@ -187,14 +174,14 @@ def preview_route(
         selected = matching[0]
 
     # Build fallback candidates from remaining matching adapters.
-    remaining = [a for a in matching if a.get("id") != selected.get("id")]
+    remaining = [a for a in matching if a.adapter_id != selected.adapter_id]
     fallback_candidates = [
-        {"adapter_id": a.get("id", ""), "reason": "supports requested capability"}
+        {"adapter_id": a.adapter_id, "reason": "supports requested capability"}
         for a in remaining
     ]
 
-    risk_level = selected.get("risk_level", "local")
-    requires_approval = bool(selected.get("requires_approval", False))
+    risk_level = selected.risk_level
+    requires_approval = bool(selected.requires_approval)
     requires_dry_run = _is_high_risk(risk_level) or requires_approval
 
     # selected_mode is the most conservative of requested_mode and adapter constraints.
@@ -205,16 +192,16 @@ def preview_route(
     operation = _select_operation(selected, capability)
 
     constraints = {
-        "adapter_kind": selected.get("kind", ""),
+        "adapter_kind": selected.kind,
         "risk_level": risk_level,
         "requires_approval": requires_approval,
         "requires_dry_run": requires_dry_run,
-        "preflight_checks": selected.get("preflight_checks", []),
+        "preflight_checks": list(selected.preflight_checks),
     }
 
     routing_reason = (
-        f"Selected adapter '{selected.get('id')}' for capability '{capability}' "
-        f"based on registry order and capability match."
+        f"Selected adapter '{selected.adapter_id}' for capability '{capability}' "
+        f"based on source order and capability match."
     )
 
     if task_context is not None:
@@ -226,7 +213,7 @@ def preview_route(
         status="pass",
         requested_capability=capability,
         task_id=task_id,
-        selected_adapter_id=selected.get("id", ""),
+        selected_adapter_id=selected.adapter_id,
         capability=capability,
         operation=operation,
         requested_mode=requested_mode,

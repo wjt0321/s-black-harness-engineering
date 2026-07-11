@@ -1752,6 +1752,8 @@ python -m agent_runtime.cli orchestration route preview \
   --mode dry-run
 ```
 
+说明：`orchestration route preview` 现在直接消费 Stage 10 source-backed adapter registry 投影作为候选集，不再依赖独立内置 registry。
+
 Preflight handoff 聚合（只读）：
 
 ```bash
@@ -1764,6 +1766,8 @@ python -m agent_runtime.cli orchestration preflight \
   --target origin/main \
   --mode dry-run
 ```
+
+说明：`orchestration preflight` 现在同样消费该 source-backed registry 投影，并在投影元数据之上叠加 guardrail 判断。
 
 Run dry-run preview（只读，不写 ledger/envelope/draft）：
 

@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .loader import load_adapters
+from .adapter_registry import load_adapter_registry
 from .orchestration_route import preview_route
 from .policy import check_action
 from .result import Finding, coalesce_status
@@ -92,18 +92,13 @@ def _guardrail_summary(guardrail_result: Any) -> dict[str, Any]:
 
 def _needs_target(adapter_id: str, root: Path) -> bool:
     """Return True if the adapter input schema requires a target field."""
-    try:
-        registry = load_adapters(root)
-    except (OSError, ValueError):
+    registry, _findings, _next_action = load_adapter_registry(root)
+    if registry is None:
         return False
-    adapter = next(
-        (a for a in registry.get("adapters", []) if a.get("id") == adapter_id),
-        None,
-    )
-    if adapter is None:
+    metadata = registry.get_adapter(adapter_id)
+    if metadata is None:
         return False
-    input_schema = adapter.get("input_schema", {})
-    return "target" in input_schema.get("required", [])
+    return "target" in metadata.input_schema.get("required", [])
 
 
 def check_preflight(

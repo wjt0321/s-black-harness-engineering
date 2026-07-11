@@ -25,6 +25,7 @@
   - CLI：`orchestration adapter list` / `orchestration adapter inspect <adapter_id>`
   - 投影字段清楚标识 derived/defaulted；schema ref 为指向该 entry 内嵌 schema 的真实 JSON Pointer
   - 不过滤 disabled entries，与 `loader.load_adapters` 同批条目语义一致
+  - `orchestration route preview` / `orchestration preflight` 现在直接消费同一 source-backed projection，保证 routing 候选集与 registry 查询同源
   - 测试覆盖：source 变更反射、schema pointer 解析、disabled entry 保留、loader 一致性、模型校验、列表稳定排序、inspect、JSON、人类可读输出、未知 ID、缺文件/非法 JSON/schema 错误
 
 ## 现在已经能做什么
@@ -34,7 +35,7 @@
 - `orchestration run list` 可见紧凑 lineage 标识
 - `orchestration report generate` 可见 lineage 安全摘要
 - `python -m agent_runtime.cli docs context` 可输出恢复入口
-- `orchestration adapter list` / `inspect` 可查询内置 adapter capability registry
+- `orchestration adapter list` / `inspect` 可查询 source-backed adapter capability registry；`orchestration route preview` / `orchestration preflight` 已基于同一投影生成路由与 preflight 决策
 
 ## 下次恢复顺序
 
@@ -47,7 +48,7 @@
 
 - **优先方向：Stage 10 — Adapter Runtime Interface（已落地第一版，继续巩固）**
 - 入口文档：`docs/48-adapter-runtime-interface.md`
-- 目标：把中枢台后端主线继续往前推，不急着跳真实执行；后续可把 registry 与 `orchestration route preview` / `orchestration preflight` 进一步打通
+- 目标：在 source-backed registry 投影已与 route preview / preflight 对齐的基础上，继续巩固 Stage 10，并为 Stage 11 capability routing model 做准备；不急着跳真实执行
 
 ## 重要约束
 

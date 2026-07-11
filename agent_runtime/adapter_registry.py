@@ -95,6 +95,13 @@ class AdapterMetadata:
     source_index: int = 0
     derived: dict[str, str] = field(default_factory=dict)
 
+    # Internal routing/preflight fields. Not exported by ``to_dict()``.
+    kind: str = ""
+    requires_approval: bool = False
+    preflight_checks: list[str] = field(default_factory=list)
+    input_schema: dict[str, Any] = field(default_factory=dict)
+    output_schema: dict[str, Any] = field(default_factory=dict)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "adapter_id": self.adapter_id,
@@ -214,6 +221,10 @@ def project_adapter(entry: dict[str, Any], source_index: int) -> AdapterMetadata
     input_schema_ref = _schema_ref(source_index, "input_schema")
     output_schema_ref = _schema_ref(source_index, "output_schema")
 
+    preflight_checks = list(entry.get("preflight_checks", []))
+    input_schema = dict(entry.get("input_schema", {}))
+    output_schema = dict(entry.get("output_schema", {}))
+
     derived: dict[str, str] = {
         "adapter_type": type_note,
         "supports_session": session_note,
@@ -243,6 +254,11 @@ def project_adapter(entry: dict[str, Any], source_index: int) -> AdapterMetadata
         output_schema_ref=output_schema_ref,
         source_index=source_index,
         derived=derived,
+        kind=kind,
+        requires_approval=requires_approval,
+        preflight_checks=preflight_checks,
+        input_schema=input_schema,
+        output_schema=output_schema,
     )
 
 

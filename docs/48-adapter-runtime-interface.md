@@ -299,6 +299,8 @@ Adapter 输出不应只有文本结果，还应能产出结构化 artifact。
 
 投影层不自行过滤 `enabled`/`disabled` entries，以保持与 `loader.load_adapters` 的同批条目语义；routing 等消费方按需自行过滤。
 
+该投影当前已被 `orchestration route preview` 与 `orchestration preflight` 直接消费：route preview 从投影中按 capability 匹配候选 adapter，preflight 在投影元数据基础上叠加 guardrail 判断。这让 routing 候选集与 registry 查询保持同源，避免 routing 与 registry 之间出现能力漂移。
+
 ### 投影规则
 
 `agent_runtime/adapter_registry.py` 从 `adapters/adapters.sample.json` 读取原始条目，然后确定性投影为 Stage 10 元数据：

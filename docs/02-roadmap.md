@@ -229,6 +229,7 @@
 已落地能力：
 
 - **单一事实源**：`orchestration adapter list/inspect` 与 `orchestration route preview` / `orchestration preflight` / `runtime plan` / `adapters list` 共用同一 `adapters/adapters.sample.json`。
+- **投影已被路由消费**：`orchestration route preview` 与 `orchestration preflight` 现在直接消费该 source-backed registry 投影，routing 候选集与 registry 查询同源。
 - 从 legacy registry 确定性投影 Stage 10 字段，并清楚标识 derived/defaulted 来源。
 - `input_schema_ref` / `output_schema_ref` 为指向该 entry 内嵌 schema 的真实 JSON Pointer（`adapters/adapters.sample.json#/adapters/<index>/input_schema|output_schema`）。
 - 不过滤 disabled entries，与 `loader.load_adapters` 同批条目语义一致。
@@ -239,14 +240,13 @@
 
 仍后续：
 
-- 与 `orchestration route preview` / `orchestration preflight` 打通，让 routing 直接消费 registry 投影。
 - 若未来为每个 adapter 补齐独立 input/output schema 文件，再更新 schema ref 指向这些真实文件。
 
 ---
 
 ## Stage 11 — Capability Routing Model（下一步高优先级）
 
-目标：让上层任务调度优先面向 capability，而不是硬编码具体工具名。
+目标：在 Stage 10 source-backed registry 投影基础上，继续把 capability-level routing 抽象做扎实，让上层任务调度优先面向 capability，而不是硬编码具体工具名。
 
 要做的事：
 

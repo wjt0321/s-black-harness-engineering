@@ -2214,3 +2214,15 @@
   - `python -m agent_runtime.cli doctor`：PASS。
   - `python tools/public_scan.py`：OK public scan。
   - `git diff --check`：无空白错误（仅 Git LF/CRLF 设置提示）。
+
+## 2026-07-11 — Stage 10 文档收口：route preview / preflight 接入 source-backed projection
+
+- 代码侧已对齐：`agent_runtime/orchestration_route.py` 改为消费 `load_adapter_registry` 投影；`agent_runtime/orchestration_preflight.py` 在 `_needs_target` 等逻辑中使用 registry 投影元数据。
+- 最小文档更新：
+  - `docs/000-stage-digest.md`：Stage 10 新进落地与“现在已经能做什么”中说明 route preview / preflight 已消费同一 source-backed projection；下一步目标改为巩固 Stage 10 并为 Stage 11 做准备。
+  - `docs/02-roadmap.md`：Stage 10 已落地能力新增“投影已被路由消费”；移除“与 route preview / preflight 打通”的仍后续项；Stage 11 目标补充“在 Stage 10 projection 基础上继续把 routing 抽象做扎实”。
+  - `docs/48-adapter-runtime-interface.md`：在 Source-Backed Registry 投影小节说明 route preview / preflight 直接消费投影。
+  - `docs/10-cli-poc-usage.md`：在 `orchestration route preview` 与 `orchestration preflight` 示例后补充说明其基于 source-backed registry 投影。
+- 未新增文档、未修改 schema、未声称 Stage 11/14 完成。
+- 验证：
+  - `python tools/public_scan.py`：OK public scan。
