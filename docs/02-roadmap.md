@@ -303,11 +303,12 @@
 冻结状态：
 
 - Stage 12 第一拍已冻结为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，已 push）。
-- 当前阶段转为在冻结基线之上持续巩固，并把 recovery lineage 聚合 read model 作为 post-freeze 下一拍。
+- 当前阶段继续在冻结基线之上巩固；recovery lineage 聚合 read model 第一版已通过 `orchestration run inspect --aggregate-lineage` 落地。
 
 主要交付物：
 
 - `docs/50-control-plane-state-model.md`
+- `docs/73-recovery-lineage-aggregation-read-model.md`
 
 ---
 
@@ -629,7 +630,7 @@
 
 ---
 
-## Stage 15.99 — Run Lineage / Recovery Read Model（当前阶段）
+## Stage 15.99 — Run Lineage / Recovery Read Model（历史编号，能力并入 Stage 12 post-freeze）
 
 目标：让 retry / fallback lineage 不只是被写进去，还能被现有 orchestration read models 以安全、紧凑的方式读出来。
 
@@ -644,8 +645,8 @@
 说明：
 
 - 本阶段仍不放开真实 adapter execution、独立 Run storage、DB、service 或 UI。
-- recovery lineage 现在已形成“可写 + 可读”的最小闭环。
-- 下一步更适合进入 recovery lineage 聚合视图设计，而不是跳去真实执行。
+- recovery lineage 已形成“可写 + 单条可读”的最小闭环。
+- 后续聚合能力已并入 Stage 12 post-freeze，并由 `docs/73-recovery-lineage-aggregation-read-model.md` 与 `orchestration run inspect --aggregate-lineage` 落地；该历史编号不再代表当前阶段。
 
 ---
 

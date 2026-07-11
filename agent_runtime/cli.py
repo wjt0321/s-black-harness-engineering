@@ -1882,6 +1882,7 @@ def _cmd_orchestration_run_inspect(args: argparse.Namespace) -> int:
         envelope_file=args.envelope,
         tasks_file=getattr(args, "tasks_file", None),
         events_file=getattr(args, "events_file", None),
+        aggregate_lineage=getattr(args, "aggregate_lineage", False),
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1902,6 +1903,22 @@ def _cmd_orchestration_run_inspect(args: argparse.Namespace) -> int:
             if result.fallback_to:
                 lineage_parts.append(f"fallback_to={result.fallback_to}")
             print(" ".join(lineage_parts))
+        if result.recovery_lineage is not None:
+            recovery = result.recovery_lineage
+            print(
+                "Recovery lineage: "
+                f"status={recovery.status} "
+                f"root={recovery.root_request_id or '-'} "
+                f"latest={recovery.latest_request_id or '-'} "
+                f"attempts={recovery.attempt_count} "
+                f"leaves={','.join(recovery.leaf_request_ids) or '-'}"
+            )
+            for issue in recovery.issues:
+                safe_ids = " ".join(
+                    f"{key}={value}" for key, value in issue.items() if key != "code"
+                )
+                suffix = f" {safe_ids}" if safe_ids else ""
+                print(f"- recovery_issue={issue['code']}{suffix}")
         if result.envelope_summary is not None:
             artifact_counts = result.envelope_summary.get("artifact_counts", {})
             counts = ", ".join(f"{k}={v}" for k, v in artifact_counts.items())
@@ -3224,6 +3241,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     orchestration_run_inspect_parser.add_argument(
         "--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)"
+    )
+    orchestration_run_inspect_parser.add_argument(
+        "--aggregate-lineage",
+        action="store_true",
+        help="Aggregate the task recovery lineage from run lifecycle events",
     )
     _add_global_args(orchestration_run_inspect_parser)
     orchestration_run_inspect_parser.set_defaults(func=_cmd_orchestration_run_inspect)

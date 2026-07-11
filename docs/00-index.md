@@ -52,6 +52,7 @@
 - `63-orchestration-task-submit-created-event-design.md` — Task 提交事件设计
 - `66-orchestration-run-retry-fallback-design.md` — Retry/Fallback 设计
 - `70-orchestration-run-retry-fallback-commit-design.md` — Retry/Fallback Commit 设计
+- `73-recovery-lineage-aggregation-read-model.md` — Recovery lineage 聚合只读模型（Stage 12 post-freeze）
 
 ### 6. 想看里程碑与冻结记录
 

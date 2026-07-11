@@ -347,3 +347,167 @@ def test_run_inspect_normal_run_no_lineage(capsys, tmp_path):
     assert "retry_of" not in result
     assert "fallback_from" not in result
     assert "fallback_to" not in result
+
+
+def _append_run_events(root: Path, events: list[dict[str, Any]]) -> None:
+    events_file = root / "tasks" / "events.jsonl"
+    with events_file.open("a", encoding="utf-8") as fh:
+        for event in events:
+            fh.write(json.dumps(event, ensure_ascii=False) + "\n")
+
+
+def _run_event(
+    request_id: str,
+    *,
+    lineage_type: str | None = None,
+    retry_of: str | None = None,
+) -> dict[str, Any]:
+    metadata: dict[str, Any] = {
+        "request_id": request_id,
+        "adapter_id": "github-cli",
+        "capability": "git_push",
+        "operation": "git_push",
+        "mode": "dry-run",
+        "plan_hash": "sha256:" + ("a" if retry_of is None else "b") * 64,
+        "freeze_check": "pass",
+        "approval_status": "not_required",
+        "envelope_path": f"drafts/runtime/{request_id}.envelope.json",
+    }
+    if lineage_type is not None:
+        metadata["lineage_type"] = lineage_type
+    if retry_of is not None:
+        metadata["retry_of"] = retry_of
+    return {
+        "event_id": f"evt-{request_id}",
+        "task_id": "task-20260703-001",
+        "timestamp": "2026-07-12T00:00:00Z",
+        "actor": "cli",
+        "event_type": "run_planned",
+        "message": "Run plan generated and frozen.",
+        "metadata": metadata,
+    }
+
+
+def test_run_inspect_aggregate_lineage_json(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root)
+    _write_events(fake_root)
+    _append_run_events(
+        fake_root,
+        [
+            _run_event("req-20260703-001"),
+            _run_event(
+                "req-20260703-002",
+                lineage_type="retry",
+                retry_of="req-20260703-001",
+            ),
+        ],
+    )
+    envelope = _make_envelope_with_lineage(
+        {"lineage_type": "retry", "retry_of": "req-20260703-001"}
+    )
+    envelope_path = fake_root / "drafts" / "runtime" / "run-inspect-retry.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    code = main([
+        "--root", str(fake_root),
+        "orchestration", "run", "inspect",
+        "--task-id", "task-20260703-001",
+        "--request-id", "req-20260703-002",
+        "--envelope", str(envelope_path),
+        "--events-file", "tasks/events.jsonl",
+        "--aggregate-lineage",
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    assert code in (0, 4)
+    result = json.loads(captured.out)
+    aggregation = result["recovery_lineage"]
+    assert aggregation["schema_version"] == "control-plane/recovery-lineage/v1"
+    assert aggregation["root_request_id"] == "req-20260703-001"
+    assert aggregation["latest_request_id"] == "req-20260703-002"
+    assert aggregation["attempt_count"] == 2
+    assert [item["request_id"] for item in aggregation["requests"]] == [
+        "req-20260703-001",
+        "req-20260703-002",
+    ]
+    assert "origin/main" not in captured.out
+
+
+def test_run_inspect_aggregate_lineage_human(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root)
+    _write_events(fake_root)
+    _append_run_events(fake_root, [_run_event("req-20260703-001")])
+    envelope = _make_envelope()
+    envelope_path = fake_root / "drafts" / "runtime" / "run-inspect.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    code = main([
+        "--root", str(fake_root),
+        "orchestration", "run", "inspect",
+        "--task-id", "task-20260703-001",
+        "--request-id", "req-20260703-001",
+        "--envelope", str(envelope_path),
+        "--events-file", "tasks/events.jsonl",
+        "--aggregate-lineage",
+    ])
+    captured = capsys.readouterr()
+    assert code in (0, 4)
+    assert "Recovery lineage:" in captured.out
+    assert "root=req-20260703-001" in captured.out
+    assert "latest=req-20260703-001" in captured.out
+    assert "attempts=1" in captured.out
+
+
+def test_run_inspect_default_output_omits_recovery_lineage(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root)
+    _write_events(fake_root)
+    _append_run_events(fake_root, [_run_event("req-20260703-001")])
+    envelope = _make_envelope()
+    envelope_path = fake_root / "drafts" / "runtime" / "run-inspect.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    code = main([
+        "--root", str(fake_root),
+        "orchestration", "run", "inspect",
+        "--task-id", "task-20260703-001",
+        "--request-id", "req-20260703-001",
+        "--envelope", str(envelope_path),
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    assert code in (0, 4)
+    assert "recovery_lineage" not in json.loads(captured.out)
+
+
+def test_run_inspect_aggregate_lineage_missing_focus_is_validation_failed(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root)
+    _write_events(fake_root)
+    envelope = _make_envelope()
+    envelope_path = fake_root / "drafts" / "runtime" / "run-inspect.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    code = main([
+        "--root", str(fake_root),
+        "orchestration", "run", "inspect",
+        "--task-id", "task-20260703-001",
+        "--request-id", "req-20260703-001",
+        "--envelope", str(envelope_path),
+        "--events-file", "tasks/events.jsonl",
+        "--aggregate-lineage",
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    assert code == 5
+    result = json.loads(captured.out)
+    assert result["status"] == "validation_failed"
+    assert result["recovery_lineage"]["issues"] == [
+        {"code": "focus_request_not_found", "request_id": "req-20260703-001"}
+    ]

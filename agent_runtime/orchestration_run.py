@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from .adapter_validation import validate_envelope_file
+from .orchestration_recovery import RecoveryLineageResult, aggregate_recovery_lineage
 from .runtime_report import RuntimeReportResult, check_runtime_report
 
 
@@ -53,6 +54,7 @@ class RunInspectResult:
     retry_of: str | None = None
     fallback_from: str | None = None
     fallback_to: str | None = None
+    recovery_lineage: RecoveryLineageResult | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -84,6 +86,8 @@ class RunInspectResult:
             d["fallback_from"] = self.fallback_from
         if self.fallback_to is not None:
             d["fallback_to"] = self.fallback_to
+        if self.recovery_lineage is not None:
+            d["recovery_lineage"] = self.recovery_lineage.to_dict()
         return d
 
 
@@ -106,6 +110,7 @@ def inspect_run(
     envelope_file: str,
     tasks_file: str | None = None,
     events_file: str | None = None,
+    aggregate_lineage: bool = False,
 ) -> RunInspectResult:
     """Inspect a run through the existing runtime report aggregator.
 
@@ -122,8 +127,28 @@ def inspect_run(
         events_file=events_file,
     )
     lineage = _extract_lineage_for_request(report.envelope_summary, request_id)
+    recovery_lineage = None
+    status = report.status
+    if aggregate_lineage:
+        recovery_lineage = aggregate_recovery_lineage(
+            root,
+            task_id=task_id,
+            request_id=request_id,
+            events_file=events_file,
+        )
+        precedence = {
+            "pass": 0,
+            "needs_approval": 1,
+            "needs_input": 2,
+            "blocked": 3,
+            "validation_failed": 4,
+            "error": 5,
+        }
+        if precedence.get(recovery_lineage.status, 5) > precedence.get(status, 5):
+            status = recovery_lineage.status
+
     return RunInspectResult(
-        status=report.status,
+        status=status,
         task_id=report.task_id,
         request_id=request_id,
         task_status=report.task_status,
@@ -134,6 +159,7 @@ def inspect_run(
         next_action=report.next_action,
         event_summary=report.event_summary,
         task_snapshot=report.task_snapshot,
+        recovery_lineage=recovery_lineage,
         **lineage,
     )
 

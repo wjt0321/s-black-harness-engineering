@@ -2411,3 +2411,11 @@
 - 下一步：recovery lineage aggregation read model（post-freeze），入口 `docs/50-control-plane-state-model.md` / `docs/52-minimal-orchestration-loop.md` / 最新 handoff。
 - 边界不变：只读、无网络、无凭据、无 UI/service/DB。
 - 未 commit/push（由主控决定）。
+
+## 2026-07-12 — Recovery Lineage Aggregation Read Model 第一版
+
+- 新增 `docs/73-recovery-lineage-aggregation-read-model.md`，冻结 ledger-backed 数据源、确定性链解析、多 leaf 与异常语义、安全边界。
+- 新增 `agent_runtime/orchestration_recovery.py`：聚合 `run_planned` / `run_draft_exported` / `run_blocked` metadata，输出 root/latest/leaves、attempt count、effective plan hash 与安全 request summaries。
+- `orchestration run inspect` 新增显式 `--aggregate-lineage`；默认输出兼容，多 leaf 返回 `needs_input`，missing/cross-task parent、cycle 与重复 metadata 冲突返回 `validation_failed`。
+- 新增 `tests/test_orchestration_recovery.py`，并扩展 `tests/test_orchestration_run_inspect.py` 的 JSON/human/default compatibility/validation failure 覆盖。
+- 边界保持：只读、不扫描 drafts、不增加 event type、不写 ledger、不执行 adapter、不访问网络。

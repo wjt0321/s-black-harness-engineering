@@ -1726,6 +1726,14 @@ python -m agent_runtime.cli orchestration run inspect \
   --request-id req-20260703-002 \
   --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json
 
+# 显式聚合同一 task 下与该 request 相连的 retry/fallback recovery chain
+python -m agent_runtime.cli orchestration run inspect \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json \
+  --events-file tasks/events.jsonl \
+  --aggregate-lineage --json
+
 python -m agent_runtime.cli orchestration run list \
   --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json
 
@@ -1734,6 +1742,8 @@ python -m agent_runtime.cli orchestration report generate \
   --request-id req-20260703-002 \
   --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json
 ```
+
+`--aggregate-lineage` 只读取现有 run lifecycle events，输出 root/latest/leaves、attempt count、effective plan hash 与安全 request summaries。多 leaf 返回 `needs_input`，缺失 parent、跨 task parent、cycle 或重复 metadata 冲突返回 `validation_failed`。默认不传时 `run inspect` 输出保持不变；该模式不扫描 drafts、不写 ledger、不执行 adapter。
 
 说明：
 

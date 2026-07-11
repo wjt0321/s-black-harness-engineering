@@ -19,7 +19,7 @@
 ## 当前阶段
 
 - **Stage 12 — Control Plane State Model（read-only loop 第一版已冻结）**
-- 当前成果：Registry → Routing → Constraints/Trace → Routing Snapshot → Run Preview → Event/Report Read Loop 已闭合为 **只读 / ephemeral / 非执行** 的 read model 链路
+- 当前成果：Registry → Routing → Constraints/Trace → Routing Snapshot → Run Preview → Event/Report Read Loop 已闭合，并在 post-freeze 切片中补上 retry/fallback recovery lineage 聚合只读视图；全部保持 **只读 / ephemeral / 非执行**
 
 ### Stage 10 基线（保留）
 
@@ -66,6 +66,15 @@
 - 不写入 ledger、不生成持久 Run/Event/Report、不执行真实 adapter；明确为 ephemeral read model。
 - Routing Snapshot → Run Preview → Event/Report read-only loop 已闭合，但仍明确非持久/非执行。
 
+
+### 新进落地：Recovery Lineage Aggregation Read Model
+
+- 新增 `agent_runtime/orchestration_recovery.py`，以现有 `run_planned` / `run_draft_exported` / `run_blocked` event metadata 为索引，确定性聚合同一 recovery chain。
+- `orchestration run inspect --aggregate-lineage` 输出 root request、leaf/latest request、attempt count、effective plan hash 与安全 request summaries。
+- 多 leaf 不静默猜测 latest，返回 `needs_input`；missing/cross-task parent、cycle、重复 metadata 冲突返回 `validation_failed`。
+- 默认未传 flag 时现有 inspect 输出保持兼容；不扫描 drafts、不增加事件类型、不写 ledger、不执行 adapter。
+- 设计入口：`docs/73-recovery-lineage-aggregation-read-model.md`。
+
 ## 现在已经能做什么
 
 - 已冻结里程碑 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`），包含 Stage 10–12 的 registry/routing/state read model 闭环。
@@ -86,17 +95,17 @@
 
 ## 下一步做什么
 
-- **已冻结**：`v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，annotated tag 已创建并 push）。工作树干净，post-freeze 文档口径已同步。
-- **下一拍（post-freeze）**：优先把 read-loop snapshot / lineage 与 **recovery lineage aggregation read model** 做扎实。
-  - 目标：在现有 `orchestration run inspect` / `orchestration run list` / `orchestration report generate` 的 lineage 字段基础上，为同一 task 的 retry/fallback 链提供聚合只读视图（例如 root request、latest attempt、fallback chain、当前有效 plan_hash）。
-  - 输入：`tasks/events.jsonl` 中的 `run_planned` / `run_draft_exported` 事件与 envelope draft 的 lineage metadata。
-  - 输出：新的只读 CLI read model（如 `orchestration run lineage --task-id <id>`）或扩展现有 `run inspect` 的聚合摘要；明确不持久化、不执行 adapter。
-  - 边界：只读、无网络、无凭据、无 UI/service/DB；若需新事件类型或索引，先走 design doc。
-  - 首个建议实现切片：在 `orchestration run inspect` 中新增可选 `--aggregate-lineage` 模式，按 task_id 聚合同一 lineage 链上的全部 request_ids 与状态。
-- **入口文档**：`docs/50-control-plane-state-model.md`、`docs/52-minimal-orchestration-loop.md`、最新 `tasks/handoff-2026-07-11-read-loop-snapshot-stage-acceptance.md`。
-- **优先方向：Stage 12 — Recovery Lineage Aggregation Read Model**
-  - 入口文档：`docs/50-control-plane-state-model.md`
-  - 重点：在 read-loop snapshot 冻结基线之上，把 retry/fallback lineage 聚合为 recovery 只读视图，不持久化、不执行 adapter。
+- **已冻结**：`v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，annotated tag 已创建并 push）。post-freeze 开发继续基于该冻结点推进。
+- **已落地（post-freeze）**：Recovery Lineage Aggregation Read Model 第一版。
+  - CLI：`orchestration run inspect --aggregate-lineage`。
+  - 数据源：现有 run lifecycle event metadata；不增加新事件类型或索引。
+  - 输出：root/latest/leaves、attempt count、effective plan hash、稳定 request summaries 与安全 issues。
+  - 边界：只读、无网络、无凭据、无 UI/service/DB、不执行 adapter。
+- **下一拍建议**：先对 aggregation 契约与异常语义做阶段验收；通过后再决定是否将同一聚合摘要复用到 `orchestration run list` / `orchestration report generate`，不要直接进入真实执行。
+- **入口文档**：`docs/73-recovery-lineage-aggregation-read-model.md`、`docs/50-control-plane-state-model.md`、最新 handoff。
+- **优先方向：Stage 12 — Recovery Lineage Aggregation Stage Acceptance**
+  - 入口文档：`docs/73-recovery-lineage-aggregation-read-model.md`
+  - 重点：验收第一版聚合契约、异常语义、默认兼容与只读边界；通过后再决定是否复用到 list/report。
 - **边界不变**：不进入真实 adapter execution、UI、service、DB。
 
 ## 重要约束
