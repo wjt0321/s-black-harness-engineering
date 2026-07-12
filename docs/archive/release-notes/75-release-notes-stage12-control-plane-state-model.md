@@ -5,7 +5,7 @@
 
 ## 收口结论
 
-Stage 12 — Control Plane State Model 已完成。冻结范围是**确定性、只读、可审计的 control-plane read model**，而不是持久化服务或真实执行系统。
+Stage 12 — Control Plane State Model 已完成。冻结范围是**确定性、只读、可审计的 control-plane read model**，而不是持久化服务或真实执行系统；最终验收 commit：`5e8df01`。
 
 Stage 12 已把以下对象及关系讲清并形成可消费投影：
 

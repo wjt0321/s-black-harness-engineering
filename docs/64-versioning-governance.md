@@ -221,5 +221,5 @@ Release notes 是阶段收口文档，不自动等于 tag 候选。
 - 本次收口使用 release notes + Git commit 记录，验收入口为 `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`。
 - 当前稳定 semver 基线继续保持 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`；本次不创建新 tag。
 - 原因：本次工作完成的是阶段契约验收、延期项划界和下一阶段交接，没有形成需要新增 semver 对外引用的独立执行能力包。
-- Stage 12 最终验收 commit：待本轮首个冻结提交后回填。
+- Stage 12 最终验收 commit：`5e8df01`。
 - 后续进入 Stage 13 — Backend-first API Boundary，第一拍为 Boundary Contract Reconciliation。

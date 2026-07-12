@@ -13,7 +13,7 @@
 
 - 稳定基线：`v0.12.1-orchestration-read-loop-snapshot`
 - 冻结 commit：`0419a04`
-- Stage 12 最终收口：本轮验收提交；精确 commit 在最终 handoff 中记录
+- Stage 12 最终收口提交：`5e8df01`
 - 上一 foundation 基线：`v0.12.0-orchestration-foundation`（commit `38b4b69`）
 - 本轮按 release notes 收口，不创建新的 semver tag
 
