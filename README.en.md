@@ -130,8 +130,8 @@ The current state is best understood as:
 
 The most natural next direction is not to keep adding scattered features, but to:
 
-1. accept the first **Stage 12 recovery lineage aggregation** contract, failure semantics, and default compatibility
-2. after acceptance, decide whether to reuse the same aggregation summary in `orchestration run list` / `orchestration report generate`
+1. keep the accepted **Stage 12 recovery lineage aggregation** contract and failure semantics stable
+2. reuse it first in `orchestration report generate --aggregate-lineage`; keep `run list` envelope-scoped without implicit ledger aggregation
 3. keep **Stage 13** as prepared context without entering HTTP / RPC / UI / DB yet
 4. preserve the read-only, controlled-write, and no-real-adapter-execution boundaries
 5. backfill guardrail gaps only when later slices expose them
@@ -152,7 +152,7 @@ Implemented capability highlights:
 - Stage 15 read-model CLI: `orchestration overview`, `orchestration task list/get`, `orchestration run list/inspect`, `orchestration approval list/get`, `orchestration artifact list/get`, `orchestration report generate`
 - Stage 15.5 controlled handoff: `orchestration route preview`, `orchestration preflight`, controlled-write `orchestration approval resolve` (records decision only, does not execute original request)
 - Stage 15.7/15.8/15.9 run controlled execution: `orchestration run --dry-run` (read-only plan preview + plan_hash), controlled-write `orchestration run --commit` (A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events, no real adapter execution)
-- Stage 12 post-freeze recovery read model: `orchestration run inspect --aggregate-lineage` (aggregates root/latest/leaves, attempt count, and effective plan hash from existing lifecycle events; read-only and does not scan drafts)
+- Stage 12 post-freeze recovery read model: `orchestration run inspect --aggregate-lineage` / `orchestration report generate --aggregate-lineage` (aggregates root/latest/leaves, attempt count, and effective plan hash from existing lifecycle events; read-only and does not scan drafts)
 
 ## Current Boundaries
 

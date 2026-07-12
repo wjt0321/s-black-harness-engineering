@@ -70,7 +70,7 @@
 ### 新进落地：Recovery Lineage Aggregation Read Model
 
 - 新增 `agent_runtime/orchestration_recovery.py`，以现有 `run_planned` / `run_draft_exported` / `run_blocked` event metadata 为索引，确定性聚合同一 recovery chain。
-- `orchestration run inspect --aggregate-lineage` 输出 root request、leaf/latest request、attempt count、effective plan hash 与安全 request summaries。
+- `orchestration run inspect --aggregate-lineage` 与 `orchestration report generate --aggregate-lineage` 输出 root request、leaf/latest request、attempt count、effective plan hash 与安全 request summaries。
 - 多 leaf 不静默猜测 latest，返回 `needs_input`；missing/cross-task parent、cycle、重复 metadata 冲突返回 `validation_failed`。
 - 默认未传 flag 时现有 inspect 输出保持兼容；不扫描 drafts、不增加事件类型、不写 ledger、不执行 adapter。
 - 设计入口：`docs/73-recovery-lineage-aggregation-read-model.md`。
@@ -102,11 +102,11 @@
   - 输出：root/latest/leaves、attempt count、effective plan hash、稳定 request summaries 与安全 issues。
   - 边界：只读、无网络、无凭据、无 UI/service/DB、不执行 adapter。
 - **阶段验收已通过（2026-07-12）**：aggregation 契约、异常语义、默认兼容、输出脱敏与只读边界均已复核并通过验证。
-- **下一拍建议**：先比较是否复用到 `orchestration run list` 或 `orchestration report generate`，形成最小兼容契约后再实现；不要直接进入真实执行。
-- **入口文档**：`docs/73-recovery-lineage-aggregation-read-model.md`、`docs/50-control-plane-state-model.md`、最新 handoff。
-- **当前优先方向：Stage 12 — Recovery Lineage Aggregation Reuse Decision**
-  - 入口文档：`docs/73-recovery-lineage-aggregation-read-model.md`
-  - 重点：比较 `run list` / `report generate` 的复用价值与兼容成本，先定最小输出契约，再决定实现范围。
+- **复用决策已落地**：优先接入单 request 的 `report generate --aggregate-lineage`；`run list` 继续保持 envelope-scoped，不做隐式 ledger 聚合。
+- **入口文档**：`docs/74-recovery-lineage-report-reuse.md`、`docs/73-recovery-lineage-aggregation-read-model.md`、最新 handoff。
+- **当前优先方向：Stage 12 — Recovery Read Model Consolidation**
+  - 入口文档：`docs/74-recovery-lineage-report-reuse.md`
+  - 重点：验收 report 复用切片并保持 inspect/report 契约一致；后续再评估是否需要集合级 lineage index，不直接改造 `run list`。
 - **边界不变**：不进入真实 adapter execution、UI、service、DB。
 
 ## 重要约束

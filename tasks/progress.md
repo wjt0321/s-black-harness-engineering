@@ -2433,3 +2433,11 @@
 - 按 `docs/73-recovery-lineage-aggregation-read-model.md` 的验收入口完成复核：duplicate lifecycle merge、branch / missing parent / cross-task parent / cycle、非法 lineage shape、JSON/human 脱敏、默认 inspect 兼容和 no-write 边界均符合契约。
 - 验证：`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`python -m compileall -q agent_runtime tests`、`git diff --check` 均通过。
 - 下一步从“实现聚合”转为“复用决策”：比较 `orchestration run list` / `report generate` 的价值与兼容成本，先定最小契约，不进入真实执行。
+
+
+## 2026-07-12 — Recovery Lineage 复用到 Report Generate
+
+- 比较 `run list` 与 `report generate` 后，选择低兼容成本的单 request report 入口；`run list` 保持 envelope-scoped。
+- 新增 `orchestration report generate --aggregate-lineage`，复用 `control-plane/recovery-lineage/v1` 与既有 aggregation 模块。
+- 显式 flag 下输出 `recovery_lineage` 并合并 aggregation 状态；默认 report 输出保持兼容，human 仅输出安全紧凑摘要。
+- 新增 JSON、human、默认兼容、validation failure 状态提升和 no-write 测试。

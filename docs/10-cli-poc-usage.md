@@ -1740,10 +1740,12 @@ python -m agent_runtime.cli orchestration run list \
 python -m agent_runtime.cli orchestration report generate \
   --task-id task-20260703-001 \
   --request-id req-20260703-002 \
-  --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json
+  --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json \
+  --events-file tasks/events.jsonl \
+  --aggregate-lineage --json
 ```
 
-`--aggregate-lineage` 只读取现有 run lifecycle events，输出 root/latest/leaves、attempt count、effective plan hash 与安全 request summaries。多 leaf 返回 `needs_input`，缺失 parent、跨 task parent、cycle 或重复 metadata 冲突返回 `validation_failed`。默认不传时 `run inspect` 输出保持不变；该模式不扫描 drafts、不写 ledger、不执行 adapter。
+`--aggregate-lineage` 只读取现有 run lifecycle events，输出 root/latest/leaves、attempt count、effective plan hash 与安全 request summaries。多 leaf 返回 `needs_input`，缺失 parent、跨 task parent、cycle 或重复 metadata 冲突返回 `validation_failed`。默认不传时 `run inspect` / `report generate` 输出保持不变；该模式不扫描 drafts、不写 ledger、不执行 adapter。`run list` 仍保持 envelope-scoped，暂不隐式查询 event ledger。
 
 说明：
 

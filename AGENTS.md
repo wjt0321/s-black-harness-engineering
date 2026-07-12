@@ -16,10 +16,11 @@ python -m agent_runtime.cli doctor
 然后按顺序阅读：
 
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
-2. `docs/73-recovery-lineage-aggregation-read-model.md`：当前设计事实源。
-3. `tasks/handoff-2026-07-12-recovery-lineage-aggregation.md`：最新交接。
-4. `docs/02-roadmap.md`：需要更完整路线图时再读。
-5. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
+2. `docs/74-recovery-lineage-report-reuse.md`：当前复用设计事实源。
+3. `docs/73-recovery-lineage-aggregation-read-model.md`：底层 aggregation 契约。
+4. `tasks/handoff-2026-07-12-recovery-lineage-aggregation.md`：最新交接。
+5. `docs/02-roadmap.md`：需要更完整路线图时再读。
+6. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
 
 不要先遍历整个 `docs/` 或 `tasks/progress.md`。
 
@@ -31,8 +32,8 @@ python -m agent_runtime.cli doctor
 
 - 冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation 第一版。
-- 当前入口：`orchestration run inspect --aggregate-lineage`。
-- aggregation 阶段验收已通过。下一步：比较复用到 `run list` / `report generate` 的价值与兼容成本，先形成最小契约再决定实现范围。
+- 当前入口：`orchestration run inspect --aggregate-lineage` 与 `orchestration report generate --aggregate-lineage`。
+- aggregation 阶段验收已通过，并优先复用到单 request report；`run list` 仍保持 envelope-scoped，不做隐式 ledger 聚合。
 
 项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
 

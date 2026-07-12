@@ -303,12 +303,13 @@
 冻结状态：
 
 - Stage 12 第一拍已冻结为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，已 push）。
-- 当前阶段继续在冻结基线之上巩固；recovery lineage 聚合 read model 第一版已通过 `orchestration run inspect --aggregate-lineage` 落地。
+- 当前阶段继续在冻结基线之上巩固；recovery lineage 聚合已通过 `orchestration run inspect --aggregate-lineage` 落地并复用到 `orchestration report generate --aggregate-lineage`；`run list` 暂不引入隐式 ledger 聚合。
 
 主要交付物：
 
 - `docs/50-control-plane-state-model.md`
 - `docs/73-recovery-lineage-aggregation-read-model.md`
+- `docs/74-recovery-lineage-report-reuse.md`
 
 ---
 

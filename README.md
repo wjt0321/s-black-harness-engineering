@@ -130,8 +130,8 @@
 
 下一步最自然的方向不是继续盲目加功能，而是：
 
-1. 先验收 **Stage 12 recovery lineage aggregation** 第一版的数据契约、异常语义与默认兼容
-2. 验收通过后，再决定是否将同一聚合摘要复用到 `orchestration run list` / `orchestration report generate`
+1. **Stage 12 recovery lineage aggregation** 第一版已通过契约、异常语义与默认兼容验收
+2. 已优先复用到 `orchestration report generate --aggregate-lineage`；`run list` 暂不引入隐式 ledger 聚合
 3. 保留 **Stage 13** 上下文，但暂不进入 HTTP / RPC / UI / DB
 4. 继续维持只读、受控写入和无真实 adapter execution 的安全边界
 5. guardrail 若在后续切片中暴露缺口，再边做边回补
@@ -152,7 +152,7 @@
 - Stage 15 read-model CLI：`orchestration overview`、`orchestration task list/get`、`orchestration run list/inspect`、`orchestration approval list/get`、`orchestration artifact list/get`、`orchestration report generate`
 - Stage 15.5 controlled handoff：`orchestration route preview`、`orchestration preflight`、受控写入 `orchestration approval resolve`（只记录 decision，不执行原请求）
 - Stage 15.7/15.8/15.9 run controlled execution：`orchestration run --dry-run`（只读 plan preview + plan_hash）、受控写入 `orchestration run --commit`（A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events，不执行真实 adapter）
-- Stage 12 post-freeze recovery read model：`orchestration run inspect --aggregate-lineage`（基于现有 lifecycle events 聚合 root/latest/leaves、attempt count 与 effective plan hash，只读、不扫描 drafts）
+- Stage 12 post-freeze recovery read model：`orchestration run inspect --aggregate-lineage` / `orchestration report generate --aggregate-lineage`（基于现有 lifecycle events 聚合 root/latest/leaves、attempt count 与 effective plan hash，只读、不扫描 drafts）
 
 ## 当前边界
 

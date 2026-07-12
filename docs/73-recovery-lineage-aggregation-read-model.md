@@ -109,8 +109,10 @@ orchestration run inspect --aggregate-lineage
 
 验证记录：`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`python -m compileall -q agent_runtime tests` 与 `git diff --check` 与 docs maintenance hook 均通过。
 
-## 后续决策入口
+## 复用决策与落地（2026-07-12）
 
-验收通过后，不直接进入真实执行。下一轮应先比较 `run list` 与 `report generate` 的复用价值和输出兼容成本，优先形成最小复用契约，再决定是否实现；继续复用 `agent_runtime/orchestration_recovery.py`，不要新建第二套聚合管线。
+比较后选择先接入 `orchestration report generate --aggregate-lineage`：report 已具备 task/request/events 输入，单 request 聚合语义与 inspect 一致，兼容成本最低。`run list` 仍是 envelope-scoped 集合视图，暂不引入逐行 ledger 聚合或跨 envelope descendants。
+
+report 直接复用 `agent_runtime/orchestration_recovery.py` 和 `control-plane/recovery-lineage/v1`，默认不传 flag 时输出保持不变。详细契约见 `docs/74-recovery-lineage-report-reuse.md`。
 
 最新交接：`tasks/handoff-2026-07-12-recovery-lineage-aggregation.md`。

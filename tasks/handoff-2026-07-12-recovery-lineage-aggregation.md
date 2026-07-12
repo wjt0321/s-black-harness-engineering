@@ -44,17 +44,25 @@
 ## 下一轮恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/73-recovery-lineage-aggregation-read-model.md`
-3. `python -m agent_runtime.cli docs context --json`
-4. 本 handoff
+2. `docs/74-recovery-lineage-report-reuse.md`
+3. `docs/73-recovery-lineage-aggregation-read-model.md`
+4. `python -m agent_runtime.cli docs context --json`
+5. 本 handoff
 
 ## 本轮验收结果
 
 - 阶段验收已通过：duplicate merge、branch / missing parent / cross-task / cycle 语义、JSON/human 安全输出、默认兼容和只读边界均已复核。
 - fresh verification：全量 pytest、doctor、public scan、compileall、`git diff --check` 与 docs maintenance hook 均通过。
 
+## Report 复用切片
+
+- 决策：优先接入 `orchestration report generate --aggregate-lineage`；`run list` 保持 envelope-scoped。
+- 设计：`docs/74-recovery-lineage-report-reuse.md`。
+- 实现：`ReportGenerateResult` 可选输出 `recovery_lineage`，并按 inspect 相同严重度合并整体状态；human 输出仅增加紧凑 root/latest/attempts/leaves 摘要。
+- 默认兼容：未传 flag 时 report JSON/human 不增加 aggregation 字段或输出。
+
 ## 下一步建议
 
-- 比较 `orchestration run list` 与 `orchestration report generate` 的复用价值和输出兼容成本，先形成最小复用契约，再决定实现哪一个入口。
+- 先验收 inspect/report 两个入口的 aggregation 契约一致性和全量回归。
+- 后续若确有集合级需求，先设计 lineage index/read model，再考虑 `run list`；不要对每行做隐式 ledger 聚合。
 - 不进入真实 adapter execution、UI、service 或 DB。
-- 不重复创建新的 recovery 聚合模块；优先复用 `agent_runtime/orchestration_recovery.py`。
