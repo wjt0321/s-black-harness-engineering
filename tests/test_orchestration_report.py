@@ -73,6 +73,40 @@ def _write_events(fake_root: Path) -> None:
     events_file.write_text("\n".join(json.dumps(e) for e in events) + "\n", encoding="utf-8")
 
 
+def _append_run_events(fake_root: Path, events: list[dict[str, Any]]) -> None:
+    events_file = fake_root / "tasks" / "events.jsonl"
+    with events_file.open("a", encoding="utf-8") as handle:
+        for event in events:
+            handle.write(json.dumps(event, ensure_ascii=False) + "\n")
+
+
+def _run_event(
+    request_id: str,
+    *,
+    lineage_type: str | None = None,
+    retry_of: str | None = None,
+) -> dict[str, Any]:
+    metadata: dict[str, Any] = {
+        "request_id": request_id,
+        "adapter_id": "github-cli",
+        "plan_hash": "sha256:" + request_id[-1] * 64,
+        "envelope_path": f"drafts/runtime/{request_id}.envelope.json",
+    }
+    if lineage_type is not None:
+        metadata["lineage_type"] = lineage_type
+    if retry_of is not None:
+        metadata["retry_of"] = retry_of
+    return {
+        "event_id": f"evt-{request_id}",
+        "task_id": "task-20260703-001",
+        "timestamp": "2026-07-12T00:00:00Z",
+        "actor": "cli",
+        "event_type": "run_planned",
+        "message": "safe",
+        "metadata": metadata,
+    }
+
+
 def _make_envelope() -> dict[str, Any]:
     """Build a valid envelope with one request/approval pair."""
     return {
@@ -348,3 +382,110 @@ def test_report_generate_fallback_lineage_json(capsys, tmp_path):
     assert result["fallback_from"] == "req-20260703-001"
     assert result["fallback_to"] == "dummy-fallback"
     assert "lineage_type=fallback" in result["status_summary"]
+
+
+def test_report_generate_aggregate_lineage_json_and_default_compatibility(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root)
+    _write_events(fake_root)
+    _append_run_events(
+        fake_root,
+        [
+            _run_event("req-20260703-001"),
+            _run_event(
+                "req-20260703-002",
+                lineage_type="retry",
+                retry_of="req-20260703-001",
+            ),
+        ],
+    )
+    envelope = _make_envelope_with_lineage(
+        {"lineage_type": "retry", "retry_of": "req-20260703-001"}
+    )
+    envelope_path = fake_root / "drafts" / "runtime" / "report-retry.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    base_args = [
+        "--root", str(fake_root),
+        "orchestration", "report", "generate",
+        "--task-id", "task-20260703-001",
+        "--request-id", "req-20260703-002",
+        "--envelope", str(envelope_path),
+        "--events-file", "tasks/events.jsonl",
+        "--json",
+    ]
+    default_code = main(base_args)
+    default_result = json.loads(capsys.readouterr().out)
+    aggregate_code = main(base_args[:-1] + ["--aggregate-lineage", "--json"])
+    aggregate_result = json.loads(capsys.readouterr().out)
+
+    assert default_code in (0, 4)
+    assert "recovery_lineage" not in default_result
+    assert aggregate_code in (0, 4)
+    lineage = aggregate_result["recovery_lineage"]
+    assert lineage["schema_version"] == "control-plane/recovery-lineage/v1"
+    assert lineage["root_request_id"] == "req-20260703-001"
+    assert lineage["latest_request_id"] == "req-20260703-002"
+    assert lineage["attempt_count"] == 2
+    assert "origin/main" not in json.dumps(lineage)
+
+
+def test_report_generate_aggregate_lineage_human_is_compact(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root)
+    _write_events(fake_root)
+    _append_run_events(fake_root, [_run_event("req-20260703-001")])
+    envelope = _make_envelope()
+    envelope_path = fake_root / "drafts" / "runtime" / "report.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    code = main([
+        "--root", str(fake_root),
+        "orchestration", "report", "generate",
+        "--task-id", "task-20260703-001",
+        "--request-id", "req-20260703-001",
+        "--envelope", str(envelope_path),
+        "--events-file", "tasks/events.jsonl",
+        "--aggregate-lineage",
+    ])
+    output = capsys.readouterr().out
+
+    assert code == 3
+    assert "Recovery lineage:" in output
+    assert "root=req-20260703-001" in output
+    assert "latest=req-20260703-001" in output
+    assert "attempts=1" in output
+    assert "origin/main" not in output
+
+
+def test_report_generate_aggregate_lineage_validation_failure_wins(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root)
+    _write_events(fake_root)
+    envelope = _make_envelope()
+    envelope_path = fake_root / "drafts" / "runtime" / "report.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+    events_path = fake_root / "tasks" / "events.jsonl"
+    before = events_path.read_bytes()
+
+    code = main([
+        "--root", str(fake_root),
+        "orchestration", "report", "generate",
+        "--task-id", "task-20260703-001",
+        "--request-id", "req-20260703-001",
+        "--envelope", str(envelope_path),
+        "--events-file", "tasks/events.jsonl",
+        "--aggregate-lineage",
+        "--json",
+    ])
+    result = json.loads(capsys.readouterr().out)
+
+    assert code == 5
+    assert result["status"] == "validation_failed"
+    assert result["recovery_lineage"]["issues"] == [
+        {"code": "focus_request_not_found", "request_id": "req-20260703-001"}
+    ]
+    assert events_path.read_bytes() == before

@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .orchestration_recovery import RecoveryLineageResult, aggregate_recovery_lineage
 from .orchestration_run import _extract_lineage_for_request
 from .runtime_report import RuntimeReportResult, check_runtime_report
 
@@ -39,6 +40,7 @@ class ReportGenerateResult:
     retry_of: str | None = None
     fallback_from: str | None = None
     fallback_to: str | None = None
+    recovery_lineage: RecoveryLineageResult | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -72,6 +74,8 @@ class ReportGenerateResult:
             d["fallback_from"] = self.fallback_from
         if self.fallback_to is not None:
             d["fallback_to"] = self.fallback_to
+        if self.recovery_lineage is not None:
+            d["recovery_lineage"] = self.recovery_lineage.to_dict()
         return d
 
 
@@ -82,6 +86,7 @@ def generate_report(
     envelope_file: str,
     tasks_file: str | None = None,
     events_file: str | None = None,
+    aggregate_lineage: bool = False,
 ) -> ReportGenerateResult:
     """Generate an orchestration report through the existing runtime report aggregator.
 
@@ -99,9 +104,28 @@ def generate_report(
     )
 
     lineage = _extract_lineage_for_request(report.envelope_summary, request_id)
+    recovery_lineage = None
+    status = report.status
+    if aggregate_lineage:
+        recovery_lineage = aggregate_recovery_lineage(
+            root,
+            task_id=task_id,
+            request_id=request_id,
+            events_file=events_file,
+        )
+        precedence = {
+            "pass": 0,
+            "needs_approval": 1,
+            "needs_input": 2,
+            "blocked": 3,
+            "validation_failed": 4,
+            "error": 5,
+        }
+        if precedence.get(recovery_lineage.status, 5) > precedence.get(status, 5):
+            status = recovery_lineage.status
 
     # Build a concise status summary for report-page consumption.
-    status_summary = f"task_id={report.task_id} task={report.task_status or '-'} report={report.status}"
+    status_summary = f"task_id={report.task_id} task={report.task_status or '-'} report={status}"
     if lineage.get("lineage_type"):
         status_summary += f" lineage_type={lineage['lineage_type']}"
     if report.blockers:
@@ -114,7 +138,7 @@ def generate_report(
             key_findings.append(f"{finding.rule_id}: {finding.message}")
 
     return ReportGenerateResult(
-        status=report.status,
+        status=status,
         task_id=report.task_id,
         request_id=request_id,
         task_status=report.task_status,
@@ -127,5 +151,6 @@ def generate_report(
         ledger=report.ledger,
         artifact_refs=[],
         evidence_refs=[],
+        recovery_lineage=recovery_lineage,
         **lineage,
     )

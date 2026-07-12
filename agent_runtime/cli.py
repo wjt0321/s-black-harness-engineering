@@ -2608,6 +2608,7 @@ def _cmd_orchestration_report_generate(args: argparse.Namespace) -> int:
         envelope_file=args.envelope,
         tasks_file=getattr(args, "tasks_file", None),
         events_file=getattr(args, "events_file", None),
+        aggregate_lineage=getattr(args, "aggregate_lineage", False),
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -2629,6 +2630,18 @@ def _cmd_orchestration_report_generate(args: argparse.Namespace) -> int:
                 lineage_parts.append(f"fallback_to={result.fallback_to}")
             print(" ".join(lineage_parts))
         print(f"status_summary={result.status_summary}")
+        if result.recovery_lineage is not None:
+            recovery = result.recovery_lineage
+            latest = recovery.latest_request_id or "-"
+            leaves = ",".join(recovery.leaf_request_ids) or "-"
+            print(
+                "Recovery lineage: "
+                f"status={recovery.status} "
+                f"root={recovery.root_request_id or '-'} "
+                f"latest={latest} "
+                f"attempts={recovery.attempt_count} "
+                f"leaves={leaves}"
+            )
         if result.key_findings:
             print("Key findings:")
             for finding in result.key_findings:
@@ -3379,6 +3392,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     orchestration_report_generate_parser.add_argument(
         "--events-file", default=None, help="Path to events JSONL file (default: tasks/events.jsonl)"
+    )
+    orchestration_report_generate_parser.add_argument(
+        "--aggregate-lineage",
+        action="store_true",
+        help="Aggregate the task recovery lineage from run lifecycle events",
     )
     _add_global_args(orchestration_report_generate_parser)
     orchestration_report_generate_parser.set_defaults(func=_cmd_orchestration_report_generate)
