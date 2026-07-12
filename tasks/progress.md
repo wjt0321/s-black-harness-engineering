@@ -2427,3 +2427,9 @@
 - `docs/73-recovery-lineage-aggregation-read-model.md` 吸收实现状态、commit、测试入口与下一轮验收清单，成为单一设计事实源。
 - 删除已完成且内容已被 73 design / handoff 吸收的临时 implementation plan，减少重复文档。
 - `tasks/handoff-2026-07-12-recovery-lineage-aggregation.md` 补实现 commit、恢复顺序与“不要重复实现”的边界。
+
+## 2026-07-12 — Recovery Lineage Aggregation 阶段验收通过
+
+- 按 `docs/73-recovery-lineage-aggregation-read-model.md` 的验收入口完成复核：duplicate lifecycle merge、branch / missing parent / cross-task parent / cycle、非法 lineage shape、JSON/human 脱敏、默认 inspect 兼容和 no-write 边界均符合契约。
+- 验证：`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`python -m compileall -q agent_runtime tests`、`git diff --check` 均通过。
+- 下一步从“实现聚合”转为“复用决策”：比较 `orchestration run list` / `report generate` 的价值与兼容成本，先定最小契约，不进入真实执行。

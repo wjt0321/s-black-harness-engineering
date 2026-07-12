@@ -48,13 +48,13 @@
 3. `python -m agent_runtime.cli docs context --json`
 4. 本 handoff
 
+## 本轮验收结果
+
+- 阶段验收已通过：duplicate merge、branch / missing parent / cross-task / cycle 语义、JSON/human 安全输出、默认兼容和只读边界均已复核。
+- fresh verification：全量 pytest、doctor、public scan、compileall、`git diff --check` 与 docs maintenance hook 均通过。
+
 ## 下一步建议
 
-- 先做本切片阶段验收，重点检查：
-  - lifecycle duplicate merge 是否足够严格；
-  - branch / missing parent / cross-task / cycle 的状态语义；
-  - human/JSON 输出是否保持安全和紧凑；
-  - 默认 inspect 是否 byte-compatible。
-- 验收通过后再决定是否把同一 aggregation 复用到 `orchestration run list` / `orchestration report generate`。
+- 比较 `orchestration run list` 与 `orchestration report generate` 的复用价值和输出兼容成本，先形成最小复用契约，再决定实现哪一个入口。
 - 不进入真实 adapter execution、UI、service 或 DB。
 - 不重复创建新的 recovery 聚合模块；优先复用 `agent_runtime/orchestration_recovery.py`。

@@ -101,11 +101,12 @@
   - 数据源：现有 run lifecycle event metadata；不增加新事件类型或索引。
   - 输出：root/latest/leaves、attempt count、effective plan hash、稳定 request summaries 与安全 issues。
   - 边界：只读、无网络、无凭据、无 UI/service/DB、不执行 adapter。
-- **下一拍建议**：先对 aggregation 契约与异常语义做阶段验收；通过后再决定是否将同一聚合摘要复用到 `orchestration run list` / `orchestration report generate`，不要直接进入真实执行。
+- **阶段验收已通过（2026-07-12）**：aggregation 契约、异常语义、默认兼容、输出脱敏与只读边界均已复核并通过验证。
+- **下一拍建议**：先比较是否复用到 `orchestration run list` 或 `orchestration report generate`，形成最小兼容契约后再实现；不要直接进入真实执行。
 - **入口文档**：`docs/73-recovery-lineage-aggregation-read-model.md`、`docs/50-control-plane-state-model.md`、最新 handoff。
-- **优先方向：Stage 12 — Recovery Lineage Aggregation Stage Acceptance**
+- **当前优先方向：Stage 12 — Recovery Lineage Aggregation Reuse Decision**
   - 入口文档：`docs/73-recovery-lineage-aggregation-read-model.md`
-  - 重点：验收第一版聚合契约、异常语义、默认兼容与只读边界；通过后再决定是否复用到 list/report。
+  - 重点：比较 `run list` / `report generate` 的复用价值与兼容成本，先定最小输出契约，再决定实现范围。
 - **边界不变**：不进入真实 adapter execution、UI、service、DB。
 
 ## 重要约束

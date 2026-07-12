@@ -97,14 +97,20 @@ orchestration run inspect --aggregate-lineage
 - 测试：`tests/test_orchestration_recovery.py` 与 `tests/test_orchestration_run_inspect.py`。
 - 默认 inspect 保持兼容；聚合仅在显式 flag 下生成。
 
-## 下一轮验收入口
+## 阶段验收结果（2026-07-12）
 
-下一轮不要重新设计或重复实现第一版，直接从以下检查开始：
+本轮按验收入口完成审查，第一版聚合契约通过：
 
-1. 审查 lifecycle duplicate merge 的关键字段一致性规则。
-2. 复核 branch / missing parent / cross-task parent / cycle 的状态与 issue code。
-3. 复核 JSON/human 输出不泄露 target、payload、raw context 或凭据。
-4. 运行全量测试、doctor、public scan 与 docs maintenance hook。
-5. 验收通过后，再决定是否复用到 `run list` / `report generate`；默认不进入真实执行。
+- duplicate lifecycle event：关键 metadata 一致时合并；任一关键字段冲突即 `validation_failed/conflicting_request_metadata`。
+- 异常语义：branch 返回 `needs_input/ambiguous_leaves`；missing parent、cross-task parent、cycle、非法 lineage shape 返回 `validation_failed`，并只携带安全 request id。
+- 输出安全：JSON/human 仅输出 request、parent、adapter、plan hash、状态和安全 issue；不输出 target、payload、raw context、envelope 内容或凭据。
+- 默认兼容：未传 `--aggregate-lineage` 时 `run inspect` 不生成 `recovery_lineage` 字段。
+- 只读边界：聚合只读取既有 lifecycle ledger；不写文件、不扫描 drafts、不执行 adapter。
+
+验证记录：`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`python -m compileall -q agent_runtime tests` 与 `git diff --check` 与 docs maintenance hook 均通过。
+
+## 后续决策入口
+
+验收通过后，不直接进入真实执行。下一轮应先比较 `run list` 与 `report generate` 的复用价值和输出兼容成本，优先形成最小复用契约，再决定是否实现；继续复用 `agent_runtime/orchestration_recovery.py`，不要新建第二套聚合管线。
 
 最新交接：`tasks/handoff-2026-07-12-recovery-lineage-aggregation.md`。

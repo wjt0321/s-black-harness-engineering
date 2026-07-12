@@ -32,7 +32,7 @@ python -m agent_runtime.cli doctor
 - 冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation 第一版。
 - 当前入口：`orchestration run inspect --aggregate-lineage`。
-- 下一步：验收 aggregation 的契约、异常语义、默认兼容和只读边界；通过后再决定是否复用到 `run list` / `report generate`。
+- aggregation 阶段验收已通过。下一步：比较复用到 `run list` / `report generate` 的价值与兼容成本，先形成最小契约再决定实现范围。
 
 项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
 
