@@ -104,9 +104,10 @@
 - **阶段验收已通过（2026-07-12）**：aggregation 契约、异常语义、默认兼容、输出脱敏与只读边界均已复核并通过验证。
 - **复用决策已落地**：优先接入单 request 的 `report generate --aggregate-lineage`；`run list` 继续保持 envelope-scoped，不做隐式 ledger 聚合。
 - **入口文档**：`docs/74-recovery-lineage-report-reuse.md`、`docs/73-recovery-lineage-aggregation-read-model.md`、最新 handoff。
-- **当前优先方向：Stage 12 — Recovery Read Model Consolidation**
+- **Recovery Read Model Consolidation 已通过（2026-07-12）**：inspect/report 共享状态合并 helper，跨入口 aggregation 契约、异常语义、脱敏和 no-write 已由专门测试锁定。
+- **当前优先方向：Stage 12 — Collection-level Lineage Need Assessment**
   - 入口文档：`docs/74-recovery-lineage-report-reuse.md`
-  - 重点：验收 report 复用切片并保持 inspect/report 契约一致；后续再评估是否需要集合级 lineage index，不直接改造 `run list`。
+  - 重点：先确认是否存在明确集合级消费者；如有，先设计独立 lineage index/read model，不对 `run list` 逐行隐式扫描 ledger。
 - **边界不变**：不进入真实 adapter execution、UI、service、DB。
 
 ## 重要约束

@@ -33,7 +33,7 @@ python -m agent_runtime.cli doctor
 - 冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation 第一版。
 - 当前入口：`orchestration run inspect --aggregate-lineage` 与 `orchestration report generate --aggregate-lineage`。
-- aggregation 阶段验收已通过，并优先复用到单 request report；`run list` 仍保持 envelope-scoped，不做隐式 ledger 聚合。
+- aggregation 与 report reuse consolidation 均已通过验收；inspect/report 共享状态合并契约。下一步仅评估集合级 lineage 的真实需求，`run list` 不做逐行隐式 ledger 聚合。
 
 项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
 
@@ -165,7 +165,7 @@ Windows 可使用 Git for Windows 的 `bash.exe`。提交前还应运行 `git di
 - 断言不仅检查状态码，还要检查 rule id、结构化字段和敏感值**未出现**。
 - 受控写测试使用临时目录或 ledger 副本，不直接修改仓库样例 ledger。
 - 新行为遵循 TDD：先写失败测试并确认失败原因正确，再写最小实现。
-- recovery lineage 相关改动至少覆盖 normal、retry、fallback、branch、missing/cross-task parent、cycle、duplicate conflict、determinism 和 no-write。
+- recovery lineage 相关改动至少覆盖 normal、retry、fallback、branch、missing/cross-task parent、cycle、duplicate conflict、determinism、no-write，以及 inspect/report 跨入口契约一致性。
 
 CI 在 Python 3.11/3.12 上运行全量测试、doctor、ledger smoke checks、受控写回归和 public scan。
 

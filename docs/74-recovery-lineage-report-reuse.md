@@ -33,6 +33,14 @@ orchestration report generate ... --aggregate-lineage
 - 不为 `run list` 增加隐式 ledger 查询。
 - 不增加 report storage、report id、UI、service、DB 或真实 adapter execution。
 
-## 验收
+## 验收结果（2026-07-12）
 
-至少覆盖 JSON、human、默认兼容、aggregation validation failure 状态提升、只读/no-write 和全量回归。
+本切片已完成 consolidation 验收：
+
+- 新增 inspect/report 跨入口契约测试，同一 lifecycle events 下 `recovery_lineage` byte-equivalent。
+- branch、missing focus/parent、cross-task parent、cycle、duplicate conflict 的 aggregation status 与 issue code 在两个入口一致。
+- 状态严重度矩阵由 `merge_recovery_status()` 统一维护，inspect/report 不再各自复制 precedence。
+- 契约测试同时锁定 no-write 与 recovery 输出不包含 envelope target/input。
+- JSON、human、默认兼容和原有 aggregation 单元测试继续通过。
+
+下一步不直接改造 `run list`。只有出现明确的集合级消费者后，才设计独立 lineage index/read model，避免逐行重复扫描 ledger。

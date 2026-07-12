@@ -61,8 +61,15 @@
 - 实现：`ReportGenerateResult` 可选输出 `recovery_lineage`，并按 inspect 相同严重度合并整体状态；human 输出仅增加紧凑 root/latest/attempts/leaves 摘要。
 - 默认兼容：未传 flag 时 report JSON/human 不增加 aggregation 字段或输出。
 
+## Consolidation 验收结果
+
+- 新增 `tests/test_orchestration_recovery_contract.py`，锁定 inspect/report 的 recovery payload、异常 issue、脱敏和 no-write 一致性。
+- 新增共享 `merge_recovery_status()`，统一两个入口的状态严重度矩阵，移除重复 precedence。
+- targeted 与全量回归均通过。
+
 ## 下一步建议
 
-- 先验收 inspect/report 两个入口的 aggregation 契约一致性和全量回归。
-- 后续若确有集合级需求，先设计 lineage index/read model，再考虑 `run list`；不要对每行做隐式 ledger 聚合。
+- 先确认是否存在明确的集合级 lineage 消费者。
+- 若有，先设计独立 lineage index/read model，再考虑 `run list`；不要对每行做隐式 ledger 聚合。
+- 若没有明确消费者，应保持当前 inspect/report 双入口，不继续堆叠视图。
 - 不进入真实 adapter execution、UI、service 或 DB。

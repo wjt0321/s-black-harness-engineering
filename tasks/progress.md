@@ -2441,3 +2441,11 @@
 - 新增 `orchestration report generate --aggregate-lineage`，复用 `control-plane/recovery-lineage/v1` 与既有 aggregation 模块。
 - 显式 flag 下输出 `recovery_lineage` 并合并 aggregation 状态；默认 report 输出保持兼容，human 仅输出安全紧凑摘要。
 - 新增 JSON、human、默认兼容、validation failure 状态提升和 no-write 测试。
+
+
+## 2026-07-12 — Recovery Read Model Consolidation 验收
+
+- 新增 inspect/report 跨入口契约测试，覆盖正常链、branch、missing focus/parent、cross-task parent、cycle、duplicate conflict、脱敏和 no-write。
+- 提取 `merge_recovery_status()` 作为共享状态严重度合并规则，删除 inspect/report 中两份重复 precedence。
+- 同一 lifecycle events 下两个入口返回完全一致的 `control-plane/recovery-lineage/v1` payload。
+- 下一步转为集合级 lineage 需求评估；无明确消费者时不改造 `run list`。
