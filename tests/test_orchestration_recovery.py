@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from agent_runtime.orchestration_recovery import aggregate_recovery_lineage
+from agent_runtime.orchestration_recovery import (
+    aggregate_recovery_lineage,
+    merge_recovery_status,
+)
 
 
 def _write_events(root: Path, events: list[dict]) -> str:
@@ -282,3 +285,20 @@ def test_invalid_lineage_shape_is_rejected(tmp_path: Path) -> None:
 
     assert result.status == "validation_failed"
     assert [issue["code"] for issue in result.issues] == ["invalid_lineage_shape"]
+
+
+@pytest.mark.parametrize(
+    ("base_status", "recovery_status", "expected"),
+    [
+        ("pass", "pass", "pass"),
+        ("needs_approval", "pass", "needs_approval"),
+        ("pass", "needs_input", "needs_input"),
+        ("needs_approval", "validation_failed", "validation_failed"),
+        ("blocked", "needs_input", "blocked"),
+        ("validation_failed", "error", "error"),
+    ],
+)
+def test_merge_recovery_status_uses_shared_severity_order(
+    base_status: str, recovery_status: str, expected: str
+) -> None:
+    assert merge_recovery_status(base_status, recovery_status) == expected

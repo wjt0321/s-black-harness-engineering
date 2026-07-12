@@ -14,7 +14,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .orchestration_recovery import RecoveryLineageResult, aggregate_recovery_lineage
+from .orchestration_recovery import (
+    RecoveryLineageResult,
+    aggregate_recovery_lineage,
+    merge_recovery_status,
+)
 from .orchestration_run import _extract_lineage_for_request
 from .runtime_report import RuntimeReportResult, check_runtime_report
 
@@ -113,16 +117,7 @@ def generate_report(
             request_id=request_id,
             events_file=events_file,
         )
-        precedence = {
-            "pass": 0,
-            "needs_approval": 1,
-            "needs_input": 2,
-            "blocked": 3,
-            "validation_failed": 4,
-            "error": 5,
-        }
-        if precedence.get(recovery_lineage.status, 5) > precedence.get(status, 5):
-            status = recovery_lineage.status
+        status = merge_recovery_status(status, recovery_lineage.status)
 
     # Build a concise status summary for report-page consumption.
     status_summary = f"task_id={report.task_id} task={report.task_status or '-'} report={status}"

@@ -24,6 +24,23 @@ _METADATA_KEYS = (
     "fallback_from",
     "fallback_to",
 )
+_STATUS_PRECEDENCE = {
+    "pass": 0,
+    "needs_approval": 1,
+    "needs_input": 2,
+    "blocked": 3,
+    "validation_failed": 4,
+    "error": 5,
+}
+
+
+def merge_recovery_status(base_status: str, recovery_status: str) -> str:
+    """Return the more severe status for a recovery-enriched read model."""
+    base_rank = _STATUS_PRECEDENCE.get(base_status, _STATUS_PRECEDENCE["error"])
+    recovery_rank = _STATUS_PRECEDENCE.get(
+        recovery_status, _STATUS_PRECEDENCE["error"]
+    )
+    return recovery_status if recovery_rank > base_rank else base_status
 
 
 @dataclass

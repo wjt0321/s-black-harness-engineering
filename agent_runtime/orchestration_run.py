@@ -19,7 +19,11 @@ from pathlib import Path
 from typing import Any
 
 from .adapter_validation import validate_envelope_file
-from .orchestration_recovery import RecoveryLineageResult, aggregate_recovery_lineage
+from .orchestration_recovery import (
+    RecoveryLineageResult,
+    aggregate_recovery_lineage,
+    merge_recovery_status,
+)
 from .runtime_report import RuntimeReportResult, check_runtime_report
 
 
@@ -136,16 +140,7 @@ def inspect_run(
             request_id=request_id,
             events_file=events_file,
         )
-        precedence = {
-            "pass": 0,
-            "needs_approval": 1,
-            "needs_input": 2,
-            "blocked": 3,
-            "validation_failed": 4,
-            "error": 5,
-        }
-        if precedence.get(recovery_lineage.status, 5) > precedence.get(status, 5):
-            status = recovery_lineage.status
+        status = merge_recovery_status(status, recovery_lineage.status)
 
     return RunInspectResult(
         status=status,
