@@ -103,7 +103,7 @@
   - 边界：只读、无网络、无凭据、无 UI/service/DB、不执行 adapter。
 - **阶段验收已通过（2026-07-12）**：aggregation 契约、异常语义、默认兼容、输出脱敏与只读边界均已复核并通过验证。
 - **复用决策已落地**：优先接入单 request 的 `report generate --aggregate-lineage`；`run list` 继续保持 envelope-scoped，不做隐式 ledger 聚合。
-- **入口文档**：`docs/74-recovery-lineage-report-reuse.md`、`docs/73-recovery-lineage-aggregation-read-model.md`、最新 handoff。
+- **入口文档**：`docs/74-recovery-lineage-report-reuse.md`、`docs/73-recovery-lineage-aggregation-read-model.md`、`tasks/handoff-2026-07-12.md`。
 - **Recovery Read Model Consolidation 已通过（2026-07-12）**：inspect/report 共享状态合并 helper，跨入口 aggregation 契约、异常语义、脱敏和 no-write 已由专门测试锁定。
 - **当前优先方向：Stage 12 — Collection-level Lineage Need Assessment**
   - 入口文档：`docs/74-recovery-lineage-report-reuse.md`

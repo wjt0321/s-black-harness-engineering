@@ -76,7 +76,7 @@
 2. `74-recovery-lineage-report-reuse.md`
 3. `73-recovery-lineage-aggregation-read-model.md`
 4. `10-cli-poc-usage.md`
-5. 最新 handoff：`tasks/handoff-2026-07-12-recovery-lineage-aggregation.md`
+5. 最新 handoff：`tasks/handoff-2026-07-12.md`
 
 ## 其他入口
 

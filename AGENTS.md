@@ -18,7 +18,7 @@ python -m agent_runtime.cli doctor
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
 2. `docs/74-recovery-lineage-report-reuse.md`：当前复用设计事实源。
 3. `docs/73-recovery-lineage-aggregation-read-model.md`：底层 aggregation 契约。
-4. `tasks/handoff-2026-07-12-recovery-lineage-aggregation.md`：最新交接。
+4. `tasks/handoff-2026-07-12.md`：最新完成态交接。
 5. `docs/02-roadmap.md`：需要更完整路线图时再读。
 6. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
 
