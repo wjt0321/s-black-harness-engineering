@@ -2458,3 +2458,11 @@
 - 新增 `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`，作为 Stage 12 最终验收记录；最终验收 commit：`5e8df01`。
 - 当前阶段切换为 Stage 13 — Backend-first API Boundary，第一拍为 Boundary Contract Reconciliation，事实源为 `docs/51-backend-first-api-boundary.md`。
 - 稳定 semver 基线继续保持 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`，本轮不新增 tag。
+
+## 2026-07-12 — Stage 12 收口后的文档一致性审查
+
+- 审查 README、roadmap、Stage 13 事实源、stage digest、AGENTS、索引和最新 handoff；恢复入口与 Stage 12 验收事实保持一致。
+- README 的项目现状改为“离线、可审计 CLI / Runtime 已可内部试用”，同时明确真实 adapter execution、持久化 service/DB、鉴权和 UI 仍未开放。
+- 修正 roadmap 中 Stage 9 仍标为“当前阶段”、Stage 11 仍标为“下一步高优先级”的过期标签；Stage 13 保持唯一当前阶段。
+- 将 51 文档的协议/UI 衔接标为长期方向，明确当前第一拍仍是 Boundary Contract Reconciliation。
+- 未新增重复设计文档，未改变代码、schema、安全边界或 semver/tag。

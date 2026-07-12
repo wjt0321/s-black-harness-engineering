@@ -187,7 +187,7 @@
 
 ---
 
-## Stage 9 — 中枢台定位校正与总蓝图（当前阶段）
+## Stage 9 — 中枢台定位校正与总蓝图（已完成）
 
 目标：明确项目不是单纯 guardrail 工具，而是一个中枢运行台；guardrail 只是其安全与审计内核。
 
@@ -244,7 +244,7 @@
 
 ---
 
-## Stage 11 — Capability Routing Model（下一步高优先级）
+## Stage 11 — Capability Routing Model（约束路由与 decision trace 第一版已落地）
 
 目标：在 Stage 10 source-backed registry 投影基础上，继续把 capability-level routing 抽象做扎实，让上层任务调度优先面向 capability，而不是硬编码具体工具名。
 

@@ -54,7 +54,11 @@ In one sentence:
 
 ## Where The Project Is Now
 
-The repository has already moved from a read-only checking CLI to a minimal controlled-write runtime, and has now started to formalize the orchestration-hub backend blueprint.
+The repository now provides an **offline, auditable CLI/runtime security core suitable for internal trials**, with the Stage 12 control-plane read model accepted:
+
+- it can already support policy validation, task/event ledgers, capability routing, dry-runs, controlled writes, and recovery-lineage auditing;
+- the current Stage 13 Boundary Contract Reconciliation will freeze backend resource and operation contracts reusable by future CLI, automation, and UI entry points;
+- real adapter execution, persistent services/databases, authentication, and UI remain unavailable, so this is not yet an auto-executing production orchestration hub.
 
 ## Progress Bar
 

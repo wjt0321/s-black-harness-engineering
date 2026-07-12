@@ -54,7 +54,11 @@
 
 ## 当前项目到了哪里
 
-当前仓库已经从“只读检查 CLI”推进到了“最小受控写入 Runtime”，并开始补“中枢台后端”的总蓝图。
+当前仓库已经形成可内部试用的**离线、可审计 CLI / Runtime 安全内核**，并完成 Stage 12 control-plane read model 验收：
+
+- 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
+- 当前进入 Stage 13 Boundary Contract Reconciliation，准备冻结未来 CLI / automation / UI 可共同复用的后端资源与操作契约；
+- 真实 adapter execution、持久化 service/DB、鉴权和 UI 尚未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条
 
