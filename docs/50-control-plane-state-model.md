@@ -486,3 +486,10 @@ next_action: 人工 review draft，确认后执行 commit 或驳回
 - `51 — Backend-first API Boundary`
 
 这样未来无论先做 CLI、脚本接口还是 Web 控制台，都能围绕统一状态对象暴露可操作边界。
+
+
+## Stage 12 收口结论（2026-07-12）
+
+Stage 12 已按 read-only control-plane scope 完成验收。Task/Event/Run/Approval/Artifact/Evidence/Report 的对象关系、顶层/附属分类和面向审计/回放/future UI 的职责已由本文与 `docs/51-backend-first-api-boundary.md` 冻结；routing/read-loop snapshot 和 recovery lineage 已形成确定性、脱敏、无副作用的可消费投影。
+
+以下事项正式延期，不作为 Stage 12 未完成项继续悬挂：持久化 Run/Event/Report storage、数据库/service、协议实现、UI 和真实 adapter execution。对象生命周期的设计边界已经明确，但持久化实现必须由后续阶段重新立项并保持受控写入边界。最终验收见 `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`。

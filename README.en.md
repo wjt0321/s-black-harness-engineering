@@ -103,8 +103,8 @@ The repository formalizes this through `docs/64-versioning-governance.md`. `v0.1
 - ✅ Stage 9 — Orchestration-hub positioning reset and blueprint
 - 🟡 Stage 10 — Adapter Runtime Interface (source-backed registry projection v1 landed; continuing refinement)
 - 🟡 Stage 11 — Capability Routing Model (constraint routing + decision trace v1 landed; continuing refinement)
-- 🟡 Stage 12 — Control Plane State Model (read-only loop first version frozen as `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`; recovery lineage aggregation v1 landed and is entering stage acceptance)
-- 🟡 Stage 13 — Backend-first API Boundary (documented, protocol choice still deferred)
+- ✅ Stage 12 — Control Plane State Model (read-only loop, recovery lineage aggregation, and inspect/report consolidation completed final acceptance)
+- 🟡 Stage 13 — Backend-first API Boundary (current stage: Boundary Contract Reconciliation; protocol choice remains deferred)
 - 🟡 Stage 14 — Minimal orchestration-hub execution loop (documents, CLI draft, and run-side A+B commit landed)
 - 🟡 Stage 15 — Backend preparation before UI / dashboard (read-model CLI first version landed, frontend still deferred)
 - 🟡 Stage 15.5 — Orchestration controlled-write boundary (first controlled handoff / approval resolve landed)
@@ -130,11 +130,10 @@ The current state is best understood as:
 
 The most natural next direction is not to keep adding scattered features, but to:
 
-1. keep the accepted **Stage 12 recovery lineage aggregation** contract and failure semantics stable
-2. reuse it first in `orchestration report generate --aggregate-lineage`; keep `run list` envelope-scoped without implicit ledger aggregation
-3. keep **Stage 13** as prepared context without entering HTTP / RPC / UI / DB yet
+1. treat **Stage 12 as complete**, with final acceptance recorded in `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`
+2. enter **Stage 13 Boundary Contract Reconciliation** and map real CLI/read models to stable / preview / unavailable contracts
+3. keep HTTP / RPC, UI, services, and DB deferred
 4. preserve the read-only, controlled-write, and no-real-adapter-execution boundaries
-5. backfill guardrail gaps only when later slices expose them
 
 Implemented capability highlights:
 

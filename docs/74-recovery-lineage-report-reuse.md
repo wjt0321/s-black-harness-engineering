@@ -44,3 +44,8 @@ orchestration report generate ... --aggregate-lineage
 - JSON、human、默认兼容和原有 aggregation 单元测试继续通过。
 
 下一步不直接改造 `run list`。只有出现明确的集合级消费者后，才设计独立 lineage index/read model，避免逐行重复扫描 ledger。
+
+
+## Stage 12 最终决策
+
+Collection-level lineage 在 Stage 12 不实现：当前没有明确消费者，inspect/report 双入口已经覆盖单 request 和 report 场景。`run list` 保持 envelope-scoped；未来若出现跨 envelope 查询需求，必须先设计独立、一次扫描、只读的 lineage index projection。

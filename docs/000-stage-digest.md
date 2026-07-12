@@ -11,15 +11,17 @@
 
 ## 当前基线
 
-- 当前稳定基线：`v0.12.1-orchestration-read-loop-snapshot`
+- 稳定基线：`v0.12.1-orchestration-read-loop-snapshot`
 - 冻结 commit：`0419a04`
+- Stage 12 最终收口：本轮验收提交；精确 commit 在最终 handoff 中记录
 - 上一 foundation 基线：`v0.12.0-orchestration-foundation`（commit `38b4b69`）
-- 当前 HEAD：以 `git rev-parse --short HEAD` 为准；`0419a04` 是本里程碑冻结代码基线，后续仅文档收口提交可位于其后
+- 本轮按 release notes 收口，不创建新的 semver tag
 
 ## 当前阶段
 
-- **Stage 12 — Control Plane State Model（read-only loop 第一版已冻结）**
-- 当前成果：Registry → Routing → Constraints/Trace → Routing Snapshot → Run Preview → Event/Report Read Loop 已闭合，并在 post-freeze 切片中补上 retry/fallback recovery lineage 聚合只读视图；全部保持 **只读 / ephemeral / 非执行**
+- **Stage 13 — Backend-first API Boundary（Boundary Contract Reconciliation）**
+- Stage 12 已完成：control-plane 对象关系、routing/read-loop snapshot、recovery lineage inspect/report 和跨入口状态契约均已验收。
+- 当前任务：把真实 CLI/read models 映射到 stable / preview / unavailable 的资源与操作边界；仍不选择 HTTP/RPC，不启动 service/UI/DB。
 
 ### Stage 10 基线（保留）
 
@@ -89,35 +91,29 @@
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再跑：`python -m agent_runtime.cli docs context`
-3. 再读：`docs/02-roadmap.md`
-4. 如需接续上轮会话：读最新 `tasks/handoff-*.md`
+2. 再读：`docs/51-backend-first-api-boundary.md`
+3. 再读：`tasks/handoff-2026-07-12.md`
+4. 再跑：`python -m agent_runtime.cli docs context --json`
+5. 需要历史事实时再读：`docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`
 
 ## 下一步做什么
 
-- **已冻结**：`v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，annotated tag 已创建并 push）。post-freeze 开发继续基于该冻结点推进。
-- **已落地（post-freeze）**：Recovery Lineage Aggregation Read Model 第一版。
-  - CLI：`orchestration run inspect --aggregate-lineage`。
-  - 数据源：现有 run lifecycle event metadata；不增加新事件类型或索引。
-  - 输出：root/latest/leaves、attempt count、effective plan hash、稳定 request summaries 与安全 issues。
-  - 边界：只读、无网络、无凭据、无 UI/service/DB、不执行 adapter。
-- **阶段验收已通过（2026-07-12）**：aggregation 契约、异常语义、默认兼容、输出脱敏与只读边界均已复核并通过验证。
-- **复用决策已落地**：优先接入单 request 的 `report generate --aggregate-lineage`；`run list` 继续保持 envelope-scoped，不做隐式 ledger 聚合。
-- **入口文档**：`docs/74-recovery-lineage-report-reuse.md`、`docs/73-recovery-lineage-aggregation-read-model.md`、`tasks/handoff-2026-07-12.md`。
-- **Recovery Read Model Consolidation 已通过（2026-07-12）**：inspect/report 共享状态合并 helper，跨入口 aggregation 契约、异常语义、脱敏和 no-write 已由专门测试锁定。
-- **当前优先方向：Stage 12 — Collection-level Lineage Need Assessment**
-  - 入口文档：`docs/74-recovery-lineage-report-reuse.md`
-  - 重点：先确认是否存在明确集合级消费者；如有，先设计独立 lineage index/read model，不对 `run list` 逐行隐式扫描 ledger。
-- **边界不变**：不进入真实 adapter execution、UI、service、DB。
+- **Stage 12 已完成**：最终验收覆盖对象关系、deterministic snapshot、read-loop、recovery lineage、默认兼容、脱敏与 no-write。
+- **正式延期**：持久化 Run/Event/Report storage、协议、鉴权、UI、service、DB 和真实 adapter execution。
+- **Collection-level lineage 决策**：无明确消费者，本阶段不实现 index，不改造 envelope-scoped `run list`。
+- **当前优先方向：Stage 13 — Boundary Contract Reconciliation**
+  - 入口文档：`docs/51-backend-first-api-boundary.md`
+  - 重点：把当前真实 CLI/read models 分类为 stable / preview / unavailable，冻结 identity、status、list/get/action 和错误边界。
+- **边界不变**：不选择 HTTP/RPC，不进入 UI/service/DB，不执行真实 adapter。
 
 ## 重要约束
 
 - 仍然**不做真实 adapter execution**
 - 仍然**不做 UI / service / DB**
-- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、73 设计文档与最新 handoff，并保持验证/提交边界
+- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、51 设计文档与最新 handoff，并保持验证/提交边界
 
 ## 一句话理解当前项目
 
 这项目现在的重点不是继续堆零散功能，而是：
 
-> 在保持受控写入边界的前提下，把 orchestration control-plane 的恢复链路、read model 和后端主线继续做扎实。
+> 在不服务化的前提下，把现有 CLI/read models 收敛为稳定、可由未来入口复用的后端资源与操作契约。

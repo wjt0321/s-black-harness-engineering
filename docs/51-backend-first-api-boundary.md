@@ -266,3 +266,16 @@ Guardrail 的结果决定写操作如何执行：
 - 后端优先 API 边界（51）
 
 这是 UI 和服务化之前需要的最小后端上下文。
+
+
+## Stage 13 进入状态（2026-07-12）
+
+Stage 12 已完成，本文成为当前阶段事实源。Stage 13 第一拍是 **Boundary Contract Reconciliation**：用现有真实 CLI/read models 校准本文资源与操作模型，而不是立即选择协议或启动服务。
+
+首先需要形成映射表：
+
+- stable：已有明确标识、状态与只读/受控写语义，可直接映射；
+- preview/ephemeral：例如 routing/read-loop snapshot，只能作为显式 preview DTO；
+- unavailable：例如持久 `run_id`、`report_id`、独立 Report collection，当前不得伪装为已实现资源。
+
+首轮重点复核 Task、Run、Approval、Artifact、Report 的 identity、status、list/get/action、错误状态和默认兼容；协议、鉴权、HTTP/RPC、UI、service、DB 与真实 adapter execution 继续暂缓。

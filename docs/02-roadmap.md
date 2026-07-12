@@ -276,44 +276,38 @@
 
 ---
 
-## Stage 12 — Control Plane State Model（read-only loop 第一版已落地，持续巩固）
+## Stage 12 — Control Plane State Model（已完成）
 
 目标：把未来 CLI、UI、自动化共同依赖的状态对象讲清楚，并把路由/preflight 决策沉淀为可消费的控制面状态。
 
-要做的事：
+完成范围：
 
-- 定义 task / event / run / approval / artifact / evidence / report 等对象关系
-- 明确哪些是顶层对象，哪些是附属对象
-- 明确这些对象如何支撑审计、回放、观察和 future UI
+- Task / Event / Run / Approval / Artifact / Evidence / Report 的关系、职责和顶层/附属分类已在 50/51 中冻结。
+- `RoutingDecisionSnapshot`、routing snapshot 引用和 `OrchestrationReadLoopSnapshot` 已形成确定性、内容寻址、只读投影。
+- recovery lineage 已通过 inspect/report 双入口聚合，并由跨入口 contract tests 锁定状态、异常、脱敏和 no-write。
+- collection-level lineage 经评估无明确消费者，本阶段不实现 index，不改造 envelope-scoped `run list`。
 
-已落地第一拍：
+正式延期：
 
-- `RoutingDecisionSnapshot` 只读投影：由 `RoutePreviewResult` / `PreflightResult` 直接构造，不写 ledger，不生成持久 Run。
-- `snapshot_id` 由 canonical safe payload 的 SHA-256 哈希确定性生成。
-- CLI：`orchestration route snapshot` 与 `orchestration preflight --snapshot`。
-- routing 状态与 guardrail 状态在 snapshot 中分层表达。
-- Routing Snapshot → Run Preview 安全引用：`orchestration run --dry-run` 支持 `--routing-snapshot-id sha256:<64hex>`，引用进入结果、artifact refs、event metadata 与 `plan_hash`；不读取磁盘、不持久化 snapshot、非法格式返回 `needs_input`。
-- Run Preview → Event / Report 只读投影闭环：`orchestration run --dry-run --snapshot` 基于真实 `RunDryRunResult` 一次性构造 `OrchestrationReadLoopSnapshot`，包含 Run Preview、candidate Event summaries、Report Preview；不写 ledger、不生成持久对象、不执行 adapter。
-
-仍后续：
-
-- 把 snapshot 与持久化 Run/Event 对象衔接（当前仍只是 ephemeral read model）。
-- 定义 Task / Run / Approval / Artifact / Evidence / Report 的完整字段与生命周期。
+- 持久化 Run/Event/Report storage 与数据库/service 实现；
+- HTTP/RPC、鉴权、UI 与真实 adapter execution。
 
 冻结状态：
 
-- Stage 12 第一拍已冻结为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，已 push）。
-- 当前阶段继续在冻结基线之上巩固；recovery lineage 聚合已通过 `orchestration run inspect --aggregate-lineage` 落地并复用到 `orchestration report generate --aggregate-lineage`；`run list` 暂不引入隐式 ledger 聚合。
+- 第一拍冻结：`v0.12.1-orchestration-read-loop-snapshot`（`0419a04`，已 push）。
+- Stage 12 最终验收已通过；最终 release notes：`docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`。
+- 本次按阶段 release notes 收口，不创建新的 semver tag。
 
 主要交付物：
 
 - `docs/50-control-plane-state-model.md`
 - `docs/73-recovery-lineage-aggregation-read-model.md`
 - `docs/74-recovery-lineage-report-reuse.md`
+- `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`
 
 ---
 
-## Stage 13 — Backend-first API Boundary（设计文档已落地，协议选择仍暂缓）
+## Stage 13 — Backend-first API Boundary（当前阶段）
 
 目标：虽然现在不急着做 UI，但后端必须先按未来可被 UI 调用的方式设计。
 
@@ -330,8 +324,8 @@
 说明：
 
 - 资源模型与操作模型已在 51 中定义。
-- 协议（REST / RPC / 本地进程调用）和鉴权细节仍不在本阶段展开。
-- 本阶段仍保持“文档先行”，不进入协议实现。
+- 当前第一拍：把现有真实 CLI/read models 映射为 stable / preview / unavailable 资源与操作契约。
+- 协议（REST / RPC / 本地进程调用）、鉴权、service 和 UI 仍不在本阶段展开。
 
 ---
 

@@ -214,3 +214,12 @@ Release notes 是阶段收口文档，不自动等于 tag 候选。
 - 已实际冻结 `v0.12.0-orchestration-foundation`（commit `38b4b69`，annotated tag 已 push）。
 - 已实际冻结 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，annotated tag 已 push），覆盖 Stage 10–12 的 source-backed registry、约束路由、decision trace、routing snapshot 与 read-loop snapshot 只读 read model。
 - 后续 semver tag 仍只在里程碑级冻结点创建，不逐阶段补 tag。
+
+## Stage 12 最终收口（2026-07-12）
+
+- Stage 12 — Control Plane State Model 已按只读、确定性、可审计的 read-model 范围完成最终验收。
+- 本次收口使用 release notes + Git commit 记录，验收入口为 `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`。
+- 当前稳定 semver 基线继续保持 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`；本次不创建新 tag。
+- 原因：本次工作完成的是阶段契约验收、延期项划界和下一阶段交接，没有形成需要新增 semver 对外引用的独立执行能力包。
+- Stage 12 最终验收 commit：待本轮首个冻结提交后回填。
+- 后续进入 Stage 13 — Backend-first API Boundary，第一拍为 Boundary Contract Reconciliation。

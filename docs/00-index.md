@@ -66,15 +66,15 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/release-notes/` | 各阶段 release notes（含最新 `72-release-notes-read-loop-snapshot.md`） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `75-release-notes-stage12-control-plane-state-model.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `74-recovery-lineage-report-reuse.md`
-3. `73-recovery-lineage-aggregation-read-model.md`
+2. `51-backend-first-api-boundary.md`
+3. `02-roadmap.md`
 4. `10-cli-poc-usage.md`
 5. 最新 handoff：`tasks/handoff-2026-07-12.md`
 

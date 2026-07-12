@@ -2449,3 +2449,12 @@
 - 提取 `merge_recovery_status()` 作为共享状态严重度合并规则，删除 inspect/report 中两份重复 precedence。
 - 同一 lifecycle events 下两个入口返回完全一致的 `control-plane/recovery-lineage/v1` payload。
 - 下一步转为集合级 lineage 需求评估；无明确消费者时不改造 `run list`。
+
+## 2026-07-12 — Stage 12 Control Plane State Model 最终收口
+
+- 对照 roadmap 与 50/51 设计文档完成最终审计：对象关系、顶层/附属分类、routing/read-loop snapshot、recovery lineage inspect/report、默认兼容、确定性、脱敏与 no-write 均具备验收证据。
+- 将持久化 Run/Event/Report storage、snapshot 到持久对象衔接、协议、鉴权、service、DB、UI 和真实 adapter execution 正式延期，不再作为 Stage 12 悬挂项。
+- 明确 collection-level lineage 暂无消费者，本阶段不实现 index，不改造 envelope-scoped `run list`。
+- 新增 `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`，作为 Stage 12 最终验收记录。
+- 当前阶段切换为 Stage 13 — Backend-first API Boundary，第一拍为 Boundary Contract Reconciliation，事实源为 `docs/51-backend-first-api-boundary.md`。
+- 稳定 semver 基线继续保持 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`，本轮不新增 tag。

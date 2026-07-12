@@ -16,10 +16,10 @@ python -m agent_runtime.cli doctor
 然后按顺序阅读：
 
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
-2. `docs/74-recovery-lineage-report-reuse.md`：当前复用设计事实源。
-3. `docs/73-recovery-lineage-aggregation-read-model.md`：底层 aggregation 契约。
-4. `tasks/handoff-2026-07-12.md`：最新完成态交接。
-5. `docs/02-roadmap.md`：需要更完整路线图时再读。
+2. `docs/51-backend-first-api-boundary.md`：Stage 13 当前设计事实源。
+3. `tasks/handoff-2026-07-12.md`：Stage 12 收口与 Stage 13 入口交接。
+4. `docs/02-roadmap.md`：需要更完整路线图时再读。
+5. `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`：上一阶段验收事实。
 6. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
 
 不要先遍历整个 `docs/` 或 `tasks/progress.md`。
@@ -28,12 +28,12 @@ python -m agent_runtime.cli doctor
 
 `s-black harness engineering`（Python 包名 `agent_runtime`）是一个轻量、可审计、可迁移的 Agent Runtime / Harness Orchestrator，逐步抽象规则门禁、任务账本、adapter envelope、能力路由和控制面 read model。
 
-当前阶段：**Stage 12 — Control Plane State Model**。
+当前阶段：**Stage 13 — Backend-first API Boundary**。
 
 - 冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation 第一版。
-- 当前入口：`orchestration run inspect --aggregate-lineage` 与 `orchestration report generate --aggregate-lineage`。
-- aggregation 与 report reuse consolidation 均已通过验收；inspect/report 共享状态合并契约。下一步仅评估集合级 lineage 的真实需求，`run list` 不做逐行隐式 ledger 聚合。
+- Stage 12 已完成：routing/read-loop snapshot 与 recovery lineage read model 已冻结并通过验收。
+- 当前入口：`docs/51-backend-first-api-boundary.md`。第一拍只做 Boundary Contract Reconciliation，把真实 CLI/read models 分类为 stable / preview / unavailable。
 
 项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
 

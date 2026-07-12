@@ -103,8 +103,8 @@
 - ✅ Stage 9 — 中枢台定位校正与总蓝图
 - 🟡 Stage 10 — Adapter Runtime Interface（source-backed registry 投影第一版已落地，持续巩固）
 - 🟡 Stage 11 — Capability Routing Model（约束路由 + decision trace 第一版已落地，持续巩固）
-- 🟡 Stage 12 — Control Plane State Model（read-only loop 第一版已冻结为 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`；recovery lineage 聚合 read model 第一版已落地，进入阶段验收）
-- 🟡 Stage 13 — Backend-first API Boundary（设计文档已落地，协议选择仍暂缓）
+- ✅ Stage 12 — Control Plane State Model（read-only loop、recovery lineage aggregation 与 inspect/report consolidation 已完成验收）
+- 🟡 Stage 13 — Backend-first API Boundary（当前阶段：Boundary Contract Reconciliation；协议选择仍暂缓）
 - 🟡 Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A+B commit 已落地）
 - 🟡 Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，前端实现仍暂缓）
 - 🟡 Stage 15.5 — Orchestration 受控写入边界（第一批 controlled handoff / approval resolve 已落地）
@@ -130,11 +130,10 @@
 
 下一步最自然的方向不是继续盲目加功能，而是：
 
-1. **Stage 12 recovery lineage aggregation** 第一版已通过契约、异常语义与默认兼容验收
-2. 已优先复用到 `orchestration report generate --aggregate-lineage`；`run list` 暂不引入隐式 ledger 聚合
-3. 保留 **Stage 13** 上下文，但暂不进入 HTTP / RPC / UI / DB
+1. **Stage 12 已完成**，最终验收记录见 `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`
+2. 当前进入 **Stage 13 Boundary Contract Reconciliation**，把真实 CLI/read models 映射为 stable / preview / unavailable
+3. 暂不选择 HTTP / RPC，不进入 UI / service / DB
 4. 继续维持只读、受控写入和无真实 adapter execution 的安全边界
-5. guardrail 若在后续切片中暴露缺口，再边做边回补
 
 已落地的主线能力包括：
 
