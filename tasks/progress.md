@@ -2500,3 +2500,12 @@
 - replay 直接复用 `RuntimeReportResult`，不重复路由/预检/计划，不写 ledger，不执行 adapter；跨入口一致性、确定性、脱敏、no-write 已测试。
 - read-loop Report Preview 的 Evidence candidate projection、Stage14 七步对账、CLI 文档、release notes、digest 和 handoff 已完成。
 - Stage 14 收口，等待用户指令，不 push、不创建新 tag。
+
+
+## 2026-07-13 — Stage 14 推送状态与今日交接文档收口
+
+- 确认 `main` 与 `origin/main` 已包含 Stage 14 Evidence projection `4a64ace` 和最终收口 `03b64dd`。
+- 修正 release notes 中“本地提交、等待 push”的过期状态，记录已推送事实。
+- 更新 stage digest 的确切收口提交，并明确当前无进行中的产品阶段。
+- 精简并重写 `tasks/handoff-2026-07-13.md`，保留下一轮恢复顺序、已交付能力、决策点、安全边界和验证入口。
+- Stage 16 仍为远期候选；未明确消费者、产品入口和授权范围前，不自动启动 UI/API/service/DB/真实 adapter execution。

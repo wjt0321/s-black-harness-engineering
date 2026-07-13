@@ -14,6 +14,8 @@
 - 稳定基线：`v0.12.1-orchestration-read-loop-snapshot`
 - 冻结 commit：`0419a04`
 - Stage 13 最终收口提交：`9625ba2`
+- Stage 14 Evidence projection 提交：`4a64ace`
+- Stage 14 最终收口提交：`03b64dd`（已推送至 `origin/main`）
 - 上一 foundation 基线：`v0.12.0-orchestration-foundation`（commit `38b4b69`）
 - 本轮按 release notes 收口，不创建新的 semver tag
 
@@ -21,7 +23,7 @@
 
 - **Stage 14 — 中枢台最小编排闭环（已完成）**
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
-- 当前任务：将已冻结契约应用到最小、可回放、可审计的本地编排闭环；仍不选择 HTTP/RPC，不启动 service/UI/DB，不执行真实 adapter。
+- 当前无进行中的产品阶段；Stage 14 收口后等待明确的产品入口或集成需求，不自动启动 Stage 16。
 - Stage 14 已完成：七步闭环对账、read-loop Evidence candidate 投影、显式 replay projection、结构化 `next_action`、跨入口一致性与安全边界均已冻结；不启动 HTTP/RPC、service、UI、DB 或真实 adapter。
 
 ### Stage 10 基线（保留）

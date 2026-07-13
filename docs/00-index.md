@@ -35,7 +35,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台后端主线（当前阶段重点）
+### 5. 想看中枢台后端主线（Stage 14 已收口）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
