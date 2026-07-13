@@ -2472,4 +2472,6 @@
 - 对照真实 `orchestration` CLI help、现有 read-model 测试和 51 资源/操作模型完成首轮对账。
 - 更新 `docs/51-backend-first-api-boundary.md`：修正真实命令名，区分 stable、受限 stable、preview 和 unavailable，并明确 run/report 的 envelope/request 边界。
 - 确认当前可稳定复用的是受限 CLI/read model；独立 Run/Report collection、真实 adapter execution、service/auth/DB/UI 不伪装为已实现。
+- 新增 `tests/test_orchestration_boundary_contract.py`，冻结真实 orchestration 子命令集合与 preview/commit/retry/fallback/snapshot/aggregate-lineage flag 边界。
+- inspect/report/read-loop/snapshot 既有测试已覆盖默认输出兼容与 preview 字段；本轮不重复添加同义测试。
 - 下一拍：为 stable/preview/unavailable 矩阵补字段、错误和默认兼容测试，不进入协议选型或服务化。
