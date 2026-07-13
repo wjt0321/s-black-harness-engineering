@@ -35,6 +35,8 @@
 
 ## 资源模型
 
+以下内容定义目标资源语义，不等于当前已经存在对应持久化 collection 或独立 id。当前真实可用性以“Stage 13 首轮契约对账结果”为准。
+
 ### 顶层资源
 
 顶层资源是指具有独立标识、独立生命周期、可被直接 list/get/operate 的对象。它们对应 50 中的主要状态对象，也是未来 UI 主要面板的直接映射。
@@ -43,7 +45,7 @@
 |:---|:---|:---|:---|:---|
 | Task | `task_id` | `Task` | `planned` -> `running` / `blocked` -> `finished` / `failed` | 业务工作单元，闭环的入口和收口锚点。 |
 | Run | `run_id` | `Run` | `pending` -> `running` -> `succeeded` / `failed` / `blocked` / `canceled` | 一次具体的执行尝试，绑定 task、capability、adapter、mode。 |
-| Approval | `approval_id` | `ApprovalRequest` | `pending` -> `granted` / `rejected` / `expired` | 需要人工确认的动作，可独立 list/resolve。 |
+| Approval | `approval_id` | `ApprovalRequest` | `pending` -> `granted` / `denied` / `expired` | 需要人工确认的动作，可独立 list/resolve。 |
 | Artifact | `artifact_id` | `Artifact` | `created` -> 可被引用/预览 | 运行产物，如 draft、report、snapshot、exported json。 |
 | Report | `report_id` | `Report` | 按 task/run 聚合生成 | 阶段收口摘要，面向人类或上层系统。 |
 
@@ -70,17 +72,17 @@
 
 | 操作 | 伪接口名 | 类型 | 输入摘要 | 输出摘要 | 对应 52 步骤 | 对应 53 草案命令 | 对应 50 对象 |
 |:---|:---|:---:|:---|:---|:---:|:---|:---|
-| list | `TaskCollection.list` | 只读 | filter、pagination | Task 摘要列表 | — | `orchestration task list` | `Task` |
+| list | `TaskCollection.list` | 只读 | optional status | Task 摘要列表 | — | `orchestration task list` | `Task` |
 | get | `TaskDetail.get` | 只读 | `task_id` | Task 详情 + 最新状态 | — | `orchestration task get` | `Task` |
 | create | `TaskCollection.create` | 受控写入 | task intent | 新 Task + 初始 Event | 1. Submit Task | `orchestration task submit` | `Task`、`Event` |
 | preview_routing | `TaskDetail.previewRouting` | 只读 | `task_id` / capability / mode | routing 结果摘要 | 2. Capability Routing | `orchestration route preview` | — |
 | routing_snapshot | `TaskDetail.routingSnapshot` | 只读 | `task_id` / capability / mode | `RoutingDecisionSnapshot` | 2. Capability Routing | `orchestration route snapshot` | `RoutingDecisionSnapshot` |
 | preflight | `TaskDetail.preflight` | 只读 | `task_id` / candidate run | preflight 结果 | 3. Guardrail Preflight | `orchestration preflight` | — |
 | preflight_snapshot | `TaskDetail.preflightSnapshot` | 只读 | `task_id` / candidate run | 带 guardrail 的 `RoutingDecisionSnapshot` | 3. Guardrail Preflight | `orchestration preflight --snapshot` | `RoutingDecisionSnapshot` |
-| run | `TaskAction.run` | 受控写入 | `task_id` / mode / input context | 新 Run + 初始 Event | 4. Adapter Dry-run / Commit | `orchestration run` | `Run`、`Event` |
-| retry | `TaskAction.retry` | 受控写入 | `task_id` / `run_id` | 新 Run（`retry_of`） | 7. Fallback / Retry | `orchestration run --retry` | `Run`、`Event` |
-| fallback | `TaskAction.fallback` | 受控写入 | `task_id` / target adapter | 新 Run（`fallback_from`） | 7. Fallback / Retry | `orchestration run --fallback-to` | `Run`、`Event` |
-| report | `TaskDetail.report` | 只读 | `task_id` | Report 摘要或详情 | 7. Generate Report | `orchestration report` | `Report` |
+| run | `TaskAction.run` | 受控写入 | `task_id` / request / mode | Run preview，或 envelope draft + lifecycle events | 4. Adapter Dry-run / Commit | `orchestration run` | `Run`、`Event` |
+| retry | `TaskAction.retry` | 受控写入 | `task_id` / source `request_id` | 新 request plan（`retry_of`） | 7. Fallback / Retry | `orchestration run --retry-of` | `Run`、`Event` |
+| fallback | `TaskAction.fallback` | 受控写入 | `task_id` / source `request_id` / target adapter | 新 request plan（`fallback_from`） | 7. Fallback / Retry | `orchestration run --fallback-from` + `--fallback-to` | `Run`、`Event` |
+| report | `TaskDetail.report` | 只读（受限） | `task_id` / `request_id` / envelope | 当前 task + request 的 Report projection | 7. Generate Report | `orchestration report generate` | `Report` |
 
 说明：`orchestration run --dry-run --snapshot` 在 `TaskAction.run` 的只读 preview 路径上额外产生一个 ephemeral `OrchestrationReadLoopSnapshot` read model，包含 Run Preview、candidate Event summaries 与 Report Preview；它不是持久化资源，不写入 ledger，仅作为控制面状态投影供 CLI / 未来 API 消费。
 
@@ -88,33 +90,33 @@
 
 | 操作 | 伪接口名 | 类型 | 输入摘要 | 输出摘要 | 对应 52 步骤 | 对应 53 草案命令 | 对应 50 对象 |
 |:---|:---|:---:|:---|:---|:---:|:---|:---|
-| list | `RunCollection.list` | 只读 | `task_id` filter、status filter | Run 摘要列表 | — | `orchestration run list` | `Run` |
-| get | `RunDetail.get` | 只读 | `run_id` | Run 详情 + Artifact / Evidence 引用 | 5. Record State | `orchestration inspect` | `Run`、`Artifact`、`Evidence` |
-| inspect | `RunDetail.inspect` | 只读 | `run_id` | 紧凑摘要（artifact counts、evidence counts） | 5. Record State | `orchestration inspect` | `Run`、`Artifact`、`Evidence` |
+| list | `RunCollection.list` | 只读（受限） | envelope / optional `task_id` | envelope-scoped Run 摘要列表 | — | `orchestration run list` | `Run` |
+| get | `RunDetail.get` | 不可用 | `run_id` | 独立持久 Run 详情尚未实现 | — | — | `Run`、`Artifact`、`Evidence` |
+| inspect | `RunDetail.inspect` | 只读（受限） | `task_id` / `request_id` / envelope | 紧凑摘要与可选 recovery lineage | 5. Record State | `orchestration run inspect` | `Run`、`Artifact`、`Evidence` |
 
 ### Approval 上的操作
 
 | 操作 | 伪接口名 | 类型 | 输入摘要 | 输出摘要 | 对应 52 步骤 | 对应 53 草案命令 | 对应 50 对象 |
 |:---|:---|:---:|:---|:---|:---:|:---|:---|
-| list | `ApprovalCollection.list` | 只读 | status filter、task filter | Approval 摘要列表 | — | `orchestration approval list` | `ApprovalRequest` |
-| get | `ApprovalDetail.get` | 只读 | `approval_id` | Approval 详情 | 6. Resolve Approval | `orchestration approval get` | `ApprovalRequest` |
+| list | `ApprovalCollection.list` | 只读（受限） | envelope / optional status | envelope-scoped Approval 摘要列表 | — | `orchestration approval list` | `ApprovalRequest` |
+| get | `ApprovalDetail.get` | 只读（受限） | envelope / `approval_id` | Approval 详情 | 6. Resolve Approval | `orchestration approval get` | `ApprovalRequest` |
 | resolve | `ApprovalResolution.resolve` | 受控写入 | `approval_id` / decision / reason | 更新后的 Approval + Event | 6. Resolve Approval | `orchestration approval resolve` | `ApprovalRequest`、`Event` |
 
 ### Artifact 上的操作
 
 | 操作 | 伪接口名 | 类型 | 输入摘要 | 输出摘要 | 对应 52 步骤 | 对应 53 草案命令 | 对应 50 对象 |
 |:---|:---|:---:|:---|:---|:---:|:---|:---|
-| list | `ArtifactCollection.list` | 只读 | `task_id` / `run_id` filter | Artifact 摘要列表 | — | `orchestration artifact list` | `Artifact` |
-| get | `ArtifactDetail.get` | 只读 | `artifact_id` | Artifact 元数据 + 安全引用 | 5. Record State | `orchestration artifact get` | `Artifact` |
-| export | `ArtifactAction.export` | 受控写入 | envelope draft / target path | 持久化后的 Artifact | 4. Adapter Dry-run / Commit | `runtime draft export --commit` | `Artifact` |
+| list | `ArtifactCollection.list` | 只读（受限） | envelope / optional type / request | envelope-scoped Artifact 摘要列表 | — | `orchestration artifact list` | `Artifact` |
+| get | `ArtifactDetail.get` | 只读（受限） | envelope / `artifact_id` | Artifact 元数据 + 安全引用 | 5. Record State | `orchestration artifact get` | `Artifact` |
+| export | `ArtifactAction.export` | 不可用 | envelope draft / target path | orchestration Artifact API 尚未实现 | — | — | `Artifact` |
 
 ### Report 上的操作
 
 | 操作 | 伪接口名 | 类型 | 输入摘要 | 输出摘要 | 对应 52 步骤 | 对应 53 草案命令 | 对应 50 对象 |
 |:---|:---|:---:|:---|:---|:---:|:---|:---|
-| list | `ReportCollection.list` | 只读 | `task_id` filter | Report 摘要列表 | — | `orchestration report list` | `Report` |
-| get | `ReportDetail.get` | 只读 | `report_id` | Report 详情 | 7. Generate Report | `orchestration report` | `Report` |
-| generate | `ReportAction.generate` | 只读 | `task_id` / `run_id` | 新生成的 Report | 7. Generate Report | `orchestration report` | `Report` |
+| list | `ReportCollection.list` | 不可用 | — | 独立 Report collection 尚未实现 | — | — | `Report` |
+| get | `ReportDetail.get` | 不可用 | `report_id` | 独立 Report 详情尚未实现 | — | — | `Report` |
+| generate | `ReportAction.generate` | 只读（受限） | `task_id` / `request_id` / envelope | 当前 task + request 的 Report projection | 7. Generate Report | `orchestration report generate` | `Report` |
 
 说明：`Report.generate` 是聚合计算，不修改 task/run/artifact/evidence 本身，因此归类为只读。如果需要缓存 Report，缓存写入应走单独的受控写入规则。
 
@@ -184,10 +186,10 @@ Guardrail 的结果决定写操作如何执行：
 | `TaskDetail.previewRouting` | 预览路由 |
 | `TaskDetail.preflight` | 预检 |
 | `TaskDetail.report` | 查看报告 |
-| `RunCollection.list` / `RunDetail.get` / `RunDetail.inspect` | 查询执行 |
+| `RunCollection.list` / `RunDetail.inspect` | 查询 envelope-scoped 执行投影 |
 | `ApprovalCollection.list` / `ApprovalDetail.get` | 查询审批 |
-| `ArtifactCollection.list` / `ArtifactDetail.get` | 查询产物 |
-| `ReportCollection.list` / `ReportDetail.get` / `ReportAction.generate` | 查询/生成报告 |
+| `ArtifactCollection.list` / `ArtifactDetail.get` | 查询 envelope-scoped 产物元数据 |
+| `ReportAction.generate` | 生成 task + request 级只读报告投影 |
 
 ### 受控写入操作
 
@@ -198,7 +200,6 @@ Guardrail 的结果决定写操作如何执行：
 | `TaskAction.retry` | 基于已有 run 重试 |
 | `TaskAction.fallback` | 切换到 fallback adapter |
 | `ApprovalResolution.resolve` | 审批决议 |
-| `ArtifactAction.export` | 持久化产物 |
 
 这些操作必须满足：
 
@@ -218,6 +219,8 @@ Guardrail 的结果决定写操作如何执行：
 | 批量并发调度 | 不在最小闭环范围内 |
 | 自动自愈 / 自动重试策略 | 需要更多运行时数据 |
 | 用户鉴权 / 权限系统 | 属于后续协议/服务化层 |
+| 独立 Run / Report collection 与持久 `run_id` / `report_id` | 当前只有 envelope/request-scoped 投影 |
+| orchestration `ArtifactAction.export` | 仅有低层 runtime draft export，不等同于资源 API |
 | 数据库持久化 / 缓存 / 索引 | 属于实现层 |
 
 ## 与 52、53 的关系
@@ -232,6 +235,32 @@ Guardrail 的结果决定写操作如何执行：
 - 53 是“命令长什么样”的草案；51 是“命令背后依赖什么稳定资源与操作”的定义。
 - 同一个 51 操作边界可以被 53 的 CLI 消费，也可以被未来 UI、自动化脚本、服务化接口消费。
 - 52 的七步闭环中的每一步都对应 51 中的一个或多个操作；50 的每个状态对象都对应 51 中的一个资源。
+
+## Stage 13 首轮契约对账结果（2026-07-13）
+
+本节把 51 的资源/操作模型与当前真实 CLI/read model 对齐。这里的“稳定”表示已有真实入口、输入输出和安全边界；“preview”表示只能作为显式 ephemeral 投影消费；“不可用”表示当前没有实现，调用方不得伪装为持久资源。
+
+| 资源/操作 | 当前真实入口 | 分类 | 当前边界 |
+|:---|:---|:---:|:---|
+| Overview | `orchestration overview` | stable | 基于 task/event ledger 的只读汇总。 |
+| Adapter registry list/inspect | `orchestration adapter list/inspect` | stable | source-backed capability registry；不探测在线状态。 |
+| Task list/get | `orchestration task list/get` | stable | 基于 task ledger；详情包含事件时间线。 |
+| Task submit | `orchestration task submit` | stable | 仅显式 dry-run/commit；commit 是 task + `created` event 的受控写入。 |
+| Routing / preflight | `orchestration route preview`、`orchestration preflight` | stable | 只读决策；不执行 adapter。 |
+| Routing / preflight snapshot | `orchestration route snapshot`、`orchestration preflight --snapshot` | preview | 确定性、内容寻址、ephemeral；不持久化。 |
+| Run plan | `orchestration run --dry-run` | preview | 只生成 plan preview；不生成持久 Run，不执行 adapter。 |
+| Run commit | `orchestration run --commit` | stable | 生成 envelope draft + lifecycle events；仍不执行真实 adapter。 |
+| Run list | `orchestration run list` | stable（受限） | 只读且 envelope-scoped；不是跨 envelope 的 Run collection。 |
+| Run inspect / recovery lineage | `orchestration run inspect`，显式 `--aggregate-lineage` | stable（受限） | 依赖 task + request + envelope；aggregation 是显式 read model。 |
+| Approval list/get/resolve | `orchestration approval list/get/resolve` | stable（受限） | list/get 读取 envelope；resolve 只记录 decision，不执行原请求。 |
+| Artifact list/get | `orchestration artifact list/get` | stable（受限） | 读取 envelope 中的安全元数据；没有独立 Artifact storage。 |
+| Report generate | `orchestration report generate` | stable（受限） | 生成 task + request 级只读 projection；`--aggregate-lineage` 为显式扩展。 |
+| Read-loop snapshot | `orchestration run --dry-run --snapshot` | preview | 包含 Run/Event/Report preview，不伪造持久 id。 |
+| 独立 Run / Report collection | 无 | unavailable | 持久 `run_id` / `report_id`、跨 envelope list/get 尚未实现。 |
+| 独立 Artifact export（orchestration 资源操作） | 无 | unavailable | 低层 `runtime draft export` 不等同于 orchestration Artifact API。 |
+| 真实 adapter execution / service / auth / DB / UI | 无 | unavailable | 继续受项目安全边界和阶段范围约束。 |
+
+首轮对账结论：当前可以稳定复用的是**受控 CLI + 受限 read model**，不是通用 API 或持久化资源层。Stage 13 下一拍应优先冻结上述 stable/preview/unavailable 矩阵的字段、错误与兼容测试，不应先选择 HTTP/RPC 或启动 service。
 
 ## 当前阶段不做什么
 

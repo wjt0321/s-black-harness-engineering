@@ -2466,3 +2466,10 @@
 - 修正 roadmap 中 Stage 9 仍标为“当前阶段”、Stage 11 仍标为“下一步高优先级”的过期标签；Stage 13 保持唯一当前阶段。
 - 将 51 文档的协议/UI 衔接标为长期方向，明确当前第一拍仍是 Boundary Contract Reconciliation。
 - 未新增重复设计文档，未改变代码、schema、安全边界或 semver/tag。
+
+## 2026-07-13 — Stage 13 首轮 Boundary Contract Reconciliation
+
+- 对照真实 `orchestration` CLI help、现有 read-model 测试和 51 资源/操作模型完成首轮对账。
+- 更新 `docs/51-backend-first-api-boundary.md`：修正真实命令名，区分 stable、受限 stable、preview 和 unavailable，并明确 run/report 的 envelope/request 边界。
+- 确认当前可稳定复用的是受限 CLI/read model；独立 Run/Report collection、真实 adapter execution、service/auth/DB/UI 不伪装为已实现。
+- 下一拍：为 stable/preview/unavailable 矩阵补字段、错误和默认兼容测试，不进入协议选型或服务化。

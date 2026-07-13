@@ -22,6 +22,7 @@
 - **Stage 13 — Backend-first API Boundary（Boundary Contract Reconciliation）**
 - Stage 12 已完成：control-plane 对象关系、routing/read-loop snapshot、recovery lineage inspect/report 和跨入口状态契约均已验收。
 - 当前任务：把真实 CLI/read models 映射到 stable / preview / unavailable 的资源与操作边界；仍不选择 HTTP/RPC，不启动 service/UI/DB。
+- 首轮对账已完成并写入 `docs/51-backend-first-api-boundary.md`：当前可稳定复用的是受限 CLI/read model；独立 Run/Report collection、真实 execution、service/auth/DB/UI 仍为 unavailable。
 
 ### Stage 10 基线（保留）
 
