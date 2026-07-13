@@ -149,8 +149,12 @@ def _report_layer(
     Report object has been generated and no completion verification has run.
     """
     artifact_refs = dry_run.artifact_candidate_refs
+    evidence_refs = dry_run.evidence_candidate_refs
     event_types = [e.get("event_type") for e in events]
     artifact_types = [ref.get("artifact_type") for ref in artifact_refs if ref.get("artifact_type")]
+    evidence_types = [
+        ref.get("evidence_type") for ref in evidence_refs if ref.get("evidence_type")
+    ]
 
     gate_status = _gate_status(dry_run)
     status_summary = (
@@ -166,6 +170,8 @@ def _report_layer(
         "candidate_event_types": dict(Counter(t for t in event_types if t)),
         "artifact_candidate_count": len(artifact_refs),
         "artifact_candidate_type_counts": dict(Counter(artifact_types)),
+        "evidence_candidate_count": len(evidence_refs),
+        "evidence_candidate_type_counts": dict(Counter(evidence_types)),
         "requires_approval": bool(
             dry_run.route.get("requires_approval")
             or dry_run.candidate_envelope_summary.get("requires_approval")

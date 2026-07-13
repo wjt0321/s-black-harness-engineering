@@ -22,6 +22,7 @@
 - **Stage 14 — 中枢台最小编排闭环**
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - 当前任务：将已冻结契约应用到最小、可回放、可审计的本地编排闭环；仍不选择 HTTP/RPC，不启动 service/UI/DB，不执行真实 adapter。
+- Stage 14 第一拍已完成七步闭环对账，并补齐 read-loop `Report Preview` 的 evidence candidate 数量/类型投影；下一拍聚焦同一 task/request 的 replay `next_action` 状态机，不新增第二套 routing 或持久化集合。
 
 ### Stage 10 基线（保留）
 

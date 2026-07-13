@@ -160,12 +160,38 @@ def test_build_read_loop_snapshot_pass_structure(tmp_path: Path) -> None:
     assert report["candidate_event_count"] == len(snapshot.events)
     assert report["candidate_event_types"]["run_planned"] >= 1
     assert report["requires_approval"] is False
+    assert report["evidence_candidate_count"] == 0
+    assert report["evidence_candidate_type_counts"] == {}
     assert "next_action" in report
 
     assert snapshot.source == {
         "task_id": TASK_ID,
         "request_id": REQUEST_ID,
         "requested_capability": "read_file",
+    }
+
+
+def test_build_read_loop_snapshot_projects_evidence_candidates(tmp_path: Path) -> None:
+    """Report preview exposes safe evidence candidate counts and type counts."""
+    dry_run = RunDryRunResult(
+        status="pass",
+        task_id=TASK_ID,
+        request_id=REQUEST_ID,
+        requested_capability="read_file",
+        route={"selected_adapter_id": "dummy-local", "operation": "read_file"},
+        evidence_candidate_refs=[
+            {"evidence_type": "dry_run_completed"},
+            {"evidence_type": "path_check_passed"},
+            {"evidence_type": "path_check_passed"},
+        ],
+    )
+
+    snapshot = build_read_loop_snapshot(dry_run)
+
+    assert snapshot.report["evidence_candidate_count"] == 3
+    assert snapshot.report["evidence_candidate_type_counts"] == {
+        "dry_run_completed": 1,
+        "path_check_passed": 2,
     }
 
 
@@ -454,6 +480,8 @@ def test_cli_dry_run_snapshot_json(capsys, tmp_path: Path) -> None:
     assert result["run"]["status"] == "planned"
     assert result["run"]["adapter_id"] == "dummy-local"
     assert result["report"]["status"] == "preview"
+    assert result["report"]["evidence_candidate_count"] == 0
+    assert result["report"]["evidence_candidate_type_counts"] == {}
     assert result["events"]
 
 
@@ -472,6 +500,7 @@ def test_cli_dry_run_snapshot_human_readable(capsys, tmp_path: Path) -> None:
     assert "run: " in captured.out
     assert "events: count=" in captured.out
     assert "report: status=preview" in captured.out
+    assert "evidence_candidate_count=0" in captured.out
 
 
 def test_cli_dry_run_default_output_unchanged(capsys, tmp_path: Path) -> None:

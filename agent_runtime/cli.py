@@ -2155,6 +2155,7 @@ def _emit_read_loop_snapshot(
             f"gate_status={report.get('gate_status')} "
             f"candidate_event_count={report.get('candidate_event_count')} "
             f"artifact_candidate_count={report.get('artifact_candidate_count')} "
+            f"evidence_candidate_count={report.get('evidence_candidate_count')} "
             f"requires_approval={report.get('requires_approval')}"
         )
         if report.get("status_summary"):

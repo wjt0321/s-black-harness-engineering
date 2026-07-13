@@ -289,3 +289,27 @@ Stage 14 当前第一拍是 **Minimal Loop Contract Application**：
 - 验证 replay、next_action、默认兼容、no-write 和 rollback。
 
 当前仍不执行真实 adapter，不选择 HTTP/RPC，不启动 service，不引入 auth/UI/DB。第一步应先对照现有实现盘点七步闭环的已实现/preview/unavailable 状态，再决定最小代码切片。
+
+## Stage 14 第一拍进展：七步闭环对账与 Evidence Projection（2026-07-13）
+
+首轮对照真实实现后的状态如下：
+
+| 闭环步骤 | 当前状态 | 真实入口/边界 |
+|:---|:---|:---|
+| 1. Submit Task | stable（受控写） | `orchestration task submit --commit`；task + `created` event 原子追加 |
+| 2. Capability Routing | stable / preview | `route preview`、`route snapshot`；复用 source-backed registry |
+| 3. Guardrail Preflight | stable / preview | `preflight`、`preflight --snapshot`；不执行 adapter |
+| 4. Adapter Dry-run / Commit | preview / stable（受限） | dry-run 生成计划；commit 只写 envelope draft + lifecycle events，仍不执行 adapter |
+| 5. Record Run/Event/Artifact/Evidence | partial | lifecycle event 可受控写；artifact/evidence 仍是 envelope/read-model 投影，无独立持久集合 |
+| 6. Resolve Approval | stable（受控写） | 只追加 decision，不执行原请求 |
+| 7. Generate Report | stable（受限） | envelope/request-scoped report；无独立 report collection |
+
+本拍选择的最小代码切片不是新增第二套 loop 命令，而是补齐现有 read-loop snapshot 的 Evidence 契约：
+
+- `Report Preview` 新增 `evidence_candidate_count` 与 `evidence_candidate_type_counts`；
+- 字段直接投影 `RunDryRunResult.evidence_candidate_refs`，不重算 routing/preflight/plan；
+- 当前真实 dry-run 不执行 adapter，因此 evidence candidates 默认为空；测试同时冻结未来安全候选引用的类型聚合行为；
+- 保持 `control-plane/read-loop/v1` 的 additive preview 兼容，默认 `orchestration run --dry-run` 输出不变；
+- 不持久化 Evidence，不伪造 evidence id，不回显 evidence 正文或敏感值。
+
+下一拍优先补“同一 task/request 的可回放状态判定”：复用既有 task/event/envelope/report read models，先定义最小 `next_action` 状态机与一致性测试；没有明确收益前不新增独立 Run/Report storage 或 service API。

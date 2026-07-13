@@ -2483,3 +2483,11 @@
 - 新增 `docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`，记录验收矩阵、稳定边界和正式延期项。
 - 当前阶段切换为 Stage 14 — 中枢台最小编排闭环，事实源为 `docs/52-minimal-orchestration-loop.md`。
 - 稳定 semver 基线继续保持 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`，本轮不新增 tag。
+
+
+## 2026-07-13 — Stage 14 第一拍：Minimal Loop Contract Application
+
+- 对照 `docs/52-minimal-orchestration-loop.md` 七步闭环盘点真实入口，确认 Step 5 的 Evidence 在 read-loop Report Preview 中缺少候选聚合字段。
+- `OrchestrationReadLoopSnapshot.report` 新增 `evidence_candidate_count` 与 `evidence_candidate_type_counts`，直接投影 `RunDryRunResult.evidence_candidate_refs`。
+- 当前 dry-run 不执行 adapter，真实 evidence candidate 默认仍为空；测试冻结未来安全候选引用的类型聚合，不持久化或伪造 Evidence。
+- 保持 `control-plane/read-loop/v1` additive preview 兼容，默认 dry-run 输出不变；下一拍进入 replay `next_action` 最小状态机。
