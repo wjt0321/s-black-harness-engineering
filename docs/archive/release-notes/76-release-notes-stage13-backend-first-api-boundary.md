@@ -81,4 +81,4 @@ python -m agent_runtime.cli task check-ledger --tasks-file tasks/tasks.jsonl --e
 bash .githooks/pre-commit
 ```
 
-最终验收提交：待本轮阶段冻结提交后回填。
+最终验收提交：`9625ba2`。

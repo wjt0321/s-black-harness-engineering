@@ -230,5 +230,5 @@ Release notes 是阶段收口文档，不自动等于 tag 候选。
 - 验收入口：`docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`。
 - 当前稳定 semver 基线继续保持 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`；本次不创建新 tag。
 - 原因：本次冻结的是后端契约语义与兼容边界，没有新增真实执行、service 或持久化能力包。
-- Stage 13 最终验收 commit：待本轮阶段冻结提交后回填。
+- Stage 13 最终验收 commit：`9625ba2`。
 - 后续进入 Stage 14 — 中枢台最小编排闭环。
