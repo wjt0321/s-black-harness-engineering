@@ -1747,6 +1747,24 @@ python -m agent_runtime.cli orchestration report generate \
 
 `--aggregate-lineage` 只读取现有 run lifecycle events，输出 root/latest/leaves、attempt count、effective plan hash 与安全 request summaries。多 leaf 返回 `needs_input`，缺失 parent、跨 task parent、cycle 或重复 metadata 冲突返回 `validation_failed`。默认不传时 `run inspect` / `report generate` 输出保持不变；该模式不扫描 drafts、不写 ledger、不执行 adapter。`run list` 仍保持 envelope-scoped，暂不隐式查询 event ledger。
 
+Stage 14 replay projection（显式只读预览）：
+
+```bash
+python -m agent_runtime.cli orchestration run inspect \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json \
+  --replay --json
+
+python -m agent_runtime.cli orchestration report generate \
+  --task-id task-20260703-001 \
+  --request-id req-20260703-002 \
+  --envelope drafts/runtime/task-20260703-001/req-20260703-002.envelope.json \
+  --replay --json
+```
+
+`--replay` 复用同一份 runtime report，输出 `control-plane/orchestration-replay/v1`，包含 task/request、紧凑 state 和结构化 `next_action.code`。默认不传时两个入口输出严格保持原契约；该 projection 不写 ledger、不创建对象、不执行 adapter。
+
 说明：
 
 - 当 envelope 的 `adapter_request.context` 包含 `lineage_type`、`retry_of`、`fallback_from`、`fallback_to` 时，上述 read model 会在 JSON / human 输出中展示；普通 run 不强制输出空字段，保持兼容。
@@ -1879,7 +1897,7 @@ python -m agent_runtime.cli orchestration run \
 - `--snapshot` 基于真实 `RunDryRunResult` 一次性投影 `OrchestrationReadLoopSnapshot`，包含 Run Preview、candidate Event summaries 与 Report Preview。
 - snapshot `snapshot_id` 由最终安全 payload 的 canonical SHA-256 哈希确定性生成，无时间戳；相同输入重复运行产生 byte-equivalent JSON。
 - `events` 层只输出 `event_type`、`status=planned`、`metadata_keys`，不伪造 `event_id` 或 `timestamp`。
-- `report` 层 `status=preview`，输出 candidate event/artifact 计数与类型分布、`requires_approval`、`next_action`、仅 rule_ids 的 finding 摘要；无持久 `report_id`。
+- `report` 层 `status=preview`，输出 candidate event/artifact/evidence 计数与类型分布、`requires_approval`、`next_action`、结构化 `next_action_code`、仅 rule_ids 的 finding 摘要；无持久 `report_id`。
 - `--commit` 模式下传入 `--snapshot` 会被明确拒绝（`blocked`），本拍仅 `--dry-run` preview 支持。
 - 不回显完整 input/output schema、原始 target、policy 原文、finding message 或凭据。
 

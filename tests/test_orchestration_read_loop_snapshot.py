@@ -160,6 +160,7 @@ def test_build_read_loop_snapshot_pass_structure(tmp_path: Path) -> None:
     assert report["candidate_event_count"] == len(snapshot.events)
     assert report["candidate_event_types"]["run_planned"] >= 1
     assert report["requires_approval"] is False
+    assert report["next_action_code"] == "proceed_to_commit"
     assert report["evidence_candidate_count"] == 0
     assert report["evidence_candidate_type_counts"] == {}
     assert "next_action" in report
@@ -214,6 +215,7 @@ def test_build_read_loop_snapshot_needs_approval(tmp_path: Path) -> None:
     assert snapshot.run["requires_approval"] is True
     assert snapshot.report["requires_approval"] is True
     assert snapshot.report["gate_status"] == "pending_approval"
+    assert snapshot.report["next_action_code"] == "blocked_wait_for_approval"
     assert "pending_approval" in snapshot.report["status_summary"]
     event_types = {e["event_type"] for e in snapshot.events}
     assert "approval_requested" in event_types
@@ -238,6 +240,7 @@ def test_build_read_loop_snapshot_blocked_structure(tmp_path: Path) -> None:
     assert snapshot.run["status"] == "blocked"
     assert snapshot.run["gate_status"] == "blocked"
     assert snapshot.report["gate_status"] == "blocked"
+    assert snapshot.report["next_action_code"] == "needs_human_review"
     assert snapshot.run["adapter_id"] is None
     assert snapshot.events == []
     assert snapshot.report["status"] == "preview"
@@ -258,6 +261,7 @@ def test_build_read_loop_snapshot_needs_input_structure(tmp_path: Path) -> None:
 
     assert snapshot.status == "needs_input"
     assert snapshot.run["status"] == "needs_input"
+    assert snapshot.report["next_action_code"] == "needs_input"
     assert snapshot.run["gate_status"] == "needs_input"
     assert snapshot.report["gate_status"] == "needs_input"
     assert snapshot.events == []

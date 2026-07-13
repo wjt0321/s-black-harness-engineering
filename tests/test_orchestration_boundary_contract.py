@@ -92,4 +92,14 @@ def test_stage13_run_flags_keep_explicit_preview_and_lineage_boundaries() -> Non
         for option in action.option_strings
     }
     assert "--aggregate-lineage" in inspect_options
+    assert "--replay" in inspect_options
     assert "--snapshot" not in inspect_options
+
+    report = _nested_parser(_nested_parser(_nested_parser(root, "orchestration"), "report"), "generate")
+    report_options = {
+        option
+        for action in report._actions
+        for option in action.option_strings
+    }
+    assert "--aggregate-lineage" in report_options
+    assert "--replay" in report_options

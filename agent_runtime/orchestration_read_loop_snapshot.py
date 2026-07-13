@@ -19,6 +19,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Any
 
+from .orchestration_replay import derive_preview_next_action_code
 from .orchestration_run_dry_run import RunDryRunResult
 
 
@@ -172,6 +173,7 @@ def _report_layer(
         "artifact_candidate_type_counts": dict(Counter(artifact_types)),
         "evidence_candidate_count": len(evidence_refs),
         "evidence_candidate_type_counts": dict(Counter(evidence_types)),
+        "next_action_code": derive_preview_next_action_code(dry_run.status),
         "requires_approval": bool(
             dry_run.route.get("requires_approval")
             or dry_run.candidate_envelope_summary.get("requires_approval")

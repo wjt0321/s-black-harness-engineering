@@ -356,6 +356,30 @@ def test_docs_context_real_digest_format(capsys, tmp_path):
     assert "tasks/handoff-*.md" not in paths
 
 
+def test_docs_context_marks_completed_stage_from_digest(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_readme(fake_root)
+    _write_index(fake_root)
+    _write_roadmap(fake_root)
+    _write_progress(fake_root)
+    _write_handoff(fake_root)
+    _write_extra_docs(fake_root)
+    _write_real_format_stage_digest(fake_root)
+    digest = fake_root / "docs" / "000-stage-digest.md"
+    text = digest.read_text(encoding="utf-8").replace(
+        "Stage 15.99 — Run Lineage / Recovery Read Model 第一版",
+        "Stage 15.99 — Run Lineage / Recovery Read Model 第一版（已完成）",
+    )
+    digest.write_text(text, encoding="utf-8")
+
+    code = main(["--root", str(fake_root), "docs", "context", "--json"])
+    result = json.loads(capsys.readouterr().out)
+
+    assert code == 0
+    assert result["current_stage"]["stage"] == "Stage 15.99"
+    assert result["current_stage"]["status"] == "completed"
+
+
 def test_docs_context_latest_handoff_date_based(capsys, tmp_path):
     """Regression: latest handoff must follow embedded date, not lexicographic order."""
     fake_root = _setup_fake_root(tmp_path)

@@ -273,16 +273,21 @@ def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
         if stage_match:
             stage_text = stage_match.group(1).strip()
             m = re.match(r"(?:优先方向[：:]\s*)?(Stage\s+[\d.]+)\s*[—-]\s*(.+)", stage_text)
+            stage_status = (
+                "completed"
+                if "已完成" in stage_text or "收口完成" in stage_text
+                else "in_progress"
+            )
             if m:
                 digest["current_stage"] = {
                     "stage": m.group(1).strip(),
-                    "status": "in_progress",
+                    "status": stage_status,
                     "description": m.group(2).strip(),
                 }
             else:
                 digest["current_stage"] = {
                     "stage": stage_text,
-                    "status": "in_progress",
+                    "status": stage_status,
                     "description": "",
                 }
             break

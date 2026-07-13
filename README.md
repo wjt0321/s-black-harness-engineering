@@ -57,7 +57,7 @@
 当前仓库已经形成可内部试用的**离线、可审计 CLI / Runtime 安全内核**，并完成 Stage 12 control-plane read model 验收：
 
 - 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
-- Stage 13 已完成资源/操作边界对账；当前进入 Stage 14，将冻结契约应用到最小可回放编排闭环；
+- Stage 13 资源/操作边界与 Stage 14 最小可回放编排闭环均已完成收口；
 - 真实 adapter execution、持久化 service/DB、鉴权和 UI 尚未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条
@@ -109,7 +109,7 @@
 - 🟡 Stage 11 — Capability Routing Model（约束路由 + decision trace 第一版已落地，持续巩固）
 - ✅ Stage 12 — Control Plane State Model（read-only loop、recovery lineage aggregation 与 inspect/report consolidation 已完成验收）
 - ✅ Stage 13 — Backend-first API Boundary（资源/操作边界对账与 CLI 契约测试已完成）
-- 🟡 Stage 14 — 中枢台最小编排闭环（当前阶段：将已冻结契约应用到最小可回放闭环）
+- ✅ Stage 14 — 中枢台最小编排闭环（七步闭环、replay 与结构化 next_action 已收口）
 - 🟡 Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，前端实现仍暂缓）
 - 🟡 Stage 15.5 — Orchestration 受控写入边界（第一批 controlled handoff / approval resolve 已落地）
 - ✅ Stage 15.7 — Orchestration Run Dry-run 落地
@@ -132,11 +132,11 @@
 
 ### 接下来的方向
 
-下一步最自然的方向不是继续盲目加功能，而是：
+下一步不自动启动新的产品阶段：
 
-1. **Stage 13 已完成**，最终验收记录见 `docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`
-2. 当前进入 **Stage 14 中枢台最小编排闭环**，把已冻结契约应用到 Task intent → routing → preflight → controlled commit → replay
-3. 暂不选择 HTTP / RPC，不进入 UI / service / DB
+1. **Stage 14 已完成收口**，验收记录见 `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`
+2. 当前已有 Task intent → routing → preflight → controlled commit → replay 的本地闭环与结构化 `next_action`
+3. Stage 16 UI / Control Panel 仍为远期，需明确产品入口或集成需求后再启动
 4. 继续维持只读、受控写入和无真实 adapter execution 的安全边界
 
 已落地的主线能力包括：

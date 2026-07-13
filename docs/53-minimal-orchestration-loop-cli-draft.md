@@ -492,3 +492,12 @@ python -m agent_runtime.cli orchestration report \
 - 自动化调度引擎。
 
 本文只提供一份可修改的命令面草案，供后续进入 51 或实现 Stage 14 时参考。
+
+## Stage 14 收口说明（2026-07-13）
+
+本文保留为历史命令面草案，不再作为真实 CLI 参数事实源。真实命令已在 Stage 13/14 对账为：
+
+- `orchestration run inspect --task-id ... --request-id ... --envelope ... [--aggregate-lineage] [--replay]`；
+- `orchestration report generate --task-id ... --request-id ... --envelope ... [--aggregate-lineage] [--replay]`。
+
+不存在独立持久 `run_id` / `report_id`；上文草案中的 `orchestration inspect --run-id`、`orchestration report --run-id` 不可直接调用。完整、可执行参数只以 `docs/10-cli-poc-usage.md` 和 `python -m agent_runtime.cli ... --help` 为准。

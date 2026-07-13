@@ -19,10 +19,10 @@
 
 ## 当前阶段
 
-- **Stage 14 — 中枢台最小编排闭环**
+- **Stage 14 — 中枢台最小编排闭环（已完成）**
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - 当前任务：将已冻结契约应用到最小、可回放、可审计的本地编排闭环；仍不选择 HTTP/RPC，不启动 service/UI/DB，不执行真实 adapter。
-- Stage 14 第一拍已完成七步闭环对账，并补齐 read-loop `Report Preview` 的 evidence candidate 数量/类型投影；下一拍聚焦同一 task/request 的 replay `next_action` 状态机，不新增第二套 routing 或持久化集合。
+- Stage 14 已完成：七步闭环对账、read-loop Evidence candidate 投影、显式 replay projection、结构化 `next_action`、跨入口一致性与安全边界均已冻结；不启动 HTTP/RPC、service、UI、DB 或真实 adapter。
 
 ### Stage 10 基线（保留）
 
@@ -96,16 +96,16 @@
 3. 再读：`tasks/handoff-2026-07-13.md`
 4. 再跑：`python -m agent_runtime.cli docs context --json`
 5. 需要 Stage 13 边界时再读：`docs/51-backend-first-api-boundary.md`
-6. 需要 Stage 13 验收事实时再读：`docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`
+6. 需要 Stage 14 验收事实时再读：`docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`
+7. 需要 Stage 13 验收事实时再读：`docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`
 
 ## 下一步做什么
 
-- **Stage 13 已完成**：真实 CLI/read models 的资源/操作契约已完成对账，命令 surface 与关键 flag 已有契约测试。
-- **当前优先方向：Stage 14 — 中枢台最小编排闭环**
-  - 入口文档：`docs/52-minimal-orchestration-loop.md`
-  - 重点：把已冻结契约应用到 Task intent → routing → preflight → dry-run/controlled commit → lifecycle event → projection/replay 闭环。
-- **正式延期**：持久化 Run/Event/Report collection、协议、鉴权、UI、service、DB 和真实 adapter execution。
-- **边界不变**：不选择 HTTP/RPC，不进入 UI/service/DB，不执行真实 adapter。
+- **Stage 14 已完成并收口**：release notes 见 `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`。
+- 当前不自动启动下一阶段；等待明确的产品入口或集成需求。
+- 长期候选：**Stage 16 — UI / Control Panel（远期，暂不启动）**。
+- 入口文档：`docs/02-roadmap.md`。
+- 继续保持只读、受控写入、无真实 adapter execution 的安全边界。
 
 ## 重要约束
 

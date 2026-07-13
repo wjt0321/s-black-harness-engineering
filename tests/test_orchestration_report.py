@@ -195,6 +195,45 @@ def test_report_generate_json_output_structure(capsys, tmp_path):
     assert result["next_action"] is not None
     assert "artifact_refs" in result
     assert "evidence_refs" in result
+    assert "replay" not in result
+
+
+def test_report_generate_replay_matches_run_inspect_and_is_no_write(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_tasks(fake_root)
+    _write_events(fake_root)
+    envelope = _make_envelope()
+    envelope_path = fake_root / "drafts" / "runtime" / "report-replay.envelope.json"
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
+    envelope_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    tasks_before = (fake_root / "tasks" / "tasks.jsonl").read_bytes()
+    events_before = (fake_root / "tasks" / "events.jsonl").read_bytes()
+    envelope_before = envelope_path.read_bytes()
+    common = [
+        "--root", str(fake_root),
+        "--task-id", "task-20260703-001",
+        "--request-id", "req-20260703-001",
+        "--envelope", str(envelope_path),
+        "--replay",
+        "--json",
+    ]
+
+    run_code = main(common[:2] + ["orchestration", "run", "inspect"] + common[2:])
+    run_output = json.loads(capsys.readouterr().out)
+    report_code = main(common[:2] + ["orchestration", "report", "generate"] + common[2:])
+    report_output = json.loads(capsys.readouterr().out)
+
+    assert run_code == report_code == 3
+    assert run_output["replay"] == report_output["replay"]
+    assert run_output["replay"]["schema_version"] == "control-plane/orchestration-replay/v1"
+    assert run_output["replay"]["next_action"]["code"] == "blocked_wait_for_approval"
+    serialized = json.dumps(run_output["replay"], ensure_ascii=False)
+    assert "origin/main" not in serialized
+    assert "decision_ref" not in serialized
+    assert (fake_root / "tasks" / "tasks.jsonl").read_bytes() == tasks_before
+    assert (fake_root / "tasks" / "events.jsonl").read_bytes() == events_before
+    assert envelope_path.read_bytes() == envelope_before
 
 
 def test_report_generate_human_readable_smoke(capsys, tmp_path):

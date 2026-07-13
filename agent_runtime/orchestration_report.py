@@ -14,6 +14,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .orchestration_replay import (
+    OrchestrationReplayProjection,
+    build_replay_projection,
+)
 from .orchestration_recovery import (
     RecoveryLineageResult,
     aggregate_recovery_lineage,
@@ -45,6 +49,7 @@ class ReportGenerateResult:
     fallback_from: str | None = None
     fallback_to: str | None = None
     recovery_lineage: RecoveryLineageResult | None = None
+    replay: OrchestrationReplayProjection | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -80,6 +85,8 @@ class ReportGenerateResult:
             d["fallback_to"] = self.fallback_to
         if self.recovery_lineage is not None:
             d["recovery_lineage"] = self.recovery_lineage.to_dict()
+        if self.replay is not None:
+            d["replay"] = self.replay.to_dict()
         return d
 
 
@@ -91,6 +98,7 @@ def generate_report(
     tasks_file: str | None = None,
     events_file: str | None = None,
     aggregate_lineage: bool = False,
+    replay: bool = False,
 ) -> ReportGenerateResult:
     """Generate an orchestration report through the existing runtime report aggregator.
 
@@ -147,5 +155,6 @@ def generate_report(
         artifact_refs=[],
         evidence_refs=[],
         recovery_lineage=recovery_lineage,
+        replay=build_replay_projection(report, request_id) if replay else None,
         **lineage,
     )

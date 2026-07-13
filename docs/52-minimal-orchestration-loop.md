@@ -313,3 +313,16 @@ Stage 14 当前第一拍是 **Minimal Loop Contract Application**：
 - 不持久化 Evidence，不伪造 evidence id，不回显 evidence 正文或敏感值。
 
 下一拍优先补“同一 task/request 的可回放状态判定”：复用既有 task/event/envelope/report read models，先定义最小 `next_action` 状态机与一致性测试；没有明确收益前不新增独立 Run/Report storage 或 service API。
+
+## Stage 14 收口记录（2026-07-13）
+
+Stage 14 的最小本地闭环已完成并冻结为当前可复用边界：
+
+- Task intent → routing → preflight → dry-run / controlled commit → lifecycle event → projection/replay 已有真实 CLI/read-model 入口；
+- `orchestration run --dry-run --snapshot` 输出确定性、脱敏、无副作用的 read-loop projection，并包含 artifact/evidence candidate 计数；
+- `orchestration run inspect --replay` 与 `orchestration report generate --replay` 显式输出同一份 `control-plane/orchestration-replay/v1` 投影；两入口复用同一个 runtime report，不重复计算状态；
+- replay 的结构化 `next_action.code` 已冻结：`proceed_to_commit`、`blocked_wait_for_approval`、`needs_input`、`needs_human_review`、`task_finished`；
+- 默认不传 `--replay` / `--snapshot` 时旧输出保持兼容；replay/read-loop 均不写 ledger、不执行 adapter、不访问网络；
+- retry/fallback lineage、approval gate、controlled write rollback、no-write、determinism、脱敏和跨入口一致性均有测试证据。
+
+Stage 14 明确不交付：独立 Run/Event/Report 数据库、HTTP/RPC/API service、UI、鉴权、真实 adapter execution、自动化多系统放权。下一阶段保持远期，等待明确的产品入口或集成需求后再启动。

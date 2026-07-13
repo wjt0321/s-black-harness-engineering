@@ -331,7 +331,7 @@
 
 ---
 
-## Stage 14 — 中枢台最小编排闭环（当前阶段；设计文档、命令草案与 run 侧 A+B commit 已落地）
+## Stage 14 — 中枢台最小编排闭环（已完成；2026-07-13 收口）
 
 目标：在后端抽象稳定后，跑通第一个真正体现“中枢台”特征的最小闭环。
 
@@ -341,6 +341,8 @@
 - `docs/53-minimal-orchestration-loop-cli-draft.md`（命令面草案参考，非正式 API 边界）
 
 当前第一拍：将 Stage 13 已冻结的 stable/preview/unavailable 契约应用到最小闭环的 use-case 与回放验证；继续保持不选 HTTP/RPC、不启动 service、不执行真实 adapter。
+
+已完成收口：七步闭环入口、read-loop Evidence projection、显式 replay projection、结构化 next_action、跨入口一致性、默认兼容、确定性、脱敏、no-write 和 rollback 均已冻结；release notes 见 `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`。
 
 候选闭环：
 

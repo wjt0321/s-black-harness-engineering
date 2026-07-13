@@ -251,10 +251,10 @@ Guardrail 的结果决定写操作如何执行：
 | Run plan | `orchestration run --dry-run` | preview | 只生成 plan preview；不生成持久 Run，不执行 adapter。 |
 | Run commit | `orchestration run --commit` | stable | 生成 envelope draft + lifecycle events；仍不执行真实 adapter。 |
 | Run list | `orchestration run list` | stable（受限） | 只读且 envelope-scoped；不是跨 envelope 的 Run collection。 |
-| Run inspect / recovery lineage | `orchestration run inspect`，显式 `--aggregate-lineage` | stable（受限） | 依赖 task + request + envelope；aggregation 是显式 read model。 |
+| Run inspect / recovery lineage / replay | `orchestration run inspect`，显式 `--aggregate-lineage` / `--replay` | stable（受限） | 依赖 task + request + envelope；lineage 与 replay 都是显式 read model。 |
 | Approval list/get/resolve | `orchestration approval list/get/resolve` | stable（受限） | list/get 读取 envelope；resolve 只记录 decision，不执行原请求。 |
 | Artifact list/get | `orchestration artifact list/get` | stable（受限） | 读取 envelope 中的安全元数据；没有独立 Artifact storage。 |
-| Report generate | `orchestration report generate` | stable（受限） | 生成 task + request 级只读 projection；`--aggregate-lineage` 为显式扩展。 |
+| Report generate | `orchestration report generate` | stable（受限） | 生成 task + request 级只读 projection；`--aggregate-lineage` / `--replay` 为显式扩展。 |
 | Read-loop snapshot | `orchestration run --dry-run --snapshot` | preview | 包含 Run/Event/Report preview，不伪造持久 id。 |
 | 独立 Run / Report collection | 无 | unavailable | 持久 `run_id` / `report_id`、跨 envelope list/get 尚未实现。 |
 | 独立 Artifact export（orchestration 资源操作） | 无 | unavailable | 低层 `runtime draft export` 不等同于 orchestration Artifact API。 |

@@ -1883,6 +1883,7 @@ def _cmd_orchestration_run_inspect(args: argparse.Namespace) -> int:
         tasks_file=getattr(args, "tasks_file", None),
         events_file=getattr(args, "events_file", None),
         aggregate_lineage=getattr(args, "aggregate_lineage", False),
+        replay=getattr(args, "replay", False),
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1948,6 +1949,12 @@ def _cmd_orchestration_run_inspect(args: argparse.Namespace) -> int:
         else:
             print("Blockers: none")
 
+        if result.replay is not None:
+            print(
+                "Replay: "
+                f"schema={result.replay.schema_version} "
+                f"next_action={result.replay.next_action['code']}"
+            )
         if result.next_action:
             print(f"Next: {result.next_action}")
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
@@ -2610,6 +2617,7 @@ def _cmd_orchestration_report_generate(args: argparse.Namespace) -> int:
         tasks_file=getattr(args, "tasks_file", None),
         events_file=getattr(args, "events_file", None),
         aggregate_lineage=getattr(args, "aggregate_lineage", False),
+        replay=getattr(args, "replay", False),
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -2661,6 +2669,12 @@ def _cmd_orchestration_report_generate(args: argparse.Namespace) -> int:
             )
         if result.ledger is not None:
             print(f"Ledger: status={result.ledger.get('status', '-')}")
+        if result.replay is not None:
+            print(
+                "Replay: "
+                f"schema={result.replay.schema_version} "
+                f"next_action={result.replay.next_action['code']}"
+            )
         if result.next_action:
             print(f"Next: {result.next_action}")
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
@@ -3261,6 +3275,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Aggregate the task recovery lineage from run lifecycle events",
     )
+    orchestration_run_inspect_parser.add_argument(
+        "--replay",
+        action="store_true",
+        help="Include the deterministic Stage 14 replay and structured next-action projection",
+    )
     _add_global_args(orchestration_run_inspect_parser)
     orchestration_run_inspect_parser.set_defaults(func=_cmd_orchestration_run_inspect)
 
@@ -3398,6 +3417,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--aggregate-lineage",
         action="store_true",
         help="Aggregate the task recovery lineage from run lifecycle events",
+    )
+    orchestration_report_generate_parser.add_argument(
+        "--replay",
+        action="store_true",
+        help="Include the deterministic Stage 14 replay and structured next-action projection",
     )
     _add_global_args(orchestration_report_generate_parser)
     orchestration_report_generate_parser.set_defaults(func=_cmd_orchestration_report_generate)

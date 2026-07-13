@@ -2491,3 +2491,12 @@
 - `OrchestrationReadLoopSnapshot.report` 新增 `evidence_candidate_count` 与 `evidence_candidate_type_counts`，直接投影 `RunDryRunResult.evidence_candidate_refs`。
 - 当前 dry-run 不执行 adapter，真实 evidence candidate 默认仍为空；测试冻结未来安全候选引用的类型聚合，不持久化或伪造 Evidence。
 - 保持 `control-plane/read-loop/v1` additive preview 兼容，默认 dry-run 输出不变；下一拍进入 replay `next_action` 最小状态机。
+
+
+## 2026-07-13 — Stage 14 最终收口
+
+- 新增显式 `--replay` read model：`run inspect` 与 `report generate` 输出统一的 `control-plane/orchestration-replay/v1`。
+- 结构化 `next_action.code` 冻结为 `proceed_to_commit`、`blocked_wait_for_approval`、`needs_input`、`needs_human_review`、`task_finished`。
+- replay 直接复用 `RuntimeReportResult`，不重复路由/预检/计划，不写 ledger，不执行 adapter；跨入口一致性、确定性、脱敏、no-write 已测试。
+- read-loop Report Preview 的 Evidence candidate projection、Stage14 七步对账、CLI 文档、release notes、digest 和 handoff 已完成。
+- Stage 14 收口，等待用户指令，不 push、不创建新 tag。

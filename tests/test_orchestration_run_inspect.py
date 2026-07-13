@@ -134,6 +134,7 @@ def test_run_inspect_json_output_structure(capsys, tmp_path):
     assert "event_summary" in result
     assert "task_snapshot" in result
     assert "next_action" in result
+    assert "replay" not in result
 
 
 def test_run_inspect_human_readable_smoke(capsys, tmp_path):
