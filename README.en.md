@@ -57,7 +57,7 @@ In one sentence:
 The repository now provides an **offline, auditable CLI/runtime security core suitable for internal trials**, with the Stage 12 control-plane read model accepted:
 
 - it can already support policy validation, task/event ledgers, capability routing, dry-runs, controlled writes, and recovery-lineage auditing;
-- the current Stage 13 Boundary Contract Reconciliation will freeze backend resource and operation contracts reusable by future CLI, automation, and UI entry points;
+- Stage 13 resource/operation reconciliation is complete; Stage 14 now applies the frozen contract to a replayable minimal orchestration loop;
 - real adapter execution, persistent services/databases, authentication, and UI remain unavailable, so this is not yet an auto-executing production orchestration hub.
 
 ## Progress Bar
@@ -108,8 +108,8 @@ The repository formalizes this through `docs/64-versioning-governance.md`. `v0.1
 - 🟡 Stage 10 — Adapter Runtime Interface (source-backed registry projection v1 landed; continuing refinement)
 - 🟡 Stage 11 — Capability Routing Model (constraint routing + decision trace v1 landed; continuing refinement)
 - ✅ Stage 12 — Control Plane State Model (read-only loop, recovery lineage aggregation, and inspect/report consolidation completed final acceptance)
-- 🟡 Stage 13 — Backend-first API Boundary (current stage: Boundary Contract Reconciliation; protocol choice remains deferred)
-- 🟡 Stage 14 — Minimal orchestration-hub execution loop (documents, CLI draft, and run-side A+B commit landed)
+- ✅ Stage 13 — Backend-first API Boundary (resource/operation reconciliation and CLI contract tests completed)
+- 🟡 Stage 14 — Minimal orchestration-hub execution loop (current stage: applying the frozen contract to a replayable minimal loop)
 - 🟡 Stage 15 — Backend preparation before UI / dashboard (read-model CLI first version landed, frontend still deferred)
 - 🟡 Stage 15.5 — Orchestration controlled-write boundary (first controlled handoff / approval resolve landed)
 - ✅ Stage 15.7 — Orchestration Run Dry-run landed
@@ -134,8 +134,8 @@ The current state is best understood as:
 
 The most natural next direction is not to keep adding scattered features, but to:
 
-1. treat **Stage 12 as complete**, with final acceptance recorded in `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`
-2. enter **Stage 13 Boundary Contract Reconciliation** and map real CLI/read models to stable / preview / unavailable contracts
+1. treat **Stage 13 as complete**, with final acceptance recorded in `docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`
+2. enter **Stage 14 Minimal Orchestration Loop** and apply the frozen contract to a replayable local loop
 3. keep HTTP / RPC, UI, services, and DB deferred
 4. preserve the read-only, controlled-write, and no-real-adapter-execution boundaries
 

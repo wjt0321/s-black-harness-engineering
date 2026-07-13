@@ -13,16 +13,15 @@
 
 - 稳定基线：`v0.12.1-orchestration-read-loop-snapshot`
 - 冻结 commit：`0419a04`
-- Stage 12 最终收口提交：`5e8df01`
+- Stage 13 最终收口提交：本轮阶段冻结提交；精确 commit 在最新 handoff 中记录
 - 上一 foundation 基线：`v0.12.0-orchestration-foundation`（commit `38b4b69`）
 - 本轮按 release notes 收口，不创建新的 semver tag
 
 ## 当前阶段
 
-- **Stage 13 — Backend-first API Boundary（Boundary Contract Reconciliation）**
-- Stage 12 已完成：control-plane 对象关系、routing/read-loop snapshot、recovery lineage inspect/report 和跨入口状态契约均已验收。
-- 当前任务：把真实 CLI/read models 映射到 stable / preview / unavailable 的资源与操作边界；仍不选择 HTTP/RPC，不启动 service/UI/DB。
-- 首轮对账已完成并写入 `docs/51-backend-first-api-boundary.md`：当前可稳定复用的是受限 CLI/read model；独立 Run/Report collection、真实 execution、service/auth/DB/UI 仍为 unavailable。
+- **Stage 14 — 中枢台最小编排闭环**
+- Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
+- 当前任务：将已冻结契约应用到最小、可回放、可审计的本地编排闭环；仍不选择 HTTP/RPC，不启动 service/UI/DB，不执行真实 adapter。
 
 ### Stage 10 基线（保留）
 
@@ -92,19 +91,19 @@
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/51-backend-first-api-boundary.md`
-3. 再读：`tasks/handoff-2026-07-12.md`
+2. 再读：`docs/52-minimal-orchestration-loop.md`
+3. 再读：`tasks/handoff-2026-07-13.md`
 4. 再跑：`python -m agent_runtime.cli docs context --json`
-5. 需要历史事实时再读：`docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`
+5. 需要 Stage 13 边界时再读：`docs/51-backend-first-api-boundary.md`
+6. 需要 Stage 13 验收事实时再读：`docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`
 
 ## 下一步做什么
 
-- **Stage 12 已完成**：最终验收覆盖对象关系、deterministic snapshot、read-loop、recovery lineage、默认兼容、脱敏与 no-write。
-- **正式延期**：持久化 Run/Event/Report storage、协议、鉴权、UI、service、DB 和真实 adapter execution。
-- **Collection-level lineage 决策**：无明确消费者，本阶段不实现 index，不改造 envelope-scoped `run list`。
-- **当前优先方向：Stage 13 — Boundary Contract Reconciliation**
-  - 入口文档：`docs/51-backend-first-api-boundary.md`
-  - 重点：把当前真实 CLI/read models 分类为 stable / preview / unavailable，冻结 identity、status、list/get/action 和错误边界。
+- **Stage 13 已完成**：真实 CLI/read models 的资源/操作契约已完成对账，命令 surface 与关键 flag 已有契约测试。
+- **当前优先方向：Stage 14 — 中枢台最小编排闭环**
+  - 入口文档：`docs/52-minimal-orchestration-loop.md`
+  - 重点：把已冻结契约应用到 Task intent → routing → preflight → dry-run/controlled commit → lifecycle event → projection/replay 闭环。
+- **正式延期**：持久化 Run/Event/Report collection、协议、鉴权、UI、service、DB 和真实 adapter execution。
 - **边界不变**：不选择 HTTP/RPC，不进入 UI/service/DB，不执行真实 adapter。
 
 ## 重要约束

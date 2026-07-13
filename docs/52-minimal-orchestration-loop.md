@@ -274,19 +274,18 @@ Report 的 `next_action` 可能取值：
 
 本文只定义最小闭环的后端语义，为后续 CLI 命令、脚本接口和 API 边界留下可执行的设计基础。
 
-## 下一步衔接
+## 历史衔接
 
-本文之后，自然进入：
+本文最初先于 `51 — Backend-first API Boundary` 完成，用于定义最小闭环语义；Stage 13 已在 51 中完成资源/操作边界对账。当前不再“进入 51”，而是把 51 已冻结的契约重新应用回本文闭环。
 
-- `51 — Backend-first API Boundary`
+## Stage 14 进入状态（2026-07-13）
 
-因为 51 才需要回答：未来 UI / CLI / automation 如何操作这个闭环里产生的 task、run、approval、artifact、report。
+Stage 14 当前第一拍是 **Minimal Loop Contract Application**：
 
-在进入 51 之前，中枢台后端已经具备：
+- 以 Task intent 作为闭环入口；
+- 复用既有 routing/preflight，不新增第二套决策逻辑；
+- 区分 dry-run preview、controlled commit、blocked 和 needs_input；
+- 对齐 lifecycle event、artifact/evidence/report projection；
+- 验证 replay、next_action、默认兼容、no-write 和 rollback。
 
-- 统一接入语义（48）
-- 能力路由语义（49）
-- 控制面状态模型（50）
-- 最小执行闭环语义（52）
-
-这是 Stage 14 之前需要的最小设计上下文。
+当前仍不执行真实 adapter，不选择 HTTP/RPC，不启动 service，不引入 auth/UI/DB。第一步应先对照现有实现盘点七步闭环的已实现/preview/unavailable 状态，再决定最小代码切片。

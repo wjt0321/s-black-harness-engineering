@@ -2475,3 +2475,11 @@
 - 新增 `tests/test_orchestration_boundary_contract.py`，冻结真实 orchestration 子命令集合与 preview/commit/retry/fallback/snapshot/aggregate-lineage flag 边界。
 - inspect/report/read-loop/snapshot 既有测试已覆盖默认输出兼容与 preview 字段；本轮不重复添加同义测试。
 - 下一拍：为 stable/preview/unavailable 矩阵补字段、错误和默认兼容测试，不进入协议选型或服务化。
+
+## 2026-07-13 — Stage 13 Backend-first API Boundary 最终收口
+
+- 完成真实 CLI/read models 与 51 资源/操作模型的 stable、stable（受限）、preview、unavailable 对账。
+- 新增 `tests/test_orchestration_boundary_contract.py`，冻结 orchestration 命令集合与关键 flag 边界。
+- 新增 `docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`，记录验收矩阵、稳定边界和正式延期项。
+- 当前阶段切换为 Stage 14 — 中枢台最小编排闭环，事实源为 `docs/52-minimal-orchestration-loop.md`。
+- 稳定 semver 基线继续保持 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`，本轮不新增 tag。

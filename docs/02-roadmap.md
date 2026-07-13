@@ -307,7 +307,7 @@
 
 ---
 
-## Stage 13 — Backend-first API Boundary（当前阶段）
+## Stage 13 — Backend-first API Boundary（已完成）
 
 目标：虽然现在不急着做 UI，但后端必须先按未来可被 UI 调用的方式设计。
 
@@ -321,15 +321,17 @@
 
 - `docs/51-backend-first-api-boundary.md`
 
-说明：
+完成状态：
 
-- 资源模型与操作模型已在 51 中定义。
-- 当前第一拍：把现有真实 CLI/read models 映射为 stable / preview / unavailable 资源与操作契约。
-- 协议（REST / RPC / 本地进程调用）、鉴权、service 和 UI 仍不在本阶段展开。
+- 真实 CLI/read models 已映射为 stable、stable（受限）、preview、unavailable 契约。
+- `tests/test_orchestration_boundary_contract.py` 已冻结命令集合与关键 flag 边界。
+- 默认输出兼容、preview/no-write、determinism 和 recovery lineage 跨入口测试已通过。
+- 最终 release notes：`docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`。
+- 本阶段不选择协议、不引入鉴权/service/DB/UI、不执行真实 adapter；本次不创建新 semver tag。
 
 ---
 
-## Stage 14 — 中枢台最小编排闭环（设计文档、命令草案与 run 侧 A+B commit 已落地）
+## Stage 14 — 中枢台最小编排闭环（当前阶段；设计文档、命令草案与 run 侧 A+B commit 已落地）
 
 目标：在后端抽象稳定后，跑通第一个真正体现“中枢台”特征的最小闭环。
 
@@ -337,6 +339,8 @@
 
 - `docs/52-minimal-orchestration-loop.md`
 - `docs/53-minimal-orchestration-loop-cli-draft.md`（命令面草案参考，非正式 API 边界）
+
+当前第一拍：将 Stage 13 已冻结的 stable/preview/unavailable 契约应用到最小闭环的 use-case 与回放验证；继续保持不选 HTTP/RPC、不启动 service、不执行真实 adapter。
 
 候选闭环：
 

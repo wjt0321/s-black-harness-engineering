@@ -16,11 +16,12 @@ python -m agent_runtime.cli doctor
 然后按顺序阅读：
 
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
-2. `docs/51-backend-first-api-boundary.md`：Stage 13 当前设计事实源。
-3. `tasks/handoff-2026-07-12.md`：Stage 12 收口与 Stage 13 入口交接。
-4. `docs/02-roadmap.md`：需要更完整路线图时再读。
-5. `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`：上一阶段验收事实。
-6. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
+2. `docs/52-minimal-orchestration-loop.md`：Stage 14 当前设计事实源。
+3. `tasks/handoff-2026-07-13.md`：Stage 13 收口与 Stage 14 入口交接。
+4. `docs/51-backend-first-api-boundary.md`：Stage 13 已冻结的资源/操作边界。
+5. `docs/02-roadmap.md`：需要更完整路线图时再读。
+6. `docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`：上一阶段验收事实。
+7. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
 
 不要先遍历整个 `docs/` 或 `tasks/progress.md`。
 
@@ -28,12 +29,13 @@ python -m agent_runtime.cli doctor
 
 `s-black harness engineering`（Python 包名 `agent_runtime`）是一个轻量、可审计、可迁移的 Agent Runtime / Harness Orchestrator，逐步抽象规则门禁、任务账本、adapter envelope、能力路由和控制面 read model。
 
-当前阶段：**Stage 13 — Backend-first API Boundary**。
+当前阶段：**Stage 14 — 中枢台最小编排闭环**。
 
 - 冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation 第一版。
 - Stage 12 已完成：routing/read-loop snapshot 与 recovery lineage read model 已冻结并通过验收。
-- 当前入口：`docs/51-backend-first-api-boundary.md`。第一拍只做 Boundary Contract Reconciliation，把真实 CLI/read models 分类为 stable / preview / unavailable。
+- Stage 13 已完成：真实 CLI/read models 的 stable/preview/unavailable 边界已对账，并由契约测试冻结命令 surface 与关键 flag。
+- 当前入口：`docs/52-minimal-orchestration-loop.md`。第一拍将已冻结契约应用到最小、可回放、可审计的本地编排闭环。
 
 项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
 

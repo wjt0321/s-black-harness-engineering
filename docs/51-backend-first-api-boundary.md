@@ -262,6 +262,18 @@ Guardrail 的结果决定写操作如何执行：
 
 首轮对账结论：当前可以稳定复用的是**受控 CLI + 受限 read model**，不是通用 API 或持久化资源层。Stage 13 下一拍应优先冻结上述 stable/preview/unavailable 矩阵的字段、错误与兼容测试，不应先选择 HTTP/RPC 或启动 service。
 
+## Stage 13 收口结论（2026-07-13）
+
+Stage 13 — Backend-first API Boundary 已完成首轮契约对账并收口：
+
+- 真实 orchestration CLI surface 已与资源/操作模型对齐；
+- stable、stable（受限）、preview、unavailable 矩阵已冻结；
+- `tests/test_orchestration_boundary_contract.py` 已冻结命令集合与关键 flag 边界；
+- inspect/report/read-loop/snapshot 既有测试继续保障默认输出兼容、preview 字段、确定性和 no-write；
+- 协议选型、鉴权、service、DB、UI 和真实 adapter execution 明确不属于本阶段。
+
+后续进入 Stage 14 — 中枢台最小编排闭环，重点是把已冻结的资源/操作契约应用到最小可回放闭环，而不是重新讨论协议或扩张资源模型。
+
 ## 当前阶段不做什么
 
 本文不实现：
@@ -279,7 +291,7 @@ Guardrail 的结果决定写操作如何执行：
 
 ## 后续长期衔接（非当前第一拍）
 
-当前第一拍仍是本文末尾定义的 **Boundary Contract Reconciliation**。只有完成现有 CLI/read models 的 stable / preview / unavailable 映射并冻结兼容边界后，才评估以下长期方向：
+Stage 13 的 **Boundary Contract Reconciliation** 已完成。以下内容是 Stage 14 之后才可能评估的长期方向，不是当前立即执行项：
 
 - **协议层选择**：根据使用场景决定 CLI、本地进程调用、RPC 还是 HTTP。
 - **Stage 15：UI / 看板前的后端准备**：按 51 的资源与操作梳理未来“总览页、任务页、执行页、审批页、产物页、报告页”分别需要什么。
@@ -297,9 +309,9 @@ Guardrail 的结果决定写操作如何执行：
 这是 UI 和服务化之前需要的最小后端上下文。
 
 
-## Stage 13 进入状态（2026-07-12）
+## Stage 13 进入状态（历史，2026-07-12）
 
-Stage 12 已完成，本文成为当前阶段事实源。Stage 13 第一拍是 **Boundary Contract Reconciliation**：用现有真实 CLI/read models 校准本文资源与操作模型，而不是立即选择协议或启动服务。
+Stage 12 完成后，本文曾作为 Stage 13 事实源。该阶段的 **Boundary Contract Reconciliation** 已于 2026-07-13 完成，以下内容保留为进入阶段时的审计上下文。
 
 首先需要形成映射表：
 

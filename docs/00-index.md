@@ -42,7 +42,7 @@
 - `49-capability-routing-model.md` — 能力路由模型
 - `50-control-plane-state-model.md` — 控制平面状态模型
 - `51-backend-first-api-boundary.md` — 后端优先 API 边界
-- `52-minimal-orchestration-loop.md` — 最小编排循环设计
+- `52-minimal-orchestration-loop.md` — 最小编排循环设计（Stage 14 当前入口）
 - `53-minimal-orchestration-loop-cli-draft.md` — CLI 草稿
 - `54-backend-preparation-before-ui.md` — 后端准备（UI 之前）
 - `56-orchestration-controlled-write-boundary.md` — 受控写入边界
@@ -66,17 +66,17 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/release-notes/` | 各阶段 release notes（最新为 `75-release-notes-stage12-control-plane-state-model.md`） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `76-release-notes-stage13-backend-first-api-boundary.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `51-backend-first-api-boundary.md`
+2. `52-minimal-orchestration-loop.md`
 3. `02-roadmap.md`
 4. `10-cli-poc-usage.md`
-5. 最新 handoff：`tasks/handoff-2026-07-12.md`
+5. 最新 handoff：`tasks/handoff-2026-07-13.md`
 
 ## 其他入口
 
