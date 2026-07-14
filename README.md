@@ -122,6 +122,7 @@
 - ✅ Stage 15.99 — Run Lineage / Recovery 单条只读模型落地
 - ✅ Stage 16 — Read-only Control Panel MVP（静态只读 snapshot/render 已收口；live UI 延期）
 - ✅ Stage 17 — Control Panel Host Integration Boundary（stdio-first handoff descriptor 已收口）
+- 🟡 Stage 18 — Read-only Host Consumer Validation（reference consumer design gate 已冻结，待实现）
 
 ### 现在最明确的位置
 
@@ -133,13 +134,13 @@
 
 ### 接下来的方向
 
-下一步进入明确但仍受限的设计切片：
+下一步进入已冻结边界的最小实现切片：
 
-1. **Stage 18 — Read-only Host Consumer Validation** 先选择一个可验收的本地消费者，再冻结输入、错误处理与副作用边界
-2. 优先验证现有 `orchestration control-panel handoff --json`，不复制 snapshot 聚合或 renderer identity
-3. 消费者不得自动执行 descriptor argv，不得把候选操作视为授权计划
+1. **Stage 18 — Read-only Host Consumer Validation** 第一拍采用标准库-only、stdin-only 的本地 reference consumer
+2. 独立校验现有 handoff schema、identity、representation metadata 与安全 boundary，不导入 producer 实现
+3. 消费者不得读取 representation、自动执行 descriptor argv，或把候选操作视为授权计划
 4. live server、API/auth/session、DB、实时刷新、在线探测、controlled artifact export 和 UI controlled write 继续延期
-5. `v0.13.0-read-only-control-plane` 仍是最新稳定 tag；Stage 17 单个 additive descriptor 不追补 tag
+5. 设计事实源为 `docs/79-read-only-host-consumer-validation-boundary.md`；`v0.13.0-read-only-control-plane` 仍是最新稳定 tag
 
 已落地的主线能力包括：
 

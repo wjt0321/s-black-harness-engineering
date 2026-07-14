@@ -22,7 +22,7 @@
 
 ## 当前阶段
 
-- **Stage 17 — Control Panel Host Integration Boundary（已完成）**
+- **Stage 18 — Read-only Host Consumer Validation（进行中）**
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
@@ -30,6 +30,8 @@
 - 2026-07-14 Stage 17 第一拍已落地：`control-panel handoff` 输出版本化 stdio descriptor，复用 snapshot identity 并声明 JSON/HTML representation、renderer identity 与只读安全边界。
 - project-local 绝对 envelope 路径会归一化为 root-relative 表示；descriptor 不内嵌 HTML、不执行 argv、不启动 service、不访问网络、不写文件或 ledger。
 - Stage 17 以 release notes 收口，不追补 tag；`v0.13.0-read-only-control-plane` 仍是稳定冻结基线。
+- Stage 18 design gate 已冻结：第一拍采用标准库-only、stdin-only 的本地 reference consumer，独立校验 handoff schema/identity/boundary，绝不执行 argv。
+- Stage 18 设计事实源：`docs/79-read-only-host-consumer-validation-boundary.md`；实现尚未开始。
 - envelope 未提供时，run/approval/artifact 区段诚实显示 unavailable；report 保持 request-scoped boundary，不伪造持久 collection。
 
 ### Stage 10 基线（保留）
@@ -104,30 +106,31 @@
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/78-control-panel-host-integration-boundary.md`
-3. 再读：`tasks/handoff-2026-07-14.md`
-4. 再读：`docs/77-read-only-control-plane-milestone-freeze.md`
-5. 再读：`docs/76-read-only-control-panel-mvp.md`
-6. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
-7. 再跑：`python -m agent_runtime.cli docs context --json`
-8. 需要 Stage 14 闭环事实时读：`docs/52-minimal-orchestration-loop.md`
-9. 需要 Stage 13 边界时读：`docs/51-backend-first-api-boundary.md`
-10. 需要 Stage 17 验收事实时读：`docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`
-11. 需要 v0.13 验收事实时读：`docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`
+2. 再读：`docs/79-read-only-host-consumer-validation-boundary.md`
+3. 再读：`docs/78-control-panel-host-integration-boundary.md`
+4. 再读：`tasks/handoff-2026-07-14.md`
+5. 再读：`docs/77-read-only-control-plane-milestone-freeze.md`
+6. 再读：`docs/76-read-only-control-panel-mvp.md`
+7. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
+8. 再跑：`python -m agent_runtime.cli docs context --json`
+9. 需要 Stage 14 闭环事实时读：`docs/52-minimal-orchestration-loop.md`
+10. 需要 Stage 13 边界时读：`docs/51-backend-first-api-boundary.md`
+11. 需要 Stage 17 验收事实时读：`docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`
+12. 需要 v0.13 验收事实时读：`docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`
 
 ## 下一步做什么
 
-- **Stage 18 — Read-only Host Consumer Validation（design gate，待下一窗口冻结）**
-- 入口文档：`docs/78-control-panel-host-integration-boundary.md`（Stage 17 contract 事实源；实现前应新增 Stage 18 设计文档）
-- 重点：先选择一个真实、可验收的本地消费者，冻结 descriptor 输入、错误处理、刷新与副作用边界；不得自动执行 argv。
+- **Stage 18 — Local Reference Consumer 第一拍（待按 TDD 实现）**
+- 入口文档：`docs/79-read-only-host-consumer-validation-boundary.md`
+- 重点：新增标准库-only `tools/control_panel_handoff_consumer.py`，只从 stdin 校验 handoff schema、identity 与 boundary；不得读取 representation 或执行 argv。
 - `v0.13.0-read-only-control-plane` 仍是当前稳定冻结基线；Stage 17 additive descriptor 不追补 tag。
 - live server、API/auth/session、DB、实时刷新、在线探测、controlled artifact export 与 UI controlled write 继续延期。
 
 ## 重要约束
 
 - 仍然**不做真实 adapter execution**
-- Stage 16/17 只允许**本地静态只读表示与 stdio descriptor**；仍然不做 live service、DB、auth、网络访问或 UI 写操作
-- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、77 里程碑冻结文档、76 设计文档与最新 handoff，并保持验证/提交边界
+- Stage 16–18 只允许**本地静态只读表示、stdio descriptor 与 stdin-only validation**；仍然不做 live service、DB、auth、网络访问或 UI 写操作
+- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、79/78/77/76 事实源与最新 handoff，并保持验证/提交边界
 
 ## 一句话理解当前项目
 

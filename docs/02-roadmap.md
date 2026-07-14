@@ -720,6 +720,26 @@ Tag 策略：design gate 与单个 additive descriptor 不自动创建 tag；待
 
 ---
 
+## Stage 18 — Read-only Host Consumer Validation（design gate 已完成，待实现）
+
+目标：用一个与 producer 解耦的本地 reference consumer，验证 Stage 17 handoff descriptor 能被外部宿主安全校验，而不是直接进入专有宿主集成。
+
+第一拍：
+
+- 新增标准库-only `tools/control_panel_handoff_consumer.py`；
+- stdin-only 读取单个 handoff JSON，最大 1 MiB；
+- 严格校验 schema、handoff/render identity、representation metadata、argv shape 与安全 boundary；
+- producer 非 pass、unsafe boundary 或 unsupported schema 不得伪装为可信 representation；
+- consumer 不导入 producer builder、不读取项目资源、不执行 argv、不访问网络、不写文件。
+
+设计事实源：
+
+- `docs/79-read-only-host-consumer-validation-boundary.md`
+
+继续延期：Codex Desktop/QwenPaw 专有 bridge、representation 自动读取、live refresh/server、文件输入/export、UI 写操作与真实 adapter execution。
+
+---
+
 ## Guardrail 主线策略
 
 guardrail / ledger / controlled write 这条主线仍然是必需能力，不应被放弃。
