@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import importlib
+import io
 import json
 from pathlib import Path
 
@@ -283,3 +284,124 @@ def test_reference_consumer_blocks_producer_error_descriptor() -> None:
         failed_check="producer_status",
         rule_id="consumer-producer-not-pass",
     )
+
+
+
+def _run_main(raw: bytes) -> tuple[int, str]:
+    output = io.StringIO()
+    code = _consumer().main(stdin=io.BytesIO(raw), stdout=output)
+    return code, output.getvalue()
+
+
+def _files(root: Path) -> dict[Path, bytes]:
+    return {
+        item.relative_to(root): item.read_bytes()
+        for item in root.rglob("*")
+        if item.is_file()
+    }
+
+
+def test_reference_consumer_cli_accepts_valid_json_deterministically() -> None:
+    raw = json.dumps(
+        _valid_handoff(),
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+    first_code, first_output = _run_main(raw)
+    second_code, second_output = _run_main(raw)
+
+    assert first_code == second_code == 0
+    assert first_output == second_output
+    assert json.loads(first_output)["status"] == "pass"
+
+
+def test_reference_consumer_cli_blocks_producer_error() -> None:
+    raw = json.dumps(
+        build_control_panel_handoff(
+            ROOT,
+            envelope_file="adapters/missing-envelope.json",
+        ).to_dict(),
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+    code, output = _run_main(raw)
+
+    assert code == 2
+    assert json.loads(output)["status"] == "blocked"
+
+
+def test_reference_consumer_rejects_empty_stdin() -> None:
+    code, output = _run_main(b"   \r\n")
+    payload = json.loads(output)
+
+    assert code == 5
+    assert payload["status"] == "validation_failed"
+    assert payload["source_handoff_id"] is None
+    assert {item["status"] for item in payload["checks"]} == {"not_run"}
+    assert payload["findings"][0]["rule_id"] == "consumer-empty-input"
+
+
+def test_reference_consumer_rejects_input_over_limit() -> None:
+    raw = b"x" * (_consumer().MAX_INPUT_BYTES + 1)
+
+    code, output = _run_main(raw)
+
+    assert code == 5
+    assert json.loads(output)["findings"][0]["rule_id"] == (
+        "consumer-input-too-large"
+    )
+
+
+def test_reference_consumer_rejects_non_utf8_input() -> None:
+    code, output = _run_main(b"\xff\xfe")
+
+    assert code == 5
+    assert json.loads(output)["findings"][0]["rule_id"] == (
+        "consumer-input-not-utf8"
+    )
+
+
+def test_reference_consumer_rejects_invalid_json_without_echo() -> None:
+    sentinel = "sentinel-secret-value"
+    code, output = _run_main(("{\"value\":\"" + sentinel).encode("utf-8"))
+
+    assert code == 5
+    assert json.loads(output)["findings"][0]["rule_id"] == "consumer-invalid-json"
+    assert sentinel not in output
+
+
+def test_reference_consumer_rejects_duplicate_object_key() -> None:
+    code, output = _run_main(b'{"status":"pass","status":"error"}')
+
+    assert code == 5
+    assert json.loads(output)["findings"][0]["rule_id"] == (
+        "consumer-duplicate-json-key"
+    )
+
+
+def test_reference_consumer_is_independent_and_has_no_side_effects(tmp_path: Path) -> None:
+    source = (ROOT / "tools/control_panel_handoff_consumer.py").read_text(
+        encoding="utf-8"
+    )
+    lowered = source.lower()
+    for forbidden in (
+        "agent_runtime",
+        "subprocess",
+        "socket",
+        "urllib",
+        "render_control_panel_html",
+        "open(",
+    ):
+        assert forbidden not in lowered
+
+    marker = tmp_path / "marker.txt"
+    marker.write_text("unchanged", encoding="utf-8")
+    root_before = _files(ROOT)
+    temp_before = _files(tmp_path)
+    valid_raw = json.dumps(_valid_handoff(), ensure_ascii=False).encode("utf-8")
+
+    assert _run_main(valid_raw)[0] == 0
+    assert _run_main(b"not-json")[0] == 5
+    assert _files(ROOT) == root_before
+    assert _files(tmp_path) == temp_before

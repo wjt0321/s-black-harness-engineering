@@ -5,9 +5,10 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import PurePosixPath, PureWindowsPath
-from typing import Any
+from typing import Any, BinaryIO, TextIO
 
 VALIDATION_SCHEMA_VERSION = (
     "control-plane/control-panel-host-consumer-validation/v1"
@@ -16,6 +17,7 @@ HANDOFF_SCHEMA_VERSION = "control-plane/control-panel-handoff/v1"
 SNAPSHOT_SCHEMA_VERSION = "control-plane/control-panel-snapshot/v1"
 HTML_RENDERER_VERSION = "control-plane/control-panel-html/v1"
 CONSUMER_ID = "local-reference-consumer/v1"
+MAX_INPUT_BYTES = 1024 * 1024
 CHECK_IDS = (
     "document_shape",
     "schema_version",
@@ -456,3 +458,107 @@ def validate_handoff_document(document: object) -> ConsumerValidationResult:
         check_states=check_states,
         findings=findings,
     )
+
+
+
+class InputDocumentError(Exception):
+    """Safe input failure that can be rendered without echoing source bytes."""
+
+    def __init__(self, rule_id: str, message: str, *, status: str = "validation_failed"):
+        super().__init__(message)
+        self.rule_id = rule_id
+        self.message = message
+        self.status = status
+
+
+class DuplicateJSONKeyError(ValueError):
+    """Raised when JSON contains an ambiguous repeated object key."""
+
+
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise DuplicateJSONKeyError
+        result[key] = value
+    return result
+
+
+def read_stdin_document(stream: BinaryIO) -> object:
+    """Read and parse one bounded UTF-8 JSON document from a binary stream."""
+    try:
+        raw = stream.read(MAX_INPUT_BYTES + 1)
+    except OSError as exc:
+        raise InputDocumentError(
+            "consumer-input-read-error",
+            "The consumer could not read stdin.",
+            status="error",
+        ) from exc
+    if len(raw) > MAX_INPUT_BYTES:
+        raise InputDocumentError(
+            "consumer-input-too-large",
+            "The handoff input exceeds the 1 MiB consumer limit.",
+        )
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise InputDocumentError(
+            "consumer-input-not-utf8",
+            "The handoff input must be valid UTF-8.",
+        ) from exc
+    if not text.strip():
+        raise InputDocumentError(
+            "consumer-empty-input",
+            "The consumer requires one handoff JSON document on stdin.",
+        )
+    try:
+        return json.loads(text, object_pairs_hook=_reject_duplicate_keys)
+    except DuplicateJSONKeyError as exc:
+        raise InputDocumentError(
+            "consumer-duplicate-json-key",
+            "The handoff JSON contains a duplicate object key.",
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise InputDocumentError(
+            "consumer-invalid-json",
+            "The handoff input is not valid JSON.",
+        ) from exc
+
+
+def _input_failure_result(error: InputDocumentError) -> ConsumerValidationResult:
+    check_states = {check_id: "not_run" for check_id in CHECK_IDS}
+    return _result(
+        status=error.status,
+        source_handoff_id=None,
+        check_states=check_states,
+        findings=[
+            _finding(
+                error.rule_id,
+                status=error.status,
+                message=error.message,
+            )
+        ],
+    )
+
+
+def main(
+    *,
+    stdin: BinaryIO | None = None,
+    stdout: TextIO | None = None,
+) -> int:
+    """Validate one stdin descriptor and emit one deterministic JSON result."""
+    input_stream = stdin if stdin is not None else sys.stdin.buffer
+    output_stream = stdout if stdout is not None else sys.stdout
+    try:
+        document = read_stdin_document(input_stream)
+    except InputDocumentError as error:
+        result = _input_failure_result(error)
+    else:
+        result = validate_handoff_document(document)
+    json.dump(result.to_dict(), output_stream, ensure_ascii=False, indent=2)
+    output_stream.write("\n")
+    return result.exit_code()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
