@@ -2531,3 +2531,12 @@
 - 新增 `docs/76-read-only-control-panel-mvp.md` 与 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`，同步 digest、roadmap、CLI usage、boundary、README、AGENTS、index 与 handoff。
 - Stage 16 第一拍收口；live service/API/auth/DB、实时刷新、UI controlled write 与真实 adapter execution 继续延期。
 - 本阶段收口提交为 `b46c013`；已按用户授权推送到 `origin/main`，不创建 tag。
+
+
+## 2026-07-14 — v0.13.0 Read-only Control Plane Milestone Freeze
+
+- 将 Stage 13 Backend-first API Boundary、Stage 14 Minimal Orchestration Loop、CLI automation consumer 与 Stage 16 Read-only Control Panel 统一判定为新里程碑能力包。
+- 新增 `docs/77-read-only-control-plane-milestone-freeze.md` 与 `docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`。
+- 冻结名：`v0.13.0-read-only-control-plane`；采用 annotated tag，不为单个 Stage 追补 tag。
+- 同步 version governance、digest、roadmap、README、AGENTS、index 与 handoff。
+- 真实 adapter execution、live service、auth、DB、实时刷新与 UI controlled write 继续延期。

@@ -11,13 +11,13 @@
 
 ## 当前基线
 
-- 稳定基线：`v0.12.1-orchestration-read-loop-snapshot`
-- 冻结 commit：`0419a04`
+- 稳定基线：`v0.13.0-read-only-control-plane`
+- 上一冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`
 - Stage 13 最终收口提交：`9625ba2`
 - Stage 14 Evidence projection 提交：`4a64ace`
 - Stage 14 最终收口提交：`03b64dd`（已推送至 `origin/main`）
 - 上一 foundation 基线：`v0.12.0-orchestration-foundation`（commit `38b4b69`）
-- 本轮按 release notes 收口，不创建新的 semver tag
+- 本轮按 Stage 13–16 能力包创建 annotated milestone tag：`v0.13.0-read-only-control-plane`
 
 ## 当前阶段
 
@@ -100,18 +100,20 @@
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/76-read-only-control-panel-mvp.md`
+2. 再读：`docs/77-read-only-control-plane-milestone-freeze.md`
 3. 再读：`tasks/handoff-2026-07-14.md`
-4. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
-5. 再跑：`python -m agent_runtime.cli docs context --json`
-6. 需要 Stage 14 闭环事实时读：`docs/52-minimal-orchestration-loop.md`
-7. 需要 Stage 13 边界时读：`docs/51-backend-first-api-boundary.md`
-8. 需要 Stage 16 验收事实时读：`docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`
-9. 需要 CLI 自动化验收事实时读：`docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`
+4. 再读：`docs/76-read-only-control-panel-mvp.md`
+5. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
+6. 再跑：`python -m agent_runtime.cli docs context --json`
+7. 需要 Stage 14 闭环事实时读：`docs/52-minimal-orchestration-loop.md`
+8. 需要 Stage 13 边界时读：`docs/51-backend-first-api-boundary.md`
+9. 需要 Stage 16 验收事实时读：`docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`
+10. 需要 CLI 自动化验收事实时读：`docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`
 
 ## 下一步做什么
 
-- **本阶段已完成并收口**：Stage 16 Read-only Control Panel MVP 设计事实源见 `docs/76-read-only-control-panel-mvp.md`，验收事实见 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`。
+- **里程碑已冻结**：Stage 13–16 能力包统一冻结为 `v0.13.0-read-only-control-plane`；事实源见 `docs/77-read-only-control-plane-milestone-freeze.md`。
+- Stage 16 Read-only Control Panel MVP 设计事实源见 `docs/76-read-only-control-panel-mvp.md`，验收事实见 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`。
 - 当前不自动扩张到 live server、API/auth/session、DB、实时刷新、在线探测或 UI controlled write。
 - 只有出现明确宿主/部署/交互写入需求并完成新的设计 gate 后，才进入 Stage 16 后续增强。
 - 继续保持只读、受控写入、无真实 adapter execution 的安全边界。
@@ -120,7 +122,7 @@
 
 - 仍然**不做真实 adapter execution**
 - Stage 16 MVP 只允许**本地静态只读 HTML**；仍然不做 live service、DB、auth、网络访问或 UI 写操作
-- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、76 设计文档与最新 handoff，并保持验证/提交边界
+- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、77 里程碑冻结文档、76 设计文档与最新 handoff，并保持验证/提交边界
 
 ## 一句话理解当前项目
 

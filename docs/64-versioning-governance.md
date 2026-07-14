@@ -232,3 +232,22 @@ Release notes 是阶段收口文档，不自动等于 tag 候选。
 - 原因：本次冻结的是后端契约语义与兼容边界，没有新增真实执行、service 或持久化能力包。
 - Stage 13 最终验收 commit：`9625ba2`。
 - 后续进入 Stage 14 — 中枢台最小编排闭环。
+
+
+## v0.13.0 Read-only Control Plane 里程碑冻结（2026-07-14）
+
+Stage 13–16 已跨过 `v0.12.1-orchestration-read-loop-snapshot` 的语义边界，形成新的可引用能力包：
+
+- Backend-first API Boundary；
+- Minimal Orchestration Loop replay / next_action；
+- recovery lineage aggregation；
+- CLI automation contract/profile/workflow；
+- deterministic static Read-only Control Panel。
+
+因此本轮按条件 A、B、C 同时满足处理，冻结 annotated tag：
+
+```text
+v0.13.0-read-only-control-plane
+```
+
+冻结事实源为 `docs/77-read-only-control-plane-milestone-freeze.md` 与 `docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`。该 tag 不改变项目边界：真实 adapter execution、live service、auth、DB、实时订阅和 UI controlled write 继续 unavailable。

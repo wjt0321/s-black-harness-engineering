@@ -13,7 +13,7 @@
 
 ## 版本治理说明
 
-当前仓库最新里程碑基线已更新为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`，已 push）。上一 foundation 基线仍是 `v0.12.0-orchestration-foundation`（commit `38b4b69`）。
+当前仓库最新里程碑基线为 `v0.13.0-read-only-control-plane`（annotated tag，已 push）。上一基线为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`）。
 
 从 orchestration 阶段开始，项目持续使用 `docs/55`、`docs/57`、`docs/59`、`docs/61`、`docs/65`、`docs/67`、`docs/72` 这类**阶段编号 + release notes**来完成阶段收口，而 semver/tag 改为只在里程碑节点冻结。
 
@@ -21,7 +21,7 @@
 
 - release notes 与阶段文档持续更新；
 - semver/tag 不再逐阶段增长；
-- `docs/64-versioning-governance.md` 定义的“阶段推进 + release notes 收口 + 里程碑打 tag”策略，已经在 `v0.12.0-orchestration-foundation` 与 `v0.12.1-orchestration-read-loop-snapshot` 两次得到实际执行。
+- `docs/64-versioning-governance.md` 定义的“阶段推进 + release notes 收口 + 里程碑打 tag”策略，已经在 `v0.12.0-orchestration-foundation`、`v0.12.1-orchestration-read-loop-snapshot` 与 `v0.13.0-read-only-control-plane` 三次得到实际执行。
 
 两条主线并行推进，但优先级上仍遵循：先把底层边界和状态模型打稳，再逐步放开接入、编排和未来 UI 可操作性。
 

@@ -79,7 +79,7 @@ Current estimate:
 
 ### Versioning Note
 
-The latest milestone baseline is now `v0.12.1-orchestration-read-loop-snapshot` (commit `0419a04`, already pushed). The previous foundation baseline remains `v0.12.0-orchestration-foundation` (commit `38b4b69`).
+The latest milestone baseline is `v0.13.0-read-only-control-plane` (annotated tag, pushed), covering the Stage 13–16 backend boundary, replay, CLI automation, and static read-only Control Panel. The previous baseline is `v0.12.1-orchestration-read-loop-snapshot` (commit `0419a04`).
 
 After `v0.11.0-runtime-event-import`, the project entered the orchestration line and effectively switched to **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, `65`, `67`, and `72`. That means:
 
@@ -87,12 +87,12 @@ After `v0.11.0-runtime-event-import`, the project entered the orchestration line
 - semver / tags no longer advanced stage-by-stage;
 - versioning moved to a "stage progression + release-notes closure + milestone tags" model.
 
-The repository formalizes this through `docs/64-versioning-governance.md`. `v0.12.0-orchestration-foundation` was the first fully frozen milestone under that policy, and `v0.12.1-orchestration-read-loop-snapshot` is the current frozen milestone:
+The repository formalizes this through `docs/64-versioning-governance.md`. The policy has now been applied to `v0.12.0-orchestration-foundation`, `v0.12.1-orchestration-read-loop-snapshot`, and `v0.13.0-read-only-control-plane`:
 
 - stage numbers continue to represent internal progression order;
 - release-notes documents close individual stages;
 - semver / Git tags are reserved for milestone-level freeze points rather than every stage;
-- the current freeze baseline is `v0.12.1-orchestration-read-loop-snapshot` (`0419a04`), adding Stage 10–12 source-backed registry, constrained routing, decision trace, routing snapshot, and read-loop snapshot read models on top of `v0.12.0-orchestration-foundation`.
+- the current freeze baseline is `v0.13.0-read-only-control-plane`, adding the Stage 13–16 backend boundary, replay/recovery, CLI automation, and static read-only Control Panel on top of `v0.12.1`.
 
 ### Stage Closure Progress
 

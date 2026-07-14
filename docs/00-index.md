@@ -56,6 +56,7 @@
 - `74-recovery-lineage-report-reuse.md` — Recovery lineage 在 report generate 的显式复用契约
 - `75-cli-automation-contract-discovery.md` — CLI 自动化 discovery、gate、profile、workflow plan 与 drift validation（已收口）
 - `76-read-only-control-panel-mvp.md` — Stage 16 本地静态只读 Control Panel 设计与验收边界（已收口）
+- `77-read-only-control-plane-milestone-freeze.md` — `v0.13.0-read-only-control-plane` 冻结范围、证据与 tag 入口
 
 ### 6. 想看里程碑与冻结记录
 
@@ -68,17 +69,17 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/release-notes/` | 各阶段 release notes（最新为 `79-release-notes-stage16-read-only-control-panel.md`） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `80-release-notes-v0.13.0-read-only-control-plane.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `76-read-only-control-panel-mvp.md`
+2. `77-read-only-control-plane-milestone-freeze.md`
 3. 最新 handoff：`tasks/handoff-2026-07-14.md`
-4. `75-cli-automation-contract-discovery.md`
-5. `52-minimal-orchestration-loop.md`
+4. `76-read-only-control-panel-mvp.md`
+5. `75-cli-automation-contract-discovery.md`
 
 ## 其他入口
 
