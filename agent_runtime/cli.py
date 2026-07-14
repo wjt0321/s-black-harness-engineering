@@ -38,6 +38,7 @@ from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_a
 from .orchestration_contract import build_contract_manifest
 from .orchestration_contract_check import check_contract_requirements
 from .orchestration_control_panel import (
+    build_control_panel_handoff,
     build_control_panel_snapshot,
     render_control_panel_html,
 )
@@ -1525,6 +1526,19 @@ def _cmd_orchestration_workflow_check(args: argparse.Namespace) -> int:
 def _cmd_orchestration_workflow_plan(args: argparse.Namespace) -> int:
     """Project one Automation Profile into deterministic unexecuted steps."""
     result = build_automation_workflow_plan(_root_path(args), args.profile_id)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_control_panel_handoff(args: argparse.Namespace) -> int:
+    """Describe deterministic Control Panel representations for a local host."""
+    result = build_control_panel_handoff(
+        _root_path(args),
+        envelope_file=args.envelope,
+    )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
@@ -3182,6 +3196,21 @@ def build_parser() -> argparse.ArgumentParser:
         orchestration_control_panel_parser.add_subparsers(
             dest="control_panel_command", required=True
         )
+    )
+
+    orchestration_control_panel_handoff_parser = (
+        orchestration_control_panel_subparsers.add_parser(
+            "handoff", help="Describe stdio representations for a local host"
+        )
+    )
+    orchestration_control_panel_handoff_parser.add_argument(
+        "--envelope",
+        default=None,
+        help="Optional envelope file shared by snapshot and render representations",
+    )
+    _add_global_args(orchestration_control_panel_handoff_parser)
+    orchestration_control_panel_handoff_parser.set_defaults(
+        func=_cmd_orchestration_control_panel_handoff
     )
 
     orchestration_control_panel_snapshot_parser = (

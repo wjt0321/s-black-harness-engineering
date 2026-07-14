@@ -57,9 +57,8 @@
 当前仓库已经形成可内部试用的**离线、可审计 CLI / Runtime 安全内核**，并完成 Stage 12 control-plane read model 验收：
 
 - 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
-- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环与 Stage 16 Read-only Control Panel MVP 均已完成收口；
-- Stage 16 收口提交为 `b46c013`；已按用户授权推送到 `origin/main`。
-- 当前可生成本地、自包含、确定性的静态只读 Control Panel；真实 adapter execution、持久化 service/DB、鉴权和 UI 写操作仍未开放，因此当前不是自动执行型生产中枢台。
+- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP 与 Stage 17 stdio host handoff 均已完成收口；
+- 当前可生成本地、自包含、确定性的静态只读 Control Panel，并通过版本化 descriptor 向受控宿主声明 snapshot/HTML representation；真实 adapter execution、持久化 service/DB、鉴权和 UI 写操作仍未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条
 
@@ -122,7 +121,7 @@
 - ✅ Stage 15.98 — Orchestration Run Retry / Fallback Commit 落地
 - ✅ Stage 15.99 — Run Lineage / Recovery 单条只读模型落地
 - ✅ Stage 16 — Read-only Control Panel MVP（静态只读 snapshot/render 已收口；live UI 延期）
-- ⚪ Stage 17 — Control Panel Host Integration Boundary（stdio-first handoff design gate 已冻结，待实现）
+- ✅ Stage 17 — Control Panel Host Integration Boundary（stdio-first handoff descriptor 已收口）
 
 ### 现在最明确的位置
 
@@ -134,13 +133,13 @@
 
 ### 接下来的方向
 
-下一步进入明确但仍受限的设计/实现切片：
+下一步进入明确但仍受限的设计切片：
 
-1. **Stage 17 — Control Panel Host Integration Boundary** 的设计事实源为 `docs/78-control-panel-host-integration-boundary.md`
-2. 第一拍按 TDD 新增只读 `orchestration control-panel handoff --json`，复用现有 snapshot/render，声明 representation、identity 与安全边界
-3. descriptor 不内嵌 HTML、不写文件、不启动 server，也不执行其中声明的命令
+1. **Stage 18 — Read-only Host Consumer Validation** 先选择一个可验收的本地消费者，再冻结输入、错误处理与副作用边界
+2. 优先验证现有 `orchestration control-panel handoff --json`，不复制 snapshot 聚合或 renderer identity
+3. 消费者不得自动执行 descriptor argv，不得把候选操作视为授权计划
 4. live server、API/auth/session、DB、实时刷新、在线探测、controlled artifact export 和 UI controlled write 继续延期
-5. Stage 17 启动时不创建 tag；形成稳定 host contract 与验收消费者后再评估里程碑冻结
+5. `v0.13.0-read-only-control-plane` 仍是最新稳定 tag；Stage 17 单个 additive descriptor 不追补 tag
 
 已落地的主线能力包括：
 
@@ -160,7 +159,7 @@
 - Stage 15.7/15.8/15.9 run controlled execution：`orchestration run --dry-run`（只读 plan preview + plan_hash）、受控写入 `orchestration run --commit`（A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events，不执行真实 adapter）
 - Stage 12 post-freeze recovery read model：`orchestration run inspect --aggregate-lineage` / `orchestration report generate --aggregate-lineage`（基于现有 lifecycle events 聚合 root/latest/leaves、attempt count 与 effective plan hash，只读、不扫描 drafts）
 - post-Stage 14 CLI automation：`orchestration contract inspect/check`、`orchestration profile list/inspect/check`、`orchestration workflow plan/check`（确定性发现、协商、命名化、未执行步骤投影与 hash drift validation）
-- Stage 16 Read-only Control Panel：`orchestration control-panel snapshot/render`（确定性 snapshot、自包含 HTML、可选 envelope-scoped run/approval/artifact、无 service/network/write/execute）
+- Stage 16/17 Read-only Control Panel：`orchestration control-panel snapshot/render/handoff`（确定性 snapshot、自包含 HTML、stdio host descriptor、可选 envelope-scoped run/approval/artifact、无 service/network/write/execute）
 
 ## 当前边界
 

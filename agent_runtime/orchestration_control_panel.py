@@ -1,4 +1,4 @@
-"""Stage 16 deterministic read-only Control Panel snapshot and static HTML."""
+"""Stage 16/17 deterministic Control Panel representations and host handoff."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+from .loader import normalize_path
 from .orchestration_adapter import list_adapters
 from .orchestration_approval import list_approvals
 from .orchestration_artifact import list_artifacts
@@ -26,6 +27,8 @@ from .result import (
 )
 
 SCHEMA_VERSION = "control-plane/control-panel-snapshot/v1"
+HANDOFF_SCHEMA_VERSION = "control-plane/control-panel-handoff/v1"
+HTML_RENDERER_VERSION = "control-plane/control-panel-html/v1"
 _SECTION_ORDER = (
     "overview",
     "tasks",
@@ -66,6 +69,16 @@ def _canonical_hash(payload: dict[str, Any]) -> str:
         sort_keys=True,
     ).encode("utf-8")
     return f"sha256:{hashlib.sha256(canonical).hexdigest()}"
+
+
+def _safe_envelope_reference(root: Path, envelope_file: str | None) -> str | None:
+    if envelope_file is None:
+        return None
+    resolved_root = root.resolve()
+    resolved_path = (resolved_root / envelope_file).resolve()
+    if resolved_path != resolved_root and resolved_root not in resolved_path.parents:
+        return None
+    return normalize_path(resolved_path.relative_to(resolved_root))
 
 
 def _section(payload: dict[str, Any], *, scope: str, availability: str) -> dict[str, Any]:
@@ -182,6 +195,76 @@ class ControlPanelSnapshot:
                 f"{name}={self.sections[name]['status']}"
                 for name in _SECTION_ORDER
             )
+        )
+        for finding in self.findings:
+            lines.append(
+                f"- {finding.get('rule_id', 'control-panel-source-error')}: "
+                f"{finding.get('message', 'Source read model failed.')}"
+            )
+        if self.next_action is not None:
+            lines.append(f"Next: {self.next_action['code']}")
+        return "\n".join(lines)
+
+
+@dataclass(frozen=True)
+class ControlPanelHandoff:
+    """Versioned stdio descriptor for host consumption of panel representations."""
+
+    status: str
+    source: dict[str, Any]
+    snapshot: dict[str, Any]
+    render: dict[str, Any]
+    findings: tuple[dict[str, Any], ...] = ()
+    next_action: dict[str, str] | None = None
+    schema_version: str = HANDOFF_SCHEMA_VERSION
+
+    def exit_code(self) -> int:
+        return _exit_code(self.status)
+
+    def _payload_without_id(self) -> dict[str, Any]:
+        return {
+            "status": self.status,
+            "schema_version": self.schema_version,
+            "source": self.source,
+            "snapshot": self.snapshot,
+            "render": self.render,
+            "boundaries": {
+                "read_only": True,
+                "writes_files": False,
+                "writes_ledgers": False,
+                "accesses_network": False,
+                "starts_service": False,
+                "executes_commands": False,
+                "executes_adapters": False,
+            },
+            "findings": list(self.findings),
+            "next_action": self.next_action,
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = self._payload_without_id()
+        return {
+            "status": payload["status"],
+            "schema_version": payload["schema_version"],
+            "handoff_id": _canonical_hash(payload),
+            "source": payload["source"],
+            "snapshot": payload["snapshot"],
+            "render": payload["render"],
+            "boundaries": payload["boundaries"],
+            "findings": payload["findings"],
+            "next_action": payload["next_action"],
+        }
+
+    def render_human(self) -> str:
+        payload = self.to_dict()
+        lines = [f"CONTROL PANEL HANDOFF {self.status.upper()}"]
+        lines.append(f"handoff_id={payload['handoff_id']}")
+        lines.append(f"snapshot_id={self.snapshot['snapshot_id']}")
+        lines.append(f"render_id={self.render['render_id']}")
+        lines.append(
+            "representations: "
+            f"snapshot={self.snapshot['media_type']} "
+            f"render={self.render['media_type']}"
         )
         for finding in self.findings:
             lines.append(
@@ -336,10 +419,100 @@ def build_control_panel_snapshot(
     )
     return ControlPanelSnapshot(
         status=status,
-        source={"envelope_file": envelope_file},
+        source={
+            "envelope_file": _safe_envelope_reference(root, envelope_file),
+        },
         summary=summary,
         sections=sections,
         findings=findings,
+        next_action=next_action,
+    )
+
+
+def build_control_panel_handoff(
+    root: Path,
+    *,
+    envelope_file: str | None = None,
+) -> ControlPanelHandoff:
+    """Describe existing panel representations without rendering or executing them."""
+    snapshot_payload = build_control_panel_snapshot(
+        root,
+        envelope_file=envelope_file,
+    ).to_dict()
+    snapshot_argv = [
+        "python",
+        "-m",
+        "agent_runtime.cli",
+        "orchestration",
+        "control-panel",
+        "snapshot",
+    ]
+    render_argv = [
+        "python",
+        "-m",
+        "agent_runtime.cli",
+        "orchestration",
+        "control-panel",
+        "render",
+    ]
+    safe_envelope_file = snapshot_payload["source"]["envelope_file"]
+    if safe_envelope_file is not None:
+        snapshot_argv.extend(("--envelope", safe_envelope_file))
+        render_argv.extend(("--envelope", safe_envelope_file))
+    snapshot_argv.append("--json")
+
+    snapshot_id = str(snapshot_payload["snapshot_id"])
+    render_id = _canonical_hash(
+        {
+            "snapshot_id": snapshot_id,
+            "renderer_version": HTML_RENDERER_VERSION,
+        }
+    )
+    status = str(snapshot_payload["status"])
+    next_action = (
+        {
+            "code": "read_control_panel_representation",
+            "message": (
+                "Read the snapshot or render representation; do not execute "
+                "candidate operations without separate authorization."
+            ),
+        }
+        if status == "pass"
+        else {
+            "code": "fix_control_panel_sources",
+            "message": "Fix the failing source read models before host consumption.",
+        }
+    )
+    return ControlPanelHandoff(
+        status=status,
+        source=dict(snapshot_payload["source"]),
+        snapshot={
+            "snapshot_id": snapshot_id,
+            "schema_version": snapshot_payload["schema_version"],
+            "media_type": "application/json; charset=utf-8",
+            "encoding": "utf-8",
+            "working_directory": "project_root",
+            "scoped_unavailable": [
+                {
+                    "section": name,
+                    "scope": snapshot_payload["sections"][name]["scope"],
+                    "reason": snapshot_payload["sections"][name]["reason"],
+                }
+                for name in _SECTION_ORDER
+                if snapshot_payload["sections"][name].get("status") == "unavailable"
+            ],
+            "argv": snapshot_argv,
+        },
+        render={
+            "render_id": render_id,
+            "renderer_version": HTML_RENDERER_VERSION,
+            "media_type": "text/html; charset=utf-8",
+            "encoding": "utf-8",
+            "working_directory": "project_root",
+            "self_contained": True,
+            "argv": render_argv,
+        },
+        findings=tuple(snapshot_payload.get("findings", [])),
         next_action=next_action,
     )
 

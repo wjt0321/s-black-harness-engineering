@@ -22,11 +22,14 @@
 
 ## 当前阶段
 
-- **Stage 16 — Read-only Control Panel MVP（已完成）**
+- **Stage 17 — Control Panel Host Integration Boundary（已完成）**
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
 - Stage 16 收口提交：`b46c013`（`Complete Stage 16 read-only control panel`）；已按用户授权推送到 `origin/main`。
+- 2026-07-14 Stage 17 第一拍已落地：`control-panel handoff` 输出版本化 stdio descriptor，复用 snapshot identity 并声明 JSON/HTML representation、renderer identity 与只读安全边界。
+- project-local 绝对 envelope 路径会归一化为 root-relative 表示；descriptor 不内嵌 HTML、不执行 argv、不启动 service、不访问网络、不写文件或 ledger。
+- Stage 17 以 release notes 收口，不追补 tag；`v0.13.0-read-only-control-plane` 仍是稳定冻结基线。
 - envelope 未提供时，run/approval/artifact 区段诚实显示 unavailable；report 保持 request-scoped boundary，不伪造持久 collection。
 
 ### Stage 10 基线（保留）
@@ -95,7 +98,7 @@
 - `orchestration contract inspect --json` 可供脚本确定性发现当前 CLI 能力、关键 flag 与不可用边界
 - `orchestration contract check --require ...` 可供脚本在执行前做 requirement negotiation，不执行被声明的 command
 - `orchestration profile list/inspect/check` 可复用版本化的 CI read-only、local dry-run 与 controlled-write preparation profiles
-- `orchestration control-panel snapshot/render` 可输出确定性 snapshot 与自包含只读 HTML；可选 envelope 只用于投影 scoped run/approval/artifact
+- `orchestration control-panel snapshot/render/handoff` 可输出确定性 snapshot、自包含只读 HTML 与版本化 stdio descriptor；可选 envelope 只用于投影 scoped run/approval/artifact
 - `orchestration adapter list` / `inspect` 可查询 source-backed adapter capability registry；`orchestration route preview` / `orchestration preflight` 已基于同一投影生成路由与 preflight 决策
 
 ## 下次恢复顺序
@@ -109,20 +112,21 @@
 7. 再跑：`python -m agent_runtime.cli docs context --json`
 8. 需要 Stage 14 闭环事实时读：`docs/52-minimal-orchestration-loop.md`
 9. 需要 Stage 13 边界时读：`docs/51-backend-first-api-boundary.md`
-10. 需要 v0.13 验收事实时读：`docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`
+10. 需要 Stage 17 验收事实时读：`docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`
+11. 需要 v0.13 验收事实时读：`docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`
 
 ## 下一步做什么
 
-- **Stage 17 — Control Panel Host Integration Boundary（design gate，待下一窗口实现）**
-- 入口文档：`docs/78-control-panel-host-integration-boundary.md`
-- 重点：先冻结本地、只读、stdio-first 的 handoff descriptor，再按 TDD 落地 `orchestration control-panel handoff --json`；不启动 live service，不新增文件写入，不执行 adapter。
-- `v0.13.0-read-only-control-plane` 仍是当前稳定冻结基线；Stage 17 启动时不创建 tag。
+- **Stage 18 — Read-only Host Consumer Validation（design gate，待下一窗口冻结）**
+- 入口文档：`docs/78-control-panel-host-integration-boundary.md`（Stage 17 contract 事实源；实现前应新增 Stage 18 设计文档）
+- 重点：先选择一个真实、可验收的本地消费者，冻结 descriptor 输入、错误处理、刷新与副作用边界；不得自动执行 argv。
+- `v0.13.0-read-only-control-plane` 仍是当前稳定冻结基线；Stage 17 additive descriptor 不追补 tag。
 - live server、API/auth/session、DB、实时刷新、在线探测、controlled artifact export 与 UI controlled write 继续延期。
 
 ## 重要约束
 
 - 仍然**不做真实 adapter execution**
-- Stage 16 MVP 只允许**本地静态只读 HTML**；仍然不做 live service、DB、auth、网络访问或 UI 写操作
+- Stage 16/17 只允许**本地静态只读表示与 stdio descriptor**；仍然不做 live service、DB、auth、网络访问或 UI 写操作
 - 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、77 里程碑冻结文档、76 设计文档与最新 handoff，并保持验证/提交边界
 
 ## 一句话理解当前项目

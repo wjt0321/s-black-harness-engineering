@@ -35,7 +35,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 17 design gate 待实现）
+### 5. 想看中枢台主线（Stage 17 handoff 第一拍已实现）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -57,7 +57,7 @@
 - `75-cli-automation-contract-discovery.md` — CLI 自动化 discovery、gate、profile、workflow plan 与 drift validation（已收口）
 - `76-read-only-control-panel-mvp.md` — Stage 16 本地静态只读 Control Panel 设计与验收边界（已收口）
 - `77-read-only-control-plane-milestone-freeze.md` — `v0.13.0-read-only-control-plane` 冻结范围、证据与 tag 入口
-- `78-control-panel-host-integration-boundary.md` — Stage 17 本地只读 stdio handoff contract 设计 gate（待实现）
+- `78-control-panel-host-integration-boundary.md` — Stage 17 本地只读 stdio handoff contract 设计与实现边界
 
 ### 6. 想看里程碑与冻结记录
 
@@ -70,7 +70,7 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/release-notes/` | 各阶段 release notes（最新为 `80-release-notes-v0.13.0-read-only-control-plane.md`） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `81-release-notes-stage17-control-panel-host-handoff.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 

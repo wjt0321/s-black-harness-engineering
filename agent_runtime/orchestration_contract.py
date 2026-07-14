@@ -165,11 +165,15 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             "preview",
             "read_only",
             commands=(
+                ("orchestration", "control-panel", "handoff"),
                 ("orchestration", "control-panel", "render"),
                 ("orchestration", "control-panel", "snapshot"),
             ),
             key_flags=("--envelope",),
-            boundary="Aggregates existing read models into a deterministic local Control Panel without service, network, or execution.",
+            boundary=(
+                "Aggregates existing read models into a deterministic local Control "
+                "Panel and host handoff without service, network, or execution."
+            ),
         ),
         _entry(
             "contract_discovery",

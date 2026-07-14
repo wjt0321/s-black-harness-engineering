@@ -59,6 +59,22 @@ def test_contract_manifest_freezes_v1_shape_and_availability_counts() -> None:
     }
 
 
+def test_control_panel_contract_includes_host_handoff_without_new_capability() -> None:
+    entries = {
+        entry["contract_id"]: entry
+        for entry in build_contract_manifest().to_dict()["entries"]
+    }
+
+    control_panel = entries["control_panel_read"]
+    assert control_panel["commands"] == [
+        ["orchestration", "control-panel", "handoff"],
+        ["orchestration", "control-panel", "render"],
+        ["orchestration", "control-panel", "snapshot"],
+    ]
+    assert control_panel["key_flags"] == ["--envelope"]
+    assert "host handoff" in control_panel["boundary"]
+
+
 def test_contract_manifest_entries_have_safe_deterministic_boundaries() -> None:
     entries = build_contract_manifest().to_dict()["entries"]
 

@@ -1729,7 +1729,7 @@ python -m agent_runtime.cli orchestration workflow check \
 - hash mismatch 只能证明 canonical projection 已变化，不提供伪造的字段级原因；结果内嵌当前完整 plan 供重新审查。
 - 输出 schema 为 `control-plane/automation-workflow-check/v1`，仍然不执行 command、不写文件或 ledger。
 
-Stage 16 Read-only Control Panel（本地静态、只读）：
+Stage 16/17 Read-only Control Panel（本地静态、只读、stdio-first）：
 
 ```bash
 python -m agent_runtime.cli orchestration control-panel snapshot --json
@@ -1739,12 +1739,18 @@ python -m agent_runtime.cli orchestration control-panel snapshot \
 python -m agent_runtime.cli orchestration control-panel render \
   --envelope adapters/execution-envelope.examples.json \
   > control-panel.html
+python -m agent_runtime.cli orchestration control-panel handoff --json
+python -m agent_runtime.cli orchestration control-panel handoff \
+  --envelope adapters/execution-envelope.examples.json \
+  --json
 ```
 
 - `snapshot` 输出 `control-plane/control-panel-snapshot/v1` 与确定性 `snapshot_id`。
 - `render` 只向 stdout 输出自包含 HTML；CLI 自身不创建文件、不启动 service。
-- 不传 `--envelope` 时，runs/approvals/artifacts 显示 `unavailable`；overview/tasks/adapters/automation 仍可用。
-- reports 保持 request-scoped boundary，不伪造独立 report collection。
+- `handoff` 输出 `control-plane/control-panel-handoff/v1`，声明 JSON/HTML representation、media type、encoding、renderer version、`snapshot_id`、`render_id`、`working_directory=project_root` 与 argv 数组。
+- `render_id` 只由 `{snapshot_id, renderer_version}` 的 canonical JSON 决定；`handoff_id` 对不含自身的 descriptor 做 canonical SHA-256。
+- `handoff` 不内嵌 HTML、不执行 argv、不打开浏览器；项目内绝对 envelope 路径会归一化为 root-relative 表示。
+- 不传 `--envelope` 时，runs/approvals/artifacts 显示 `envelope_required`；reports 保持 `request_context_required`，不会伪造持久 collection。
 - HTML 无外部资源与网络请求，所有 read-model 字符串都会转义；只提供本地过滤，不提供 commit、approval resolve 或执行按钮。
 
 总览聚合：

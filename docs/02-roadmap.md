@@ -691,11 +691,11 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 ---
 
-## Stage 17 — Control Panel Host Integration Boundary（下一阶段，design gate 待实现）
+## Stage 17 — Control Panel Host Integration Boundary（已完成）
 
 目标：为 Stage 16 的 snapshot / static HTML 定义一个宿主可消费、版本化、stdio-first 的只读 handoff contract，而不是直接进入 live service 或可写 UI。
 
-推荐第一拍：
+第一拍实现：
 
 - 新增 `orchestration control-panel handoff [--envelope ...] --json`；
 - 复用现有 snapshot builder，输出 `control-plane/control-panel-handoff/v1`；
@@ -706,6 +706,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 设计事实源：
 
 - `docs/78-control-panel-host-integration-boundary.md`
+- `docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`
 
 继续延期：
 

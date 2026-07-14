@@ -1,6 +1,6 @@
 # 78 — Stage 17 Control Panel Host Integration Boundary
 
-> 状态：**design gate，待下一窗口实现**  
+> 状态：**第一拍已实现并收口**
 > 基线：`v0.13.0-read-only-control-plane` / `f401b98`  
 > 前置事实源：`docs/76-read-only-control-panel-mvp.md`、`docs/77-read-only-control-plane-milestone-freeze.md`
 
@@ -118,6 +118,20 @@ control-plane/control-panel-handoff/v1
 6. 完成全量验证后新增 Stage 17 release notes；设计开始时不创建 tag。
 
 建议不要在第一拍新增独立 JSON schema 文件；先沿用现有 dataclass + contract tests 的轻量 read-model 模式。若出现第二个独立消费者或 controlled export，再评估正式 schema 文件。
+
+## 5.1 第一拍实现结果（2026-07-14）
+
+当前工作区已按上述边界落地：
+
+- 新增 `build_control_panel_handoff()` 与 `ControlPanelHandoff`，直接复用一次 `build_control_panel_snapshot()` 结果；
+- 新增 `orchestration control-panel handoff [--envelope ...] --json` 与紧凑 human output；
+- `snapshot_id` 直接复用 snapshot，`render_id` 固定由 `snapshot_id + control-plane/control-panel-html/v1` 生成；
+- descriptor 使用 argv 数组并声明 `working_directory=project_root`，不内嵌 HTML，显式列出 scoped unavailable 与 no-write/no-network/no-service/no-execution 边界；
+- project-local 绝对 envelope 路径在公开 source/argv 中归一化为 root-relative 路径，越界路径不回显；
+- 新命令并入既有 `control_panel_read` contract entry，没有新增平行 capability；
+- 单元与 CLI/manifest 契约测试已覆盖 identity、determinism、缺失/合法/非法 envelope、no-write、路径脱敏和 human/JSON 输出。
+
+全量仓库验证证据与最终边界记录见 `docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`。
 
 ## 6. 验收标准
 
