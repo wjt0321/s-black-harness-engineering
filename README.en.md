@@ -58,7 +58,7 @@ The repository now provides an **offline, auditable CLI/runtime security core su
 
 - it can already support policy validation, task/event ledgers, capability routing, dry-runs, controlled writes, and recovery-lineage auditing;
 - Stage 13 resource/operation reconciliation and the Stage 14 replayable minimal orchestration loop are both complete;
-- real adapter execution, persistent services/databases, authentication, and UI remain unavailable, so this is not yet an auto-executing production orchestration hub.
+- a local, deterministic, self-contained read-only Control Panel is now available; real adapter execution, persistent services/databases, authentication, and UI write operations remain unavailable, so this is not yet an auto-executing production orchestration hub.
 
 ## Progress Bar
 
@@ -74,7 +74,7 @@ Current estimate:
 
 - **Security and audit core**: about **80%**
 - **Orchestration-hub backend abstractions**: about **55%**
-- **Future UI / Control Panel readiness**: about **30%**
+- **UI / Control Panel readiness**: about **45%**
 
 ### Versioning Note
 
@@ -110,7 +110,7 @@ The repository formalizes this through `docs/64-versioning-governance.md`. `v0.1
 - ✅ Stage 12 — Control Plane State Model (read-only loop, recovery lineage aggregation, and inspect/report consolidation completed final acceptance)
 - ✅ Stage 13 — Backend-first API Boundary (resource/operation reconciliation and CLI contract tests completed)
 - ✅ Stage 14 — Minimal orchestration-hub execution loop (seven-step loop, replay, and structured next action completed)
-- 🟡 Stage 15 — Backend preparation before UI / dashboard (read-model CLI first version landed, frontend still deferred)
+- 🟡 Stage 15 — Backend preparation before UI / dashboard (read-model CLI first version landed; interactive frontend still deferred)
 - 🟡 Stage 15.5 — Orchestration controlled-write boundary (first controlled handoff / approval resolve landed)
 - ✅ Stage 15.7 — Orchestration Run Dry-run landed
 - ✅ Stage 15.8 — Orchestration Run Commit (A-only) landed
@@ -120,7 +120,7 @@ The repository formalizes this through `docs/64-versioning-governance.md`. `v0.1
 - ✅ Stage 15.97 — Orchestration Foundation Freeze completed (baseline: `38b4b69` / `v0.12.0-orchestration-foundation`)
 - ✅ Stage 15.98 — Orchestration Run Retry / Fallback Commit landed
 - ✅ Stage 15.99 — Run Lineage / Recovery single-run read models landed
-- ⚪ Stage 16 — UI / Control Panel (future)
+- ✅ Stage 16 — Read-only Control Panel MVP (static snapshot/render closed; live UI deferred)
 
 ### The Most Accurate Current Read
 
@@ -128,15 +128,15 @@ The current state is best understood as:
 
 - **guardrails / ledgers / controlled writes are no longer a sketch; they are already a formed security core**
 - **the orchestration backend now has source-backed registry, constraint routing, read-loop snapshots, and recovery lineage aggregation v1**
-- **real adapter execution, long-running services/APIs, UI, and DB remain out of implementation scope**
+- **real adapter execution, long-running services/APIs, interactive write-capable UI, and DB remain out of implementation scope**
 
 ### What Comes Next
 
 No new product stage starts automatically:
 
-1. treat **Stage 14 as complete**, with final acceptance recorded in `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`
+1. treat **Stage 16 Read-only Control Panel MVP as complete**, with final acceptance recorded in `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`
 2. retain the local Task intent → routing → preflight → controlled commit → replay loop and structured next action
-3. keep Stage 16 UI / Control Panel as a future direction until a concrete product or integration need exists
+3. keep live service, authentication, database, real-time refresh, and UI write operations deferred until a concrete product or integration need exists
 4. preserve the read-only, controlled-write, and no-real-adapter-execution boundaries
 
 Implemented capability highlights:
@@ -156,6 +156,7 @@ Implemented capability highlights:
 - Stage 15.5 controlled handoff: `orchestration route preview`, `orchestration preflight`, controlled-write `orchestration approval resolve` (records decision only, does not execute original request)
 - Stage 15.7/15.8/15.9 run controlled execution: `orchestration run --dry-run` (read-only plan preview + plan_hash), controlled-write `orchestration run --commit` (A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events, no real adapter execution)
 - Stage 12 post-freeze recovery read model: `orchestration run inspect --aggregate-lineage` / `orchestration report generate --aggregate-lineage` (aggregates root/latest/leaves, attempt count, and effective plan hash from existing lifecycle events; read-only and does not scan drafts)
+- Stage 16 Read-only Control Panel: `orchestration control-panel snapshot/render` (deterministic snapshot, self-contained HTML, optional envelope-scoped run/approval/artifact projection, no service/network/write/execute)
 
 ## Current Boundaries
 

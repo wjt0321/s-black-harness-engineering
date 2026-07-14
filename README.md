@@ -57,8 +57,8 @@
 当前仓库已经形成可内部试用的**离线、可审计 CLI / Runtime 安全内核**，并完成 Stage 12 control-plane read model 验收：
 
 - 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
-- Stage 13 资源/操作边界与 Stage 14 最小可回放编排闭环均已完成收口；
-- 真实 adapter execution、持久化 service/DB、鉴权和 UI 尚未开放，因此当前不是自动执行型生产中枢台。
+- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环与 Stage 16 Read-only Control Panel MVP 均已完成收口；
+- 当前可生成本地、自包含、确定性的静态只读 Control Panel；真实 adapter execution、持久化 service/DB、鉴权和 UI 写操作仍未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条
 
@@ -74,7 +74,7 @@
 
 - **安全与审计内核**：约 **80%**
 - **中枢台后端抽象**：约 **55%**
-- **未来 UI / Control Panel 准备度**：约 **30%**
+- **UI / Control Panel 准备度**：约 **45%**
 
 ### 版本号说明
 
@@ -110,7 +110,7 @@
 - ✅ Stage 12 — Control Plane State Model（read-only loop、recovery lineage aggregation 与 inspect/report consolidation 已完成验收）
 - ✅ Stage 13 — Backend-first API Boundary（资源/操作边界对账与 CLI 契约测试已完成）
 - ✅ Stage 14 — 中枢台最小编排闭环（七步闭环、replay 与结构化 next_action 已收口）
-- 🟡 Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，前端实现仍暂缓）
+- 🟡 Stage 15 — UI / 看板前的后端准备（read-model CLI 第一版已落地，交互式前端仍暂缓）
 - 🟡 Stage 15.5 — Orchestration 受控写入边界（第一批 controlled handoff / approval resolve 已落地）
 - ✅ Stage 15.7 — Orchestration Run Dry-run 落地
 - ✅ Stage 15.8 — Orchestration Run Commit（A-only）落地
@@ -120,7 +120,7 @@
 - ✅ Stage 15.97 — Orchestration Foundation Freeze 完成（基线：`38b4b69` / `v0.12.0-orchestration-foundation`）
 - ✅ Stage 15.98 — Orchestration Run Retry / Fallback Commit 落地
 - ✅ Stage 15.99 — Run Lineage / Recovery 单条只读模型落地
-- ⚪ Stage 16 — UI / Control Panel（远期）
+- ✅ Stage 16 — Read-only Control Panel MVP（静态只读 snapshot/render 已收口；live UI 延期）
 
 ### 现在最明确的位置
 
@@ -128,16 +128,16 @@
 
 - **门禁 / ledger / controlled write 这一层，已经不是草稿，而是一个成型的安全内核**
 - **中枢台后端主线已经具备 source-backed registry、约束路由、read-loop snapshot、recovery lineage aggregation，以及 CLI automation contract/profile/workflow plan/drift validation projection**
-- **真实 adapter execution、长期服务/API、UI 和 DB 仍未进入实现范围**
+- **真实 adapter execution、长期服务/API、交互式写入 UI 和 DB 仍未进入实现范围**
 
 ### 接下来的方向
 
-下一步不自动启动新的产品阶段：
+下一步不自动扩张新的产品面：
 
-1. **Stage 14 已完成收口**，验收记录见 `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`
+1. **Stage 16 Read-only Control Panel MVP 已完成收口**，验收记录见 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`
 2. 当前已有 Task intent → routing → preflight → controlled commit → replay 的本地闭环与结构化 `next_action`
-3. post-Stage 14 CLI 自动化消费者已完成五拍收口，验收记录见 `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`
-4. Stage 16 UI / Control Panel 仍为远期，需明确产品入口或集成需求后再启动
+3. CLI 自动化消费者五拍与静态只读 Control Panel 均复用同一 contract/read-model 边界
+4. live server、API/auth/session、DB、实时刷新、在线探测和 UI controlled write 继续延期
 5. 继续维持只读、受控写入和无真实 adapter execution 的安全边界
 
 已落地的主线能力包括：
@@ -158,6 +158,7 @@
 - Stage 15.7/15.8/15.9 run controlled execution：`orchestration run --dry-run`（只读 plan preview + plan_hash）、受控写入 `orchestration run --commit`（A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events，不执行真实 adapter）
 - Stage 12 post-freeze recovery read model：`orchestration run inspect --aggregate-lineage` / `orchestration report generate --aggregate-lineage`（基于现有 lifecycle events 聚合 root/latest/leaves、attempt count 与 effective plan hash，只读、不扫描 drafts）
 - post-Stage 14 CLI automation：`orchestration contract inspect/check`、`orchestration profile list/inspect/check`、`orchestration workflow plan/check`（确定性发现、协商、命名化、未执行步骤投影与 hash drift validation）
+- Stage 16 Read-only Control Panel：`orchestration control-panel snapshot/render`（确定性 snapshot、自包含 HTML、可选 envelope-scoped run/approval/artifact、无 service/network/write/execute）
 
 ## 当前边界
 

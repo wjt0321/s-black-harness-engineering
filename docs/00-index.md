@@ -35,7 +35,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台后端主线（Stage 14 已收口）
+### 5. 想看中枢台主线（Stage 16 MVP 已收口）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -55,6 +55,7 @@
 - `73-recovery-lineage-aggregation-read-model.md` — Recovery lineage 聚合只读模型（Stage 12 post-freeze）
 - `74-recovery-lineage-report-reuse.md` — Recovery lineage 在 report generate 的显式复用契约
 - `75-cli-automation-contract-discovery.md` — CLI 自动化 discovery、gate、profile、workflow plan 与 drift validation（已收口）
+- `76-read-only-control-panel-mvp.md` — Stage 16 本地静态只读 Control Panel 设计与验收边界（已收口）
 
 ### 6. 想看里程碑与冻结记录
 
@@ -67,17 +68,17 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/release-notes/` | 各阶段 release notes（最新为 `78-release-notes-cli-automation-consumer.md`） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `79-release-notes-stage16-read-only-control-panel.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `75-cli-automation-contract-discovery.md`
+2. `76-read-only-control-panel-mvp.md`
 3. 最新 handoff：`tasks/handoff-2026-07-14.md`
-4. `52-minimal-orchestration-loop.md`
-5. `51-backend-first-api-boundary.md`
+4. `75-cli-automation-contract-discovery.md`
+5. `52-minimal-orchestration-loop.md`
 
 ## 其他入口
 

@@ -245,6 +245,7 @@ Guardrail 的结果决定写操作如何执行：
 | Overview | `orchestration overview` | stable | 基于 task/event ledger 的只读汇总。 |
 | Contract discovery | `orchestration contract inspect` | stable | 面向 CLI 自动化的版本化、确定性、只读 stable/preview/unavailable manifest；不读取运行时数据。 |
 | Contract requirement gate | `orchestration contract check` | stable | 复用 manifest 评估 requirement、preview opt-in 与 access ceiling；不执行声明的 command。 |
+| Read-only Control Panel | `orchestration control-panel snapshot/render` | preview | 聚合既有 read models，生成确定性 snapshot 或自包含静态 HTML；不启动 service、不写入、不执行。 |
 | Automation Profile list/inspect/check | `orchestration profile list/inspect/check` | stable | 固定项目 registry 的命名化 requirement 集合；check 复用 Requirement Gate，不执行 command。 |
 | Adapter registry list/inspect | `orchestration adapter list/inspect` | stable | source-backed capability registry；不探测在线状态。 |
 | Task list/get | `orchestration task list/get` | stable | 基于 task ledger；详情包含事件时间线。 |
@@ -261,7 +262,7 @@ Guardrail 的结果决定写操作如何执行：
 | Read-loop snapshot | `orchestration run --dry-run --snapshot` | preview | 包含 Run/Event/Report preview，不伪造持久 id。 |
 | 独立 Run / Report collection | 无 | unavailable | 持久 `run_id` / `report_id`、跨 envelope list/get 尚未实现。 |
 | 独立 Artifact export（orchestration 资源操作） | 无 | unavailable | 低层 `runtime draft export` 不等同于 orchestration Artifact API。 |
-| 真实 adapter execution / service / auth / DB / UI | 无 | unavailable | 继续受项目安全边界和阶段范围约束。 |
+| 真实 adapter execution / live service / auth / DB / 交互式写入 UI | 无 | unavailable | 静态只读 Control Panel 不改变这些边界。 |
 
 首轮对账结论：当前可以稳定复用的是**受控 CLI + 受限 read model**，不是通用 API 或持久化资源层。Stage 13 下一拍应优先冻结上述 stable/preview/unavailable 矩阵的字段、错误与兼容测试，不应先选择 HTTP/RPC 或启动 service。
 
@@ -370,3 +371,8 @@ Stage 12 完成后，本文曾作为 Stage 13 事实源。该阶段的 **Boundar
 - manifest 自描述 plan/check 两个 preview/read-only capability，argparse 契约测试冻结 command 与关键 flag。
 
 CLI 自动化消费者五拍至此收口。详细设计见 `docs/75-cli-automation-contract-discovery.md`，验收事实见 `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`。
+
+
+## Stage 16 Read-only Control Panel 衔接（2026-07-14）
+
+Stage 16 第一拍只消费本文件已冻结的 read-model 边界：`control-panel snapshot/render` 是本地静态 preview，不新增通用 API、持久资源或写操作。Run、Approval、Artifact 仍保持 envelope-scoped，Report 仍保持 request-scoped；live service、auth、DB、实时订阅和 UI controlled write 继续 unavailable。设计事实源见 `docs/76-read-only-control-panel-mvp.md`。

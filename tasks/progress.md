@@ -2518,3 +2518,15 @@
 - 所有自动化 projection 保持 deterministic、no-write、no-network、no-command/adaptor execution；preview 与 controlled-write 边界继续显式。
 - 新增 `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`，更新 digest、roadmap、CLI usage、boundary、README、AGENTS 与 handoff。
 - CLI 自动化消费者阶段收口；当前无进行中的产品阶段，不自动启动 Stage 16、service、UI、DB 或真实 adapter execution。
+
+
+## 2026-07-14 — Stage 16 Read-only Control Panel MVP 最终收口
+
+- 新增 `agent_runtime/orchestration_control_panel.py`，聚合现有 overview/task/adapter/automation/run/approval/artifact read models。
+- 新增 `orchestration control-panel snapshot/render`；snapshot 使用 `control-plane/control-panel-snapshot/v1` 与内容寻址 id，render 输出自包含静态 HTML。
+- 未传 envelope 时 scoped 区段诚实 unavailable；Report 保持 request-scoped boundary，不伪造持久 collection。
+- HTML 采用 industrial audit console 视觉，支持本地过滤、CSP、escaping、语义结构、reduced-motion 和响应式布局。
+- manifest 新增 `control_panel_read` preview/read-only；CLI surface/flag 契约同步冻结。
+- headless Chromium 验证 8 个 section、过滤交互、无 console/page error，并生成 screenshot。
+- 新增 `docs/76-read-only-control-panel-mvp.md` 与 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`，同步 digest、roadmap、CLI usage、boundary、README、AGENTS、index 与 handoff。
+- Stage 16 第一拍收口；live service/API/auth/DB、实时刷新、UI controlled write 与真实 adapter execution 继续延期。

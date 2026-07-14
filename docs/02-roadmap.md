@@ -664,23 +664,30 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 ---
 
-## Stage 16 — UI / Control Panel（远期）
+## Stage 16 — Read-only Control Panel MVP（已完成）
 
-目标：在后端抽象稳定后，为中枢台提供一个真正可操作、可观察、可审计的前端或看板。
+目标：在不引入 service、DB、auth 或真实执行的前提下，把既有后端 read models 收敛成一个可观察、可审计的本地控制面。
 
-候选能力：
+第一拍已完成：
 
-- adapter / agent availability 总览
-- task / event / run 浏览
-- blocked / approval pending 列表
-- dry-run / commit 操作面
-- artifacts / evidence / reports 查看
-- diagnostics / health / regression 状态总览
+- `orchestration control-panel snapshot [--envelope ...]` 输出 `control-plane/control-panel-snapshot/v1`；
+- `orchestration control-panel render [--envelope ...]` 向 stdout 输出自包含静态 HTML；
+- 固定聚合 overview、tasks、adapters、automation、runs、approvals、artifacts、reports 八个区段；
+- envelope 未提供时，scoped 区段诚实标为 unavailable，不伪造 collection；
+- snapshot 内容寻址、确定性、只读、无网络、无写入、无命令/adapter 执行；
+- industrial audit console 视觉、全局本地过滤、CSP、escaping、语义结构和窄屏适配均已验证。
 
-前提：
+设计与验收事实源：
 
-- 必须以后端抽象成熟为前提
-- 不应倒逼后端临时补洞
+- `docs/76-read-only-control-panel-mvp.md`
+- `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`
+
+继续延期：
+
+- live HTTP/API、auth/session、DB 与持久 collection；
+- 实时刷新、WebSocket、在线 availability probe；
+- UI 内 dry-run/commit/approval resolve 等写操作；
+- 真实 adapter execution。
 
 ---
 

@@ -1729,6 +1729,24 @@ python -m agent_runtime.cli orchestration workflow check \
 - hash mismatch 只能证明 canonical projection 已变化，不提供伪造的字段级原因；结果内嵌当前完整 plan 供重新审查。
 - 输出 schema 为 `control-plane/automation-workflow-check/v1`，仍然不执行 command、不写文件或 ledger。
 
+Stage 16 Read-only Control Panel（本地静态、只读）：
+
+```bash
+python -m agent_runtime.cli orchestration control-panel snapshot --json
+python -m agent_runtime.cli orchestration control-panel snapshot \
+  --envelope adapters/execution-envelope.examples.json \
+  --json
+python -m agent_runtime.cli orchestration control-panel render \
+  --envelope adapters/execution-envelope.examples.json \
+  > control-panel.html
+```
+
+- `snapshot` 输出 `control-plane/control-panel-snapshot/v1` 与确定性 `snapshot_id`。
+- `render` 只向 stdout 输出自包含 HTML；CLI 自身不创建文件、不启动 service。
+- 不传 `--envelope` 时，runs/approvals/artifacts 显示 `unavailable`；overview/tasks/adapters/automation 仍可用。
+- reports 保持 request-scoped boundary，不伪造独立 report collection。
+- HTML 无外部资源与网络请求，所有 read-model 字符串都会转义；只提供本地过滤，不提供 commit、approval resolve 或执行按钮。
+
 总览聚合：
 
 ```bash

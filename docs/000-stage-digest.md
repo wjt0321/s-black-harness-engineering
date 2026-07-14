@@ -21,11 +21,11 @@
 
 ## 当前阶段
 
-- **Stage 14 — 中枢台最小编排闭环（已完成）**
+- **Stage 16 — Read-only Control Panel MVP（已完成）**
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
-- 当前无进行中的产品阶段；首个 post-Stage 14 CLI 自动化消费者已完成五拍收口，不自动启动 Stage 16。
-- 2026-07-14 CLI 自动化消费者已收口：contract discovery、Requirement Gate、source-backed Automation Profile、read-only Workflow Plan 与 plan re-check/drift validation 均已落地；仍不执行 workflow step。
-- Stage 14 已完成：七步闭环对账、read-loop Evidence candidate 投影、显式 replay projection、结构化 `next_action`、跨入口一致性与安全边界均已冻结；不启动 HTTP/RPC、service、UI、DB 或真实 adapter。
+- Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
+- 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
+- envelope 未提供时，run/approval/artifact 区段诚实显示 unavailable；report 保持 request-scoped boundary，不伪造持久 collection。
 
 ### Stage 10 基线（保留）
 
@@ -93,33 +93,33 @@
 - `orchestration contract inspect --json` 可供脚本确定性发现当前 CLI 能力、关键 flag 与不可用边界
 - `orchestration contract check --require ...` 可供脚本在执行前做 requirement negotiation，不执行被声明的 command
 - `orchestration profile list/inspect/check` 可复用版本化的 CI read-only、local dry-run 与 controlled-write preparation profiles
+- `orchestration control-panel snapshot/render` 可输出确定性 snapshot 与自包含只读 HTML；可选 envelope 只用于投影 scoped run/approval/artifact
 - `orchestration adapter list` / `inspect` 可查询 source-backed adapter capability registry；`orchestration route preview` / `orchestration preflight` 已基于同一投影生成路由与 preflight 决策
 
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/75-cli-automation-contract-discovery.md`
+2. 再读：`docs/76-read-only-control-panel-mvp.md`
 3. 再读：`tasks/handoff-2026-07-14.md`
-4. 需要 Stage 14 闭环事实时再读：`docs/52-minimal-orchestration-loop.md`
+4. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
 5. 再跑：`python -m agent_runtime.cli docs context --json`
-6. 需要 Stage 13 边界时再读：`docs/51-backend-first-api-boundary.md`
-7. 需要本轮 CLI 自动化验收事实时再读：`docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`
-8. 需要 Stage 14 验收事实时再读：`docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`
-9. 需要 Stage 13 验收事实时再读：`docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`
+6. 需要 Stage 14 闭环事实时读：`docs/52-minimal-orchestration-loop.md`
+7. 需要 Stage 13 边界时读：`docs/51-backend-first-api-boundary.md`
+8. 需要 Stage 16 验收事实时读：`docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`
+9. 需要 CLI 自动化验收事实时读：`docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`
 
 ## 下一步做什么
 
-- **Stage 14 已完成并收口**：release notes 见 `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`。
-- **CLI 自动化消费者已完成五拍收口**：discovery、requirement gate、Automation Profile、Workflow Plan 与 plan re-check/drift validation 均已冻结；release notes 见 `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`。
-- 长期候选：**Stage 16 — UI / Control Panel（远期，暂不启动）**。
-- 入口文档：`docs/02-roadmap.md`。
+- **本阶段已完成并收口**：Stage 16 Read-only Control Panel MVP 设计事实源见 `docs/76-read-only-control-panel-mvp.md`，验收事实见 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`。
+- 当前不自动扩张到 live server、API/auth/session、DB、实时刷新、在线探测或 UI controlled write。
+- 只有出现明确宿主/部署/交互写入需求并完成新的设计 gate 后，才进入 Stage 16 后续增强。
 - 继续保持只读、受控写入、无真实 adapter execution 的安全边界。
 
 ## 重要约束
 
 - 仍然**不做真实 adapter execution**
-- 仍然**不做 UI / service / DB**
-- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、51 设计文档与最新 handoff，并保持验证/提交边界
+- Stage 16 MVP 只允许**本地静态只读 HTML**；仍然不做 live service、DB、auth、网络访问或 UI 写操作
+- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、76 设计文档与最新 handoff，并保持验证/提交边界
 
 ## 一句话理解当前项目
 

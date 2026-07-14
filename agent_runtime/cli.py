@@ -37,6 +37,10 @@ from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
 from .orchestration_contract import build_contract_manifest
 from .orchestration_contract_check import check_contract_requirements
+from .orchestration_control_panel import (
+    build_control_panel_snapshot,
+    render_control_panel_html,
+)
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_profile import (
     check_automation_profile,
@@ -1525,6 +1529,29 @@ def _cmd_orchestration_workflow_plan(args: argparse.Namespace) -> int:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
         print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_control_panel_snapshot(args: argparse.Namespace) -> int:
+    """Render the deterministic read-only Control Panel snapshot."""
+    result = build_control_panel_snapshot(
+        _root_path(args),
+        envelope_file=args.envelope,
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
+    """Render a self-contained read-only Control Panel HTML document."""
+    result = build_control_panel_snapshot(
+        _root_path(args),
+        envelope_file=args.envelope,
+    )
+    print(render_control_panel_html(result.to_dict()))
     return result.exit_code()
 
 
@@ -3145,6 +3172,46 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(orchestration_contract_check_parser)
     orchestration_contract_check_parser.set_defaults(
         func=_cmd_orchestration_contract_check
+    )
+
+    # orchestration read-only Control Panel snapshot/render
+    orchestration_control_panel_parser = orchestration_subparsers.add_parser(
+        "control-panel", help="Render the local read-only Control Panel"
+    )
+    orchestration_control_panel_subparsers = (
+        orchestration_control_panel_parser.add_subparsers(
+            dest="control_panel_command", required=True
+        )
+    )
+
+    orchestration_control_panel_snapshot_parser = (
+        orchestration_control_panel_subparsers.add_parser(
+            "snapshot", help="Build a deterministic Control Panel snapshot"
+        )
+    )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--envelope",
+        default=None,
+        help="Optional envelope file for scoped runs, approvals, and artifacts",
+    )
+    _add_global_args(orchestration_control_panel_snapshot_parser)
+    orchestration_control_panel_snapshot_parser.set_defaults(
+        func=_cmd_orchestration_control_panel_snapshot
+    )
+
+    orchestration_control_panel_render_parser = (
+        orchestration_control_panel_subparsers.add_parser(
+            "render", help="Render a self-contained Control Panel HTML document"
+        )
+    )
+    orchestration_control_panel_render_parser.add_argument(
+        "--envelope",
+        default=None,
+        help="Optional envelope file for scoped runs, approvals, and artifacts",
+    )
+    _add_global_args(orchestration_control_panel_render_parser)
+    orchestration_control_panel_render_parser.set_defaults(
+        func=_cmd_orchestration_control_panel_render
     )
 
     # orchestration profile list/inspect/check

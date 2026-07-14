@@ -42,6 +42,7 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "contract",
         "profile",
         "workflow",
+        "control-panel",
     }
     assert _subparser_names(_nested_parser(orchestration, "route")) == {
         "preview",
@@ -84,6 +85,10 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
     assert _subparser_names(_nested_parser(orchestration, "workflow")) == {
         "plan",
         "check",
+    }
+    assert _subparser_names(_nested_parser(orchestration, "control-panel")) == {
+        "snapshot",
+        "render",
     }
 
 

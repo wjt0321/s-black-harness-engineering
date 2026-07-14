@@ -16,14 +16,14 @@ python -m agent_runtime.cli doctor
 然后按顺序阅读：
 
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
-2. `docs/75-cli-automation-contract-discovery.md`：已收口 CLI 自动化 discovery、gate、profile、workflow plan 与 drift validation 事实源。
-3. `tasks/handoff-2026-07-14.md`：本轮增量与下一轮恢复上下文。
-4. `docs/52-minimal-orchestration-loop.md`：Stage 14 收口设计事实源。
-5. `docs/51-backend-first-api-boundary.md`：Stage 13 已冻结的资源/操作边界。
-6. `docs/02-roadmap.md`：需要更完整路线图时再读。
-7. `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`：本轮 CLI 自动化消费者验收事实。
-8. `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`：Stage 14 验收事实。
-9. `docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`：Stage 13 验收事实。
+2. `docs/76-read-only-control-panel-mvp.md`：Stage 16 静态只读 Control Panel 设计事实源。
+3. `tasks/handoff-2026-07-14.md`：Stage 16 收口与下一轮恢复上下文。
+4. `docs/75-cli-automation-contract-discovery.md`：已收口 CLI 自动化事实源。
+5. `docs/52-minimal-orchestration-loop.md`：Stage 14 收口设计事实源。
+6. `docs/51-backend-first-api-boundary.md`：Stage 13 已冻结的资源/操作边界。
+7. `docs/02-roadmap.md`：需要更完整路线图时再读。
+8. `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`：Stage 16 MVP 验收事实。
+9. `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`：CLI 自动化消费者验收事实。
 10. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
 
 不要先遍历整个 `docs/` 或 `tasks/progress.md`。
@@ -32,10 +32,10 @@ python -m agent_runtime.cli doctor
 
 `s-black harness engineering`（Python 包名 `agent_runtime`）是一个轻量、可审计、可迁移的 Agent Runtime / Harness Orchestrator，逐步抽象规则门禁、任务账本、adapter envelope、能力路由和控制面 read model。
 
-当前状态：**Stage 14 — 中枢台最小编排闭环已收口**；post-Stage 14 CLI 自动化消费者已完成 discovery、gate、profile、workflow plan 与 drift validation 五拍收口，下一产品阶段仍不自动启动。
+当前状态：**Stage 16 — Read-only Control Panel MVP 已收口**；本地静态控制面已复用现有 read models 落地，后续 live service、DB、auth、网络与 UI 写操作仍不自动启动。
 
 - 冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
-- 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation 第一版，以及 `orchestration contract inspect` / `contract check`、`orchestration profile list/inspect/check` 与 `orchestration workflow plan/check` 的机器可读发现、requirement negotiation、命名化 profile、未执行计划投影与 content-hash drift validation。
+- 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation、CLI automation contract/profile/workflow，以及 `orchestration control-panel snapshot/render` 的确定性 snapshot 与自包含静态 HTML。
 - Stage 12 已完成：routing/read-loop snapshot 与 recovery lineage read model 已冻结并通过验收。
 - Stage 13 已完成：真实 CLI/read models 的 stable/preview/unavailable 边界已对账，并由契约测试冻结命令 surface 与关键 flag。
 - 收口事实源：`docs/52-minimal-orchestration-loop.md`。Stage 14 已完成最小、可回放、可审计的本地编排闭环。
@@ -140,6 +140,7 @@ Windows 可使用 Git for Windows 的 `bash.exe`。提交前还应运行 `git di
 - `agent_runtime/loader.py`：安全读取、路径归一化、数据加载。
 - `agent_runtime/result.py`：`Finding` / `CheckResult` 与退出码。
 - `agent_runtime/orchestration_run.py`：run list/inspect read model。
+- `agent_runtime/orchestration_control_panel.py`：Stage 16 确定性 snapshot 与自包含静态 HTML renderer。
 - `agent_runtime/orchestration_recovery.py`：recovery lineage aggregation。
 - `agent_runtime/orchestration_workflow.py`：Automation Profile 到未执行 CLI 候选步骤的确定性投影。
 - `agent_runtime/orchestration_workflow_check.py`：reviewed plan id 与当前 projection 的只读 drift validation。

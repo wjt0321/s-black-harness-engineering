@@ -161,6 +161,17 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Projects checked profile requirements into unexecuted CLI candidates.",
         ),
         _entry(
+            "control_panel_read",
+            "preview",
+            "read_only",
+            commands=(
+                ("orchestration", "control-panel", "render"),
+                ("orchestration", "control-panel", "snapshot"),
+            ),
+            key_flags=("--envelope",),
+            boundary="Aggregates existing read models into a deterministic local Control Panel without service, network, or execution.",
+        ),
+        _entry(
             "contract_discovery",
             "stable",
             "read_only",
@@ -179,7 +190,7 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             "external_execution_service_stack",
             "unavailable",
             "unavailable",
-            boundary="Real adapter execution, service, auth, database, and UI are unavailable.",
+            boundary="Real adapter execution, long-running service, auth, database, and interactive write-capable UI are unavailable.",
         ),
         _entry(
             "orchestration_artifact_export",
