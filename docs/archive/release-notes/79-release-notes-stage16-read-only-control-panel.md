@@ -4,6 +4,8 @@
 
 Stage 16 第一拍已完成并收口：项目现在可以在不服务化、不联网、不写入、不执行 adapter 的前提下，把既有 orchestration read models 聚合成确定性 snapshot，并渲染为单文件、自包含的本地只读 Control Panel。
 
+本阶段收口提交：`b46c013`（`Complete Stage 16 read-only control panel`）。
+
 ## 新增能力
 
 ### Control Panel Snapshot
