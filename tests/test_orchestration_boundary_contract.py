@@ -1,10 +1,11 @@
-"""Contract tests for the Stage 13 orchestration CLI surface."""
+"""Contract tests for the reconciled orchestration CLI surface."""
 
 from __future__ import annotations
 
 import argparse
 
 from agent_runtime.cli import build_parser
+from agent_runtime.orchestration_contract import build_contract_manifest
 
 
 def _nested_parser(parser: argparse.ArgumentParser, name: str) -> argparse.ArgumentParser:
@@ -23,7 +24,7 @@ def _subparser_names(parser: argparse.ArgumentParser) -> set[str]:
     return set()
 
 
-def test_stage13_orchestration_surface_matches_reconciliation_contract() -> None:
+def test_orchestration_surface_matches_reconciliation_contract() -> None:
     """Freeze the real CLI commands used by the stable/preview matrix."""
     root = build_parser()
     orchestration = _nested_parser(root, "orchestration")
@@ -38,6 +39,7 @@ def test_stage13_orchestration_surface_matches_reconciliation_contract() -> None
         "artifact",
         "report",
         "adapter",
+        "contract",
     }
     assert _subparser_names(_nested_parser(orchestration, "route")) == {
         "preview",
@@ -66,6 +68,9 @@ def test_stage13_orchestration_surface_matches_reconciliation_contract() -> None
     }
     assert _subparser_names(_nested_parser(orchestration, "adapter")) == {
         "list",
+        "inspect",
+    }
+    assert _subparser_names(_nested_parser(orchestration, "contract")) == {
         "inspect",
     }
 
@@ -103,3 +108,35 @@ def test_stage13_run_flags_keep_explicit_preview_and_lineage_boundaries() -> Non
     }
     assert "--aggregate-lineage" in report_options
     assert "--replay" in report_options
+
+def test_contract_manifest_available_commands_exist_in_cli_surface() -> None:
+    """Prevent the machine-readable manifest from drifting from argparse."""
+    root = build_parser()
+
+    for entry in build_contract_manifest().entries:
+        if entry.availability == "unavailable":
+            assert entry.commands == ()
+            continue
+
+        for command in entry.commands:
+            parser = root
+            for segment in command:
+                parser = _nested_parser(parser, segment)
+
+def test_contract_manifest_key_flags_exist_on_declared_commands() -> None:
+    """Freeze the flags that automation uses to select explicit boundaries."""
+    root = build_parser()
+
+    for entry in build_contract_manifest().entries:
+        declared_options: set[str] = set()
+        for command in entry.commands:
+            parser = root
+            for segment in command:
+                parser = _nested_parser(parser, segment)
+            declared_options.update(
+                option
+                for action in parser._actions
+                for option in action.option_strings
+            )
+
+        assert set(entry.key_flags) <= declared_options

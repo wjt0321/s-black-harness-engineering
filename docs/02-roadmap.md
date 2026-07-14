@@ -344,6 +344,14 @@
 
 已完成收口：七步闭环入口、read-loop Evidence projection、显式 replay projection、结构化 next_action、跨入口一致性、默认兼容、确定性、脱敏、no-write 和 rollback 均已冻结；release notes 见 `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`。
 
+Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
+
+- 新增 `orchestration contract inspect` 机器可读契约发现入口；
+- 使用 `control-plane/orchestration-contract/v1` 投影 stable/stable_limited/preview/unavailable 矩阵；
+- command argv 与关键 flag 由契约测试反向校验真实 argparse surface；
+- 只读、确定性、no-write、no-network、no-adapter-execution，不启动新的产品 Stage；
+- 设计事实源：`docs/75-cli-automation-contract-discovery.md`。
+
 候选闭环：
 
 - 提交 task intent

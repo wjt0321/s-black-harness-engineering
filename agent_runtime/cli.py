@@ -35,6 +35,7 @@ from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_task_create import TaskCreateDryRunResult, create_task, create_task_dry_run
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
+from .orchestration_contract import build_contract_manifest
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .orchestration_task_submit import submit_task, TaskSubmitResult
@@ -1462,6 +1463,27 @@ def _cmd_policies_list(args: argparse.Namespace) -> int:
             f"command={row['command_rules']} publish={row['publish_rules']} "
             f"completion={row['completion_rules']}"
         )
+    return EXIT_PASS
+
+
+def _cmd_orchestration_contract_inspect(args: argparse.Namespace) -> int:
+    """Render the machine-readable orchestration capability contract."""
+    manifest = build_contract_manifest()
+    payload = manifest.to_dict()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print("ORCHESTRATION CONTRACT")
+        print(f"schema_version={manifest.schema_version}")
+        summary = payload["summary"]
+        print("summary: " + " ".join(f"{key}={value}" for key, value in summary.items()))
+        print("entries:")
+        for entry in manifest.entries:
+            command = " | ".join(" ".join(parts) for parts in entry.commands) or "-"
+            print(
+                f"- {entry.contract_id} {entry.availability} "
+                f"{entry.access} {command}"
+            )
     return EXIT_PASS
 
 
@@ -2996,7 +3018,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # orchestration overview
     orchestration_parser = subparsers.add_parser(
-        "orchestration", help="Read-only orchestration overview aggregation"
+        "orchestration", help="Orchestration control-plane operations and read models"
     )
     orchestration_subparsers = orchestration_parser.add_subparsers(
         dest="orchestration_command", required=True
@@ -3007,6 +3029,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(orchestration_overview_parser)
     orchestration_overview_parser.set_defaults(func=_cmd_orchestration_overview)
+
+    # orchestration contract inspect
+    orchestration_contract_parser = orchestration_subparsers.add_parser(
+        "contract", help="Discover the versioned orchestration CLI contract"
+    )
+    orchestration_contract_subparsers = orchestration_contract_parser.add_subparsers(
+        dest="contract_command", required=True
+    )
+    orchestration_contract_inspect_parser = orchestration_contract_subparsers.add_parser(
+        "inspect", help="Render the stable/preview/unavailable capability manifest"
+    )
+    _add_global_args(orchestration_contract_inspect_parser)
+    orchestration_contract_inspect_parser.set_defaults(
+        func=_cmd_orchestration_contract_inspect
+    )
 
     # orchestration route preview
     orchestration_route_preview_parser = orchestration_subparsers.add_parser(

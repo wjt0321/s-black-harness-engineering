@@ -243,6 +243,7 @@ Guardrail 的结果决定写操作如何执行：
 | 资源/操作 | 当前真实入口 | 分类 | 当前边界 |
 |:---|:---|:---:|:---|
 | Overview | `orchestration overview` | stable | 基于 task/event ledger 的只读汇总。 |
+| Contract discovery | `orchestration contract inspect` | stable | 面向 CLI 自动化的版本化、确定性、只读 stable/preview/unavailable manifest；不读取运行时数据。 |
 | Adapter registry list/inspect | `orchestration adapter list/inspect` | stable | source-backed capability registry；不探测在线状态。 |
 | Task list/get | `orchestration task list/get` | stable | 基于 task ledger；详情包含事件时间线。 |
 | Task submit | `orchestration task submit` | stable | 仅显式 dry-run/commit；commit 是 task + `created` event 的受控写入。 |
@@ -320,3 +321,17 @@ Stage 12 完成后，本文曾作为 Stage 13 事实源。该阶段的 **Boundar
 - unavailable：例如持久 `run_id`、`report_id`、独立 Report collection，当前不得伪装为已实现资源。
 
 首轮重点复核 Task、Run、Approval、Artifact、Report 的 identity、status、list/get/action、错误状态和默认兼容；协议、鉴权、HTTP/RPC、UI、service、DB 与真实 adapter execution 继续暂缓。
+
+
+## Post-Stage 14：CLI 自动化契约发现（2026-07-14）
+
+用户已确认 CLI 自动化为下一真实消费者。为避免调用方继续从文档或 argparse help 猜测能力边界，新增 `orchestration contract inspect`：
+
+- 输出 `control-plane/orchestration-contract/v1`；
+- 明确区分 `stable`、`stable_limited`、`preview`、`unavailable`；
+- 暴露真实 command argv 与影响 dry-run/commit/snapshot/replay/lineage 的关键 flag；
+- manifest 自描述 `contract_discovery` 能力；
+- 契约测试校验所有可用 command path 与 key flag 都存在于真实 argparse surface；
+- 保持确定性、no-write、no-network、no-adapter-execution，且不改变既有命令默认输出。
+
+详细设计见 `docs/75-cli-automation-contract-discovery.md`。

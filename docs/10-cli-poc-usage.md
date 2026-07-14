@@ -1649,6 +1649,15 @@ python -m agent_runtime.cli --assignee media-agent policies list
 
 Stage 15 第一版新增了一组 `orchestration` 命名空间的只读命令，作为未来看板各页面的最小 read model 雏形。这些命令都不写 ledger、不执行 adapter、不访问网络。
 
+CLI 自动化契约发现（post-Stage 14，只读）：
+
+```bash
+python -m agent_runtime.cli orchestration contract inspect
+python -m agent_runtime.cli orchestration contract inspect --json
+```
+
+JSON 输出使用 `control-plane/orchestration-contract/v1`，确定性列出 `stable`、`stable_limited`、`preview`、`unavailable` 条目、真实 command argv、关键边界 flag 与安全说明。该命令只读取代码内冻结的契约元数据，不读取 ledger 或 adapter registry，不写文件，不访问网络，也不执行 manifest 中的命令。
+
 总览聚合：
 
 ```bash
