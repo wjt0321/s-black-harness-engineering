@@ -2530,4 +2530,4 @@
 - headless Chromium 验证 8 个 section、过滤交互、无 console/page error，并生成 screenshot。
 - 新增 `docs/76-read-only-control-panel-mvp.md` 与 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`，同步 digest、roadmap、CLI usage、boundary、README、AGENTS、index 与 handoff。
 - Stage 16 第一拍收口；live service/API/auth/DB、实时刷新、UI controlled write 与真实 adapter execution 继续延期。
-- 本阶段收口提交为 `b46c013`；按用户授权推送 `origin/main`，不创建 tag。
+- 本阶段收口提交为 `b46c013`；已按用户授权推送到 `origin/main`，不创建 tag。

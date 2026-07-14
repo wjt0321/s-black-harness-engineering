@@ -58,7 +58,7 @@
 
 - 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
 - Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环与 Stage 16 Read-only Control Panel MVP 均已完成收口；
-- Stage 16 收口提交为 `b46c013`；当前已按用户授权推送到 `origin/main`。
+- Stage 16 收口提交为 `b46c013`；已按用户授权推送到 `origin/main`。
 - 当前可生成本地、自包含、确定性的静态只读 Control Panel；真实 adapter execution、持久化 service/DB、鉴权和 UI 写操作仍未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条

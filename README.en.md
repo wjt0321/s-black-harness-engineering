@@ -59,7 +59,7 @@ The repository now provides an **offline, auditable CLI/runtime security core su
 - it can already support policy validation, task/event ledgers, capability routing, dry-runs, controlled writes, and recovery-lineage auditing;
 - Stage 13 resource/operation reconciliation and the Stage 14 replayable minimal orchestration loop are both complete;
 - a local, deterministic, self-contained read-only Control Panel is now available; real adapter execution, persistent services/databases, authentication, and UI write operations remain unavailable, so this is not yet an auto-executing production orchestration hub.
-- Stage 16 closure commit: `b46c013`; this closure is being pushed to `origin/main` with user authorization.
+- Stage 16 closure commit: `b46c013`; this closure has been pushed to `origin/main` with user authorization.
 
 ## Progress Bar
 
