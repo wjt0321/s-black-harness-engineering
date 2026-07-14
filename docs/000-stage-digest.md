@@ -101,23 +101,23 @@
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/77-read-only-control-plane-milestone-freeze.md`
+2. 再读：`docs/78-control-panel-host-integration-boundary.md`
 3. 再读：`tasks/handoff-2026-07-14.md`
-4. 再读：`docs/76-read-only-control-panel-mvp.md`
-5. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
-6. 再跑：`python -m agent_runtime.cli docs context --json`
-7. 需要 Stage 14 闭环事实时读：`docs/52-minimal-orchestration-loop.md`
-8. 需要 Stage 13 边界时读：`docs/51-backend-first-api-boundary.md`
-9. 需要 Stage 16 验收事实时读：`docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`
-10. 需要 CLI 自动化验收事实时读：`docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`
+4. 再读：`docs/77-read-only-control-plane-milestone-freeze.md`
+5. 再读：`docs/76-read-only-control-panel-mvp.md`
+6. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
+7. 再跑：`python -m agent_runtime.cli docs context --json`
+8. 需要 Stage 14 闭环事实时读：`docs/52-minimal-orchestration-loop.md`
+9. 需要 Stage 13 边界时读：`docs/51-backend-first-api-boundary.md`
+10. 需要 v0.13 验收事实时读：`docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`
 
 ## 下一步做什么
 
-- **里程碑已冻结**：Stage 13–16 能力包统一冻结为 `v0.13.0-read-only-control-plane`；事实源见 `docs/77-read-only-control-plane-milestone-freeze.md`。
-- Stage 16 Read-only Control Panel MVP 设计事实源见 `docs/76-read-only-control-panel-mvp.md`，验收事实见 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`。
-- 当前不自动扩张到 live server、API/auth/session、DB、实时刷新、在线探测或 UI controlled write。
-- 只有出现明确宿主/部署/交互写入需求并完成新的设计 gate 后，才进入 Stage 16 后续增强。
-- 继续保持只读、受控写入、无真实 adapter execution 的安全边界。
+- **Stage 17 — Control Panel Host Integration Boundary（design gate，待下一窗口实现）**
+- 入口文档：`docs/78-control-panel-host-integration-boundary.md`
+- 重点：先冻结本地、只读、stdio-first 的 handoff descriptor，再按 TDD 落地 `orchestration control-panel handoff --json`；不启动 live service，不新增文件写入，不执行 adapter。
+- `v0.13.0-read-only-control-plane` 仍是当前稳定冻结基线；Stage 17 启动时不创建 tag。
+- live server、API/auth/session、DB、实时刷新、在线探测、controlled artifact export 与 UI controlled write 继续延期。
 
 ## 重要约束
 

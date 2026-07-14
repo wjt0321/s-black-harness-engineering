@@ -691,6 +691,34 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 ---
 
+## Stage 17 — Control Panel Host Integration Boundary（下一阶段，design gate 待实现）
+
+目标：为 Stage 16 的 snapshot / static HTML 定义一个宿主可消费、版本化、stdio-first 的只读 handoff contract，而不是直接进入 live service 或可写 UI。
+
+推荐第一拍：
+
+- 新增 `orchestration control-panel handoff [--envelope ...] --json`；
+- 复用现有 snapshot builder，输出 `control-plane/control-panel-handoff/v1`；
+- 声明 snapshot/render representation、media type、encoding、renderer version、identity 与安全边界；
+- descriptor 不内嵌 HTML、不写文件、不启动 server、不执行命令或 adapter；
+- 将新命令并入现有 `control_panel_read` contract entry，并冻结跨入口一致性、确定性和 no-write。
+
+设计事实源：
+
+- `docs/78-control-panel-host-integration-boundary.md`
+
+继续延期：
+
+- controlled artifact export 与任意路径写入；
+- 自动打开浏览器；
+- live HTTP/API、auth/session、DB、实时刷新与在线 probe；
+- UI controlled write 与真实 adapter execution；
+- 特定宿主专有耦合。
+
+Tag 策略：design gate 与单个 additive descriptor 不自动创建 tag；待形成稳定 host contract 与可验收消费者能力包后再评估里程碑冻结。
+
+---
+
 ## Guardrail 主线策略
 
 guardrail / ledger / controlled write 这条主线仍然是必需能力，不应被放弃。

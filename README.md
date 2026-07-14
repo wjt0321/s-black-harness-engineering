@@ -122,6 +122,7 @@
 - ✅ Stage 15.98 — Orchestration Run Retry / Fallback Commit 落地
 - ✅ Stage 15.99 — Run Lineage / Recovery 单条只读模型落地
 - ✅ Stage 16 — Read-only Control Panel MVP（静态只读 snapshot/render 已收口；live UI 延期）
+- ⚪ Stage 17 — Control Panel Host Integration Boundary（stdio-first handoff design gate 已冻结，待实现）
 
 ### 现在最明确的位置
 
@@ -133,13 +134,13 @@
 
 ### 接下来的方向
 
-下一步不自动扩张新的产品面：
+下一步进入明确但仍受限的设计/实现切片：
 
-1. **Stage 16 Read-only Control Panel MVP 已完成收口**，验收记录见 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`
-2. 当前已有 Task intent → routing → preflight → controlled commit → replay 的本地闭环与结构化 `next_action`
-3. CLI 自动化消费者五拍与静态只读 Control Panel 均复用同一 contract/read-model 边界
-4. live server、API/auth/session、DB、实时刷新、在线探测和 UI controlled write 继续延期
-5. 继续维持只读、受控写入和无真实 adapter execution 的安全边界
+1. **Stage 17 — Control Panel Host Integration Boundary** 的设计事实源为 `docs/78-control-panel-host-integration-boundary.md`
+2. 第一拍按 TDD 新增只读 `orchestration control-panel handoff --json`，复用现有 snapshot/render，声明 representation、identity 与安全边界
+3. descriptor 不内嵌 HTML、不写文件、不启动 server，也不执行其中声明的命令
+4. live server、API/auth/session、DB、实时刷新、在线探测、controlled artifact export 和 UI controlled write 继续延期
+5. Stage 17 启动时不创建 tag；形成稳定 host contract 与验收消费者后再评估里程碑冻结
 
 已落地的主线能力包括：
 

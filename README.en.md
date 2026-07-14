@@ -122,6 +122,7 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 15.98 — Orchestration Run Retry / Fallback Commit landed
 - ✅ Stage 15.99 — Run Lineage / Recovery single-run read models landed
 - ✅ Stage 16 — Read-only Control Panel MVP (static snapshot/render closed; live UI deferred)
+- ⚪ Stage 17 — Control Panel Host Integration Boundary (stdio-first handoff design gate frozen; implementation next)
 
 ### The Most Accurate Current Read
 
@@ -133,12 +134,13 @@ The current state is best understood as:
 
 ### What Comes Next
 
-No new product stage starts automatically:
+The next step is explicit but remains narrowly bounded:
 
-1. treat **Stage 16 Read-only Control Panel MVP as complete**, with final acceptance recorded in `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`
-2. retain the local Task intent → routing → preflight → controlled commit → replay loop and structured next action
-3. keep live service, authentication, database, real-time refresh, and UI write operations deferred until a concrete product or integration need exists
-4. preserve the read-only, controlled-write, and no-real-adapter-execution boundaries
+1. use `docs/78-control-panel-host-integration-boundary.md` as the Stage 17 design source of truth
+2. implement a read-only `orchestration control-panel handoff --json` descriptor with TDD, reusing the existing snapshot/render pipeline
+3. keep the descriptor free of embedded HTML, file writes, server startup, and command execution
+4. continue deferring live service, authentication, database, real-time refresh, controlled artifact export, and UI write operations
+5. do not create a tag when Stage 17 starts; reassess milestone tagging only after a stable host contract and an accepted consumer exist
 
 Implemented capability highlights:
 

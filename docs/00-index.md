@@ -35,7 +35,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 16 MVP 已收口）
+### 5. 想看中枢台主线（Stage 17 design gate 待实现）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -57,6 +57,7 @@
 - `75-cli-automation-contract-discovery.md` — CLI 自动化 discovery、gate、profile、workflow plan 与 drift validation（已收口）
 - `76-read-only-control-panel-mvp.md` — Stage 16 本地静态只读 Control Panel 设计与验收边界（已收口）
 - `77-read-only-control-plane-milestone-freeze.md` — `v0.13.0-read-only-control-plane` 冻结范围、证据与 tag 入口
+- `78-control-panel-host-integration-boundary.md` — Stage 17 本地只读 stdio handoff contract 设计 gate（待实现）
 
 ### 6. 想看里程碑与冻结记录
 
@@ -76,10 +77,10 @@
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `77-read-only-control-plane-milestone-freeze.md`
+2. `78-control-panel-host-integration-boundary.md`
 3. 最新 handoff：`tasks/handoff-2026-07-14.md`
-4. `76-read-only-control-panel-mvp.md`
-5. `75-cli-automation-contract-discovery.md`
+4. `77-read-only-control-plane-milestone-freeze.md`
+5. `76-read-only-control-panel-mvp.md`
 
 ## 其他入口
 

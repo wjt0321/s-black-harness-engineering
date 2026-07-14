@@ -2543,3 +2543,12 @@
 
 - 实际 freeze commit：`f401b98`；annotated tag `v0.13.0-read-only-control-plane` 已推送。
 - GitHub Actions CI run `29325425721` 的 Python 3.11 / 3.12 matrix 均通过。
+
+## 2026-07-14 — Stage 17 下一窗口上下文准备
+
+- 在 `v0.13.0-read-only-control-plane` 冻结后，选择下一阶段为 **Stage 17 — Control Panel Host Integration Boundary**。
+- 新增 `docs/78-control-panel-host-integration-boundary.md`，推荐 stdio-first、只读 handoff descriptor，不启动 live service，不新增文件写入，不执行 adapter。
+- 建议下一窗口按 TDD 落地 `orchestration control-panel handoff [--envelope ...] --json`，复用现有 snapshot builder，并将新命令加入既有 `control_panel_read` contract entry。
+- 明确 `snapshot_id` 复用规则、`renderer_version` / `render_id` identity、media type、encoding、source passthrough、determinism 与 no-write 验收标准。
+- 同步 stage digest、roadmap、index、README、AGENTS 与 `tasks/handoff-2026-07-14.md`，确保新窗口可直接恢复。
+- Stage 17 design gate 不创建 tag；controlled artifact export、live service、auth、DB、实时刷新、UI controlled write 与真实 adapter execution 继续延期。
