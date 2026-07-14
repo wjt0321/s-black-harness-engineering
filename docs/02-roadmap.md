@@ -352,6 +352,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 - 只读、确定性、no-write、no-network、no-adapter-execution，不启动新的产品 Stage；
 - 设计事实源：`docs/75-cli-automation-contract-discovery.md`。
 - 第二拍新增 `orchestration contract check` requirement gate：支持 requirement 去重排序、preview 显式 opt-in、access ceiling、结构化 next action 与退出码；继续保持纯只读。
+- 第三拍新增 `orchestration profile list/inspect/check`：source-backed 命名化 requirements，复用同一 gate，doctor 校验 schema/sample，仍不执行 workflow。
 
 候选闭环：
 

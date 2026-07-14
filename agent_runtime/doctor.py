@@ -22,7 +22,7 @@ from .policy import check_text
 from .result import CheckResult, Finding
 
 
-REQUIRED_DIRECTORIES = ["docs", "policies", "agents", "adapters", "tasks"]
+REQUIRED_DIRECTORIES = ["docs", "policies", "agents", "adapters", "automation", "tasks"]
 REQUIRED_FILES = ["README.md"]
 
 SCHEMA_FILES = [
@@ -30,6 +30,7 @@ SCHEMA_FILES = [
     "agents/agents.schema.json",
     "adapters/adapter.schema.json",
     "adapters/execution-envelope.schema.json",
+    "automation/automation-profiles.schema.json",
     "tasks/task.schema.json",
     "tasks/event.schema.json",
 ]
@@ -39,6 +40,7 @@ SAMPLE_TO_SCHEMA: list[tuple[str, str]] = [
     ("agents/agents.sample.json", "agents/agents.schema.json"),
     ("adapters/adapters.sample.json", "adapters/adapter.schema.json"),
     ("adapters/execution-envelope.examples.json", "adapters/execution-envelope.schema.json"),
+    ("automation/automation-profiles.sample.json", "automation/automation-profiles.schema.json"),
 ]
 
 JSONL_PATTERNS = ["tasks/*.jsonl"]

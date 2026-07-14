@@ -38,6 +38,11 @@ from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_a
 from .orchestration_contract import build_contract_manifest
 from .orchestration_contract_check import check_contract_requirements
 from .orchestration_overview import OverviewSummary, check_overview
+from .orchestration_profile import (
+    check_automation_profile,
+    inspect_automation_profile,
+    list_automation_profiles,
+)
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .orchestration_task_submit import submit_task, TaskSubmitResult
 from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
@@ -1465,6 +1470,36 @@ def _cmd_policies_list(args: argparse.Namespace) -> int:
             f"completion={row['completion_rules']}"
         )
     return EXIT_PASS
+
+
+def _cmd_orchestration_profile_list(args: argparse.Namespace) -> int:
+    """List project Automation Profiles without executing requirements."""
+    result = list_automation_profiles(_root_path(args))
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_profile_inspect(args: argparse.Namespace) -> int:
+    """Inspect one project Automation Profile."""
+    result = inspect_automation_profile(_root_path(args), args.profile_id)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_profile_check(args: argparse.Namespace) -> int:
+    """Evaluate one project Automation Profile through the Requirement Gate."""
+    result = check_automation_profile(_root_path(args), args.profile_id)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
 
 
 def _cmd_orchestration_contract_check(args: argparse.Namespace) -> int:
@@ -3084,6 +3119,43 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(orchestration_contract_check_parser)
     orchestration_contract_check_parser.set_defaults(
         func=_cmd_orchestration_contract_check
+    )
+
+    # orchestration profile list/inspect/check
+    orchestration_profile_parser = orchestration_subparsers.add_parser(
+        "profile", help="Read and check project Automation Profiles"
+    )
+    orchestration_profile_subparsers = orchestration_profile_parser.add_subparsers(
+        dest="profile_command", required=True
+    )
+    orchestration_profile_list_parser = orchestration_profile_subparsers.add_parser(
+        "list", help="List source-backed Automation Profiles"
+    )
+    _add_global_args(orchestration_profile_list_parser)
+    orchestration_profile_list_parser.set_defaults(
+        func=_cmd_orchestration_profile_list
+    )
+
+    orchestration_profile_inspect_parser = orchestration_profile_subparsers.add_parser(
+        "inspect", help="Inspect one source-backed Automation Profile"
+    )
+    orchestration_profile_inspect_parser.add_argument(
+        "--profile-id", required=True, help="Automation Profile id"
+    )
+    _add_global_args(orchestration_profile_inspect_parser)
+    orchestration_profile_inspect_parser.set_defaults(
+        func=_cmd_orchestration_profile_inspect
+    )
+
+    orchestration_profile_check_parser = orchestration_profile_subparsers.add_parser(
+        "check", help="Evaluate one Automation Profile through the Requirement Gate"
+    )
+    orchestration_profile_check_parser.add_argument(
+        "--profile-id", required=True, help="Automation Profile id"
+    )
+    _add_global_args(orchestration_profile_check_parser)
+    orchestration_profile_check_parser.set_defaults(
+        func=_cmd_orchestration_profile_check
     )
 
     # orchestration route preview

@@ -245,6 +245,7 @@ Guardrail 的结果决定写操作如何执行：
 | Overview | `orchestration overview` | stable | 基于 task/event ledger 的只读汇总。 |
 | Contract discovery | `orchestration contract inspect` | stable | 面向 CLI 自动化的版本化、确定性、只读 stable/preview/unavailable manifest；不读取运行时数据。 |
 | Contract requirement gate | `orchestration contract check` | stable | 复用 manifest 评估 requirement、preview opt-in 与 access ceiling；不执行声明的 command。 |
+| Automation Profile list/inspect/check | `orchestration profile list/inspect/check` | stable | 固定项目 registry 的命名化 requirement 集合；check 复用 Requirement Gate，不执行 command。 |
 | Adapter registry list/inspect | `orchestration adapter list/inspect` | stable | source-backed capability registry；不探测在线状态。 |
 | Task list/get | `orchestration task list/get` | stable | 基于 task ledger；详情包含事件时间线。 |
 | Task submit | `orchestration task submit` | stable | 仅显式 dry-run/commit；commit 是 task + `created` event 的受控写入。 |
@@ -343,5 +344,13 @@ Stage 12 完成后，本文曾作为 Stage 13 事实源。该阶段的 **Boundar
 - unknown/preview 未授权为 `needs_input`，unavailable/access 超限为 `blocked`；
 - 逐项结果完整保留，aggregate next-action code 确定性生成；
 - 完全复用 v1 manifest，不建立第二份 capability table。
+
+第三拍新增 source-backed Automation Profile：
+
+- 固定 source 为 `automation/automation-profiles.sample.json`，由 JSON Schema 和 doctor 校验；
+- `profile list/inspect` 提供确定性只读 projection；
+- `profile check` 把命名化 requirements 交给同一 Requirement Gate；
+- 首批 profile 覆盖 CI read-only、local dry-run preview 和 local controlled-write preparation；
+- 不支持任意外部 profile 路径、继承、变量替换或 workflow execution。
 
 详细设计见 `docs/75-cli-automation-contract-discovery.md`。

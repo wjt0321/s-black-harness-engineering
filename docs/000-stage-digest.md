@@ -24,7 +24,7 @@
 - **Stage 14 — 中枢台最小编排闭环（已完成）**
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - 当前无进行中的产品阶段；用户已选择 CLI 自动化作为首个 post-Stage 14 消费者，不自动启动 Stage 16。
-- 2026-07-14 增量：新增 `orchestration contract inspect` 与 `orchestration contract check`，机器可读投影并评估 stable/stable_limited/preview/unavailable、preview opt-in 和 access ceiling。
+- 2026-07-14 增量：新增 contract discovery、Requirement Gate 与 source-backed Automation Profile，机器可读投影、评估并命名化 requirements；仍不执行 workflow。
 - Stage 14 已完成：七步闭环对账、read-loop Evidence candidate 投影、显式 replay projection、结构化 `next_action`、跨入口一致性与安全边界均已冻结；不启动 HTTP/RPC、service、UI、DB 或真实 adapter。
 
 ### Stage 10 基线（保留）
@@ -92,22 +92,24 @@
 - `python -m agent_runtime.cli docs context` 可输出恢复入口
 - `orchestration contract inspect --json` 可供脚本确定性发现当前 CLI 能力、关键 flag 与不可用边界
 - `orchestration contract check --require ...` 可供脚本在执行前做 requirement negotiation，不执行被声明的 command
+- `orchestration profile list/inspect/check` 可复用版本化的 CI read-only、local dry-run 与 controlled-write preparation profiles
 - `orchestration adapter list` / `inspect` 可查询 source-backed adapter capability registry；`orchestration route preview` / `orchestration preflight` 已基于同一投影生成路由与 preflight 决策
 
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/52-minimal-orchestration-loop.md`
+2. 再读：`docs/75-cli-automation-contract-discovery.md`
 3. 再读：`tasks/handoff-2026-07-14.md`
-4. 再跑：`python -m agent_runtime.cli docs context --json`
-5. 需要 Stage 13 边界时再读：`docs/51-backend-first-api-boundary.md`
-6. 需要 Stage 14 验收事实时再读：`docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`
-7. 需要 Stage 13 验收事实时再读：`docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`
+4. 需要 Stage 14 闭环事实时再读：`docs/52-minimal-orchestration-loop.md`
+5. 再跑：`python -m agent_runtime.cli docs context --json`
+6. 需要 Stage 13 边界时再读：`docs/51-backend-first-api-boundary.md`
+7. 需要 Stage 14 验收事实时再读：`docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`
+8. 需要 Stage 13 验收事实时再读：`docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`
 
 ## 下一步做什么
 
 - **Stage 14 已完成并收口**：release notes 见 `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`。
-- CLI 自动化 discovery + requirement gate 已落地；下一拍优先定义可版本化 Automation Profile，把 requirement 集合与 preview/access 约束命名化，仍不自动执行工作流。
+- CLI 自动化 discovery + requirement gate + Automation Profile 已落地；下一拍优先做 read-only Workflow Plan projection，把 profile 映射为步骤计划，但不自动执行任何 CLI command。
 - 长期候选：**Stage 16 — UI / Control Panel（远期，暂不启动）**。
 - 入口文档：`docs/02-roadmap.md`。
 - 继续保持只读、受控写入、无真实 adapter execution 的安全边界。

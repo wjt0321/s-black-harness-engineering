@@ -126,6 +126,25 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Reads safe envelope metadata; no independent artifact store.",
         ),
         _entry(
+            "automation_profile_check",
+            "stable",
+            "read_only",
+            commands=(("orchestration", "profile", "check"),),
+            key_flags=("--profile-id",),
+            boundary="Evaluates a fixed project profile without executing requirements.",
+        ),
+        _entry(
+            "automation_profile_read",
+            "stable",
+            "read_only",
+            commands=(
+                ("orchestration", "profile", "inspect"),
+                ("orchestration", "profile", "list"),
+            ),
+            key_flags=("--profile-id",),
+            boundary="Reads the fixed project Automation Profile registry only.",
+        ),
+        _entry(
             "contract_discovery",
             "stable",
             "read_only",

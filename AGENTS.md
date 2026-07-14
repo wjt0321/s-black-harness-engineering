@@ -16,13 +16,14 @@ python -m agent_runtime.cli doctor
 然后按顺序阅读：
 
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
-2. `docs/52-minimal-orchestration-loop.md`：Stage 14 收口设计事实源。
-3. `tasks/handoff-2026-07-14.md`：CLI 自动化 discovery + requirement gate 增量与下一轮恢复上下文。
-4. `docs/51-backend-first-api-boundary.md`：Stage 13 已冻结的资源/操作边界。
-5. `docs/02-roadmap.md`：需要更完整路线图时再读。
-6. `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`：Stage 14 验收事实。
-7. `docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`：Stage 13 验收事实。
-8. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
+2. `docs/75-cli-automation-contract-discovery.md`：CLI 自动化 discovery、Requirement Gate 与 Automation Profile 事实源。
+3. `tasks/handoff-2026-07-14.md`：本轮增量与下一轮恢复上下文。
+4. `docs/52-minimal-orchestration-loop.md`：Stage 14 收口设计事实源。
+5. `docs/51-backend-first-api-boundary.md`：Stage 13 已冻结的资源/操作边界。
+6. `docs/02-roadmap.md`：需要更完整路线图时再读。
+7. `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`：Stage 14 验收事实。
+8. `docs/archive/release-notes/76-release-notes-stage13-backend-first-api-boundary.md`：Stage 13 验收事实。
+9. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
 
 不要先遍历整个 `docs/` 或 `tasks/progress.md`。
 
@@ -30,10 +31,10 @@ python -m agent_runtime.cli doctor
 
 `s-black harness engineering`（Python 包名 `agent_runtime`）是一个轻量、可审计、可迁移的 Agent Runtime / Harness Orchestrator，逐步抽象规则门禁、任务账本、adapter envelope、能力路由和控制面 read model。
 
-当前状态：**Stage 14 — 中枢台最小编排闭环已收口**；post-Stage 14 已落地 CLI 自动化契约发现与 Requirement Gate，下一产品阶段仍不自动启动。
+当前状态：**Stage 14 — 中枢台最小编排闭环已收口**；post-Stage 14 已落地 CLI 自动化契约发现、Requirement Gate 与 Automation Profile，下一产品阶段仍不自动启动。
 
 - 冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
-- 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation 第一版，以及 `orchestration contract inspect` / `contract check` 机器可读发现与 requirement negotiation。
+- 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation 第一版，以及 `orchestration contract inspect` / `contract check` 与 `orchestration profile list/inspect/check` 的机器可读发现、requirement negotiation 和命名化 profile。
 - Stage 12 已完成：routing/read-loop snapshot 与 recovery lineage read model 已冻结并通过验收。
 - Stage 13 已完成：真实 CLI/read models 的 stable/preview/unavailable 边界已对账，并由契约测试冻结命令 surface 与关键 flag。
 - 收口事实源：`docs/52-minimal-orchestration-loop.md`。Stage 14 已完成最小、可回放、可审计的本地编排闭环。
@@ -126,6 +127,7 @@ Windows 可使用 Git for Windows 的 `bash.exe`。提交前还应运行 `git di
 | `policies/` | policy schema 与样例 |
 | `agents/` | agent registry schema 与样例 |
 | `adapters/` | adapter registry、execution envelope schema 与样例 |
+| `automation/` | Automation Profile schema 与 source-backed 样例 registry |
 | `tasks/` | task/event schema、JSONL ledger、progress 与 handoff |
 | `drafts/` | 受控生成的 runtime draft |
 | `tools/` | 独立只读工具，如 `public_scan.py` |

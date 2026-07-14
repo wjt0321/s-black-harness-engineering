@@ -1,0 +1,57 @@
+{
+  "schema_version": "control-plane/automation-profiles/v1",
+  "profiles": [
+    {
+      "profile_id": "ci-read-only",
+      "description": "Stable read-only control-plane capabilities for CI inspection.",
+      "required_contracts": [
+        "adapter_registry",
+        "artifact_read",
+        "automation_profile_check",
+        "automation_profile_read",
+        "contract_discovery",
+        "contract_requirement_gate",
+        "overview",
+        "report_generate",
+        "routing_preflight",
+        "run_read",
+        "task_read"
+      ],
+      "allow_preview": false,
+      "max_access": "read_only"
+    },
+    {
+      "profile_id": "local-dry-run",
+      "description": "Local read-only planning with explicit preview projections.",
+      "required_contracts": [
+        "automation_profile_check",
+        "contract_discovery",
+        "contract_requirement_gate",
+        "read_loop_snapshot",
+        "report_generate",
+        "routing_preflight",
+        "routing_preflight_snapshot",
+        "run_plan",
+        "task_read"
+      ],
+      "allow_preview": true,
+      "max_access": "read_only"
+    },
+    {
+      "profile_id": "local-controlled-write",
+      "description": "Local controlled-write preparation without adapter execution.",
+      "required_contracts": [
+        "approval_resolve",
+        "automation_profile_check",
+        "contract_requirement_gate",
+        "report_generate",
+        "routing_preflight",
+        "run_commit",
+        "run_plan",
+        "task_submit"
+      ],
+      "allow_preview": true,
+      "max_access": "controlled_write"
+    }
+  ]
+}

@@ -137,3 +137,63 @@ python -m agent_runtime.cli orchestration contract check \
 - manifest 增加自描述的 `contract_requirement_gate` stable 条目；
 - 测试覆盖 pass、去重排序、unknown、unavailable、preview opt-in、access ceiling、混合问题优先级、CLI 退出码、determinism、no-write 与 argparse command/flag 漂移；
 - 既有 `contract inspect` schema_version 与字段保持兼容，仅新增一个排序后的 entry 和相应 summary 计数。
+
+## 第三拍：Automation Profile
+
+### 目标与方案
+
+Requirement Gate 已能判断一组临时 `--require`，第三拍把 requirement 集合与约束命名化为项目内可版本控制的 Automation Profile，供 CI、本地只读审计和受控写入准备复用。
+
+选择 source-backed JSON registry，而不是把 profile 硬编码在 CLI 或立即引入 workflow runner：
+
+- source of truth：`automation/automation-profiles.sample.json`；
+- schema：`automation/automation-profiles.schema.json`；
+- 固定从项目 root 读取，不提供任意 `--profiles-file`，避免扩大文件读取范围；
+- profile check 直接调用 `check_contract_requirements()`，不复制 requirement 计算；
+- 不执行 profile 中声明的 command，不生成 workflow plan，不写 ledger。
+
+### Profile v1
+
+registry 顶层：
+
+- `schema_version`: `control-plane/automation-profiles/v1`；
+- `profiles`: profile 数组，`profile_id` 必须唯一。
+
+单个 profile：
+
+- `profile_id`: 小写短横线 id；
+- `description`: 安全、简短说明；
+- `required_contracts`: 至少一个 contract id，元素唯一；
+- `allow_preview`: 是否显式接受 preview；
+- `max_access`: `read_only` 或 `controlled_write`。
+
+首批样例：
+
+- `ci-read-only`：只消费 stable/stable_limited read models；
+- `local-dry-run`：显式接受 run/read-loop preview，但限制为 read-only；
+- `local-controlled-write`：允许 controlled-write requirement，但 gate 本身仍不执行写操作。
+
+### CLI
+
+```bash
+python -m agent_runtime.cli orchestration profile list --json
+python -m agent_runtime.cli orchestration profile inspect --profile-id ci-read-only --json
+python -m agent_runtime.cli orchestration profile check --profile-id local-dry-run --json
+```
+
+输出版本：
+
+- list：`control-plane/automation-profile-list/v1`；
+- inspect：`control-plane/automation-profile/v1`；
+- check：`control-plane/automation-profile-check/v1`，内嵌原始 `contract_check` projection。
+
+未知 profile 返回 `needs_input`；registry 缺失、JSON/schema 错误、重复 profile id 返回结构化 `validation_failed`，不得 traceback 或回显敏感内容。
+
+### 安全与兼容
+
+- list/inspect/check 均只读、确定性、no-network、no-command-execution；
+- list 按 profile id 排序，required contracts 在 projection 中去重排序；
+- doctor 纳入 automation schema/sample 校验；
+- manifest 增加 `automation_profile_read` 与 `automation_profile_check` stable 条目；
+- 既有 contract discovery/check 默认字段保持兼容，仅 manifest entries/summary 追加新能力；
+- 不支持自定义任意文件路径、profile 继承、变量替换、条件表达式或 workflow execution。

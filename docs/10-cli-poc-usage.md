@@ -1681,6 +1681,24 @@ python -m agent_runtime.cli orchestration contract check \
 - unknown / preview 未授权返回 `needs_input`（退出码 4）；unavailable / access 超限返回 `blocked`（退出码 2）。
 - 输出 schema 为 `control-plane/orchestration-contract-check/v1`。
 
+Automation Profile（source-backed，只读）：
+
+```bash
+python -m agent_runtime.cli orchestration profile list --json
+python -m agent_runtime.cli orchestration profile inspect \
+  --profile-id ci-read-only \
+  --json
+python -m agent_runtime.cli orchestration profile check \
+  --profile-id local-dry-run \
+  --json
+```
+
+- 固定读取 `automation/automation-profiles.sample.json`，不接受任意 profile 文件路径。
+- `profile list` 输出紧凑摘要；`inspect` 输出规范化 requirement 集合；`check` 复用 Requirement Gate。
+- 内置样例：`ci-read-only`、`local-dry-run`、`local-controlled-write`。
+- registry 缺失、非法 JSON/schema 或重复 profile id 返回 `validation_failed`（退出码 5）。
+- profile check 只做能力协商，不执行 requirement 对应 command。
+
 总览聚合：
 
 ```bash
