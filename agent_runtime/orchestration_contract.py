@@ -145,6 +145,14 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Reads the fixed project Automation Profile registry only.",
         ),
         _entry(
+            "automation_workflow_plan",
+            "preview",
+            "read_only",
+            commands=(("orchestration", "workflow", "plan"),),
+            key_flags=("--profile-id",),
+            boundary="Projects checked profile requirements into unexecuted CLI candidates.",
+        ),
+        _entry(
             "contract_discovery",
             "stable",
             "read_only",

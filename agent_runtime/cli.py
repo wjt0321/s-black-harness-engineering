@@ -43,6 +43,7 @@ from .orchestration_profile import (
     inspect_automation_profile,
     list_automation_profiles,
 )
+from .orchestration_workflow import build_automation_workflow_plan
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .orchestration_task_submit import submit_task, TaskSubmitResult
 from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
@@ -1495,6 +1496,16 @@ def _cmd_orchestration_profile_inspect(args: argparse.Namespace) -> int:
 def _cmd_orchestration_profile_check(args: argparse.Namespace) -> int:
     """Evaluate one project Automation Profile through the Requirement Gate."""
     result = check_automation_profile(_root_path(args), args.profile_id)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_workflow_plan(args: argparse.Namespace) -> int:
+    """Project one Automation Profile into deterministic unexecuted steps."""
+    result = build_automation_workflow_plan(_root_path(args), args.profile_id)
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
@@ -3156,6 +3167,24 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(orchestration_profile_check_parser)
     orchestration_profile_check_parser.set_defaults(
         func=_cmd_orchestration_profile_check
+    )
+
+    # orchestration workflow plan
+    orchestration_workflow_parser = orchestration_subparsers.add_parser(
+        "workflow", help="Project Automation Profiles into unexecuted workflow steps"
+    )
+    orchestration_workflow_subparsers = orchestration_workflow_parser.add_subparsers(
+        dest="workflow_command", required=True
+    )
+    orchestration_workflow_plan_parser = orchestration_workflow_subparsers.add_parser(
+        "plan", help="Build a deterministic read-only plan for one Automation Profile"
+    )
+    orchestration_workflow_plan_parser.add_argument(
+        "--profile-id", required=True, help="Automation Profile id"
+    )
+    _add_global_args(orchestration_workflow_plan_parser)
+    orchestration_workflow_plan_parser.set_defaults(
+        func=_cmd_orchestration_workflow_plan
     )
 
     # orchestration route preview

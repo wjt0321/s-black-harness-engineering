@@ -24,7 +24,7 @@
 - **Stage 14 — 中枢台最小编排闭环（已完成）**
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - 当前无进行中的产品阶段；用户已选择 CLI 自动化作为首个 post-Stage 14 消费者，不自动启动 Stage 16。
-- 2026-07-14 增量：新增 contract discovery、Requirement Gate 与 source-backed Automation Profile，机器可读投影、评估并命名化 requirements；仍不执行 workflow。
+- 2026-07-14 增量：新增 contract discovery、Requirement Gate、source-backed Automation Profile 与 read-only Workflow Plan projection，机器可读发现、评估、命名化并投影 requirements；仍不执行 workflow step。
 - Stage 14 已完成：七步闭环对账、read-loop Evidence candidate 投影、显式 replay projection、结构化 `next_action`、跨入口一致性与安全边界均已冻结；不启动 HTTP/RPC、service、UI、DB 或真实 adapter。
 
 ### Stage 10 基线（保留）
@@ -109,7 +109,7 @@
 ## 下一步做什么
 
 - **Stage 14 已完成并收口**：release notes 见 `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`。
-- CLI 自动化 discovery + requirement gate + Automation Profile 已落地；下一拍优先做 read-only Workflow Plan projection，把 profile 映射为步骤计划，但不自动执行任何 CLI command。
+- CLI 自动化 discovery + requirement gate + Automation Profile + read-only Workflow Plan projection 已落地；下一拍如继续，优先做 plan re-check/drift validation，仍不自动执行任何 CLI command。
 - 长期候选：**Stage 16 — UI / Control Panel（远期，暂不启动）**。
 - 入口文档：`docs/02-roadmap.md`。
 - 继续保持只读、受控写入、无真实 adapter execution 的安全边界。

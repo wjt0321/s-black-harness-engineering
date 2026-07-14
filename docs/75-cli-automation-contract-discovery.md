@@ -197,3 +197,39 @@ python -m agent_runtime.cli orchestration profile check --profile-id local-dry-r
 - manifest 增加 `automation_profile_read` 与 `automation_profile_check` stable 条目；
 - 既有 contract discovery/check 默认字段保持兼容，仅 manifest entries/summary 追加新能力；
 - 不支持自定义任意文件路径、profile 继承、变量替换、条件表达式或 workflow execution。
+
+## 第四拍：Read-only Workflow Plan Projection
+
+### 目标与方案
+
+Automation Profile 已冻结一组命名化 requirements 与边界约束，第四拍只把通过 Requirement Gate 的 profile 投影为可审计的工作流步骤，不执行任何步骤。
+
+- CLI：`orchestration workflow plan --profile-id <id>`；
+- 输出 schema：`control-plane/automation-workflow-plan/v1`；
+- profile 仍从固定 `automation/automation-profiles.sample.json` 读取；
+- 先复用 `check_automation_profile()`，只有 gate 为 `pass` 时才生成步骤；
+- 每个步骤的 command、flag、availability、access 与 boundary 直接来自 `build_contract_manifest()`，不维护第二份 capability table；
+- planner 只维护稳定的阶段分组与顺序：`discovery`、`inspect`、`decide`、`prepare`、`controlled_write`、`observe`，未映射能力落入 `capability`；
+- `plan_id` 对不含自身的规范化 JSON projection 做 SHA-256 内容寻址，同一输入产生相同 id 与相同输出；
+- gate 未通过、未知 profile 或 registry 校验失败时保留原状态/findings/next_action，步骤为空。
+
+### Step v1
+
+每个步骤包含：
+
+- `step_id`：`<phase>:<contract_id>`；
+- `phase` 与 `contract_id`；
+- `availability`、`access`、`boundary`；
+- `candidate_commands`：manifest 声明的真实 CLI command 数组；
+- `required_flags`：manifest 声明的关键显式边界 flag；
+- `status=planned`、`execution=not_executed`。
+
+步骤按固定 phase 顺序、再按 contract id 排序。summary 汇总总步骤数、各 phase 数量、preview 数量和 controlled-write 数量。
+
+### 安全与兼容
+
+- projection 是 ephemeral read model，不写文件/ledger、不执行 command/adapter、不访问网络；
+- controlled-write requirement 只会生成带 `--commit` 等显式 flag 的候选步骤，不会触发写入；
+- manifest 增加 `automation_workflow_plan` preview/read-only 条目；
+- 不支持 workflow execution、变量替换、条件分支、后台服务或任意 profile 路径；
+- 既有 profile/contract 默认输出保持兼容，仅 manifest entries/summary 追加能力。

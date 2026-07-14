@@ -1699,6 +1699,21 @@ python -m agent_runtime.cli orchestration profile check \
 - registry 缺失、非法 JSON/schema 或重复 profile id 返回 `validation_failed`（退出码 5）。
 - profile check 只做能力协商，不执行 requirement 对应 command。
 
+Read-only Workflow Plan projection：
+
+```bash
+python -m agent_runtime.cli orchestration workflow plan \
+  --profile-id local-dry-run \
+  --json
+```
+
+- 输出 schema 为 `control-plane/automation-workflow-plan/v1`。
+- 先复用 profile check；只有 gate 为 `pass` 才生成步骤，否则保持原状态且 `steps=[]`。
+- command argv、关键 flag、availability、access 与 boundary 都来自同一 contract manifest。
+- 步骤按 discovery / inspect / decide / prepare / controlled_write / observe / capability 排序，并固定标记 `status=planned`、`execution=not_executed`。
+- `plan_id` 是规范化安全 projection 的 SHA-256 内容哈希；同一 source/profile 产生相同输出。
+- 即使 profile 允许 controlled-write，planner 也只展示带 `--commit` 等显式 flag 的候选，不执行命令、不写文件或 ledger。
+
 总览聚合：
 
 ```bash

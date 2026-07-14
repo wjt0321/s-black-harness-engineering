@@ -353,4 +353,12 @@ Stage 12 完成后，本文曾作为 Stage 13 事实源。该阶段的 **Boundar
 - 首批 profile 覆盖 CI read-only、local dry-run preview 和 local controlled-write preparation；
 - 不支持任意外部 profile 路径、继承、变量替换或 workflow execution。
 
+第四拍新增 read-only Workflow Plan projection：
+
+- `orchestration workflow plan --profile-id ...` 先复用 profile check，gate 未通过时不生成步骤；
+- 每个 step 的 command、flag、availability、access 与 boundary 直接复用 contract manifest；
+- planner 只维护 phase 分组和确定性顺序，不复制 capability table；
+- `plan_id` 使用 canonical projection 的 SHA-256 内容寻址；
+- 所有步骤固定为 `not_executed`，包括 controlled-write 候选，不写文件/ledger、不访问网络。
+
 详细设计见 `docs/75-cli-automation-contract-discovery.md`。

@@ -54,7 +54,7 @@
 - `70-orchestration-run-retry-fallback-commit-design.md` — Retry/Fallback Commit 设计
 - `73-recovery-lineage-aggregation-read-model.md` — Recovery lineage 聚合只读模型（Stage 12 post-freeze）
 - `74-recovery-lineage-report-reuse.md` — Recovery lineage 在 report generate 的显式复用契约
-- 75-cli-automation-contract-discovery.md — CLI 自动化契约发现、Requirement Gate 与 source-backed Automation Profile
+- 75-cli-automation-contract-discovery.md — CLI 自动化契约发现、Requirement Gate、source-backed Automation Profile 与 read-only Workflow Plan
 
 ### 6. 想看里程碑与冻结记录
 
