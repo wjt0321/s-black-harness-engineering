@@ -1,6 +1,6 @@
 # 79 — Stage 18 Read-only Host Consumer Validation Boundary
 
-> 状态：**design gate 已冻结，待按 TDD 实现第一拍**
+> 状态：**第一拍已按 TDD 实现并收口**
 > 前置事实源：`docs/78-control-panel-host-integration-boundary.md`、`docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`
 
 ## 1. 决策摘要
@@ -74,7 +74,7 @@ V1 使用严格字段集合。出现未知字段时返回 contract drift finding
 
 ## 5. 输出契约
 
-建议 schema：
+实现 schema：
 
 ```text
 control-plane/control-panel-host-consumer-validation/v1
@@ -155,3 +155,26 @@ control-plane/control-panel-host-consumer-validation/v1
 4. 更新 CLI 使用文档、stage digest、roadmap、README、AGENTS 与 handoff。
 5. 跑全量 pytest、doctor、public scan、controlled-write regression、compileall、docs context、pre-commit 与 diff check。
 6. 通过后新增 Stage 18 release notes；不自动创建 tag，不 push。
+
+
+## 11. 实现与收口结果
+
+Stage 18 第一拍已完成：
+
+- 新增 `tools/control_panel_handoff_consumer.py`，仅使用 Python 标准库，且不导入 `agent_runtime`；
+- 固定检查顺序为 `document_shape`、`schema_version`、`producer_status`、`handoff_identity`、`render_identity`、`representations`、`argv`、`boundaries`；
+- stdin 读取上限为 1 MiB，并在解析前拒绝空输入、非 UTF-8 与超限输入；JSON loader 拒绝重复 object key；
+- project-relative source 同时按 POSIX 与 Windows 语义检查，拒绝绝对路径、盘符路径、Windows 根相对路径与 `..` 穿越；
+- 输出固定为 `control-plane/control-panel-host-consumer-validation/v1`，状态与退出码遵守第 6 节；
+- consumer 不读取 snapshot/HTML representation、不执行 argv、不访问网络、不启动服务、不写文件或 ledger；
+- 测试覆盖合法 descriptor、producer error、shape/schema/identity/representation/argv/boundary drift、输入门禁、确定性、脱敏和 no-side-effect。
+
+真实 stdio 管道已通过：
+
+```bash
+python -m agent_runtime.cli orchestration control-panel handoff \
+  --envelope adapters/execution-envelope.examples.json \
+  --json | python tools/control_panel_handoff_consumer.py
+```
+
+收口事实源：`docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`。本阶段不创建 tag，不 push。

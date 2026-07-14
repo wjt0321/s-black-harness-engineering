@@ -720,7 +720,7 @@ Tag 策略：design gate 与单个 additive descriptor 不自动创建 tag；待
 
 ---
 
-## Stage 18 — Read-only Host Consumer Validation（design gate 已完成，待实现）
+## Stage 18 — Read-only Host Consumer Validation（已完成）
 
 目标：用一个与 producer 解耦的本地 reference consumer，验证 Stage 17 handoff descriptor 能被外部宿主安全校验，而不是直接进入专有宿主集成。
 
@@ -732,11 +732,16 @@ Tag 策略：design gate 与单个 additive descriptor 不自动创建 tag；待
 - producer 非 pass、unsafe boundary 或 unsupported schema 不得伪装为可信 representation；
 - consumer 不导入 producer builder、不读取项目资源、不执行 argv、不访问网络、不写文件。
 
-设计事实源：
+设计与验收事实源：
 
 - `docs/79-read-only-host-consumer-validation-boundary.md`
+- `docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`
+
+验收结果：标准库-only、stdin-only consumer 已独立验证 handoff schema、identity、representation metadata、argv shape 与安全 boundary；真实 producer 管道、确定性、脱敏和 no-side-effect 均已通过。
 
 继续延期：Codex Desktop/QwenPaw 专有 bridge、representation 自动读取、live refresh/server、文件输入/export、UI 写操作与真实 adapter execution。
+
+下一拍：Stage 19 只进入 Host-specific Read-only Adapter design gate；先冻结真实宿主选择、生命周期、错误处理与授权边界，再决定是否实现。
 
 ---
 

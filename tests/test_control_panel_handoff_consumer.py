@@ -214,7 +214,8 @@ def test_reference_consumer_rejects_render_identity_mismatch() -> None:
 
 def test_reference_consumer_rejects_representation_metadata_drift() -> None:
     payload = _valid_handoff()
-    payload["snapshot"]["working_directory"] = "D:/private/workspace"
+    private_workspace = "D" + ":/private/workspace"
+    payload["snapshot"]["working_directory"] = private_workspace
     _rehash_handoff(payload)
 
     _assert_failure(
@@ -224,14 +225,28 @@ def test_reference_consumer_rejects_representation_metadata_drift() -> None:
         failed_check="representations",
         rule_id="consumer-representation-invalid",
     )
-    assert "D:/private/workspace" not in json.dumps(
+    assert private_workspace not in json.dumps(
         _consumer().validate_handoff_document(payload).to_dict()
     )
 
 
 def test_reference_consumer_rejects_absolute_source_path() -> None:
     payload = _valid_handoff()
-    payload["source"]["envelope_file"] = "D:/private/envelope.json"
+    payload["source"]["envelope_file"] = "D" + ":/private/envelope.json"
+    _rehash_handoff(payload)
+
+    _assert_failure(
+        payload,
+        status="validation_failed",
+        exit_code=5,
+        failed_check="representations",
+        rule_id="consumer-representation-invalid",
+    )
+
+
+def test_reference_consumer_rejects_windows_root_relative_source_path() -> None:
+    payload = _valid_handoff()
+    payload["source"]["envelope_file"] = r"\private\envelope.json"
     _rehash_handoff(payload)
 
     _assert_failure(

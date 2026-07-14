@@ -1729,7 +1729,7 @@ python -m agent_runtime.cli orchestration workflow check \
 - hash mismatch 只能证明 canonical projection 已变化，不提供伪造的字段级原因；结果内嵌当前完整 plan 供重新审查。
 - 输出 schema 为 `control-plane/automation-workflow-check/v1`，仍然不执行 command、不写文件或 ledger。
 
-Stage 16/17 Read-only Control Panel（本地静态、只读、stdio-first）：
+Stage 16–18 Read-only Control Panel（本地静态、只读、stdio-first）：
 
 ```bash
 python -m agent_runtime.cli orchestration control-panel snapshot --json
@@ -1752,6 +1752,22 @@ python -m agent_runtime.cli orchestration control-panel handoff \
 - `handoff` 不内嵌 HTML、不执行 argv、不打开浏览器；项目内绝对 envelope 路径会归一化为 root-relative 表示。
 - 不传 `--envelope` 时，runs/approvals/artifacts 显示 `envelope_required`；reports 保持 `request_context_required`，不会伪造持久 collection。
 - HTML 无外部资源与网络请求，所有 read-model 字符串都会转义；只提供本地过滤，不提供 commit、approval resolve 或执行按钮。
+
+Stage 18 独立 reference consumer：
+
+```bash
+python -m agent_runtime.cli orchestration control-panel handoff --json | \
+  python tools/control_panel_handoff_consumer.py
+python -m agent_runtime.cli orchestration control-panel handoff \
+  --envelope adapters/execution-envelope.examples.json \
+  --json | python tools/control_panel_handoff_consumer.py
+```
+
+- consumer 只从 stdin 读取一份 UTF-8 JSON，最大 1 MiB；拒绝空输入、超限、非 UTF-8、非法 JSON 和重复 object key。
+- 输出 schema 固定为 `control-plane/control-panel-host-consumer-validation/v1`，consumer id 固定为 `local-reference-consumer/v1`。
+- 固定检查 schema、producer status、handoff/render identity、representation metadata、argv shape 与只读 boundary。
+- `pass`/`blocked`/`validation_failed`/`error` 分别使用退出码 `0`/`2`/`5`/`1`。
+- consumer 不导入 producer 实现，不读取 snapshot/HTML representation，不执行 argv，不访问网络，不写文件或 ledger。
 
 总览聚合：
 

@@ -237,7 +237,11 @@ def _source_is_project_relative(source: dict[str, Any]) -> bool:
         return False
     windows_path = PureWindowsPath(value)
     posix_path = PurePosixPath(value)
-    if windows_path.is_absolute() or bool(windows_path.drive):
+    if (
+        windows_path.is_absolute()
+        or bool(windows_path.drive)
+        or bool(windows_path.root)
+    ):
         return False
     if posix_path.is_absolute():
         return False

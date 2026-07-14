@@ -171,7 +171,7 @@ python -m pytest -p no:cacheprovider tests/test_controlled_write_regression.py -
 python -m compileall -q agent_runtime tests tools
 python -m agent_runtime.cli docs context --json
 git diff --check
-"C:/Program Files/Git/bin/bash.exe" .githooks/pre-commit
+bash .githooks/pre-commit
 ```
 
 Expected: every command exits `0`.
