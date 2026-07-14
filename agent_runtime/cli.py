@@ -36,6 +36,7 @@ from .runtime_task_create import TaskCreateDryRunResult, create_task, create_tas
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
 from .orchestration_contract import build_contract_manifest
+from .orchestration_contract_check import check_contract_requirements
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .orchestration_task_submit import submit_task, TaskSubmitResult
@@ -1464,6 +1465,20 @@ def _cmd_policies_list(args: argparse.Namespace) -> int:
             f"completion={row['completion_rules']}"
         )
     return EXIT_PASS
+
+
+def _cmd_orchestration_contract_check(args: argparse.Namespace) -> int:
+    """Evaluate required contract capabilities without executing commands."""
+    result = check_contract_requirements(
+        args.required_contracts,
+        allow_preview=args.allow_preview,
+        max_access=args.max_access,
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
 
 
 def _cmd_orchestration_contract_inspect(args: argparse.Namespace) -> int:
@@ -3043,6 +3058,32 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(orchestration_contract_inspect_parser)
     orchestration_contract_inspect_parser.set_defaults(
         func=_cmd_orchestration_contract_inspect
+    )
+
+    orchestration_contract_check_parser = orchestration_contract_subparsers.add_parser(
+        "check", help="Check required capabilities against the contract manifest"
+    )
+    orchestration_contract_check_parser.add_argument(
+        "--require",
+        dest="required_contracts",
+        action="append",
+        required=True,
+        help="Required contract id; repeat for multiple requirements",
+    )
+    orchestration_contract_check_parser.add_argument(
+        "--allow-preview",
+        action="store_true",
+        help="Explicitly allow preview contract capabilities",
+    )
+    orchestration_contract_check_parser.add_argument(
+        "--max-access",
+        choices=["read_only", "controlled_write"],
+        default="controlled_write",
+        help="Maximum access level allowed by this requirement check",
+    )
+    _add_global_args(orchestration_contract_check_parser)
+    orchestration_contract_check_parser.set_defaults(
+        func=_cmd_orchestration_contract_check
     )
 
     # orchestration route preview

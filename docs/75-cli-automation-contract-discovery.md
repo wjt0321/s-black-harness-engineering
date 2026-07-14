@@ -1,7 +1,7 @@
 <!-- parents: 51-backend-first-api-boundary.md, 52-minimal-orchestration-loop.md -->
 <!-- relates: 02-roadmap.md, 10-cli-poc-usage.md -->
 
-# 75 — CLI 自动化契约发现
+# 75 — CLI 自动化契约发现与 Requirement Gate
 
 ## 定位
 
@@ -77,3 +77,63 @@ v1 覆盖 `docs/51-backend-first-api-boundary.md` 的首轮契约矩阵，不声
 - 不读取在线 availability；
 - 不把 preview 升级为 stable；
 - 不引入服务协议、UI、数据库、鉴权或真实 adapter execution。
+
+## 第二拍：Requirement Gate
+
+### 目标
+
+在 discovery 之上增加一个真正消费 v1 manifest 的只读 requirement gate，让脚本或 CI 在执行任何 orchestration 操作前判断所需契约是否可用，而不是自行解释 availability/access 字段。
+
+新增入口：
+
+```bash
+python -m agent_runtime.cli orchestration contract check \
+  --require task_read \
+  --require routing_preflight \
+  --require run_plan \
+  --json
+```
+
+### 输入约束
+
+- `--require <contract-id>`：可重复且至少出现一次；实现按 contract id 去重并排序。
+- `--allow-preview`：默认关闭；未显式允许时，preview requirement 返回 `needs_input`。
+- `--max-access read_only|controlled_write`：默认 `controlled_write`；调用方可显式收紧为 `read_only`。
+
+该 gate 只评估 manifest，不执行被声明的 command，不读取 ledger/registry，不写文件，不访问网络。
+
+### 结果模型
+
+使用 `control-plane/orchestration-contract-check/v1`：
+
+- `status`：`pass`、`needs_input` 或 `blocked`；
+- `constraints`：回显规范化后的 `allow_preview` 与 `max_access`；
+- `requirements`：逐项输出 `satisfied`、`unknown`、`unavailable`、`preview_not_allowed` 或 `access_exceeded`；
+- `summary`：总数、满足数、不满足数；
+- `next_action.code`：稳定的机器动作码。
+
+状态规则：
+
+1. 空 requirement 集合：`needs_input` / `provide_requirements`；
+2. 已知 stable/stable_limited 且 access 不超限：`satisfied`；
+3. preview 未显式允许：`preview_not_allowed`，总体至少为 `needs_input`；
+4. 未知 contract id：`unknown`，总体至少为 `needs_input`；
+5. manifest 明确 unavailable：`unavailable`，总体为 `blocked`；
+6. access 超过 `--max-access`：`access_exceeded`，总体为 `blocked`；
+7. 多问题并存时，`blocked` 高于 `needs_input`，但逐项结果完整保留。
+
+稳定 next-action code：
+
+- `provide_requirements`
+- `requirements_satisfied`
+- `provide_known_contract_ids`
+- `allow_preview_or_choose_stable`
+- `choose_available_contract`
+- `raise_max_access_or_choose_read_only`
+
+### 实现与测试边界
+
+- 新建独立 requirement evaluation 模块，复用 `build_contract_manifest()`，不维护第二份 capability table；
+- manifest 增加自描述的 `contract_requirement_gate` stable 条目；
+- 测试覆盖 pass、去重排序、unknown、unavailable、preview opt-in、access ceiling、混合问题优先级、CLI 退出码、determinism、no-write 与 argparse command/flag 漂移；
+- 既有 `contract inspect` schema_version 与字段保持兼容，仅新增一个排序后的 entry 和相应 summary 计数。

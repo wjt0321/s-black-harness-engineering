@@ -1658,6 +1658,29 @@ python -m agent_runtime.cli orchestration contract inspect --json
 
 JSON 输出使用 `control-plane/orchestration-contract/v1`，确定性列出 `stable`、`stable_limited`、`preview`、`unavailable` 条目、真实 command argv、关键边界 flag 与安全说明。该命令只读取代码内冻结的契约元数据，不读取 ledger 或 adapter registry，不写文件，不访问网络，也不执行 manifest 中的命令。
 
+Requirement Gate（只读，不执行 requirement 对应命令）：
+
+```bash
+# stable/stable_limited requirement
+python -m agent_runtime.cli orchestration contract check \
+  --require task_read \
+  --require routing_preflight \
+  --json
+
+# preview 默认返回 needs_input；必须显式 opt-in
+python -m agent_runtime.cli orchestration contract check \
+  --require run_plan \
+  --allow-preview \
+  --max-access read_only \
+  --json
+```
+
+- `--require` 可重复；结果按 contract id 去重和排序。
+- `--allow-preview` 默认关闭。
+- `--max-access` 可选 `read_only` 或 `controlled_write`，默认 `controlled_write`。
+- unknown / preview 未授权返回 `needs_input`（退出码 4）；unavailable / access 超限返回 `blocked`（退出码 2）。
+- 输出 schema 为 `control-plane/orchestration-contract-check/v1`。
+
 总览聚合：
 
 ```bash

@@ -133,6 +133,14 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Returns this versioned manifest without reading project runtime data.",
         ),
         _entry(
+            "contract_requirement_gate",
+            "stable",
+            "read_only",
+            commands=(("orchestration", "contract", "check"),),
+            key_flags=("--allow-preview", "--max-access", "--require"),
+            boundary="Evaluates declared requirements without executing their commands.",
+        ),
+        _entry(
             "external_execution_service_stack",
             "unavailable",
             "unavailable",

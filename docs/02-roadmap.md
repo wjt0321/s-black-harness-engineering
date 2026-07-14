@@ -351,6 +351,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 - command argv 与关键 flag 由契约测试反向校验真实 argparse surface；
 - 只读、确定性、no-write、no-network、no-adapter-execution，不启动新的产品 Stage；
 - 设计事实源：`docs/75-cli-automation-contract-discovery.md`。
+- 第二拍新增 `orchestration contract check` requirement gate：支持 requirement 去重排序、preview 显式 opt-in、access ceiling、结构化 next action 与退出码；继续保持纯只读。
 
 候选闭环：
 
