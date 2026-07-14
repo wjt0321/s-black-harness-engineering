@@ -127,7 +127,7 @@
 可以把当前状态理解成：
 
 - **门禁 / ledger / controlled write 这一层，已经不是草稿，而是一个成型的安全内核**
-- **中枢台后端主线已经具备 source-backed registry、约束路由、read-loop snapshot、recovery lineage aggregation，以及 CLI automation contract/profile/workflow plan projection**
+- **中枢台后端主线已经具备 source-backed registry、约束路由、read-loop snapshot、recovery lineage aggregation，以及 CLI automation contract/profile/workflow plan/drift validation projection**
 - **真实 adapter execution、长期服务/API、UI 和 DB 仍未进入实现范围**
 
 ### 接下来的方向
@@ -136,7 +136,7 @@
 
 1. **Stage 14 已完成收口**，验收记录见 `docs/archive/release-notes/77-release-notes-stage14-minimal-orchestration-loop.md`
 2. 当前已有 Task intent → routing → preflight → controlled commit → replay 的本地闭环与结构化 `next_action`
-3. post-Stage 14 CLI 自动化已具备 contract discovery、requirement gate、Automation Profile 与 read-only Workflow Plan；如继续，优先做 plan drift validation，不执行步骤
+3. post-Stage 14 CLI 自动化消费者已完成五拍收口，验收记录见 `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`
 4. Stage 16 UI / Control Panel 仍为远期，需明确产品入口或集成需求后再启动
 5. 继续维持只读、受控写入和无真实 adapter execution 的安全边界
 
@@ -157,7 +157,7 @@
 - Stage 15.5 controlled handoff：`orchestration route preview`、`orchestration preflight`、受控写入 `orchestration approval resolve`（只记录 decision，不执行原请求）
 - Stage 15.7/15.8/15.9 run controlled execution：`orchestration run --dry-run`（只读 plan preview + plan_hash）、受控写入 `orchestration run --commit`（A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events，不执行真实 adapter）
 - Stage 12 post-freeze recovery read model：`orchestration run inspect --aggregate-lineage` / `orchestration report generate --aggregate-lineage`（基于现有 lifecycle events 聚合 root/latest/leaves、attempt count 与 effective plan hash，只读、不扫描 drafts）
-- post-Stage 14 CLI automation：`orchestration contract inspect/check`、`orchestration profile list/inspect/check`、`orchestration workflow plan`（确定性发现、协商、命名化与未执行步骤投影）
+- post-Stage 14 CLI automation：`orchestration contract inspect/check`、`orchestration profile list/inspect/check`、`orchestration workflow plan/check`（确定性发现、协商、命名化、未执行步骤投影与 hash drift validation）
 
 ## 当前边界
 

@@ -54,7 +54,7 @@
 - `70-orchestration-run-retry-fallback-commit-design.md` — Retry/Fallback Commit 设计
 - `73-recovery-lineage-aggregation-read-model.md` — Recovery lineage 聚合只读模型（Stage 12 post-freeze）
 - `74-recovery-lineage-report-reuse.md` — Recovery lineage 在 report generate 的显式复用契约
-- 75-cli-automation-contract-discovery.md — CLI 自动化契约发现、Requirement Gate、source-backed Automation Profile 与 read-only Workflow Plan
+- `75-cli-automation-contract-discovery.md` — CLI 自动化 discovery、gate、profile、workflow plan 与 drift validation（已收口）
 
 ### 6. 想看里程碑与冻结记录
 
@@ -67,7 +67,7 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/release-notes/` | 各阶段 release notes（最新为 `77-release-notes-stage14-minimal-orchestration-loop.md`） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `78-release-notes-cli-automation-consumer.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 

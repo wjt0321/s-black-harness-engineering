@@ -361,4 +361,12 @@ Stage 12 完成后，本文曾作为 Stage 13 事实源。该阶段的 **Boundar
 - `plan_id` 使用 canonical projection 的 SHA-256 内容寻址；
 - 所有步骤固定为 `not_executed`，包括 controlled-write 候选，不写文件/ledger、不访问网络。
 
-详细设计见 `docs/75-cli-automation-contract-discovery.md`。
+第五拍新增 Workflow Plan re-check / drift validation：
+
+- `orchestration workflow check --profile-id ... --expected-plan-id ...` 重新投影当前 plan；
+- expected id 严格限制为 lowercase SHA-256 content id，非法格式在 source read 前拒绝；
+- match 返回 pass，hash mismatch 返回 blocked 与结构化 drift finding；
+- 不读取任意旧 plan 文件、不持久化 plan、不宣称 hash 能提供字段级差异；
+- manifest 自描述 plan/check 两个 preview/read-only capability，argparse 契约测试冻结 command 与关键 flag。
+
+CLI 自动化消费者五拍至此收口。详细设计见 `docs/75-cli-automation-contract-discovery.md`，验收事实见 `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`。

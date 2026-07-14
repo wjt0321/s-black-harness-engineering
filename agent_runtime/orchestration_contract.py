@@ -145,6 +145,14 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Reads the fixed project Automation Profile registry only.",
         ),
         _entry(
+            "automation_workflow_check",
+            "preview",
+            "read_only",
+            commands=(("orchestration", "workflow", "check"),),
+            key_flags=("--expected-plan-id", "--profile-id"),
+            boundary="Re-projects a profile and detects content-hash drift without execution.",
+        ),
+        _entry(
             "automation_workflow_plan",
             "preview",
             "read_only",

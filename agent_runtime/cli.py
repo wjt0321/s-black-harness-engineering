@@ -44,6 +44,7 @@ from .orchestration_profile import (
     list_automation_profiles,
 )
 from .orchestration_workflow import build_automation_workflow_plan
+from .orchestration_workflow_check import check_automation_workflow_plan
 from .orchestration_tasks import TaskDetailResult, TaskListResult, get_task, list_tasks
 from .orchestration_task_submit import submit_task, TaskSubmitResult
 from .orchestration_approval import ApprovalDetailResult, ApprovalListResult, get_approval, list_approvals
@@ -1496,6 +1497,20 @@ def _cmd_orchestration_profile_inspect(args: argparse.Namespace) -> int:
 def _cmd_orchestration_profile_check(args: argparse.Namespace) -> int:
     """Evaluate one project Automation Profile through the Requirement Gate."""
     result = check_automation_profile(_root_path(args), args.profile_id)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_workflow_check(args: argparse.Namespace) -> int:
+    """Re-check a reviewed Workflow Plan id against the current projection."""
+    result = check_automation_workflow_plan(
+        _root_path(args),
+        args.profile_id,
+        args.expected_plan_id,
+    )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
@@ -3176,6 +3191,22 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_workflow_subparsers = orchestration_workflow_parser.add_subparsers(
         dest="workflow_command", required=True
     )
+    orchestration_workflow_check_parser = orchestration_workflow_subparsers.add_parser(
+        "check", help="Compare a reviewed plan id with the current profile projection"
+    )
+    orchestration_workflow_check_parser.add_argument(
+        "--profile-id", required=True, help="Automation Profile id"
+    )
+    orchestration_workflow_check_parser.add_argument(
+        "--expected-plan-id",
+        required=True,
+        help="Reviewed workflow plan id using sha256:<64 lowercase hex>",
+    )
+    _add_global_args(orchestration_workflow_check_parser)
+    orchestration_workflow_check_parser.set_defaults(
+        func=_cmd_orchestration_workflow_check
+    )
+
     orchestration_workflow_plan_parser = orchestration_workflow_subparsers.add_parser(
         "plan", help="Build a deterministic read-only plan for one Automation Profile"
     )

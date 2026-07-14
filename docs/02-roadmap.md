@@ -354,6 +354,8 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 - 第二拍新增 `orchestration contract check` requirement gate：支持 requirement 去重排序、preview 显式 opt-in、access ceiling、结构化 next action 与退出码；继续保持纯只读。
 - 第三拍新增 `orchestration profile list/inspect/check`：source-backed 命名化 requirements，复用同一 gate，doctor 校验 schema/sample，仍不执行 workflow。
 - 第四拍新增 `orchestration workflow plan --profile-id ...`：gate 通过后按固定 phase 投影 manifest-backed command/flag 候选，生成内容寻址 `plan_id`；步骤全部为 `not_executed`，不写文件或 ledger。
+- 第五拍新增 `orchestration workflow check --expected-plan-id ...`：重投影并比较 content hash，match 为 pass，drift 为 blocked；不读取旧 plan 文件、不执行步骤。
+- CLI 自动化消费者已完成五拍收口；验收见 `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`，不自动启动新的产品阶段。
 
 候选闭环：
 

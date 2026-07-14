@@ -1714,6 +1714,21 @@ python -m agent_runtime.cli orchestration workflow plan \
 - `plan_id` 是规范化安全 projection 的 SHA-256 内容哈希；同一 source/profile 产生相同输出。
 - 即使 profile 允许 controlled-write，planner 也只展示带 `--commit` 等显式 flag 的候选，不执行命令、不写文件或 ledger。
 
+Workflow Plan re-check / drift validation：
+
+```bash
+python -m agent_runtime.cli orchestration workflow check \
+  --profile-id local-dry-run \
+  --expected-plan-id sha256:<64-lowercase-hex> \
+  --json
+```
+
+- expected id 来自之前 `workflow plan --json` 的 `plan_id`。
+- id 必须严格匹配 `sha256:[a-f0-9]{64}`；非法格式返回 `needs_input`，并且不会读取 profile registry。
+- 当前投影匹配时返回 `pass` / `matches_current=true`；不匹配时返回 `blocked` / `automation-workflow-plan-drift`。
+- hash mismatch 只能证明 canonical projection 已变化，不提供伪造的字段级原因；结果内嵌当前完整 plan 供重新审查。
+- 输出 schema 为 `control-plane/automation-workflow-check/v1`，仍然不执行 command、不写文件或 ledger。
+
 总览聚合：
 
 ```bash

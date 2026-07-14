@@ -2509,3 +2509,12 @@
 - 更新 stage digest 的确切收口提交，并明确当前无进行中的产品阶段。
 - 精简并重写 `tasks/handoff-2026-07-13.md`，保留下一轮恢复顺序、已交付能力、决策点、安全边界和验证入口。
 - Stage 16 仍为远期候选；未明确消费者、产品入口和授权范围前，不自动启动 UI/API/service/DB/真实 adapter execution。
+
+
+## 2026-07-14 — Post-Stage 14 CLI Automation Consumer 最终收口
+
+- 完成 contract discovery、Requirement Gate、source-backed Automation Profile、read-only Workflow Plan 与 Workflow Plan re-check/drift validation 五拍。
+- 新增 `orchestration workflow check --expected-plan-id`：严格校验 content id，match 返回 pass，hash drift 返回 blocked；不读取旧 plan 文件，不执行步骤。
+- 所有自动化 projection 保持 deterministic、no-write、no-network、no-command/adaptor execution；preview 与 controlled-write 边界继续显式。
+- 新增 `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`，更新 digest、roadmap、CLI usage、boundary、README、AGENTS 与 handoff。
+- CLI 自动化消费者阶段收口；当前无进行中的产品阶段，不自动启动 Stage 16、service、UI、DB 或真实 adapter execution。
