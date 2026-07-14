@@ -79,7 +79,7 @@
 
 ### 版本号说明
 
-当前仓库最新里程碑基线为 `v0.13.0-read-only-control-plane`（annotated tag，已 push），覆盖 Stage 13–16 的 backend boundary、replay、CLI automation 与静态只读 Control Panel。上一基线为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`）。
+当前仓库最新里程碑基线为 `v0.13.0-read-only-control-plane`（commit `f401b98`，annotated tag 已 push），覆盖 Stage 13–16 的 backend boundary、replay、CLI automation 与静态只读 Control Panel。上一基线为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`）。
 
 在 `v0.11.0-runtime-event-import` 之后，项目进入 orchestration 主线，实际改用“**阶段编号 + release notes 文档**”做阶段收口，例如 `55`、`57`、`59`、`61`、`65`、`67`、`72`。这代表：
 

@@ -36,7 +36,7 @@ python -m agent_runtime.cli doctor
 
 当前状态：**Stage 16 — Read-only Control Panel MVP 已收口**；Stage 13–16 已统一冻结为 `v0.13.0-read-only-control-plane`。本地静态控制面已复用现有 read models 落地，后续 live service、DB、auth、网络与 UI 写操作仍不自动启动。
 
-- 冻结基线：`v0.13.0-read-only-control-plane`；上一基线为 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
+- 冻结基线：`v0.13.0-read-only-control-plane` / `f401b98`；上一基线为 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation、CLI automation contract/profile/workflow，以及 `orchestration control-panel snapshot/render` 的确定性 snapshot 与自包含静态 HTML。
 - Stage 12 已完成：routing/read-loop snapshot 与 recovery lineage read model 已冻结并通过验收。
 - Stage 13 已完成：真实 CLI/read models 的 stable/preview/unavailable 边界已对账，并由契约测试冻结命令 surface 与关键 flag。

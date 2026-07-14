@@ -13,7 +13,7 @@
 
 ## 版本治理说明
 
-当前仓库最新里程碑基线为 `v0.13.0-read-only-control-plane`（annotated tag，已 push）。上一基线为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`）。
+当前仓库最新里程碑基线为 `v0.13.0-read-only-control-plane`（commit `f401b98`，annotated tag 已 push）。上一基线为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`）。
 
 从 orchestration 阶段开始，项目持续使用 `docs/55`、`docs/57`、`docs/59`、`docs/61`、`docs/65`、`docs/67`、`docs/72` 这类**阶段编号 + release notes**来完成阶段收口，而 semver/tag 改为只在里程碑节点冻结。
 

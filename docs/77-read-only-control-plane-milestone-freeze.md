@@ -116,3 +116,12 @@ Includes:
 ## 8. 后续策略
 
 `v0.13.0-read-only-control-plane` 冻结后，下一 tag 不按单个 Stage 自动增长。只有出现新的稳定能力包，例如 live service boundary、宿主集成或受控 UI operation，并完成独立设计 gate 与验收时，才考虑后续 semver milestone。
+
+
+## 9. 实际冻结结果
+
+- freeze commit：`f401b98`；
+- annotated tag：`v0.13.0-read-only-control-plane`；
+- tag 指向：`f401b9807eaa778de2cc0953f220ef27a06a5429`；
+- GitHub Actions run `29325425721`：Python 3.11 / 3.12 jobs 均通过；
+- tag 与 `main` 均已推送到 `origin`。

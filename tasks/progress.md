@@ -2540,3 +2540,6 @@
 - 冻结名：`v0.13.0-read-only-control-plane`；采用 annotated tag，不为单个 Stage 追补 tag。
 - 同步 version governance、digest、roadmap、README、AGENTS、index 与 handoff。
 - 真实 adapter execution、live service、auth、DB、实时刷新与 UI controlled write 继续延期。
+
+- 实际 freeze commit：`f401b98`；annotated tag `v0.13.0-read-only-control-plane` 已推送。
+- GitHub Actions CI run `29325425721` 的 Python 3.11 / 3.12 matrix 均通过。

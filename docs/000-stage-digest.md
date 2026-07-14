@@ -11,7 +11,8 @@
 
 ## 当前基线
 
-- 稳定基线：`v0.13.0-read-only-control-plane`
+- 稳定基线：`v0.13.0-read-only-control-plane` / `f401b98`（annotated tag 已 push）
+- 冻结 commit：`f401b98`
 - 上一冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`
 - Stage 13 最终收口提交：`9625ba2`
 - Stage 14 Evidence projection 提交：`4a64ace`

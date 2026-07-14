@@ -79,7 +79,7 @@ Current estimate:
 
 ### Versioning Note
 
-The latest milestone baseline is `v0.13.0-read-only-control-plane` (annotated tag, pushed), covering the Stage 13–16 backend boundary, replay, CLI automation, and static read-only Control Panel. The previous baseline is `v0.12.1-orchestration-read-loop-snapshot` (commit `0419a04`).
+The latest milestone baseline is `v0.13.0-read-only-control-plane` (commit `f401b98`, annotated tag pushed), covering the Stage 13–16 backend boundary, replay, CLI automation, and static read-only Control Panel. The previous baseline is `v0.12.1-orchestration-read-loop-snapshot` (commit `0419a04`).
 
 After `v0.11.0-runtime-event-import`, the project entered the orchestration line and effectively switched to **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, `65`, `67`, and `72`. That means:
 

@@ -61,3 +61,11 @@ bash .githooks/pre-commit
 ## 后续边界
 
 下一个 semver tag 继续以里程碑能力包为单位，不为单个文档、单个 preview 命令或单个 UI 增量自动创建 tag。
+
+
+## 实际冻结结果
+
+- freeze commit：`f401b98`；
+- annotated tag：`v0.13.0-read-only-control-plane`；
+- GitHub Actions CI run `29325425721` 的 Python 3.11 / 3.12 matrix 均通过；
+- tag 已推送到 `origin`。

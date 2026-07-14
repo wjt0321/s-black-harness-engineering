@@ -251,3 +251,11 @@ v0.13.0-read-only-control-plane
 ```
 
 冻结事实源为 `docs/77-read-only-control-plane-milestone-freeze.md` 与 `docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`。该 tag 不改变项目边界：真实 adapter execution、live service、auth、DB、实时订阅和 UI controlled write 继续 unavailable。
+
+
+实际冻结结果：
+
+- freeze commit：`f401b98`；
+- annotated tag：`v0.13.0-read-only-control-plane`；
+- GitHub Actions CI：Python 3.11 / 3.12 matrix 均通过；
+- `main` 与 tag 均已推送到 `origin`。
