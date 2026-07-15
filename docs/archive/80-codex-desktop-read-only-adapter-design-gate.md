@@ -249,4 +249,4 @@ Stage 19 设计 gate 通过的依据：
 
 本设计 gate 不创建 tag、不 push、不启动外部服务、不访问网络，也不修改生产代码。
 
-Stage 20 实现与验收见 `docs/81-codex-desktop-read-only-adapter-implementation.md`。
+Stage 20 实现与验收见 `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`。

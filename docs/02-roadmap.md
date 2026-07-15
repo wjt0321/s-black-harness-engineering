@@ -792,7 +792,7 @@ codex-desktop-read-only-adapter/v1
 
 设计与验收事实源：
 
-- `docs/81-codex-desktop-read-only-adapter-implementation.md`
+- `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`
 - `docs/archive/release-notes/83-release-notes-stage20-codex-desktop-read-only-adapter.md`
 
 继续延期：representation 自动读取、live refresh/server、文件输入/export、UI 写操作与真实 adapter execution。
@@ -899,9 +899,27 @@ Stage 22 收口时继续延期 envelope 参数；该项已在 Stage 23/24 通过
 
 ---
 
-## Stage 27 — Filtered Envelope Snapshot JSON Reader Implementation（条件启动）
+## Stage 27 — Filtered Envelope Snapshot JSON Reader Implementation（已完成）
 
-按 Stage 26 的 v3 contract、request→task 关系闭包、filter/view identity 和 TDD 矩阵实现。无 filter 必须保持 Stage 24 v2，未提供 envelope 必须保持 Stage 22 v1。
+已按 Stage 26 contract 在既有 reader 上实现：
+
+- `--task-id` / `--request-id` canonical exact filter，双参数使用 AND；
+- task filter 使用 request→task 关系闭包，合法无匹配返回 ready 空视图；
+- v3 独立 filtered payload、filter id 与 view id，并在输出前重算验证；
+- filter 只作用于完整验证后的安全 summaries，不进入 fixed child argv；
+- 无 filter 保持 Stage 24 v2，未提供 envelope 保持 Stage 22 v1；
+- no query/persistence/export/HTML/browser/network/write/execute 边界保持不变。
+
+事实源：
+
+- `docs/87-filtered-envelope-snapshot-json-reader-implementation.md`
+- `docs/archive/release-notes/89-release-notes-stage27-filtered-envelope-snapshot-json-reader.md`
+
+---
+
+## Stage 28 — Filtered Snapshot Host Consumer Validation Gate（条件启动）
+
+只有具体宿主需要独立消费 filtered v3 时启动。目标是冻结并验证 bounded stdout JSON、v3 schema、canonical filter、base snapshot/filter/view identity 与只读展示边界；不扩展为 live service、缓存/export、HTML/browser 或真实 adapter execution。
 
 ---
 

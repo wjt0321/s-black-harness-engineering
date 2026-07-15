@@ -252,7 +252,12 @@ Stage 27 开始前必须按 TDD 覆盖：
 - fixed child argv 与 post-validation in-memory filtering；
 - no query、no lineage expansion、no persistence/export、no HTML/browser/network/write/execute。
 
-下一阶段为 **Stage 27 — Filtered Envelope Snapshot JSON Reader Implementation（条件启动）**。
+Stage 27 已按本设计门实现并收口，事实源为：
+
+- `docs/87-filtered-envelope-snapshot-json-reader-implementation.md`
+- `docs/archive/release-notes/89-release-notes-stage27-filtered-envelope-snapshot-json-reader.md`
+
+下一阶段为 **Stage 28 — Filtered Snapshot Host Consumer Validation Gate（条件启动）**。
 
 <!-- gate-status: passed -->
-<!-- implementation-status: stage27-not-started -->
+<!-- implementation-status: stage27-complete -->

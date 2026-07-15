@@ -3,7 +3,7 @@
 > 日期：2026-07-15
 > 状态：验收完成
 > 设计前置：`docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`
-> 实现事实源：`docs/81-codex-desktop-read-only-adapter-implementation.md`
+> 实现事实源：`docs/archive/81-codex-desktop-read-only-adapter-implementation.md`
 
 ## 1. 交付内容
 

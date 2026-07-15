@@ -1,4 +1,4 @@
-"""Stage 22/24 one-shot Codex Desktop snapshot JSON representation reader."""
+"""Stage 22/24/27 one-shot Codex Desktop snapshot JSON representation reader."""
 
 from __future__ import annotations
 
@@ -23,12 +23,19 @@ READER_SCHEMA_VERSION = "control-plane/codex-desktop-snapshot-read/v1"
 READER_ID = "codex-desktop-snapshot-json-reader/v1"
 SCOPED_READER_SCHEMA_VERSION = "control-plane/codex-desktop-snapshot-read/v2"
 SCOPED_READER_ID = "codex-desktop-envelope-snapshot-json-reader/v2"
+FILTERED_READER_SCHEMA_VERSION = "control-plane/codex-desktop-snapshot-read/v3"
+FILTERED_READER_ID = "codex-desktop-filtered-envelope-snapshot-json-reader/v3"
+FILTERED_PAYLOAD_SCHEMA_VERSION = "control-plane/filtered-envelope-snapshot/v1"
+FILTER_SCHEMA_VERSION = "control-plane/envelope-snapshot-filter/v1"
 REPRESENTATION = "snapshot-json"
 SNAPSHOT_SCHEMA_VERSION = "control-plane/control-panel-snapshot/v1"
 DEFAULT_TIMEOUT_SECONDS = base_adapter.DEFAULT_TIMEOUT_SECONDS
 MAX_TIMEOUT_SECONDS = base_adapter.MAX_TIMEOUT_SECONDS
 MAX_OUTPUT_BYTES = base_adapter.MAX_OUTPUT_BYTES
 SAFE_CONTENT_ID = re.compile(r"sha256:[0-9a-f]{64}\Z")
+TASK_FILTER_PATTERN = re.compile(r"task-[0-9]{8}-[0-9]{3,}\Z")
+REQUEST_FILTER_PATTERN = re.compile(r"req-[0-9]{8}-[0-9]{3,}\Z")
+MAX_FILTER_BYTES = 128
 SECRET_SCAN_RULE_IDS = {
     "github-token",
     "openai-style-key",
@@ -107,7 +114,7 @@ class ReaderResult:
     next_action: dict[str, str] | None = None
     schema_version: str = READER_SCHEMA_VERSION
     reader_id: str = READER_ID
-    source: dict[str, str] = field(
+    source: dict[str, Any] = field(
         default_factory=lambda: {"project_root": "project_root"}
     )
 
@@ -138,6 +145,14 @@ class ReaderResult:
                     "writes_ledgers": False,
                     "allows_arbitrary_paths": False,
                     "scans_envelope_secrets": True,
+                }
+            )
+        if "filter_id" in self.source:
+            guarantees.update(
+                {
+                    "filters_safe_summaries": True,
+                    "allows_arbitrary_queries": False,
+                    "persists_filtered_views": False,
                 }
             )
         return {
@@ -191,8 +206,13 @@ def _finding(
     )
 
 
-def _next_action(status: str) -> dict[str, str]:
+def _next_action(status: str, *, filtered: bool = False) -> dict[str, str]:
     if status == "ready":
+        if filtered:
+            return {
+                "code": "filtered_snapshot_loaded",
+                "message": "Review the validated filtered snapshot; no operation was executed.",
+            }
         return {
             "code": "snapshot_loaded",
             "message": "Review the validated local snapshot; no operation was executed.",
@@ -221,7 +241,39 @@ def _result(
     representation: dict[str, Any] | None = None,
     findings: Sequence[ReaderFinding] = (),
     scope: dict[str, str] | None = None,
+    filtered: bool = False,
 ) -> ReaderResult:
+    if filtered:
+        schema_version = FILTERED_READER_SCHEMA_VERSION
+        reader_id = FILTERED_READER_ID
+        default_representation = {
+            "status": "not_run",
+            "type": REPRESENTATION,
+            "exit_code": None,
+            "base_snapshot_id": None,
+            "view_id": None,
+            "payload": None,
+        }
+    elif scope:
+        schema_version = SCOPED_READER_SCHEMA_VERSION
+        reader_id = SCOPED_READER_ID
+        default_representation = {
+            "status": "not_run",
+            "type": REPRESENTATION,
+            "exit_code": None,
+            "snapshot_id": None,
+            "payload": None,
+        }
+    else:
+        schema_version = READER_SCHEMA_VERSION
+        reader_id = READER_ID
+        default_representation = {
+            "status": "not_run",
+            "type": REPRESENTATION,
+            "exit_code": None,
+            "snapshot_id": None,
+            "payload": None,
+        }
     return ReaderResult(
         status=status,
         lifecycle_phases=tuple(phases) + ("closed",),
@@ -231,18 +283,11 @@ def _result(
             "exit_code": None,
             "source_handoff_id": None,
         },
-        representation=representation
-        or {
-            "status": "not_run",
-            "type": REPRESENTATION,
-            "exit_code": None,
-            "snapshot_id": None,
-            "payload": None,
-        },
+        representation=representation or default_representation,
         findings=tuple(findings),
-        next_action=_next_action(status),
-        schema_version=(SCOPED_READER_SCHEMA_VERSION if scope else READER_SCHEMA_VERSION),
-        reader_id=(SCOPED_READER_ID if scope else READER_ID),
+        next_action=_next_action(status, filtered=filtered),
+        schema_version=schema_version,
+        reader_id=reader_id,
         source={"project_root": "project_root", **(scope or {})},
     )
 
@@ -256,6 +301,7 @@ def _failure(
     handoff: dict[str, Any] | None = None,
     representation: dict[str, Any] | None = None,
     scope: dict[str, str] | None = None,
+    filtered: bool = False,
 ) -> ReaderResult:
     severity = "block" if status == "blocked" else "error"
     action = "block" if status == "blocked" else "error"
@@ -265,6 +311,7 @@ def _failure(
         handoff=handoff,
         representation=representation,
         scope=scope,
+        filtered=filtered,
         findings=(
             _finding(
                 rule_id,
@@ -336,6 +383,286 @@ def _canonical_id(payload: dict[str, Any]) -> str:
         sort_keys=True,
     ).encode("utf-8")
     return f"sha256:{hashlib.sha256(canonical).hexdigest()}"
+
+
+def _validate_filter_inputs(
+    *,
+    envelope_file: str | None,
+    task_id_filter: str | None,
+    request_id_filter: str | None,
+) -> dict[str, Any] | None:
+    if task_id_filter is None and request_id_filter is None:
+        return None
+    if envelope_file is None:
+        raise ReaderProtocolError(
+            "filter-envelope-required",
+            "Structured snapshot filters require an explicit envelope scope.",
+        )
+
+    values = (
+        ("task", task_id_filter, TASK_FILTER_PATTERN),
+        ("request", request_id_filter, REQUEST_FILTER_PATTERN),
+    )
+    for name, value, pattern in values:
+        if value is None:
+            continue
+        try:
+            encoded = value.encode("ascii")
+        except (AttributeError, UnicodeEncodeError) as exc:
+            raise ReaderProtocolError(
+                f"filter-{name}-id-invalid",
+                f"The {name} filter must use its canonical ASCII id shape.",
+            ) from exc
+        if len(encoded) > MAX_FILTER_BYTES or pattern.fullmatch(value) is None:
+            raise ReaderProtocolError(
+                f"filter-{name}-id-invalid",
+                f"The {name} filter must use its canonical ASCII id shape.",
+            )
+
+    return {
+        "schema_version": FILTER_SCHEMA_VERSION,
+        "task_id": task_id_filter,
+        "request_id": request_id_filter,
+    }
+
+
+def _snapshot_rows(
+    snapshot: dict[str, Any],
+    *,
+    section_name: str,
+    collection_name: str,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    sections = snapshot.get("sections")
+    if not isinstance(sections, dict):
+        raise ReaderProtocolError(
+            "snapshot-filter-source-invalid",
+            "The validated snapshot does not expose filterable safe summaries.",
+        )
+    section = sections.get(section_name)
+    if not isinstance(section, dict):
+        raise ReaderProtocolError(
+            "snapshot-filter-source-invalid",
+            "The validated snapshot does not expose filterable safe summaries.",
+        )
+    rows = section.get(collection_name)
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        raise ReaderProtocolError(
+            "snapshot-filter-source-invalid",
+            "The validated snapshot does not expose filterable safe summaries.",
+        )
+    return section, rows
+
+
+def _filtered_section(
+    section: dict[str, Any],
+    collection_name: str,
+    rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {**section, collection_name: rows}
+
+
+def _build_filtered_payload(
+    snapshot: dict[str, Any],
+    *,
+    scope: dict[str, str],
+    filter_spec: dict[str, Any],
+) -> dict[str, Any]:
+    runs_section, runs = _snapshot_rows(
+        snapshot,
+        section_name="runs",
+        collection_name="runs",
+    )
+    approvals_section, approvals = _snapshot_rows(
+        snapshot,
+        section_name="approvals",
+        collection_name="approvals",
+    )
+    artifacts_section, artifacts = _snapshot_rows(
+        snapshot,
+        section_name="artifacts",
+        collection_name="artifacts",
+    )
+    reports = snapshot.get("sections", {}).get("reports")
+    if not isinstance(reports, dict):
+        raise ReaderProtocolError(
+            "snapshot-filter-source-invalid",
+            "The validated snapshot does not expose the report availability boundary.",
+        )
+
+    task_id = filter_spec["task_id"]
+    request_id = filter_spec["request_id"]
+    selected_runs = [
+        row
+        for row in runs
+        if (task_id is None or row.get("task_id") == task_id)
+        and (request_id is None or row.get("request_id") == request_id)
+    ]
+
+    if task_id is not None and request_id is None:
+        selected_request_ids = {
+            str(row.get("request_id"))
+            for row in selected_runs
+            if isinstance(row.get("request_id"), str) and row.get("request_id")
+        }
+        selected_approvals = [
+            row
+            for row in approvals
+            if row.get("task_id") == task_id
+            or row.get("request_id") in selected_request_ids
+        ]
+        selected_artifacts = [
+            row
+            for row in artifacts
+            if row.get("task_id") == task_id
+            or row.get("request_id") in selected_request_ids
+        ]
+    elif task_id is None and request_id is not None:
+        selected_approvals = [
+            row for row in approvals if row.get("request_id") == request_id
+        ]
+        selected_artifacts = [
+            row for row in artifacts if row.get("request_id") == request_id
+        ]
+    else:
+        selected_request_ids = {
+            str(row.get("request_id"))
+            for row in selected_runs
+            if isinstance(row.get("request_id"), str) and row.get("request_id")
+        }
+        selected_approvals = [
+            row for row in approvals if row.get("request_id") in selected_request_ids
+        ]
+        selected_artifacts = [
+            row for row in artifacts if row.get("request_id") in selected_request_ids
+        ]
+
+    filter_id = _canonical_id(filter_spec)
+    payload: dict[str, Any] = {
+        "status": "pass",
+        "schema_version": FILTERED_PAYLOAD_SCHEMA_VERSION,
+        "source": {
+            "base_snapshot_id": snapshot["snapshot_id"],
+            "scope_id": scope["scope_id"],
+            "filter_id": filter_id,
+        },
+        "filter": filter_spec,
+        "summary": {
+            "matched": bool(selected_runs or selected_approvals or selected_artifacts),
+            "run_count": len(selected_runs),
+            "approval_count": len(selected_approvals),
+            "artifact_count": len(selected_artifacts),
+            "section_statuses": {
+                "runs": str(runs_section.get("status")),
+                "approvals": str(approvals_section.get("status")),
+                "artifacts": str(artifacts_section.get("status")),
+                "reports": str(reports.get("status")),
+            },
+        },
+        "sections": {
+            "runs": _filtered_section(runs_section, "runs", selected_runs),
+            "approvals": _filtered_section(
+                approvals_section,
+                "approvals",
+                selected_approvals,
+            ),
+            "artifacts": _filtered_section(
+                artifacts_section,
+                "artifacts",
+                selected_artifacts,
+            ),
+            "reports": reports,
+        },
+    }
+    payload["view_id"] = _canonical_id(payload)
+    _validate_filtered_payload(payload)
+    return payload
+
+
+def _validate_filtered_payload(payload: dict[str, Any]) -> None:
+    if set(payload) != {
+        "status",
+        "schema_version",
+        "source",
+        "filter",
+        "summary",
+        "sections",
+        "view_id",
+    }:
+        raise ReaderProtocolError(
+            "filtered-view-shape-invalid",
+            "The filtered snapshot view does not match its strict shape.",
+        )
+    if payload.get("status") != "pass" or payload.get("schema_version") != FILTERED_PAYLOAD_SCHEMA_VERSION:
+        raise ReaderProtocolError(
+            "filtered-view-shape-invalid",
+            "The filtered snapshot view does not match its strict shape.",
+        )
+    filter_spec = payload.get("filter")
+    source = payload.get("source")
+    if not isinstance(filter_spec, dict) or not isinstance(source, dict):
+        raise ReaderProtocolError(
+            "filtered-view-shape-invalid",
+            "The filtered snapshot view does not match its strict shape.",
+        )
+    if (
+        set(filter_spec) != {"schema_version", "task_id", "request_id"}
+        or filter_spec.get("schema_version") != FILTER_SCHEMA_VERSION
+    ):
+        raise ReaderProtocolError(
+            "filtered-view-filter-invalid",
+            "The filtered snapshot view does not contain a canonical filter.",
+        )
+    task_id = filter_spec.get("task_id")
+    request_id = filter_spec.get("request_id")
+    if task_id is None and request_id is None:
+        raise ReaderProtocolError(
+            "filtered-view-filter-invalid",
+            "The filtered snapshot view does not contain a canonical filter.",
+        )
+    filter_values = (
+        (task_id, TASK_FILTER_PATTERN),
+        (request_id, REQUEST_FILTER_PATTERN),
+    )
+    for value, pattern in filter_values:
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            raise ReaderProtocolError(
+                "filtered-view-filter-invalid",
+                "The filtered snapshot view does not contain a canonical filter.",
+            )
+        try:
+            encoded = value.encode("ascii")
+        except UnicodeEncodeError as exc:
+            raise ReaderProtocolError(
+                "filtered-view-filter-invalid",
+                "The filtered snapshot view does not contain a canonical filter.",
+            ) from exc
+        if len(encoded) > MAX_FILTER_BYTES or pattern.fullmatch(value) is None:
+            raise ReaderProtocolError(
+                "filtered-view-filter-invalid",
+                "The filtered snapshot view does not contain a canonical filter.",
+            )
+    if source.get("filter_id") != _canonical_id(filter_spec):
+        raise ReaderProtocolError(
+            "filtered-view-filter-identity-mismatch",
+            "The filtered snapshot filter does not match its content identity.",
+        )
+    if (
+        _safe_content_id(source.get("base_snapshot_id")) is None
+        or _safe_content_id(source.get("scope_id")) is None
+    ):
+        raise ReaderProtocolError(
+            "filtered-view-source-invalid",
+            "The filtered snapshot source identity is invalid.",
+        )
+    view_id = _safe_content_id(payload.get("view_id"))
+    without_view_id = {key: value for key, value in payload.items() if key != "view_id"}
+    if view_id is None or view_id != _canonical_id(without_view_id):
+        raise ReaderProtocolError(
+            "filtered-view-identity-mismatch",
+            "The filtered snapshot view does not match its content identity.",
+        )
 
 
 def _validate_envelope_scope(root: Path, envelope_file: str) -> dict[str, str]:
@@ -586,6 +913,7 @@ def _run_error(
     handoff: dict[str, Any] | None = None,
     representation: dict[str, Any] | None = None,
     scope: dict[str, str] | None = None,
+    filtered: bool = False,
 ) -> ReaderResult:
     if isinstance(exc, TimeoutError):
         rule_id = "reader-process-timeout"
@@ -604,6 +932,7 @@ def _run_error(
         handoff=handoff,
         representation=representation,
         scope=scope,
+        filtered=filtered,
     )
 
 
@@ -612,6 +941,8 @@ def run_snapshot_json_reader(
     *,
     representation: str | None,
     envelope_file: str | None = None,
+    task_id_filter: str | None = None,
+    request_id_filter: str | None = None,
     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
     runner: Runner | None = None,
 ) -> ReaderResult:
@@ -640,6 +971,23 @@ def run_snapshot_json_reader(
             phases=("created",),
         )
 
+    filtered_requested = task_id_filter is not None or request_id_filter is not None
+    try:
+        filter_spec = _validate_filter_inputs(
+            envelope_file=envelope_file,
+            task_id_filter=task_id_filter,
+            request_id_filter=request_id_filter,
+        )
+    except ReaderProtocolError as exc:
+        return _failure(
+            status=exc.status,
+            rule_id=exc.rule_id,
+            message=exc.message,
+            phases=("created", "scoping"),
+            filtered=filtered_requested,
+        )
+    filtered_mode = filter_spec is not None
+
     scope: dict[str, str] | None = None
     if envelope_file is not None:
         try:
@@ -650,12 +998,18 @@ def run_snapshot_json_reader(
                 rule_id=exc.rule_id,
                 message=exc.message,
                 phases=("created", "scoping"),
+                filtered=filtered_mode,
             )
+
+    output_scope = scope
+    if scope is not None and filter_spec is not None:
+        output_scope = {**scope, "filter_id": _canonical_id(filter_spec)}
 
     created_phases = ("created", "scoping") if scope is not None else ("created",)
     producing_phases = (*created_phases, "producing")
     validating_phases = (*producing_phases, "validating")
     reading_phases = (*validating_phases, "reading")
+    filtering_phases = (*reading_phases, "filtering")
 
     handoff_argv = list(HANDOFF_ARGV)
     snapshot_argv = list(SNAPSHOT_ARGV)
@@ -670,13 +1024,23 @@ def run_snapshot_json_reader(
         "exit_code": None,
         "source_handoff_id": None,
     }
-    representation_summary: dict[str, Any] = {
-        "status": "not_run",
-        "type": REPRESENTATION,
-        "exit_code": None,
-        "snapshot_id": None,
-        "payload": None,
-    }
+    if filtered_mode:
+        representation_summary: dict[str, Any] = {
+            "status": "not_run",
+            "type": REPRESENTATION,
+            "exit_code": None,
+            "base_snapshot_id": None,
+            "view_id": None,
+            "payload": None,
+        }
+    else:
+        representation_summary = {
+            "status": "not_run",
+            "type": REPRESENTATION,
+            "exit_code": None,
+            "snapshot_id": None,
+            "payload": None,
+        }
 
     try:
         producer_process = process_runner(
@@ -686,7 +1050,12 @@ def run_snapshot_json_reader(
             timeout_seconds=timeout_seconds,
         )
     except Exception as exc:
-        return _run_error(exc, phases=producing_phases, scope=scope)
+        return _run_error(
+            exc,
+            phases=producing_phases,
+            scope=output_scope,
+            filtered=filtered_mode,
+        )
 
     if not producer_process.stdout:
         return _failure(
@@ -694,7 +1063,8 @@ def run_snapshot_json_reader(
             rule_id="reader-handoff-no-output",
             message="The fixed handoff producer returned no descriptor.",
             phases=producing_phases,
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
         )
     if len(producer_process.stdout) > MAX_OUTPUT_BYTES:
         return _failure(
@@ -702,7 +1072,8 @@ def run_snapshot_json_reader(
             rule_id="reader-handoff-output-too-large",
             message="The fixed handoff producer exceeded the output limit.",
             phases=producing_phases,
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
         )
 
     try:
@@ -715,9 +1086,10 @@ def run_snapshot_json_reader(
     except Exception as exc:
         return _run_error(
             exc,
-            scope=scope,
+            scope=output_scope,
             phases=validating_phases,
             handoff=handoff_summary,
+            filtered=filtered_mode,
         )
 
     try:
@@ -731,7 +1103,8 @@ def run_snapshot_json_reader(
             rule_id=exc.rule_id,
             message="The reference consumer returned an invalid safe result.",
             phases=validating_phases,
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
             handoff={
                 "status": "error",
                 "exit_code": consumer_process.returncode,
@@ -758,7 +1131,8 @@ def run_snapshot_json_reader(
             handoff=handoff_summary,
             representation=representation_summary,
             findings=_safe_consumer_findings(consumer_payload),
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
         )
     if producer_process.returncode != 0:
         return _failure(
@@ -767,7 +1141,8 @@ def run_snapshot_json_reader(
             message="The handoff producer did not exit successfully.",
             phases=validating_phases,
             handoff=handoff_summary,
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
         )
 
     try:
@@ -783,7 +1158,8 @@ def run_snapshot_json_reader(
             message=exc.message,
             phases=validating_phases,
             handoff=handoff_summary,
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
         )
 
     if handoff_summary["source_handoff_id"] != handoff_payload.get("handoff_id"):
@@ -793,7 +1169,8 @@ def run_snapshot_json_reader(
             message="The handoff identity does not match the consumer result.",
             phases=validating_phases,
             handoff=handoff_summary,
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
         )
 
     if scope is not None and handoff_payload.get("source") != {
@@ -805,7 +1182,8 @@ def run_snapshot_json_reader(
             message="The handoff envelope scope does not match the explicit reader scope.",
             phases=validating_phases,
             handoff=handoff_summary,
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
         )
 
     try:
@@ -818,19 +1196,30 @@ def run_snapshot_json_reader(
     except Exception as exc:
         return _run_error(
             exc,
-            scope=scope,
+            scope=output_scope,
             phases=reading_phases,
             handoff=handoff_summary,
             representation=representation_summary,
+            filtered=filtered_mode,
         )
 
-    representation_summary = {
-        "status": "pass" if snapshot_process.returncode == 0 else "error",
-        "type": REPRESENTATION,
-        "exit_code": snapshot_process.returncode,
-        "snapshot_id": None,
-        "payload": None,
-    }
+    if filtered_mode:
+        representation_summary = {
+            "status": "pass" if snapshot_process.returncode == 0 else "error",
+            "type": REPRESENTATION,
+            "exit_code": snapshot_process.returncode,
+            "base_snapshot_id": None,
+            "view_id": None,
+            "payload": None,
+        }
+    else:
+        representation_summary = {
+            "status": "pass" if snapshot_process.returncode == 0 else "error",
+            "type": REPRESENTATION,
+            "exit_code": snapshot_process.returncode,
+            "snapshot_id": None,
+            "payload": None,
+        }
     try:
         snapshot_payload = _parse_json_object(
             snapshot_process.stdout,
@@ -849,7 +1238,8 @@ def run_snapshot_json_reader(
             phases=reading_phases,
             handoff=handoff_summary,
             representation=representation_summary,
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
         )
 
     if snapshot_process.returncode != 0:
@@ -860,24 +1250,67 @@ def run_snapshot_json_reader(
             phases=reading_phases,
             handoff=handoff_summary,
             representation=representation_summary,
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
         )
 
-    representation_summary = {
-        "status": "pass",
-        "type": REPRESENTATION,
-        "media_type": "application/json; charset=utf-8",
-        "encoding": "utf-8",
-        "exit_code": snapshot_process.returncode,
-        "snapshot_id": snapshot_payload["snapshot_id"],
-        "payload": snapshot_payload,
-    }
+    if filtered_mode:
+        assert scope is not None
+        assert filter_spec is not None
+        try:
+            filtered_payload = _build_filtered_payload(
+                snapshot_payload,
+                scope=scope,
+                filter_spec=filter_spec,
+            )
+        except ReaderProtocolError as exc:
+            return _failure(
+                status=exc.status,
+                rule_id=exc.rule_id,
+                message=exc.message,
+                phases=filtering_phases,
+                handoff=handoff_summary,
+                representation={
+                    "status": "error",
+                    "type": REPRESENTATION,
+                    "exit_code": snapshot_process.returncode,
+                    "base_snapshot_id": snapshot_payload["snapshot_id"],
+                    "view_id": None,
+                    "payload": None,
+                },
+                scope=output_scope,
+                filtered=True,
+            )
+        representation_summary = {
+            "status": "pass",
+            "type": REPRESENTATION,
+            "media_type": "application/json; charset=utf-8",
+            "encoding": "utf-8",
+            "exit_code": snapshot_process.returncode,
+            "base_snapshot_id": snapshot_payload["snapshot_id"],
+            "view_id": filtered_payload["view_id"],
+            "payload": filtered_payload,
+        }
+        ready_phases = (*filtering_phases, "ready")
+    else:
+        representation_summary = {
+            "status": "pass",
+            "type": REPRESENTATION,
+            "media_type": "application/json; charset=utf-8",
+            "encoding": "utf-8",
+            "exit_code": snapshot_process.returncode,
+            "snapshot_id": snapshot_payload["snapshot_id"],
+            "payload": snapshot_payload,
+        }
+        ready_phases = (*reading_phases, "ready")
+
     ready = _result(
         status="ready",
-        phases=(*reading_phases, "ready"),
+        phases=ready_phases,
         handoff=handoff_summary,
         representation=representation_summary,
-        scope=scope,
+        scope=output_scope,
+        filtered=filtered_mode,
     )
     serialized = json.dumps(
         ready.to_dict(),
@@ -890,16 +1323,18 @@ def run_snapshot_json_reader(
             status="error",
             rule_id="reader-output-too-large",
             message="The validated reader result exceeded the output limit.",
-            phases=reading_phases,
+            phases=filtering_phases if filtered_mode else reading_phases,
             handoff=handoff_summary,
-            scope=scope,
+            scope=output_scope,
+            filtered=filtered_mode,
         )
     return ready
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Read one validated local Control Panel snapshot JSON representation."
+        description="Read one validated local Control Panel snapshot JSON representation.",
+        allow_abbrev=False,
     )
     parser.add_argument(
         "--project-root",
@@ -921,6 +1356,16 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--task-id",
+        default=None,
+        help="Exact canonical task id filter; requires --envelope.",
+    )
+    parser.add_argument(
+        "--request-id",
+        default=None,
+        help="Exact canonical request id filter; requires --envelope.",
+    )
+    parser.add_argument(
         "--timeout-seconds",
         type=float,
         default=DEFAULT_TIMEOUT_SECONDS,
@@ -934,18 +1379,39 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _has_duplicate_option(argv: Sequence[str], option: str) -> bool:
+    count = sum(item == option or item.startswith(f"{option}=") for item in argv)
+    return count > 1
+
+
 def main(
     argv: Sequence[str] | None = None,
     *,
     stdout: TextIO | None = None,
 ) -> int:
-    args = _parser().parse_args(argv)
-    result = run_snapshot_json_reader(
-        args.project_root or Path.cwd(),
-        representation=args.representation,
-        envelope_file=args.envelope,
-        timeout_seconds=args.timeout_seconds,
-    )
+    raw_argv = list(argv) if argv is not None else list(sys.argv[1:])
+    duplicate_filter = _has_duplicate_option(
+        raw_argv,
+        "--task-id",
+    ) or _has_duplicate_option(raw_argv, "--request-id")
+    args = _parser().parse_args(raw_argv)
+    if duplicate_filter:
+        result = _failure(
+            status="validation_failed",
+            rule_id="filter-argument-duplicate",
+            message="Each structured snapshot filter may be provided at most once.",
+            phases=("created", "scoping"),
+            filtered=True,
+        )
+    else:
+        result = run_snapshot_json_reader(
+            args.project_root or Path.cwd(),
+            representation=args.representation,
+            envelope_file=args.envelope,
+            task_id_filter=args.task_id,
+            request_id_filter=args.request_id,
+            timeout_seconds=args.timeout_seconds,
+        )
     output = stdout if stdout is not None else sys.stdout
     json.dump(result.to_dict(), output, ensure_ascii=False, indent=2)
     output.write("\n")

@@ -2570,7 +2570,7 @@
 - 固定 producer/consumer argv、project-root cwd、最小环境白名单、默认 30 秒/最大 60 秒超时、1 MiB stdout 上限和 no-retry。
 - 输出 `control-plane/codex-desktop-read-only-adapter/v1`，确定性映射 `ready` / `blocked` / `validation_failed` / `error` 与退出码 `0` / `2` / `5` / `1`。
 - 新增 `tests/test_codex_desktop_read_only_adapter.py`，覆盖 fixed argv、descriptor argv sentinel、determinism、脱敏、错误映射、timeout、project-root gate 与真实 stdio smoke。
-- 新增 `docs/81-codex-desktop-read-only-adapter-implementation.md` 与归档 release notes 83，Stage 20 收口。
+- 新增当时位于活跃区、现已归档至 `docs/archive/81-codex-desktop-read-only-adapter-implementation.md` 的 Stage 20 实现事实源，并新增 release notes 83，Stage 20 收口。
 - 下一步为 Stage 21 representation read design gate；不自动读取 representation、不执行 descriptor argv。
 
 
@@ -2643,3 +2643,15 @@
 - 新增 prerequisite contract test；本阶段不修改生产 reader，现有 v1/v2 保持不变。
 - 新增 release notes 88；将已被 Stage 22 及后续事实源取代的 Stage 21 设计门完整归档至 `docs/archive/82-read-only-representation-read-design-gate.md`，活跃文档保持 50 个。
 - 下一阶段为 Stage 27 Filtered Envelope Snapshot JSON Reader Implementation（条件启动）。
+
+## 2026-07-15 — Stage 27 Filtered Envelope Snapshot JSON Reader 收口
+
+- 用户要求推进到本阶段冻结结束、更新文档并推送；Stage 27 按 Stage 26 contract 直接实现并收口。
+- 先新增 filtered v3 失败测试并确认 7 个预期失败，再在既有 `tools/codex_desktop_snapshot_json_reader.py` 上完成最小实现，没有创建平行 reader。
+- CLI 新增 `--task-id` / `--request-id` canonical exact filter；filter 必须绑定显式 envelope，同一 flag 重复时结构化失败且不启动 child。
+- 支持 task-only、request-only、task+request AND 与合法空视图；task view 使用 request→task 关系闭包包含缺少直接 task_id 的 response artifact。
+- 新增 v3 result、filtered payload、filter schema、canonical `filter_id` 与 `view_id`；输出前独立重算并拒绝 tamper mismatch。
+- filter 只作用于 Stage 24 完整验证后的安全 summaries，不传给 handoff/consumer/snapshot argv；无 filter v2 与无 envelope v1 保持兼容。
+- 新增 `docs/87-filtered-envelope-snapshot-json-reader-implementation.md` 与 release notes 89；同步 digest/index/roadmap/README/AGENTS/CLI usage/Stage 26 gate/handoff。
+- 将已被 Stage 22–27 事实源取代的 Stage 20 实现文档完整归档至 `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`；活跃文档保持 50 个。
+- 下一阶段为 Stage 28 Filtered Snapshot Host Consumer Validation Gate（条件启动）；query、lineage expansion、persistence/export、HTML/browser、service/network/write 与真实 adapter execution 继续延期。

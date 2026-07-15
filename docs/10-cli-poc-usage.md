@@ -1823,20 +1823,34 @@ scoped mode 规则：
 - 输出 `relative_envelope`、`envelope_content_id`、`scope_id`，不输出 absolute root、raw envelope、`input`、payload refs 或 raw refs；
 - snapshot 返回后再次校验 envelope content id，拒绝 one-shot 生命周期内的内容漂移。
 
-Stage 25 已冻结 consumer/filter 边界：
+Stage 27 filtered v3：
 
-- 当前 reader 不提供 `--task-id`、`--request-id`、`--filter`、`--query`、排序、分页或 export；
-- scoped v2 始终表示一个显式 envelope 的完整安全摘要；
-- 宿主只可一次性读取 `status=ready` 的 bounded stdout JSON 并在内存中展示；
-- 不保存、缓存、export，不打开 HTML/browser，不自动刷新，不访问网络或执行 adapter。
+```bash
+python tools/codex_desktop_snapshot_json_reader.py \
+  --project-root . \
+  --representation snapshot-json \
+  --envelope adapters/execution-envelope.examples.json \
+  --task-id task-20260703-001 \
+  --json
 
-Stage 26 已冻结未来 filtered v3 设计，但**当前命令尚未实现 filter flags**：
+python tools/codex_desktop_snapshot_json_reader.py \
+  --project-root . \
+  --representation snapshot-json \
+  --envelope adapters/execution-envelope.examples.json \
+  --request-id req-20260703-001 \
+  --json
+```
 
-- Stage 27 候选输入仅为 `--task-id` / `--request-id` exact filter，至少一个，可同时提供并使用 AND；
-- filter 必须与显式 envelope 同时使用，只作用于已验证的 runs/approvals/artifacts 安全 summaries；
+filtered mode 规则：
+
+- `--task-id` / `--request-id` 至少一个，可同时提供并使用 AND；每个 flag 只能出现一次；
+- filter 必须与显式 envelope 同时使用，并使用 canonical ASCII exact id；
+- filter 只作用于完整验证后的 runs/approvals/artifacts 安全 summaries；
 - task filter 通过 request→task 关系闭包包含缺少直接 task_id 的 response artifact；
-- 合法无匹配返回 ready 空视图，不猜测；
-- v3 将使用独立 filtered payload、filter id 与 view id，不修改现有 v1/v2。
+- 合法无匹配返回 `ready` 空视图与 `matched=false`，不猜测或降级；
+- 输出 `control-plane/codex-desktop-snapshot-read/v3`，包含独立 filtered payload、filter id、base snapshot id 与 view id；
+- filter 不传给 handoff/consumer/snapshot child argv；仍不提供 `--filter`、`--query`、排序、分页、缓存或 export；
+- 无 filter 的 envelope-scoped 调用保持 v2；无 envelope、无 filter 保持 v1。
 
 总览聚合：
 

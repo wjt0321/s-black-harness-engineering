@@ -1,11 +1,11 @@
-<!-- parents: 81-codex-desktop-read-only-adapter-implementation.md, archive/80-codex-desktop-read-only-adapter-design-gate.md -->
+<!-- parents: archive/81-codex-desktop-read-only-adapter-implementation.md, archive/80-codex-desktop-read-only-adapter-design-gate.md -->
 <!-- relates: 79-read-only-host-consumer-validation-boundary.md, 78-control-panel-host-integration-boundary.md -->
 
 # 82 — Read-only Representation Read Design Gate
 
 > 状态：**Stage 21 已收口：当前不开放 representation read**
 > 日期：2026-07-15
-> 前置事实源：`docs/81-codex-desktop-read-only-adapter-implementation.md`
+> 前置事实源：`docs/archive/81-codex-desktop-read-only-adapter-implementation.md`
 
 ## 1. 决策摘要
 

@@ -1,4 +1,4 @@
-"""Tests for the Stage 22-26 Codex Desktop snapshot JSON reader contracts."""
+"""Tests for the Stage 22-27 Codex Desktop snapshot JSON reader contracts."""
 
 from __future__ import annotations
 
@@ -643,7 +643,7 @@ def test_scoped_reader_detects_envelope_content_change_after_scope_validation(
         raise AssertionError("scope content drift must be rejected")
 
 
-def test_reader_cli_keeps_stage25_no_filter_boundary() -> None:
+def test_reader_cli_exposes_only_structured_stage27_filter_flags() -> None:
     reader = _reader()
     parser = reader._parser()
     option_strings = {
@@ -652,9 +652,8 @@ def test_reader_cli_keeps_stage25_no_filter_boundary() -> None:
         for option in action.option_strings
     }
 
+    assert {"--task-id", "--request-id"}.issubset(option_strings)
     assert {
-        "--task-id",
-        "--request-id",
         "--filter",
         "--query",
         "--sort",
@@ -686,6 +685,234 @@ def test_stage26_filter_design_has_safe_summary_join_keys() -> None:
         not row["task_id"] and row["request_id"] in request_tasks
         for row in artifacts
     )
+
+
+def test_filtered_reader_task_filter_builds_v3_with_relation_closure() -> None:
+    reader = _reader()
+    envelope = "adapters/execution-envelope.examples.json"
+    runner = FakeRunner(_handoff(envelope), _snapshot(envelope))
+
+    result = reader.run_snapshot_json_reader(
+        ROOT,
+        representation="snapshot-json",
+        envelope_file=envelope,
+        task_id_filter="task-20260703-001",
+        runner=runner,
+    )
+    payload = result.to_dict()
+
+    assert result.status == "ready"
+    assert payload["schema_version"] == "control-plane/codex-desktop-snapshot-read/v3"
+    assert payload["reader"] == "codex-desktop-filtered-envelope-snapshot-json-reader/v3"
+    assert payload["lifecycle"]["phases"] == [
+        "created",
+        "scoping",
+        "producing",
+        "validating",
+        "reading",
+        "filtering",
+        "ready",
+        "closed",
+    ]
+    filtered = payload["representation"]["payload"]
+    assert filtered["schema_version"] == "control-plane/filtered-envelope-snapshot/v1"
+    assert filtered["filter"] == {
+        "schema_version": "control-plane/envelope-snapshot-filter/v1",
+        "task_id": "task-20260703-001",
+        "request_id": None,
+    }
+    assert filtered["summary"] == {
+        "matched": True,
+        "run_count": 2,
+        "approval_count": 1,
+        "artifact_count": 6,
+        "section_statuses": {
+            "runs": "pass",
+            "approvals": "pass",
+            "artifacts": "pass",
+            "reports": "unavailable",
+        },
+    }
+    assert set(filtered["sections"]) == {"runs", "approvals", "artifacts", "reports"}
+    assert payload["guarantees"]["filters_safe_summaries"] is True
+    assert payload["guarantees"]["allows_arbitrary_queries"] is False
+    assert payload["guarantees"]["persists_filtered_views"] is False
+    serialized = json.dumps(payload, ensure_ascii=False)
+    assert str(ROOT.resolve()) not in serialized
+    assert '"input"' not in serialized
+    assert "payload_refs" not in serialized
+    assert "raw_ref" not in serialized
+    response_rows = [
+        row
+        for row in filtered["sections"]["artifacts"]["artifacts"]
+        if row["artifact_type"] == "adapter_response"
+    ]
+    assert response_rows and response_rows[0]["task_id"] == ""
+    assert all("--task-id" not in call["argv"] for call in runner.calls)
+    assert all("--request-id" not in call["argv"] for call in runner.calls)
+
+
+def test_filtered_reader_request_and_combined_filters_are_exact() -> None:
+    reader = _reader()
+    envelope = "adapters/execution-envelope.examples.json"
+
+    request_result = reader.run_snapshot_json_reader(
+        ROOT,
+        representation="snapshot-json",
+        envelope_file=envelope,
+        request_id_filter="req-20260703-002",
+        runner=FakeRunner(_handoff(envelope), _snapshot(envelope)),
+    ).to_dict()
+    request_view = request_result["representation"]["payload"]
+    assert request_view["summary"]["matched"] is True
+    assert request_view["summary"]["run_count"] == 1
+    assert request_view["summary"]["approval_count"] == 0
+    assert request_view["summary"]["artifact_count"] == 3
+    assert {
+        row["request_id"]
+        for row in request_view["sections"]["artifacts"]["artifacts"]
+    } == {"req-20260703-002"}
+
+    mismatch_result = reader.run_snapshot_json_reader(
+        ROOT,
+        representation="snapshot-json",
+        envelope_file=envelope,
+        task_id_filter="task-20260703-999",
+        request_id_filter="req-20260703-002",
+        runner=FakeRunner(_handoff(envelope), _snapshot(envelope)),
+    ).to_dict()
+    mismatch_view = mismatch_result["representation"]["payload"]
+    assert mismatch_result["status"] == "ready"
+    assert mismatch_view["summary"]["matched"] is False
+    assert mismatch_view["summary"]["run_count"] == 0
+    assert mismatch_view["summary"]["approval_count"] == 0
+    assert mismatch_view["summary"]["artifact_count"] == 0
+
+
+def test_filtered_reader_identity_is_canonical_and_self_validating() -> None:
+    reader = _reader()
+    envelope = "adapters/execution-envelope.examples.json"
+    payload = reader.run_snapshot_json_reader(
+        ROOT,
+        representation="snapshot-json",
+        envelope_file=envelope,
+        request_id_filter="req-20260703-001",
+        runner=FakeRunner(_handoff(envelope), _snapshot(envelope)),
+    ).to_dict()
+    filtered = payload["representation"]["payload"]
+    filter_id = reader._canonical_id(filtered["filter"])
+    without_view_id = {key: value for key, value in filtered.items() if key != "view_id"}
+    view_id = reader._canonical_id(without_view_id)
+
+    assert filtered["source"]["filter_id"] == filter_id
+    assert payload["source"]["filter_id"] == filter_id
+    assert filtered["view_id"] == view_id
+    assert payload["representation"]["view_id"] == view_id
+    assert payload["representation"]["base_snapshot_id"] == (
+        filtered["source"]["base_snapshot_id"]
+    )
+
+    tampered = copy.deepcopy(filtered)
+    tampered["summary"]["run_count"] = 99
+    try:
+        reader._validate_filtered_payload(tampered)
+    except reader.ReaderProtocolError as exc:
+        assert exc.rule_id == "filtered-view-identity-mismatch"
+    else:
+        raise AssertionError("tampered filtered view must be rejected")
+
+
+def test_filtered_reader_rejects_invalid_or_unscoped_filters_before_spawning() -> None:
+    reader = _reader()
+    cases = [
+        ({"task_id_filter": "task-20260703-001"}, "filter-envelope-required"),
+        (
+            {
+                "envelope_file": "adapters/execution-envelope.examples.json",
+                "task_id_filter": " task-20260703-001",
+            },
+            "filter-task-id-invalid",
+        ),
+        (
+            {
+                "envelope_file": "adapters/execution-envelope.examples.json",
+                "request_id_filter": "REQ-20260703-001",
+            },
+            "filter-request-id-invalid",
+        ),
+    ]
+    for kwargs, rule_id in cases:
+        calls: list[object] = []
+
+        def no_spawn(*args: object, **runner_kwargs: object) -> SimpleNamespace:
+            calls.append((args, runner_kwargs))
+            raise AssertionError("invalid filter must not spawn")
+
+        result = reader.run_snapshot_json_reader(
+            ROOT,
+            representation="snapshot-json",
+            runner=no_spawn,
+            **kwargs,
+        )
+        assert result.status == "validation_failed"
+        assert result.schema_version == reader.FILTERED_READER_SCHEMA_VERSION
+        assert result.reader_id == reader.FILTERED_READER_ID
+        assert rule_id in {
+            finding["rule_id"] for finding in result.to_dict()["findings"]
+        }
+        assert calls == []
+
+
+def test_filtered_reader_cli_rejects_duplicate_filter_flags_as_json() -> None:
+    reader = _reader()
+    output = io.StringIO()
+    exit_code = reader.main(
+        argv=[
+            "--project-root",
+            str(ROOT),
+            "--representation",
+            "snapshot-json",
+            "--envelope",
+            "adapters/execution-envelope.examples.json",
+            "--task-id",
+            "task-20260703-001",
+            "--task-id",
+            "task-20260703-002",
+            "--json",
+        ],
+        stdout=output,
+    )
+    payload = json.loads(output.getvalue())
+    assert exit_code == 5
+    assert payload["status"] == "validation_failed"
+    assert payload["schema_version"] == reader.FILTERED_READER_SCHEMA_VERSION
+    assert payload["reader"] == reader.FILTERED_READER_ID
+    assert payload["findings"][0]["rule_id"] == "filter-argument-duplicate"
+
+
+def test_filtered_reader_real_stdio_pipeline() -> None:
+    reader = _reader()
+    envelope = "adapters/execution-envelope.examples.json"
+    output = io.StringIO()
+    exit_code = reader.main(
+        argv=[
+            "--project-root",
+            str(ROOT),
+            "--representation",
+            "snapshot-json",
+            "--envelope",
+            envelope,
+            "--request-id",
+            "req-20260703-001",
+            "--json",
+        ],
+        stdout=output,
+    )
+    payload = json.loads(output.getvalue())
+    assert exit_code == 0
+    assert payload["status"] == "ready"
+    assert payload["schema_version"] == "control-plane/codex-desktop-snapshot-read/v3"
+    assert payload["representation"]["payload"]["summary"]["run_count"] == 1
 
 
 def test_scoped_reader_real_stdio_pipeline() -> None:

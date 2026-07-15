@@ -1,4 +1,4 @@
-<!-- parents: archive/82-read-only-representation-read-design-gate.md, 81-codex-desktop-read-only-adapter-implementation.md -->
+<!-- parents: archive/82-read-only-representation-read-design-gate.md, archive/81-codex-desktop-read-only-adapter-implementation.md -->
 <!-- relates: 79-read-only-host-consumer-validation-boundary.md, 78-control-panel-host-integration-boundary.md -->
 
 # 83 — Codex Desktop Snapshot JSON Reader Implementation
