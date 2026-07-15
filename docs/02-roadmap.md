@@ -919,7 +919,22 @@ Stage 22 收口时继续延期 envelope 参数；该项已在 Stage 23/24 通过
 
 ## Stage 28 — Filtered Snapshot Host Consumer Validation Gate（条件启动）
 
-只有具体宿主需要独立消费 filtered v3 时启动。目标是冻结并验证 bounded stdout JSON、v3 schema、canonical filter、base snapshot/filter/view identity 与只读展示边界；不扩展为 live service、缓存/export、HTML/browser 或真实 adapter execution。
+只有具体宿主需要独立消费 filtered v3 时启动。Stage 28 第一拍是 design gate，不预设必须新增 consumer 工具。
+
+需要冻结：
+
+- stdin-only、bounded UTF-8 JSON 输入与 duplicate-key 拒绝；
+- v3 reader result / filtered payload 的版本 allowlist；
+- reader status、closed lifecycle、source、representation 与 guarantees 校验；
+- wrapper/payload 间 filter、scope、base snapshot、view identity 的 cross-field 一致性；
+- canonical filter id 与 filtered view id 的独立重算边界；
+- base snapshot payload 未随输入提供时，只做关联和形状验证，不伪称重算 base snapshot id；
+- 一次性状态/退出码映射、输出最小化、确定性与 no-side-effect；
+- safe summaries 展示范围，不接受 project/registry/raw envelope 扩权。
+
+启动前必须有具体宿主、输入对象和安全展示需求；否则继续维持 Stage 27 冻结状态。完整下一会话审计清单见 `tasks/handoff-2026-07-15.md`。
+
+继续延期：live service、缓存/export、HTML/browser、query、lineage expansion、文件读取、UI 写操作与真实 adapter execution。
 
 ---
 

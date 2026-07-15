@@ -160,8 +160,10 @@
 ## 下一步做什么
 
 - **Stage 28 — Filtered Snapshot Host Consumer Validation Gate（条件启动）**
-- 只有具体宿主需要独立验证 v3 result/filter/view identity 与安全展示边界时启动；不得把 reader `ready` 扩大为执行权限。
-- 优先复用 Stage 18 stdin-only consumer 思路，验证 bounded stdout JSON、schema、filter/base/view identity 与 guarantees；不创建 service 或持久缓存。
+- 今日工作停在 Stage 27 冻结点；下一会话先恢复上下文并判断是否存在具体宿主需求，不得默认启动 Stage 28。
+- 条件满足后第一拍只做 design gate，候选事实源为 `docs/88-filtered-snapshot-host-consumer-validation-gate.md`；先冻结输入、版本、identity、状态映射、输出最小化和 no-side-effect 边界，再决定是否实现 consumer。
+- 优先复用 Stage 18 stdin-only consumer 的独立验证思路，但输入对象改为完整 filtered v3 reader result；必须区分可重算的 filter/view identity 与只能关联检查的 base snapshot identity。
+- 首轮审计和 TDD 候选矩阵见 `tasks/handoff-2026-07-15.md` 的“Stage 28”章节。
 - `v0.13.0-read-only-control-plane` 仍是稳定冻结基线；Stage 27 为 additive reader 收口，不追补 tag。
 - 通用 query、lineage 自动扩展、sort/page、persistence/export、HTML/browser、service/network/write 与真实 adapter execution 继续延期。
 

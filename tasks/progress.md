@@ -2655,3 +2655,13 @@
 - 新增 `docs/87-filtered-envelope-snapshot-json-reader-implementation.md` 与 release notes 89；同步 digest/index/roadmap/README/AGENTS/CLI usage/Stage 26 gate/handoff。
 - 将已被 Stage 22–27 事实源取代的 Stage 20 实现文档完整归档至 `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`；活跃文档保持 50 个。
 - 下一阶段为 Stage 28 Filtered Snapshot Host Consumer Validation Gate（条件启动）；query、lineage expansion、persistence/export、HTML/browser、service/network/write 与真实 adapter execution 继续延期。
+
+## 2026-07-15 — 日终文档交接与 Stage 28 上下文冻结
+
+- 用户要求更新文档、留下下一阶段上下文、完成推送并结束今日任务。
+- 本次只做文档交接，不启动 Stage 28，不修改 reader、consumer、schema、测试或运行时行为。
+- 在最新 handoff 中记录 Stage 27 日终基线 `fc92de9`、下一会话恢复命令、Stage 28 条件启动判定、首轮 design audit、候选 TDD 矩阵与明确停止线。
+- 更新 stage digest 与 roadmap：Stage 28 第一拍只允许 design gate；必须先有具体宿主和有界消费需求，不能默认创建通用 consumer。
+- 冻结关键 identity 边界：consumer 可独立重算 canonical filter id 与 filtered view id；未携带 base payload 时只能关联检查 base snapshot id，不得伪称重算。
+- 下一会话若用户要求继续，应先输出 Stage 28 是否满足条件启动的审计结论，再决定是否创建 `docs/88-filtered-snapshot-host-consumer-validation-gate.md`。
+- query、lineage expansion、persistence/export、HTML/browser、service/network/write 与真实 adapter execution 继续延期。
