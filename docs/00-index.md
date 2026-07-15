@@ -35,7 +35,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 22 snapshot JSON reader 已收口）
+### 5. 想看中枢台主线（Stage 23 envelope-scoped snapshot design gate 已启动）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -63,6 +63,7 @@
 - `81-codex-desktop-read-only-adapter-implementation.md` — Stage 20 Codex Desktop 只读 adapter 实现与验收边界（已收口）
 - `82-read-only-representation-read-design-gate.md` — Stage 21 representation read 设计门（validation-only 冻结）
 - `83-codex-desktop-snapshot-json-reader-implementation.md` — Stage 22 Codex Desktop 显式 snapshot JSON reader（已收口）
+- `84-envelope-scoped-snapshot-read-design-gate.md` — Stage 23 envelope-scoped snapshot read 设计门（已启动，尚未实现）
 
 ### 6. 想看里程碑与冻结记录
 
@@ -84,10 +85,10 @@
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `83-codex-desktop-snapshot-json-reader-implementation.md`
-3. `82-read-only-representation-read-design-gate.md`
+2. `84-envelope-scoped-snapshot-read-design-gate.md`
+3. `83-codex-desktop-snapshot-json-reader-implementation.md`
 4. 最新 handoff：`tasks/handoff-2026-07-15.md`
-5. `81-codex-desktop-read-only-adapter-implementation.md`
+5. `82-read-only-representation-read-design-gate.md`
 
 ## 其他入口
 

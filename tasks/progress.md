@@ -2603,3 +2603,10 @@
 - 同步 README / README.en、index、roadmap、digest、Stage 22 fact/release notes、历史与最新 handoff 及 progress 中的当前路径引用，并修复 55/57/59/61/65/67/71 release notes 的既有归档路径。
 - 更新 `docs/MAINTENANCE.md`，移除 L2 编号只到 `7x` 的过时说明，并增加根目录超过 50 时的无损归档动作。
 - 活跃根目录 Markdown 数量从 51 降至 49；Stage 23 Envelope-scoped Snapshot Read Design Gate 仍为条件启动。
+
+## 2026-07-15 — Stage 23 Envelope-scoped Snapshot Read Design Gate 启动
+
+- 用户明确要求继续推进 Stage 23；本轮启动设计门，但不把设计门启动解释为 reader implementation 已授权。
+- 新增 `docs/84-envelope-scoped-snapshot-read-design-gate.md`，冻结显式 `--representation snapshot-json` + future `--envelope`、project-relative allowlist、越界/`..`/symlink 拒绝、1 MiB/UTF-8/duplicate-key/secret-scan 门禁，以及 handoff → consumer → snapshot 的 scope identity 关联。
+- 保持 Stage 22 reader 现状：不接受 `--envelope`，不执行 descriptor argv；无 envelope 时 runs/approvals/artifacts 继续 `unavailable/envelope_required`，reports 继续 request-scoped。
+- 下一拍只有在具体消费者、envelope 来源、版本化 schema/reader id 与逐项回归测试齐备后，才进入实现。

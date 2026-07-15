@@ -4,7 +4,7 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：49 个
+- docs/ 活跃文档：50 个
 - 归档文档：48 个，位于 `docs/archive/`（freeze records / release-notes / dry-runs / smoke-regression）
 - 全仓 .md 文件：约 170 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
@@ -22,8 +22,8 @@
 
 ## 当前阶段
 
-- **Stage 22 — Codex Desktop Snapshot JSON Reader（收口完成）**
-- **下一阶段：Stage 23 — Envelope-scoped Snapshot Read Design Gate（条件启动）**
+- **Stage 23 — Envelope-scoped Snapshot Read Design Gate（已启动，设计门未放行实现）**
+- Stage 22 — Codex Desktop Snapshot JSON Reader（已收口）
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
@@ -45,6 +45,8 @@
 - Stage 22 事实源：`docs/83-codex-desktop-snapshot-json-reader-implementation.md` 与 `docs/archive/release-notes/85-release-notes-stage22-codex-desktop-snapshot-json-reader.md`。
 - Stage 22 post-close 文档沉淀已完成：旧 `v0.12.0` freeze checklist / execution plan（68/69）完整移入 `docs/archive/`，活跃根目录文档从 51 降至 49，所有外部引用已更新，内容未删除。
 - envelope 未提供时，run/approval/artifact 区段诚实显示 unavailable；report 保持 request-scoped boundary，不伪造持久 collection。
+- Stage 23 已启动设计门：用户明确要求继续推进，但当前未指定具体 envelope 消费者或文件；本轮只冻结显式 scope、project-relative allowlist、输入门禁与三段 identity 关联，不加入 `--envelope`。
+- Stage 23 事实源：`docs/84-envelope-scoped-snapshot-read-design-gate.md`；设计门状态为 `started-not-implementation`。
 
 ### Stage 10 基线（保留）
 

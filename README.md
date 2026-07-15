@@ -127,7 +127,7 @@
 - ✅ Stage 20 — Host-specific Read-only Adapter Implementation（固定 producer/consumer 的 one-shot read-only adapter 已收口）
 - ✅ Stage 21 — Read-only Representation Read Design Gate（validation-only 已冻结）
 - ✅ Stage 22 — Codex Desktop Snapshot JSON Reader（显式 one-shot snapshot read 已收口）
-- ⚪ Stage 23 — Envelope-scoped Snapshot Read Design Gate（条件启动）
+- 🟡 Stage 23 — Envelope-scoped Snapshot Read Design Gate（已启动，设计门未放行实现）
 
 ### 现在最明确的位置
 
@@ -139,13 +139,13 @@
 
 ### 接下来的方向
 
-Stage 22 已完成；下一步仅在出现 envelope-scoped 消费需求时启动 Stage 23：
+Stage 23 设计门已启动，但尚未放行 envelope-scoped reader 实现：
 
-1. 用户明确需要 runs / approvals / artifacts 的 envelope-scoped snapshot
-2. 冻结显式授权、project-relative envelope path allowlist 与越界拒绝
+1. 用户已明确要求继续推进 Stage 23；具体 envelope 消费者和文件来源仍需在实现前冻结
+2. 设计门冻结显式授权、project-relative envelope path allowlist 与越界拒绝
 3. 复用 Stage 17 handoff、Stage 18 validation 与 Stage 22 identity/hash 校验，不创建平行管线
-4. 当前 reader 不接受 `--envelope`，不读取 HTML，不打开浏览器、不写文件或 artifact
-5. Stage 22 事实源为 `docs/83-codex-desktop-snapshot-json-reader-implementation.md`；`v0.13.0-read-only-control-plane` 仍是最新稳定 tag
+4. 当前 reader 仍不接受 `--envelope`，不读取 HTML，不打开浏览器、不写文件或 artifact
+5. Stage 23 事实源为 `docs/84-envelope-scoped-snapshot-read-design-gate.md`；Stage 22 事实源为 `docs/83-codex-desktop-snapshot-json-reader-implementation.md`
 
 已落地的主线能力包括：
 
