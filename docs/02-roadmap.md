@@ -813,7 +813,7 @@ codex-desktop-read-only-adapter/v1
 
 设计与验收事实源：
 
-- `docs/82-read-only-representation-read-design-gate.md`
+- `docs/archive/82-read-only-representation-read-design-gate.md`
 - `docs/archive/release-notes/84-release-notes-stage21-read-only-representation-read-design-gate.md`
 
 ---
@@ -880,9 +880,28 @@ Stage 22 收口时继续延期 envelope 参数；该项已在 Stage 23/24 通过
 
 ---
 
-## Stage 26 — Filtered Envelope Snapshot Read Design Gate（条件启动）
+## Stage 26 — Filtered Envelope Snapshot Read Design Gate（已完成）
 
-仅在具体消费者给出结构化 task/request filter 需求后启动。设计前必须冻结 filter canonical form、空值/无匹配/组合语义、identity 与 snapshot/scope 的绑定、确定性排序和结果上限，并继续满足 no arbitrary query/path、no persistence/export、no HTML/browser/network/write/execute。
+用户明确要求进入下一阶段后，已冻结未来 filtered v3：
+
+- 只允许 canonical `--task-id` / `--request-id` exact filter，至少一个，双参数为 AND；
+- filter 必须与显式 envelope 同时使用，非法/重复输入在 spawn 前失败；
+- 只过滤已验证 snapshot 的 runs/approvals/artifacts 安全 summaries；
+- task filter 使用 request→task 关系闭包，确保 response summaries 不因缺少直接 task_id 丢失；
+- 合法无匹配返回 ready 空视图，不猜测或降级；
+- 使用独立 v3 result、filtered payload schema、filter id 与 view id，不改变 v1/v2；
+- child argv 不传 filter，继续 no query/persistence/export/HTML/browser/network/write/execute。
+
+事实源：
+
+- `docs/86-filtered-envelope-snapshot-read-design-gate.md`
+- `docs/archive/release-notes/88-release-notes-stage26-filtered-envelope-snapshot-read-design-gate.md`
+
+---
+
+## Stage 27 — Filtered Envelope Snapshot JSON Reader Implementation（条件启动）
+
+按 Stage 26 的 v3 contract、request→task 关系闭包、filter/view identity 和 TDD 矩阵实现。无 filter 必须保持 Stage 24 v2，未提供 envelope 必须保持 Stage 22 v1。
 
 ---
 

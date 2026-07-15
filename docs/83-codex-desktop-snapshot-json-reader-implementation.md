@@ -1,11 +1,11 @@
-<!-- parents: 82-read-only-representation-read-design-gate.md, 81-codex-desktop-read-only-adapter-implementation.md -->
+<!-- parents: archive/82-read-only-representation-read-design-gate.md, 81-codex-desktop-read-only-adapter-implementation.md -->
 <!-- relates: 79-read-only-host-consumer-validation-boundary.md, 78-control-panel-host-integration-boundary.md -->
 
 # 83 — Codex Desktop Snapshot JSON Reader Implementation
 
 > 状态：**Stage 22 已按 TDD 实现并收口**
 > 日期：2026-07-15
-> 前置事实源：`docs/82-read-only-representation-read-design-gate.md`
+> 前置事实源：`docs/archive/82-read-only-representation-read-design-gate.md`
 
 ## 1. 真实消费者与用户动作
 

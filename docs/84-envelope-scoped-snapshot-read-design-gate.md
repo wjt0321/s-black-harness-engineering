@@ -1,5 +1,5 @@
 <!-- parents: 83-codex-desktop-snapshot-json-reader-implementation.md -->
-<!-- relates: 82-read-only-representation-read-design-gate.md, 81-codex-desktop-read-only-adapter-implementation.md, 79-read-only-host-consumer-validation-boundary.md -->
+<!-- relates: archive/82-read-only-representation-read-design-gate.md, 81-codex-desktop-read-only-adapter-implementation.md, 79-read-only-host-consumer-validation-boundary.md -->
 
 # 84 — Envelope-scoped Snapshot Read Design Gate
 

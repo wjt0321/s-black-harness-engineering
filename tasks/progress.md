@@ -2576,7 +2576,7 @@
 
 ## 2026-07-15 — Stage 21 Read-only Representation Read Design Gate 收口
 
-- 新增 `docs/82-read-only-representation-read-design-gate.md`，审计 Stage 17 descriptor、Stage 18 consumer 与 Stage 20 adapter 的实际 representation 消费范围。
+- 新增当时位于活跃区、现已归档至 `docs/archive/82-read-only-representation-read-design-gate.md` 的设计门，审计 Stage 17 descriptor、Stage 18 consumer 与 Stage 20 adapter 的实际 representation 消费范围。
 - 确认当前没有已冻结的真实 consumer、用户动作或授权需求，拒绝 validation 后自动读取与新增 `control-panel consume` 两种扩权方案。
 - 冻结 validation-only：不执行 descriptor argv，不读取 HTML/JSON，不打开浏览器、不写文件、不启动 service。
 - 新增归档 release notes 84，并明确 Stage 22 仅在真实消费者、显式授权、argv allowlist、路径/输出边界和 no-write/no-network/no-service 证据齐备后条件启动。
@@ -2631,3 +2631,15 @@
 - Stage 24 v1/v2 schema、reader id、scope id 与 snapshot identity 保持不变；不修改生产 reader。
 - 新增 release notes 87；将已被 Stage 20 implementation 取代的 Stage 19 设计门完整移动到 `docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`，活跃文档保持 50 个。
 - 下一阶段为 Stage 26 Filtered Envelope Snapshot Read Design Gate（条件启动）；没有具体消费者时继续维持 Stage 25 冻结状态。
+
+
+## 2026-07-15 — Stage 26 Filtered Envelope Snapshot Read Design Gate 收口
+
+- 用户明确要求直接进入下一阶段，Stage 26 design gate 启动并完成。
+- 审计 Stage 24 scoped safe summaries，确认 runs/approvals/artifacts 具备 request/task join keys；response artifact 可能需要 request→task 关系闭包。
+- 新增 `docs/86-filtered-envelope-snapshot-read-design-gate.md`，冻结 task/request exact filter、双参数 AND、合法空视图与 deterministic order。
+- 冻结未来 v3 result / filtered payload / filter schema，以及 canonical `filter_id`、base snapshot id、`view_id` 三层 identity。
+- filter 仅在 base snapshot 全链验证和 envelope content-drift recheck 后作用于内存安全 summaries；child argv 不携带 filter。
+- 新增 prerequisite contract test；本阶段不修改生产 reader，现有 v1/v2 保持不变。
+- 新增 release notes 88；将已被 Stage 22 及后续事实源取代的 Stage 21 设计门完整归档至 `docs/archive/82-read-only-representation-read-design-gate.md`，活跃文档保持 50 个。
+- 下一阶段为 Stage 27 Filtered Envelope Snapshot JSON Reader Implementation（条件启动）。

@@ -35,7 +35,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 25 consumer/filter design gate 已收口）
+### 5. 想看中枢台主线（Stage 26 filtered-read design gate 已收口）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -60,10 +60,10 @@
 - `78-control-panel-host-integration-boundary.md` — Stage 17 本地只读 stdio handoff contract 设计与实现边界
 - `79-read-only-host-consumer-validation-boundary.md` — Stage 18 本地 reference consumer validation 设计与实现边界（已收口）
 - `81-codex-desktop-read-only-adapter-implementation.md` — Stage 20 Codex Desktop 只读 adapter 实现与验收边界（已收口）
-- `82-read-only-representation-read-design-gate.md` — Stage 21 representation read 设计门（validation-only 冻结）
 - `83-codex-desktop-snapshot-json-reader-implementation.md` — Stage 22 Codex Desktop 显式 snapshot JSON reader（已收口）
 - `84-envelope-scoped-snapshot-read-design-gate.md` — Stage 23 设计门与 Stage 24 envelope-scoped snapshot JSON reader 实现事实源（已收口）
 - `85-envelope-scoped-consumer-filter-design-gate.md` — Stage 25 consumer/filter 设计门；无 filter 单-envelope v2 与宿主展示边界（已收口）
+- `86-filtered-envelope-snapshot-read-design-gate.md` — Stage 26 task/request filter、关系闭包与 v3 identity 设计门（已收口）
 
 ### 6. 想看里程碑与冻结记录
 
@@ -77,18 +77,18 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/` | 历史设计门 / freeze checklist / execution plan（Stage 19 `80` 与 `68` / `69` 已完整归档） |
-| `archive/release-notes/` | 各阶段 release notes（最新为 `87-release-notes-stage25-envelope-scoped-consumer-filter-design-gate.md`） |
+| `archive/` | 历史设计门 / freeze checklist / execution plan（Stage 19 `80`、Stage 21 `82` 与 `68` / `69` 已完整归档） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `88-release-notes-stage26-filtered-envelope-snapshot-read-design-gate.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `85-envelope-scoped-consumer-filter-design-gate.md`
-3. `84-envelope-scoped-snapshot-read-design-gate.md`
+2. `86-filtered-envelope-snapshot-read-design-gate.md`
+3. `85-envelope-scoped-consumer-filter-design-gate.md`
 4. 最新 handoff：`tasks/handoff-2026-07-15.md`
-5. `83-codex-desktop-snapshot-json-reader-implementation.md`
+5. `84-envelope-scoped-snapshot-read-design-gate.md`
 
 ## 其他入口
 

@@ -1830,6 +1830,14 @@ Stage 25 已冻结 consumer/filter 边界：
 - 宿主只可一次性读取 `status=ready` 的 bounded stdout JSON 并在内存中展示；
 - 不保存、缓存、export，不打开 HTML/browser，不自动刷新，不访问网络或执行 adapter。
 
+Stage 26 已冻结未来 filtered v3 设计，但**当前命令尚未实现 filter flags**：
+
+- Stage 27 候选输入仅为 `--task-id` / `--request-id` exact filter，至少一个，可同时提供并使用 AND；
+- filter 必须与显式 envelope 同时使用，只作用于已验证的 runs/approvals/artifacts 安全 summaries；
+- task filter 通过 request→task 关系闭包包含缺少直接 task_id 的 response artifact；
+- 合法无匹配返回 ready 空视图，不猜测；
+- v3 将使用独立 filtered payload、filter id 与 view id，不修改现有 v1/v2。
+
 总览聚合：
 
 ```bash

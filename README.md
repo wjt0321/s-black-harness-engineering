@@ -57,7 +57,7 @@
 当前仓库已经形成可内部试用的**离线、可审计 CLI / Runtime 安全内核**，并完成 Stage 12 control-plane read model 验收：
 
 - 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
-- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP、Stage 17 stdio host handoff、Stage 18 独立 reference consumer、Stage 19 Codex Desktop 只读 adapter design gate、Stage 20 one-shot adapter、Stage 21 representation read design gate、Stage 22 project-scoped reader、Stage 23 design gate、Stage 24 envelope-scoped reader 与 Stage 25 consumer/filter design gate 均已完成收口；
+- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP、Stage 17 stdio host handoff、Stage 18 独立 reference consumer、Stage 19 Codex Desktop 只读 adapter design gate、Stage 20 one-shot adapter、Stage 21 representation read design gate、Stage 22 project-scoped reader、Stage 23 design gate、Stage 24 envelope-scoped reader、Stage 25 consumer contract 与 Stage 26 filtered-read design gate 均已完成收口；
 - 当前可生成本地、自包含、确定性的静态只读 Control Panel，通过版本化 descriptor 声明 snapshot/HTML representation，并用标准库-only、stdin-only consumer 独立验证 schema、identity 与只读边界；真实 adapter execution、持久化 service/DB、鉴权和 UI 写操作仍未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条
@@ -130,7 +130,8 @@
 - ✅ Stage 23 — Envelope-scoped Snapshot Read Design Gate（已通过）
 - ✅ Stage 24 — Codex Desktop Envelope-scoped Snapshot JSON Reader（显式 allowlist-only v2 已收口）
 - ✅ Stage 25 — Envelope-scoped Consumer Integration / Filter Design Gate（无 filter consumer contract 已冻结）
-- ⚪ Stage 26 — Filtered Envelope Snapshot Read Design Gate（条件启动）
+- ✅ Stage 26 — Filtered Envelope Snapshot Read Design Gate（task/request exact filter 与 v3 identity 已冻结）
+- ⚪ Stage 27 — Filtered Envelope Snapshot JSON Reader Implementation（条件启动）
 
 ### 现在最明确的位置
 
@@ -142,7 +143,7 @@
 
 ### 接下来的方向
 
-Stage 23/24 scoped reader 与 Stage 25 consumer/filter design gate 已完成：
+Stage 23/24 scoped reader、Stage 25 consumer contract 与 Stage 26 filter design gate 已完成：
 
 1. 用户必须同时显式选择 `snapshot-json` 并提供 allowlist 内的 project-relative `--envelope`
 2. allowlist 为 `adapters/*.json` 与 `drafts/runtime/**/*.envelope.json`，绝对路径、`..`、越界和 arbitrary JSON 均拒绝
@@ -150,6 +151,7 @@ Stage 23/24 scoped reader 与 Stage 25 consumer/filter design gate 已完成：
 4. scoped v2 输出 envelope content/scope identity，并在 one-shot 结束前复查内容未漂移
 5. 仍不读取 HTML、不打开浏览器、不写文件或 artifact；事实源为 `docs/84-envelope-scoped-snapshot-read-design-gate.md`
 6. Stage 25 保持单-envelope、无 filter v2；宿主只能一次性读取并内存展示已验证 JSON，不新增 query/persistence/export；事实源为 `docs/85-envelope-scoped-consumer-filter-design-gate.md`
+7. Stage 26 冻结未来 v3 的 task/request exact filter、AND/空视图、关系闭包与 filter/view identity；事实源为 `docs/86-filtered-envelope-snapshot-read-design-gate.md`
 
 已落地的主线能力包括：
 

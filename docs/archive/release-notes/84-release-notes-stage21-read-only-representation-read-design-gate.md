@@ -3,7 +3,7 @@
 > 日期：2026-07-15
 > 状态：验收完成
 > 前置事实源：`docs/81-codex-desktop-read-only-adapter-implementation.md`
-> 设计事实源：`docs/82-read-only-representation-read-design-gate.md`
+> 设计事实源：`docs/archive/82-read-only-representation-read-design-gate.md`
 
 ## 1. 决策
 

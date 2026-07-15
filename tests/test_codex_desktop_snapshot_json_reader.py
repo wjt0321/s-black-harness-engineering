@@ -1,4 +1,4 @@
-"""Tests for the Stage 22-25 Codex Desktop snapshot JSON reader contracts."""
+"""Tests for the Stage 22-26 Codex Desktop snapshot JSON reader contracts."""
 
 from __future__ import annotations
 
@@ -661,6 +661,31 @@ def test_reader_cli_keeps_stage25_no_filter_boundary() -> None:
         "--page",
         "--export",
     }.isdisjoint(option_strings)
+
+
+def test_stage26_filter_design_has_safe_summary_join_keys() -> None:
+    payload = _snapshot("adapters/execution-envelope.examples.json")
+    sections = payload["sections"]
+    runs = sections["runs"]["runs"]
+    approvals = sections["approvals"]["approvals"]
+    artifacts = sections["artifacts"]["artifacts"]
+
+    request_tasks = {row["request_id"]: row["task_id"] for row in runs}
+    assert request_tasks
+    assert all(row["request_id"] and row["task_id"] for row in runs)
+    assert all(
+        row["request_id"] in request_tasks
+        and row["task_id"] == request_tasks[row["request_id"]]
+        for row in approvals
+    )
+    assert all(
+        not row["request_id"] or row["request_id"] in request_tasks
+        for row in artifacts
+    )
+    assert any(
+        not row["task_id"] and row["request_id"] in request_tasks
+        for row in artifacts
+    )
 
 
 def test_scoped_reader_real_stdio_pipeline() -> None:
