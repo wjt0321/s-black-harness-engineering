@@ -1,4 +1,4 @@
-"""Tests for the Stage 22 Codex Desktop snapshot JSON reader."""
+"""Tests for the Stage 22-25 Codex Desktop snapshot JSON reader contracts."""
 
 from __future__ import annotations
 
@@ -641,6 +641,26 @@ def test_scoped_reader_detects_envelope_content_change_after_scope_validation(
         assert exc.rule_id == "envelope-scope-content-changed"
     else:
         raise AssertionError("scope content drift must be rejected")
+
+
+def test_reader_cli_keeps_stage25_no_filter_boundary() -> None:
+    reader = _reader()
+    parser = reader._parser()
+    option_strings = {
+        option
+        for action in parser._actions
+        for option in action.option_strings
+    }
+
+    assert {
+        "--task-id",
+        "--request-id",
+        "--filter",
+        "--query",
+        "--sort",
+        "--page",
+        "--export",
+    }.isdisjoint(option_strings)
 
 
 def test_scoped_reader_real_stdio_pipeline() -> None:

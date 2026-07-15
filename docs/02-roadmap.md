@@ -767,7 +767,7 @@ codex-desktop-read-only-adapter/v1
 
 设计事实源：
 
-- `docs/80-codex-desktop-read-only-adapter-design-gate.md`
+- `docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`
 - `docs/79-read-only-host-consumer-validation-boundary.md`
 - `docs/78-control-panel-host-integration-boundary.md`
 
@@ -863,9 +863,26 @@ Stage 22 收口时继续延期 envelope 参数；该项已在 Stage 23/24 通过
 
 ---
 
-## Stage 25 — Envelope-scoped Consumer Integration / Filter Design Gate（条件启动）
+## Stage 25 — Envelope-scoped Consumer Integration / Filter Design Gate（已完成）
 
-仅在出现明确 task/request filter 或宿主展示消费者需求时启动。设计前必须冻结 filter 作用域、identity、输出上限、no arbitrary query/path、no persistence/export 与 no HTML/browser/network/write 边界。
+审计结论：当前没有具体 task/request filter 消费者，也没有足够事实冻结 filter 组合语义、canonical identity、排序/分页或持久化边界。因此 Stage 25 选择并冻结方案 C：
+
+- 保持单个显式 envelope、无 filter 的 scoped v2；
+- 不新增 `--task-id`、`--request-id`、`--filter`、`--query`、排序、分页或 export；
+- 宿主只能一次性读取 `status=ready` 的 bounded stdout JSON，并在进程内展示既有安全摘要；
+- 不执行 argv、不保存/cache/export、不打开 HTML/browser、不刷新/轮询、不访问网络或真实 adapter；
+- Stage 24 v1/v2 schema、reader id、scope id 与 snapshot identity 保持兼容。
+
+事实源：
+
+- `docs/85-envelope-scoped-consumer-filter-design-gate.md`
+- `docs/archive/release-notes/87-release-notes-stage25-envelope-scoped-consumer-filter-design-gate.md`
+
+---
+
+## Stage 26 — Filtered Envelope Snapshot Read Design Gate（条件启动）
+
+仅在具体消费者给出结构化 task/request filter 需求后启动。设计前必须冻结 filter canonical form、空值/无匹配/组合语义、identity 与 snapshot/scope 的绑定、确定性排序和结果上限，并继续满足 no arbitrary query/path、no persistence/export、no HTML/browser/network/write/execute。
 
 ---
 

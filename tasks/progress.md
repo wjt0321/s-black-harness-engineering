@@ -2556,7 +2556,7 @@
 
 ## 2026-07-15 — Stage 19 Codex Desktop Read-only Adapter Design Gate 冻结
 
-- 新增 `docs/80-codex-desktop-read-only-adapter-design-gate.md`，选择 Codex Desktop 本地任务进程边界作为首个真实宿主候选。
+- 新增当时位于活跃区、现已归档至 `docs/archive/80-codex-desktop-read-only-adapter-design-gate.md` 的设计门，选择 Codex Desktop 本地任务进程边界作为首个真实宿主候选。
 - 冻结 `codex-desktop-read-only-adapter/v1`：固定 handoff bootstrap → Stage 18 reference consumer validation → 宿主状态映射。
 - 冻结一次性生命周期、有限超时、取消、不自动重试，以及 `pass` / `blocked` / `validation_failed` / `error` 映射。
 - 明确 v1 不读取 representation、不执行 descriptor argv、不写文件、不访问网络、不启动服务；用户授权只覆盖一次 project-root 内只读 validation。
@@ -2620,3 +2620,14 @@
 - handoff source、consumer source handoff id、snapshot source/id/canonical hash 全链关联；snapshot 返回后复查 envelope content id，拒绝 one-shot 生命周期内的 scope drift。
 - scoped lifecycle 为 `created → scoping → producing → validating → reading → ready → closed`；仍不执行 descriptor argv、HTML、网络、service、写入、candidate command 或真实 adapter。
 - Stage 23/24 事实源更新为 `docs/84-envelope-scoped-snapshot-read-design-gate.md`，验收记录为 `docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`。
+
+
+## 2026-07-15 — Stage 25 Envelope-scoped Consumer / Filter Design Gate 收口
+
+- 审计 Stage 24 scoped v2、现有 consumer/handoff 与宿主需求，确认当前没有具体 task/request filter 消费者。
+- 新增 `docs/85-envelope-scoped-consumer-filter-design-gate.md`，拒绝自动 task/request filter 与通用 query 两种扩权方案。
+- 冻结当前唯一 scoped consumer contract：单个显式 envelope、无 filter 的 v2；宿主只可一次性读取 `status=ready` 的 bounded stdout JSON 并内存展示。
+- 新增 parser contract test，确保 reader 不暴露 `--task-id`、`--request-id`、`--filter`、`--query`、排序、分页或 export。
+- Stage 24 v1/v2 schema、reader id、scope id 与 snapshot identity 保持不变；不修改生产 reader。
+- 新增 release notes 87；将已被 Stage 20 implementation 取代的 Stage 19 设计门完整移动到 `docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`，活跃文档保持 50 个。
+- 下一阶段为 Stage 26 Filtered Envelope Snapshot Read Design Gate（条件启动）；没有具体消费者时继续维持 Stage 25 冻结状态。

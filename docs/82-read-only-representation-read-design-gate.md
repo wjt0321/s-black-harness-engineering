@@ -1,4 +1,4 @@
-<!-- parents: 81-codex-desktop-read-only-adapter-implementation.md, 80-codex-desktop-read-only-adapter-design-gate.md -->
+<!-- parents: 81-codex-desktop-read-only-adapter-implementation.md, archive/80-codex-desktop-read-only-adapter-design-gate.md -->
 <!-- relates: 79-read-only-host-consumer-validation-boundary.md, 78-control-panel-host-integration-boundary.md -->
 
 # 82 — Read-only Representation Read Design Gate

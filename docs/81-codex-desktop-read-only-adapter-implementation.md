@@ -1,11 +1,11 @@
-<!-- parents: 80-codex-desktop-read-only-adapter-design-gate.md -->
+<!-- parents: archive/80-codex-desktop-read-only-adapter-design-gate.md -->
 <!-- relates: 79-read-only-host-consumer-validation-boundary.md, 78-control-panel-host-integration-boundary.md -->
 
 # 81 — Codex Desktop Read-only Adapter Implementation
 
 > 状态：**Stage 20 已实现并收口**
 > 日期：2026-07-15
-> 设计事实源：`docs/80-codex-desktop-read-only-adapter-design-gate.md`
+> 设计事实源：`docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`
 
 ## 1. 实现摘要
 

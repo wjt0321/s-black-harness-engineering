@@ -1823,6 +1823,13 @@ scoped mode 规则：
 - 输出 `relative_envelope`、`envelope_content_id`、`scope_id`，不输出 absolute root、raw envelope、`input`、payload refs 或 raw refs；
 - snapshot 返回后再次校验 envelope content id，拒绝 one-shot 生命周期内的内容漂移。
 
+Stage 25 已冻结 consumer/filter 边界：
+
+- 当前 reader 不提供 `--task-id`、`--request-id`、`--filter`、`--query`、排序、分页或 export；
+- scoped v2 始终表示一个显式 envelope 的完整安全摘要；
+- 宿主只可一次性读取 `status=ready` 的 bounded stdout JSON 并在内存中展示；
+- 不保存、缓存、export，不打开 HTML/browser，不自动刷新，不访问网络或执行 adapter。
+
 总览聚合：
 
 ```bash
