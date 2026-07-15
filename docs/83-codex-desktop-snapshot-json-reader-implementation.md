@@ -165,3 +165,8 @@ Stage 22 收口后，`docs/` 根目录达到 51 个 Markdown 文件。按 `docs/
 - 活跃根目录 Markdown 数量从 51 降至 49，低于维护提示阈值 50。
 
 Stage 23 的进入条件保持不变：没有明确 envelope-scoped consumer 需求时，不新增 `--envelope`。
+## 12. Stage 24 兼容性说明
+
+Stage 22 本文冻结的无 envelope `v1` 行为保持不变。Stage 24 在同一个 reader 工具上新增显式 `--envelope` 的版本化 `v2` scoped mode；只有传入通过 allowlist 与输入门禁的 project-relative envelope 时才启用。
+
+Stage 24 当前事实源：`docs/84-envelope-scoped-snapshot-read-design-gate.md`；验收记录：`docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`。

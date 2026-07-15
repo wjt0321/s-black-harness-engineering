@@ -3,7 +3,7 @@
 
 # 84 — Envelope-scoped Snapshot Read Design Gate
 
-> Stage 23 条件启动设计门。本文冻结“是否允许把现有 envelope-scoped runs / approvals / artifacts read model 接入 Codex Desktop snapshot reader”的边界；不等同于已实现 `--envelope`，也不开放任何执行能力。
+> Stage 23 设计门与 Stage 24 实现事实源。设计门先冻结 envelope-scoped runs / approvals / artifacts 的读取边界；随后按 TDD 实现显式、allowlist-only 的 `--envelope` snapshot JSON read，仍不开放任何执行能力。
 
 ## 1. 启动判定
 
@@ -120,10 +120,11 @@ scope_id = sha256(canonical_json({
 
 要求：
 
-- handoff 的 `source.envelope_file`、consumer 的 `source_envelope_file`、snapshot 的 `source.envelope_file` 必须完全一致；
-- handoff、consumer、snapshot 的 `scope_id` 必须完全一致；
+- handoff 与 snapshot 的 `source.envelope_file` 必须等于显式 normalized project-relative path；
+- Stage 18 consumer 的 `source_handoff_id` 必须匹配 handoff canonical identity，从而传递验证后的 scope source；
+- reader 独立计算 `envelope_content_id` 与 `scope_id`，并在 snapshot 返回后再次校验 envelope bytes 未发生漂移；
 - `snapshot_id` 必须在 reader 内对完整 snapshot payload 重新计算；
-- 任意 identity 或 scope mismatch 都是 `validation_failed`，不得降级为 `ready`；
+- 任意 handoff/source/snapshot/scope mismatch 都是 `validation_failed`，不得降级为 `ready`；
 - 输出只保留 normalized relative path 与 content/scope id，不保留绝对路径、raw envelope bytes 或 descriptor argv。
 
 由于新增 scope identity 会改变 representation contract，不能偷偷复用 Stage 22 `v1` 并赋予新语义；实现时应新增明确的版本化 schema/reader id。
@@ -174,16 +175,69 @@ scope_id = sha256(canonical_json({
 
 在这些条件未全部满足前，不把 `--envelope` 加入 Stage 22 reader，不把 handoff 中已有的 envelope argv 当作可执行授权。
 
-## 9. 当前验收结论
+Stage 24 实现前已逐项满足上述条件；实现以新增 `v2` scoped contract 的方式落地，不改变无 envelope 的 Stage 22 `v1` 语义。
 
-本轮结论为：**Stage 23 design gate 已启动，设计边界已冻结；Envelope-scoped Snapshot Read Implementation 尚未启动。**
+## 9. Design Gate 验收结论
 
-保留的安全基线：
+Stage 23 design gate 已通过。进入条件已由用户授权、allowlist、input gate、scope identity、TDD 与 no-execute boundary 补齐。
+
+保留的兼容与安全基线：
 
 - `snapshot-json` 仍需显式选择；
-- reader 不接受 `--envelope`；
+- 未提供 envelope 时继续返回 Stage 22 `v1`，runs/approvals/artifacts honest unavailable；
 - descriptor argv 不被执行；
-- 无 envelope 时 runs/approvals/artifacts honest unavailable；
 - no-write、no-network、no-service、no-adapter-execution 保持不变。
 
-<!-- gate-status: started-not-implementation -->
+## 10. Stage 24 实际实现
+
+实现继续复用 `tools/codex_desktop_snapshot_json_reader.py`，没有创建平行 reader：
+
+```bash
+python tools/codex_desktop_snapshot_json_reader.py \
+  --project-root . \
+  --representation snapshot-json \
+  --envelope adapters/execution-envelope.examples.json \
+  --timeout-seconds 30 \
+  --json
+```
+
+版本化结果：
+
+| 模式 | schema | reader id |
+|:---|:---|:---|
+| 无 envelope | `control-plane/codex-desktop-snapshot-read/v1` | `codex-desktop-snapshot-json-reader/v1` |
+| 显式 envelope | `control-plane/codex-desktop-snapshot-read/v2` | `codex-desktop-envelope-snapshot-json-reader/v2` |
+
+scoped 生命周期为：
+
+```text
+created → scoping → producing → validating → reading → ready → closed
+```
+
+固定 argv 由 reader 自身构造：
+
+```text
+handoff --envelope <validated-relative-path> --json
+consumer(stdin=handoff bytes)
+snapshot --envelope <validated-relative-path> --json
+```
+
+不消费 descriptor 内的 argv，也不把 raw envelope 传给 consumer 或输出结果。
+
+## 11. Stage 24 TDD 验收矩阵
+
+测试覆盖：
+
+- v1 默认输出与原有 guarantees 完全兼容；
+- v2 `relative_envelope` / `envelope_content_id` / `scope_id`；
+- runs / approvals / artifacts scoped sections 为 `pass`；
+- absolute、UNC/drive、`..`、非 canonical、allowlist 外和 missing path；
+- strict UTF-8 JSON、duplicate-key、1 MiB、schema/consistency 与 secret scan；
+- handoff scope mismatch、snapshot source/id/hash mismatch、envelope content drift；
+- fixed argv、真实 stdio、确定性、无绝对 root、无 raw input/payload refs/raw refs；
+- no retry、no HTML、no network、no service、no write、no adapter execution。
+
+Stage 24 release notes：`docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`。
+
+<!-- gate-status: passed -->
+<!-- implementation-status: stage24-complete -->

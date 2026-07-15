@@ -2610,3 +2610,13 @@
 - 新增 `docs/84-envelope-scoped-snapshot-read-design-gate.md`，冻结显式 `--representation snapshot-json` + future `--envelope`、project-relative allowlist、越界/`..`/symlink 拒绝、1 MiB/UTF-8/duplicate-key/secret-scan 门禁，以及 handoff → consumer → snapshot 的 scope identity 关联。
 - 保持 Stage 22 reader 现状：不接受 `--envelope`，不执行 descriptor argv；无 envelope 时 runs/approvals/artifacts 继续 `unavailable/envelope_required`，reports 继续 request-scoped。
 - 下一拍只有在具体消费者、envelope 来源、版本化 schema/reader id 与逐项回归测试齐备后，才进入实现。
+
+## 2026-07-15 — Stage 24 Envelope-scoped Snapshot JSON Reader 收口
+
+- 按 Stage 23 design gate 的 allowlist、input gate 与 identity 边界，先新增失败测试并确认 `run_snapshot_json_reader()` 尚不接受 `envelope_file`。
+- 在既有 `tools/codex_desktop_snapshot_json_reader.py` 上新增显式 `--envelope` scoped v2，没有创建平行 reader；无 envelope 的 Stage 22 v1 输出保持兼容。
+- allowlist 仅允许 `adapters/*.json` 与 `drafts/runtime/**/*.envelope.json`；拒绝 absolute/drive/UNC、`..`、非 canonical、allowlist 外、missing 和 root 外 symlink。
+- 读取前校验 1 MiB、strict UTF-8、duplicate key、JSON object、schema/consistency 与 secret scan；输出 normalized path、envelope content id 与 scope id，不回显 raw envelope/input/payload refs/raw refs。
+- handoff source、consumer source handoff id、snapshot source/id/canonical hash 全链关联；snapshot 返回后复查 envelope content id，拒绝 one-shot 生命周期内的 scope drift。
+- scoped lifecycle 为 `created → scoping → producing → validating → reading → ready → closed`；仍不执行 descriptor argv、HTML、网络、service、写入、candidate command 或真实 adapter。
+- Stage 23/24 事实源更新为 `docs/84-envelope-scoped-snapshot-read-design-gate.md`，验收记录为 `docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`。

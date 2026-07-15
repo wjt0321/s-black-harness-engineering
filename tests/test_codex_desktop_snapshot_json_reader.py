@@ -24,12 +24,12 @@ def _reader():
     return importlib.import_module("tools.codex_desktop_snapshot_json_reader")
 
 
-def _handoff() -> dict[str, object]:
-    return build_control_panel_handoff(ROOT).to_dict()
+def _handoff(envelope_file: str | None = None) -> dict[str, object]:
+    return build_control_panel_handoff(ROOT, envelope_file=envelope_file).to_dict()
 
 
-def _snapshot() -> dict[str, object]:
-    return build_control_panel_snapshot(ROOT).to_dict()
+def _snapshot(envelope_file: str | None = None) -> dict[str, object]:
+    return build_control_panel_snapshot(ROOT, envelope_file=envelope_file).to_dict()
 
 
 def _rehash_handoff(payload: dict[str, object]) -> None:
@@ -416,3 +416,267 @@ def test_reader_main_and_real_stdio_pipeline() -> None:
     )
     assert str(ROOT.resolve()) not in completed.stdout.decode("utf-8")
     assert completed.stderr == b""
+
+
+def test_scoped_reader_uses_validated_relative_envelope_and_v2_identity() -> None:
+    reader = _reader()
+    envelope = "adapters/execution-envelope.examples.json"
+    handoff = _handoff(envelope)
+    snapshot = _snapshot(envelope)
+    runner = FakeRunner(handoff, snapshot)
+
+    result = reader.run_snapshot_json_reader(
+        ROOT,
+        representation="snapshot-json",
+        envelope_file=envelope,
+        runner=runner,
+    )
+    payload = result.to_dict()
+
+    envelope_bytes = (ROOT / envelope).read_bytes()
+    content_id = f"sha256:{hashlib.sha256(envelope_bytes).hexdigest()}"
+    scope_identity = {
+        "relative_envelope": envelope,
+        "envelope_content_id": content_id,
+    }
+    canonical = json.dumps(
+        scope_identity,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    scope_id = f"sha256:{hashlib.sha256(canonical).hexdigest()}"
+
+    assert result.status == "ready"
+    assert payload["schema_version"] == "control-plane/codex-desktop-snapshot-read/v2"
+    assert payload["reader"] == "codex-desktop-envelope-snapshot-json-reader/v2"
+    assert payload["source"] == {
+        "project_root": "project_root",
+        "relative_envelope": envelope,
+        "envelope_content_id": content_id,
+        "scope_id": scope_id,
+    }
+    assert payload["representation"]["payload"]["source"] == {
+        "envelope_file": envelope,
+    }
+    assert payload["representation"]["payload"]["sections"]["runs"]["status"] == "pass"
+    assert payload["representation"]["payload"]["sections"]["approvals"]["status"] == "pass"
+    assert payload["representation"]["payload"]["sections"]["artifacts"]["status"] == "pass"
+    assert payload["guarantees"]["reads_envelope_scope"] is True
+    assert runner.calls[0]["argv"] == [
+        *reader.HANDOFF_ARGV[:-1],
+        "--envelope",
+        envelope,
+        "--json",
+    ]
+    assert runner.calls[2]["argv"] == [
+        *reader.SNAPSHOT_ARGV[:-1],
+        "--envelope",
+        envelope,
+        "--json",
+    ]
+    serialized = json.dumps(payload, ensure_ascii=False)
+    assert str(ROOT.resolve()) not in serialized
+    assert '"input"' not in serialized
+    assert "payload_refs" not in serialized
+    assert "raw_ref" not in serialized
+
+
+def test_scoped_reader_rejects_unsafe_or_disallowed_paths_without_spawning() -> None:
+    reader = _reader()
+    calls: list[object] = []
+
+    def runner(*args: object, **kwargs: object) -> SimpleNamespace:
+        calls.append((args, kwargs))
+        raise AssertionError("unsafe scope must not spawn")
+
+    candidates = [
+        str((ROOT / "adapters" / "execution-envelope.examples.json").resolve()),
+        "../outside.json",
+        "tasks/task.schema.json",
+        "adapters/nested/envelope.json",
+        "drafts/runtime/not-an-envelope.json",
+        "adapters//execution-envelope.examples.json",
+        r"\\server\share\envelope.json",
+        "",
+    ]
+    for candidate in candidates:
+        result = reader.run_snapshot_json_reader(
+            ROOT,
+            representation="snapshot-json",
+            envelope_file=candidate,
+            runner=runner,
+        )
+        assert result.status == "validation_failed"
+        assert result.to_dict()["representation"]["status"] == "not_run"
+
+    missing = reader.run_snapshot_json_reader(
+        ROOT,
+        representation="snapshot-json",
+        envelope_file="adapters/missing-envelope.json",
+        runner=runner,
+    )
+    assert missing.status == "error"
+    assert "envelope-file-unavailable" in {
+        finding["rule_id"] for finding in missing.to_dict()["findings"]
+    }
+    assert calls == []
+
+
+def test_scoped_reader_rejects_secret_and_duplicate_key_before_spawning(tmp_path: Path) -> None:
+    reader = _reader()
+    project = tmp_path / "project"
+    adapters = project / "adapters"
+    adapters.mkdir(parents=True)
+    (project / "agent_runtime").mkdir()
+    (project / "pyproject.toml").write_text("[project]\nname='fixture'\n", encoding="utf-8")
+    (adapters / "execution-envelope.schema.json").write_text(
+        (ROOT / "adapters" / "execution-envelope.schema.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    calls: list[object] = []
+
+    def runner(*args: object, **kwargs: object) -> SimpleNamespace:
+        calls.append((args, kwargs))
+        raise AssertionError("invalid envelope must not spawn")
+
+    duplicate = adapters / "duplicate.json"
+    duplicate.write_text('{"version":1,"version":1,"artifacts":[]}', encoding="utf-8")
+    duplicate_result = reader.run_snapshot_json_reader(
+        project,
+        representation="snapshot-json",
+        envelope_file="adapters/duplicate.json",
+        runner=runner,
+    )
+    assert duplicate_result.status == "validation_failed"
+    assert "envelope-protocol-duplicate-key" in {
+        finding["rule_id"] for finding in duplicate_result.to_dict()["findings"]
+    }
+
+    secret_value = "ghp_" + "A" * 32
+    secret = adapters / "secret.json"
+    secret.write_text(
+        json.dumps({"version": 1, "description": secret_value, "artifacts": []}),
+        encoding="utf-8",
+    )
+    secret_result = reader.run_snapshot_json_reader(
+        project,
+        representation="snapshot-json",
+        envelope_file="adapters/secret.json",
+        runner=runner,
+    )
+    secret_payload = secret_result.to_dict()
+    assert secret_result.status == "validation_failed"
+    assert "envelope-secret-github-token" in {
+        finding["rule_id"] for finding in secret_payload["findings"]
+    }
+    assert "line 1" in secret_payload["findings"][0]["message"]
+    assert secret_value not in json.dumps(secret_payload, ensure_ascii=False)
+
+    oversized = adapters / "oversized.json"
+    oversized.write_bytes(b"{" + b"x" * (reader.MAX_OUTPUT_BYTES + 1))
+    oversized_result = reader.run_snapshot_json_reader(
+        project,
+        representation="snapshot-json",
+        envelope_file="adapters/oversized.json",
+        runner=runner,
+    )
+    assert oversized_result.status == "validation_failed"
+    assert "envelope-input-too-large" in {
+        finding["rule_id"] for finding in oversized_result.to_dict()["findings"]
+    }
+    assert calls == []
+
+
+def test_scoped_reader_rejects_handoff_scope_mismatch_before_snapshot_read() -> None:
+    reader = _reader()
+    envelope = "adapters/execution-envelope.examples.json"
+    handoff = _handoff(envelope)
+    handoff["source"] = {"envelope_file": "adapters/other.json"}
+    _rehash_handoff(handoff)
+    runner = FakeRunner(handoff, _snapshot(envelope))
+
+    result = reader.run_snapshot_json_reader(
+        ROOT,
+        representation="snapshot-json",
+        envelope_file=envelope,
+        runner=runner,
+    )
+
+    assert result.status == "validation_failed"
+    assert "handoff-scope-mismatch" in {
+        finding["rule_id"] for finding in result.to_dict()["findings"]
+    }
+    assert len(runner.calls) == 2
+
+
+def test_scoped_reader_detects_envelope_content_change_after_scope_validation(
+    tmp_path: Path,
+) -> None:
+    reader = _reader()
+    project = tmp_path / "project"
+    adapters = project / "adapters"
+    adapters.mkdir(parents=True)
+    (project / "agent_runtime").mkdir()
+    (project / "pyproject.toml").write_text("[project]\nname='fixture'\n", encoding="utf-8")
+    (adapters / "execution-envelope.schema.json").write_text(
+        (ROOT / "adapters" / "execution-envelope.schema.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    envelope = adapters / "scope.json"
+    envelope.write_text(
+        (ROOT / "adapters" / "execution-envelope.examples.json").read_text(
+            encoding="utf-8"
+        ),
+        encoding="utf-8",
+    )
+
+    scope = reader._validate_envelope_scope(project, "adapters/scope.json")
+    envelope.write_text(envelope.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+    try:
+        reader._ensure_envelope_scope_unchanged(project, scope)
+    except reader.ReaderProtocolError as exc:
+        assert exc.rule_id == "envelope-scope-content-changed"
+    else:
+        raise AssertionError("scope content drift must be rejected")
+
+
+def test_scoped_reader_real_stdio_pipeline() -> None:
+    reader = _reader()
+    envelope = "adapters/execution-envelope.examples.json"
+    output = io.StringIO()
+
+    exit_code = reader.main(
+        argv=[
+            "--project-root",
+            str(ROOT),
+            "--representation",
+            "snapshot-json",
+            "--envelope",
+            envelope,
+            "--json",
+        ],
+        stdout=output,
+    )
+
+    payload = json.loads(output.getvalue())
+    assert exit_code == 0
+    assert payload["status"] == "ready"
+    assert payload["schema_version"] == "control-plane/codex-desktop-snapshot-read/v2"
+    assert payload["source"]["relative_envelope"] == envelope
+    assert payload["lifecycle"]["phases"] == [
+        "created",
+        "scoping",
+        "producing",
+        "validating",
+        "reading",
+        "ready",
+        "closed",
+    ]
+    sections = payload["representation"]["payload"]["sections"]
+    assert sections["runs"]["status"] == "pass"
+    assert sections["approvals"]["status"] == "pass"
+    assert sections["artifacts"]["status"] == "pass"
+    assert str(ROOT.resolve()) not in output.getvalue()

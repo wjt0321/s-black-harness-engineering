@@ -1796,12 +1796,32 @@ python tools/codex_desktop_snapshot_json_reader.py \
 
 说明：
 
-- `--representation snapshot-json` 必须显式提供；v1 没有默认 representation；
+- `--representation snapshot-json` 必须显式提供；没有默认 representation；
 - 固定执行 handoff producer → reference consumer → snapshot producer；
 - 不执行 descriptor 中的 argv；
-- 输出 schema 为 `control-plane/codex-desktop-snapshot-read/v1`；
+- 未提供 envelope 时输出 `control-plane/codex-desktop-snapshot-read/v1`；
 - `ready` 前校验 snapshot schema、source、guarantees、handoff identity 与 canonical hash；
-- v1 不接受 `--envelope`，不读取 HTML，不打开浏览器，不写文件，不访问网络，不启动 service，不执行真实 adapter。
+- v1 不读取 HTML，不打开浏览器，不写文件，不访问网络，不启动 service，不执行真实 adapter。
+
+Stage 24 新增显式 envelope-scoped v2：
+
+```bash
+python tools/codex_desktop_snapshot_json_reader.py \
+  --project-root . \
+  --representation snapshot-json \
+  --envelope adapters/execution-envelope.examples.json \
+  --timeout-seconds 30 \
+  --json
+```
+
+scoped mode 规则：
+
+- 输出 `control-plane/codex-desktop-snapshot-read/v2` / `codex-desktop-envelope-snapshot-json-reader/v2`；
+- 只接受 `adapters/*.json` 与 `drafts/runtime/**/*.envelope.json` project-relative allowlist；
+- 拒绝绝对路径、drive/UNC、`..`、非 canonical path、root 外 symlink 和 arbitrary JSON；
+- 读取前执行 1 MiB、strict UTF-8、duplicate-key、schema/consistency 与 secret scan；
+- 输出 `relative_envelope`、`envelope_content_id`、`scope_id`，不输出 absolute root、raw envelope、`input`、payload refs 或 raw refs；
+- snapshot 返回后再次校验 envelope content id，拒绝 one-shot 生命周期内的内容漂移。
 
 总览聚合：
 

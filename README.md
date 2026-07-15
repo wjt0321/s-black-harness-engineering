@@ -57,7 +57,7 @@
 当前仓库已经形成可内部试用的**离线、可审计 CLI / Runtime 安全内核**，并完成 Stage 12 control-plane read model 验收：
 
 - 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
-- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP、Stage 17 stdio host handoff、Stage 18 独立 reference consumer、Stage 19 Codex Desktop 只读 adapter design gate、Stage 20 one-shot adapter、Stage 21 representation read design gate 与 Stage 22 snapshot JSON reader 均已完成收口；
+- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP、Stage 17 stdio host handoff、Stage 18 独立 reference consumer、Stage 19 Codex Desktop 只读 adapter design gate、Stage 20 one-shot adapter、Stage 21 representation read design gate、Stage 22 project-scoped reader、Stage 23 design gate 与 Stage 24 envelope-scoped reader 均已完成收口；
 - 当前可生成本地、自包含、确定性的静态只读 Control Panel，通过版本化 descriptor 声明 snapshot/HTML representation，并用标准库-only、stdin-only consumer 独立验证 schema、identity 与只读边界；真实 adapter execution、持久化 service/DB、鉴权和 UI 写操作仍未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条
@@ -127,7 +127,9 @@
 - ✅ Stage 20 — Host-specific Read-only Adapter Implementation（固定 producer/consumer 的 one-shot read-only adapter 已收口）
 - ✅ Stage 21 — Read-only Representation Read Design Gate（validation-only 已冻结）
 - ✅ Stage 22 — Codex Desktop Snapshot JSON Reader（显式 one-shot snapshot read 已收口）
-- 🟡 Stage 23 — Envelope-scoped Snapshot Read Design Gate（已启动，设计门未放行实现）
+- ✅ Stage 23 — Envelope-scoped Snapshot Read Design Gate（已通过）
+- ✅ Stage 24 — Codex Desktop Envelope-scoped Snapshot JSON Reader（显式 allowlist-only v2 已收口）
+- ⚪ Stage 25 — Envelope-scoped Consumer Integration / Filter Design Gate（条件启动）
 
 ### 现在最明确的位置
 
@@ -139,13 +141,13 @@
 
 ### 接下来的方向
 
-Stage 23 设计门已启动，但尚未放行 envelope-scoped reader 实现：
+Stage 23 design gate 与 Stage 24 scoped reader 已完成：
 
-1. 用户已明确要求继续推进 Stage 23；具体 envelope 消费者和文件来源仍需在实现前冻结
-2. 设计门冻结显式授权、project-relative envelope path allowlist 与越界拒绝
-3. 复用 Stage 17 handoff、Stage 18 validation 与 Stage 22 identity/hash 校验，不创建平行管线
-4. 当前 reader 仍不接受 `--envelope`，不读取 HTML，不打开浏览器、不写文件或 artifact
-5. Stage 23 事实源为 `docs/84-envelope-scoped-snapshot-read-design-gate.md`；Stage 22 事实源为 `docs/83-codex-desktop-snapshot-json-reader-implementation.md`
+1. 用户必须同时显式选择 `snapshot-json` 并提供 allowlist 内的 project-relative `--envelope`
+2. allowlist 为 `adapters/*.json` 与 `drafts/runtime/**/*.envelope.json`，绝对路径、`..`、越界和 arbitrary JSON 均拒绝
+3. 复用 Stage 17 handoff、Stage 18 validation 与 Stage 22 snapshot identity/hash 校验，不创建平行管线
+4. scoped v2 输出 envelope content/scope identity，并在 one-shot 结束前复查内容未漂移
+5. 仍不读取 HTML、不打开浏览器、不写文件或 artifact；事实源为 `docs/84-envelope-scoped-snapshot-read-design-gate.md`
 
 已落地的主线能力包括：
 
@@ -167,7 +169,7 @@ Stage 23 设计门已启动，但尚未放行 envelope-scoped reader 实现：
 - post-Stage 14 CLI automation：`orchestration contract inspect/check`、`orchestration profile list/inspect/check`、`orchestration workflow plan/check`（确定性发现、协商、命名化、未执行步骤投影与 hash drift validation）
 - Stage 16/17 Read-only Control Panel：`orchestration control-panel snapshot/render/handoff`（确定性 snapshot、自包含 HTML、stdio host descriptor、可选 envelope-scoped run/approval/artifact、无 service/network/write/execute）
 - Stage 20 Codex Desktop Read-only Adapter：`python tools/codex_desktop_read_only_adapter.py --project-root . --timeout-seconds 30 --json`（固定 producer → reference consumer validation，一次性、无写入、无网络、不读取 representation）
-- Stage 22 Codex Desktop Snapshot JSON Reader：`python tools/codex_desktop_snapshot_json_reader.py --project-root . --representation snapshot-json --timeout-seconds 30 --json`（显式选择、固定三段 argv、identity/hash 校验、有界 JSON representation）
+- Stage 22/24 Codex Desktop Snapshot JSON Reader：无 envelope 时保持 v1；显式追加 `--envelope adapters/execution-envelope.examples.json` 时返回 allowlist-only scoped v2（固定三段 argv、scope/content identity、无写入/网络/执行）
 
 ## 当前边界
 

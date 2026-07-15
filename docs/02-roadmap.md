@@ -838,13 +838,34 @@ codex-desktop-read-only-adapter/v1
 - `docs/83-codex-desktop-snapshot-json-reader-implementation.md`
 - `docs/archive/release-notes/85-release-notes-stage22-codex-desktop-snapshot-json-reader.md`
 
-继续延期：envelope 参数、HTML、浏览器、文件 export、refresh/server、UI write 与真实 adapter execution。
+Stage 22 收口时继续延期 envelope 参数；该项已在 Stage 23/24 通过独立设计门与版本化 v2 实现。HTML、浏览器、文件 export、refresh/server、UI write 与真实 adapter execution 继续延期。
 
 ---
 
-## Stage 23 — Envelope-scoped Snapshot Read Design Gate（条件启动）
+## Stage 23 — Envelope-scoped Snapshot Read Design Gate（已完成）
 
-只有用户明确需要 run/approval/artifact scoped representation，并先冻结显式授权、project-relative envelope path allowlist、越界拒绝、identity 关联、输出边界和 no-write 证据后，才启动设计。Stage 22 reader 当前不接受 `--envelope`。
+已冻结显式授权、project-relative envelope path allowlist、越界拒绝、输入大小/UTF-8/duplicate-key/schema/secret scan、scope identity、输出脱敏与 no-write/no-network/no-service 证据。事实源：`docs/84-envelope-scoped-snapshot-read-design-gate.md`。
+
+---
+
+## Stage 24 — Codex Desktop Envelope-scoped Snapshot JSON Reader（已完成）
+
+已在既有 reader 上新增显式 `--envelope` scoped v2：
+
+- 无 envelope 保持 Stage 22 v1；
+- allowlist 仅为 `adapters/*.json` 与 `drafts/runtime/**/*.envelope.json`；
+- 固定 handoff → consumer → snapshot 三段 argv；
+- 输出 envelope content id / scope id，并校验 handoff/source/snapshot identity 与 one-shot content drift；
+- 只返回 runs / approvals / artifacts 安全摘要；reports 继续 request-scoped unavailable；
+- 不执行 descriptor argv、HTML、网络、service、写入或真实 adapter。
+
+验收记录：`docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`。
+
+---
+
+## Stage 25 — Envelope-scoped Consumer Integration / Filter Design Gate（条件启动）
+
+仅在出现明确 task/request filter 或宿主展示消费者需求时启动。设计前必须冻结 filter 作用域、identity、输出上限、no arbitrary query/path、no persistence/export 与 no HTML/browser/network/write 边界。
 
 ---
 
