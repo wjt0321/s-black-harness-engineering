@@ -385,7 +385,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 主要交付物：
 
 - `docs/54-backend-preparation-before-ui.md`
-- `docs/55-release-notes-orchestration-read-models.md`
+- `docs/archive/release-notes/55-release-notes-orchestration-read-models.md`
 - 十只读 `orchestration *` CLI 命令（见 55）
 
 要做的事：
@@ -419,7 +419,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 主要交付物：
 
 - `docs/56-orchestration-controlled-write-boundary.md`（design gate）
-- `docs/57-release-notes-orchestration-controlled-handoff.md`
+- `docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md`
 - `orchestration route preview`（只读 capability routing preview）
 - `orchestration preflight`（只读 routing + guardrail 聚合）
 - `orchestration approval resolve`（event-ledger append 方案受控写入）
@@ -502,7 +502,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 - `agent_runtime/orchestration_run_commit.py`
 - `tests/test_orchestration_run_commit.py`
-- `docs/59-release-notes-orchestration-run-controlled-execution.md`
+- `docs/archive/release-notes/59-release-notes-orchestration-run-controlled-execution.md`
 - `docs/10-cli-poc-usage.md` / `docs/53-minimal-orchestration-loop-cli-draft.md` / `docs/58-orchestration-run-controlled-execution-design.md` 更新
 
 已落地能力：
@@ -531,7 +531,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 主要交付物：
 
 - `docs/60-orchestration-run-lifecycle-events-design.md`
-- `docs/61-release-notes-orchestration-run-lifecycle-events.md`
+- `docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`
 - `tasks/event.schema.json` enum 扩展
 - `agent_runtime/orchestration_run_commit.py`
 - `tests/test_orchestration_run_commit.py`
@@ -571,7 +571,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 - B：向 event ledger 追加一条 `created` event。
 - A+B：all-or-nothing rollback，不接受“task 已存在但没有 created event”或“created event 已存在但 task 不存在”的残留状态。
 - 输出与 read model 一致性：补齐 task list/get 与 event timeline 的入口一致性，但仍不自动触发 route / preflight / run。
-- 阶段收口文档：`docs/65-release-notes-orchestration-task-submit-created-event.md`。
+- 阶段收口文档：`docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`。
 
 说明：
 
@@ -594,7 +594,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 - `plan_hash` 纳入 lineage 字段，避免普通 dry-run、retry dry-run、fallback dry-run 共用同一 hash。
 - 第一版仅实现 dry-run preview，不实现 retry/fallback commit。
 - 不扩展 event schema enum，不引入独立 Run storage，不自动执行真实 adapter。
-- 阶段收口文档：`docs/67-release-notes-orchestration-run-retry-fallback.md`。
+- 阶段收口文档：`docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`。
 
 说明：
 
@@ -610,14 +610,14 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 已完成范围：
 
-- 已新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md`，明确候选能力包、验证证据与冻结前判定。
-- 已新增 `docs/69-orchestration-foundation-freeze-execution-plan.md`，记录冻结范围、建议 commit message、建议 tag、annotated tag message 与执行顺序。
+- 已新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md`，明确候选能力包、验证证据与冻结前判定。
+- 已新增 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，记录冻结范围、建议 commit message、建议 tag、annotated tag message 与执行顺序。
 - 已完成冻结前验证：全量 `pytest tests -q`、`doctor`、`public_scan`、`git diff --check`。
 - 已完成实际冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 
 说明：
 
-- `68` / `69` 仍保留为冻结前判断与执行方案的历史文档。
+- `68` / `69` 已完整归档到 `docs/archive/`，继续保留冻结前判断与执行方案的历史证据。
 - 当前阶段已经不再是“等待 Git 动作”，而是进入 freeze 之后的文档收口与下一拍承接。
 - 不标记 Stage 16 开始；Stage 16 仍保持远期。
 
@@ -654,7 +654,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 - `orchestration run list` 已能在每条 run 摘要中显示紧凑 lineage 标识
 - `orchestration report generate` 已补 lineage 安全摘要
 - lineage 提取优先复用 envelope `adapter_request.context`，不引入新存储
-- 阶段收口文档：`docs/71-release-notes-run-lineage-read-models.md`
+- 阶段收口文档：`docs/archive/release-notes/71-release-notes-run-lineage-read-models.md`
 
 说明：
 

@@ -2,7 +2,7 @@
 
 ## 阶段定位
 
-`docs/59-release-notes-orchestration-run-controlled-execution.md` 已经把 `orchestration run --dry-run` 落地；本文档所设计的 B 侧 run lifecycle events 也已实现：
+`docs/archive/release-notes/59-release-notes-orchestration-run-controlled-execution.md` 已经把 `orchestration run --dry-run` 落地；本文档所设计的 B 侧 run lifecycle events 也已实现：
 
 - `orchestration run --dry-run`：只读 run plan preview + 稳定 `plan_hash`。
 - `orchestration run --commit` A+B：生成 envelope draft/export 文件，并追加 `run_planned` + `run_draft_exported` lifecycle events 到 event ledger，all-or-nothing 回滚。
@@ -199,9 +199,9 @@ B 第一版建议要求显式 `--events-file`，避免默认写真实仓库 `tas
 - `docs/53-minimal-orchestration-loop-cli-draft.md` 提供了 `orchestration run` 命令草案；本文档为其 B 侧扩展提供设计前置。
 - `docs/54-backend-preparation-before-ui.md` 定义了执行页 read model；本文档说明 lifecycle events 如何补充执行页数据。
 - `docs/56-orchestration-controlled-write-boundary.md` 定义了 dry-run/commit 统一语义；本文档将其扩展到 event ledger append。
-- `docs/57-release-notes-orchestration-controlled-handoff.md` 记录了 route preview / preflight / approval resolve 落地；这些命令仍是 run commit 的前置。
+- `docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md` 记录了 route preview / preflight / approval resolve 落地；这些命令仍是 run commit 的前置。
 - `docs/58-orchestration-run-controlled-execution-design.md` 定义了 A/B 产物策略；本文档把 B 侧 event append 的 schema、payload、顺序、回滚规则讲清楚。
-- `docs/59-release-notes-orchestration-run-controlled-execution.md` 记录了 A-only 落地；本文档是 B 侧实现的直接前置。
+- `docs/archive/release-notes/59-release-notes-orchestration-run-controlled-execution.md` 记录了 A-only 落地；本文档是 B 侧实现的直接前置。
 
 ## 实现状态
 

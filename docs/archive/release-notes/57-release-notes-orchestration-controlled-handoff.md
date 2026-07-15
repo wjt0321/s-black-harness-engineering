@@ -124,7 +124,7 @@ python -m agent_runtime.cli orchestration approval resolve \
 
 ## 文档更新
 
-- 新增本文档 `docs/57-release-notes-orchestration-controlled-handoff.md`。
+- 新增本文档 `docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md`。
 - 更新 `docs/00-index.md`：在中枢台后端主线与发布/阶段收口列表中加入 57。
 - 更新 `docs/02-roadmap.md`：Stage 15.5 状态从「design gate」调整为「第一批 controlled handoff / approval resolve 已落地」。
 - 更新 `docs/10-cli-poc-usage.md`：把三个命令从草案标记为已存在命令，并补充示例。

@@ -54,7 +54,7 @@
 
 ## 文档更新
 
-- 新增本文档 `docs/55-release-notes-orchestration-read-models.md`。
+- 新增本文档 `docs/archive/release-notes/55-release-notes-orchestration-read-models.md`。
 - 更新 `docs/00-index.md`：在中枢台后端主线与发布/阶段收口列表中加入 55。
 - 更新 `docs/02-roadmap.md`：Stage 15 状态从「设计文档已落地」调整为「read-model CLI 第一版已落地」。
 - 更新 `docs/10-cli-poc-usage.md`：新增 Orchestration Read-Model CLI 章节。

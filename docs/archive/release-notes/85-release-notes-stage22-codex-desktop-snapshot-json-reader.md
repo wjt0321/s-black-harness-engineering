@@ -39,3 +39,10 @@
 目标测试、真实 Windows 三段 stdio smoke、全量 pytest、doctor、public scan、controlled-write regression、compileall、pre-commit 与 `git diff --check` 均通过。
 
 下一阶段为条件启动的 Stage 23 Envelope-scoped Snapshot Read Design Gate；Stage 22 完成不自动开放 envelope、HTML、浏览器或 export。
+
+## 5. Post-close 文档沉淀
+
+- 将已被当前冻结事实源取代的 `68` / `69` 两份 `v0.12.0` freeze 历史文档完整移入 `docs/archive/`；
+- 更新全部当前路径引用与维护规则；
+- 活跃 `docs/` 根目录 Markdown 数从 51 降至 49；
+- 无内容删除，无生产代码行为变化，Stage 23 条件启动边界不变。

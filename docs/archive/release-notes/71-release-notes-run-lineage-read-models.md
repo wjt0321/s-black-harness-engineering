@@ -77,7 +77,7 @@ report 路径现在也能看见 lineage 安全摘要：
 文档：
 
 - `docs/10-cli-poc-usage.md`
-- `docs/71-release-notes-run-lineage-read-models.md`
+- `docs/archive/release-notes/71-release-notes-run-lineage-read-models.md`
 
 ## 保持不变的边界
 

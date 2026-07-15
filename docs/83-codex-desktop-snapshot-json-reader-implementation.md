@@ -152,3 +152,16 @@ created -> producing -> validating -> reading -> ready -> closed
 - 已通过真实 Windows stdio smoke、全量测试与仓库安全门禁。
 
 下一阶段为 **Stage 23 — Envelope-scoped Snapshot Read Design Gate（条件启动）**。v1 不接受 envelope；只有明确用户需要 run/approval/artifact scoped representation，并冻结 project-relative path、授权和 no-write 边界后才启动。HTML、浏览器和 export 继续延期。
+
+## 11. Post-close 文档沉淀
+
+Stage 22 收口后，`docs/` 根目录达到 51 个 Markdown 文件。按 `docs/MAINTENANCE.md` 的 SHOULD 归档规则完成无损整理：
+
+- 完整移动 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 到 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md`；
+- 完整移动 `docs/69-orchestration-foundation-freeze-execution-plan.md` 到 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`；
+- 两份文档均属于已完成的 `v0.12.0-orchestration-foundation` 历史冻结记录，当前冻结事实已由 `docs/77-read-only-control-plane-milestone-freeze.md` 取代；
+- 文档正文与历史命令示例全部保留，没有删除独特约束、证据或操作记录；
+- README、中英文入口、roadmap、index、历史 handoff 与 progress 中的当前路径引用已同步；同时修复 55/57/59/61/65/67/71 release notes 的既有归档路径；
+- 活跃根目录 Markdown 数量从 51 降至 49，低于维护提示阈值 50。
+
+Stage 23 的进入条件保持不变：没有明确 envelope-scoped consumer 需求时，不新增 `--envelope`。

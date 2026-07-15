@@ -2,7 +2,7 @@
 
 ## 阶段定位
 
-`docs/57-release-notes-orchestration-controlled-handoff.md` 已经把第一批 handoff / controlled-write 命令落地：
+`docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md` 已经把第一批 handoff / controlled-write 命令落地：
 
 - `orchestration route preview`：只读 capability routing preview。
 - `orchestration preflight`：只读 routing + guardrail 聚合 handoff。
@@ -274,7 +274,7 @@ commit 后至少执行：
 - `docs/53-minimal-orchestration-loop-cli-draft.md` 提供了 `orchestration run` 命令草案；本文档为其进入实现提供设计前置。
 - `docs/54-backend-preparation-before-ui.md` 定义了执行页 read model；本文档说明执行页操作入口（run dry-run/commit）在写入侧应如何沉淀产物。
 - `docs/56-orchestration-controlled-write-boundary.md` 定义了 dry-run/commit 统一语义；本文档将其应用到 run 命令。
-- `docs/57-release-notes-orchestration-controlled-handoff.md` 记录了 route preview / preflight / approval resolve 落地；本文档是 run 侧落地的直接前置。
+- `docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md` 记录了 route preview / preflight / approval resolve 落地；本文档是 run 侧落地的直接前置。
 
 ## 下一步建议
 

@@ -1,5 +1,8 @@
 # 69 — Orchestration Foundation Freeze Execution Plan
 
+> 归档状态：2026-07-15 按 `docs/MAINTENANCE.md` 移入 `docs/archive/`；正文与历史命令示例完整保留，不应再作为当前执行计划。当前冻结事实源为 `docs/77-read-only-control-plane-milestone-freeze.md`。
+
+
 ## 目标
 
 本文档用于把当前已通过验证的 orchestration foundation 候选变更，整理成一次可执行的冻结动作方案。
@@ -40,9 +43,9 @@
 
 - `docs/63-orchestration-task-submit-created-event-design.md`
 - `docs/64-versioning-governance.md`
-- `docs/65-release-notes-orchestration-task-submit-created-event.md`
+- `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`
 - `docs/66-orchestration-run-retry-fallback-design.md`
-- `docs/67-release-notes-orchestration-run-retry-fallback.md`
+- `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`
 - `docs/68-orchestration-foundation-milestone-freeze-checklist.md`
 - `docs/69-orchestration-foundation-freeze-execution-plan.md`
 
@@ -128,9 +131,9 @@ git add README.md README.en.md \
   docs/00-index.md docs/02-roadmap.md docs/10-cli-poc-usage.md \
   docs/63-orchestration-task-submit-created-event-design.md \
   docs/64-versioning-governance.md \
-  docs/65-release-notes-orchestration-task-submit-created-event.md \
+  docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md \
   docs/66-orchestration-run-retry-fallback-design.md \
-  docs/67-release-notes-orchestration-run-retry-fallback.md \
+  docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md \
   docs/68-orchestration-foundation-milestone-freeze-checklist.md \
   docs/69-orchestration-foundation-freeze-execution-plan.md \
   tasks/progress.md \

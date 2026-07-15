@@ -239,7 +239,7 @@ candidate task 仍需通过：
 - `docs/51-backend-first-api-boundary.md` 中，`TaskCollection.create` 是受控写入操作；本文档把它细化到 CLI / controlled-write 层。
 - `docs/54-backend-preparation-before-ui.md` 中，任务页的“创建任务”操作入口目前仍是草案；本文档把它转成可实现的第一版写入边界。
 - `docs/56-orchestration-controlled-write-boundary.md` 已明确 `orchestration task submit --commit` 应晚于 route/preflight/approval resolve、早于 retry/fallback；本文档承接这个排期。
-- `docs/61-release-notes-orchestration-run-lifecycle-events.md` 已说明 run 侧 A+B 完成；本文档把下一步焦点从 run 生命周期切回 task 入口。
+- `docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md` 已说明 run 侧 A+B 完成；本文档把下一步焦点从 run 生命周期切回 task 入口。
 
 ## 验收标准
 

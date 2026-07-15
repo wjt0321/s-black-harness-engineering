@@ -66,8 +66,9 @@
 
 ### 6. 想看里程碑与冻结记录
 
-- `68-orchestration-foundation-milestone-freeze-checklist.md`
-- `69-orchestration-foundation-freeze-execution-plan.md`
+- 当前冻结事实源：`77-read-only-control-plane-milestone-freeze.md`
+- 历史 `v0.12.0` freeze checklist：`archive/68-orchestration-foundation-milestone-freeze-checklist.md`
+- 历史 `v0.12.0` freeze execution plan：`archive/69-orchestration-foundation-freeze-execution-plan.md`
 
 ### 7. 想看历史阶段交付物
 
@@ -75,6 +76,7 @@
 
 | 目录 | 内容 |
 |:---|:---|
+| `archive/` | 历史 freeze checklist / execution plan（`68` / `69` 已完整归档） |
 | `archive/release-notes/` | 各阶段 release notes（最新为 `85-release-notes-stage22-codex-desktop-snapshot-json-reader.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |

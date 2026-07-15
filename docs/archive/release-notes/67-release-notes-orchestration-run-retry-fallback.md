@@ -85,7 +85,7 @@ JSON 与 human 输出现在包含安全 lineage 字段，但仍不回显：
 
 - `docs/10-cli-poc-usage.md`
 - `docs/66-orchestration-run-retry-fallback-design.md`
-- `docs/67-release-notes-orchestration-run-retry-fallback.md`
+- `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`
 
 ## 保持不变的边界
 

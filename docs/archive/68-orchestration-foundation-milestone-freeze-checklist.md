@@ -1,5 +1,8 @@
 # 68 — Orchestration Foundation Milestone Freeze Checklist
 
+> 归档状态：2026-07-15 按 `docs/MAINTENANCE.md` 移入 `docs/archive/`；正文完整保留。当前里程碑冻结事实源为 `docs/77-read-only-control-plane-milestone-freeze.md`。
+
+
 > 后续状态补充：本清单对应的冻结动作已在 commit `38b4b69` 完成，tag 为 `v0.12.0-orchestration-foundation`，且已 push。本文档保留为冻结前判定记录，不再代表“当前仍待冻结”。
 
 ## 目标

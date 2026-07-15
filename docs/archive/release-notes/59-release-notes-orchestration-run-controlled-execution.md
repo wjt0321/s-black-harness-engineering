@@ -125,7 +125,7 @@ python -m agent_runtime.cli orchestration run \
 
 ## 文档更新
 
-- 新增本文档 `docs/59-release-notes-orchestration-run-controlled-execution.md`。
+- 新增本文档 `docs/archive/release-notes/59-release-notes-orchestration-run-controlled-execution.md`。
 - 更新 `docs/00-index.md`：在中枢台后端主线与发布/阶段收口列表中加入 59。
 - 更新 `docs/02-roadmap.md`：Stage 15.6/15.7/15.8 状态调整为 run dry-run / commit A-only 已落地，B lifecycle events 仍后续。
 - 更新 `docs/10-cli-poc-usage.md`：把 `orchestration run --commit` 从草案标记为已存在命令，并补充示例。

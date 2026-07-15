@@ -104,7 +104,7 @@ metadata 只保留安全摘要：
 
 - `docs/10-cli-poc-usage.md`
 - `docs/63-orchestration-task-submit-created-event-design.md`
-- `docs/65-release-notes-orchestration-task-submit-created-event.md`
+- `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`
 
 ## 保持不变的边界
 

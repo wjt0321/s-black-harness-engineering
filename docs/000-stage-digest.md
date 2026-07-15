@@ -4,9 +4,9 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：~35 个
-- 归档文档：`docs/archive/`（release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：~140 个
+- docs/ 活跃文档：49 个
+- 归档文档：48 个，位于 `docs/archive/`（freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：约 170 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -43,6 +43,7 @@
 - Stage 22 已按 TDD 实现 `tools/codex_desktop_snapshot_json_reader.py`：用户显式选择 `snapshot-json`，固定 handoff → consumer → snapshot 三段 argv，独立校验 schema/source/guarantees/identity/canonical hash 后返回有界 JSON representation。
 - Stage 22 不执行 descriptor argv、不读取 HTML、不接受 envelope/URL/任意路径、不写文件、不访问网络、不启动 service、不执行 candidate command 或真实 adapter。
 - Stage 22 事实源：`docs/83-codex-desktop-snapshot-json-reader-implementation.md` 与 `docs/archive/release-notes/85-release-notes-stage22-codex-desktop-snapshot-json-reader.md`。
+- Stage 22 post-close 文档沉淀已完成：旧 `v0.12.0` freeze checklist / execution plan（68/69）完整移入 `docs/archive/`，活跃根目录文档从 51 降至 49，所有外部引用已更新，内容未删除。
 - envelope 未提供时，run/approval/artifact 区段诚实显示 unavailable；report 保持 request-scoped boundary，不伪造持久 collection。
 
 ### Stage 10 基线（保留）

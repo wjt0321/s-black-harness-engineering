@@ -2,7 +2,7 @@
 
 ## 阶段定位
 
-`docs/66-orchestration-run-retry-fallback-design.md` 已完成 retry / fallback 的第一版 design gate，`docs/67-release-notes-orchestration-run-retry-fallback.md` 已完成 dry-run preview 落地。
+`docs/66-orchestration-run-retry-fallback-design.md` 已完成 retry / fallback 的第一版 design gate，`docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md` 已完成 dry-run preview 落地。
 
 当前基线已经具备：
 

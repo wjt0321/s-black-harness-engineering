@@ -258,7 +258,7 @@
 
 ## 2026-07-10 — Run Lineage / Recovery Read Model 第一版
 
-- 在 retry / fallback commit 已落地后，继续补 read model 可见性：新增 `docs/71-release-notes-run-lineage-read-models.md`。
+- 在 retry / fallback commit 已落地后，继续补 read model 可见性：新增 `docs/archive/release-notes/71-release-notes-run-lineage-read-models.md`。
 - `orchestration run inspect` 已支持输出 `lineage_type`、`retry_of`、`fallback_from`、`fallback_to`。
 - `orchestration run list` 已支持在每条 run 摘要中显示紧凑 lineage 标识，普通 run 不误标。
 - `orchestration report generate` 已补 lineage 安全摘要。
@@ -1303,7 +1303,7 @@
 - 所有命令保持只读：不写 ledger/draft/envelope、不执行 adapter、不访问网络、不引入服务/API/数据库/UI。
 - 安全边界：不回显完整 `input` payload、`raw_ref`、`decision_ref`、`payload_refs`、evidence descriptions 或 secret match。
 - 资源边界明确：Run / Approval / Artifact 当前为 envelope-scoped read model；Report 为 runtime-report-backed 实时聚合，未引入独立持久集合。
-- 新增阶段收口文档 `docs/55-release-notes-orchestration-read-models.md`。
+- 新增阶段收口文档 `docs/archive/release-notes/55-release-notes-orchestration-read-models.md`。
 - 更新 `docs/00-index.md`：在中枢台后端主线与发布/阶段收口列表中加入 55，并更新「当前最重要的几份文档」。
 - 更新 `docs/02-roadmap.md`：Stage 15 状态从「设计文档已落地」调整为「read-model CLI 第一版已落地」，补充 Stage 13/14 状态说明，不将 Stage 16 标为开始。
 - 更新 `docs/10-cli-poc-usage.md`：新增「Orchestration Read-Model CLI」章节，给出六类页面命令示例与边界说明。
@@ -1384,7 +1384,7 @@
 
 - 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
 - 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
-- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 新增阶段收口文档：`docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`。
 - 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
 - smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
 - 验证：
@@ -1421,12 +1421,12 @@
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
 - 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
-- 新增 `docs/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
 - 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
-- 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
-- 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+- 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 
 ## 2026-07-09（续）— orchestration preflight 只读 handoff 命令落地
 
@@ -1461,7 +1461,7 @@
 
 - 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
 - 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
-- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 新增阶段收口文档：`docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`。
 - 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
 - smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
 - 验证：
@@ -1498,12 +1498,12 @@
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
 - 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
-- 新增 `docs/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
 - 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
-- 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
-- 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+- 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 
 ## 2026-07-09（续）— orchestration approval resolve 受控写入命令落地
 
@@ -1547,7 +1547,7 @@
 
 - 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
 - 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
-- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 新增阶段收口文档：`docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`。
 - 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
 - smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
 - 验证：
@@ -1584,22 +1584,22 @@
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
 - 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
-- 新增 `docs/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
 - 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
-- 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
-- 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+- 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 
 ## 2026-07-09（续）— Stage 15.5 收口：controlled handoff + approval resolve release notes
 
-- 新增 `docs/57-release-notes-orchestration-controlled-handoff.md`，记录从 56 design gate 到第一批 handoff / controlled-write 命令落地的阶段成果。
+- 新增 `docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md`，记录从 56 design gate 到第一批 handoff / controlled-write 命令落地的阶段成果。
 - 更新 `docs/00-index.md`：
   - 中枢台后端主线列表加入 `57-release-notes-orchestration-controlled-handoff.md`。
   - 发布与阶段收口列表加入 57。
 - 更新 `docs/02-roadmap.md`：
   - Stage 15.5 状态从「design gate / 设计先行」调整为「第一批 controlled handoff / approval resolve 已落地」。
-  - 交付物加入 `docs/57-release-notes-orchestration-controlled-handoff.md`、`orchestration route preview`、`orchestration preflight`、`orchestration approval resolve`。
+  - 交付物加入 `docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md`、`orchestration route preview`、`orchestration preflight`、`orchestration approval resolve`。
   - 不标记 Stage 16 开始；run --commit / retry / fallback 仍暂缓。
 - 更新 `README.md` / `README.en.md`：
   - 阶段进度列表加入 Stage 15.5 并已落地状态。
@@ -1616,7 +1616,7 @@
 
 - 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
 - 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
-- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 新增阶段收口文档：`docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`。
 - 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
 - smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
 - 验证：
@@ -1653,12 +1653,12 @@
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
 - 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
-- 新增 `docs/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
 - 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
-- 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
-- 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+- 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 - 不弱化 guardrail，不夸大 run --commit 已实现。
 
 ## 2026-07-09（续）— Stage 15.6：orchestration run 受控执行设计 gate
@@ -1686,7 +1686,7 @@
 
 - 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
 - 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
-- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 新增阶段收口文档：`docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`。
 - 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
 - smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
 - 验证：
@@ -1723,12 +1723,12 @@
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
 - 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
-- 新增 `docs/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
 - 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
-- 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
-- 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+- 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 - 不弱化 guardrail，不夸大 run --commit 已实现。
 
 ## 2026-07-09（续）— Stage 15.7：orchestration run --dry-run 落地
@@ -1765,7 +1765,7 @@
 
 - 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
 - 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
-- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 新增阶段收口文档：`docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`。
 - 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
 - smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
 - 验证：
@@ -1802,12 +1802,12 @@
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
 - 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
-- 新增 `docs/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
 - 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
-- 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
-- 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+- 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 - 不弱化 guardrail，`--commit` 仍明确未实现，不触发真实 adapter execution。
 
 ## 2026-07-09（续）— Stage 15.8：orchestration run --commit 第一版 A-only 落地
@@ -1850,7 +1850,7 @@
 
 - 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
 - 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
-- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 新增阶段收口文档：`docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`。
 - 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
 - smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
 - 验证：
@@ -1887,17 +1887,17 @@
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
 - 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
-- 新增 `docs/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
 - 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
-- 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
-- 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+- 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 - 不弱化 guardrail，`--commit` 仍明确不执行真实 adapter。
 
-## 2026-07-09（续）— Stage 15.8 收口：docs/59-release-notes-orchestration-run-controlled-execution.md
+## 2026-07-09（续）— Stage 15.8 收口：docs/archive/release-notes/59-release-notes-orchestration-run-controlled-execution.md
 
-- 新增 `docs/59-release-notes-orchestration-run-controlled-execution.md`，记录 `orchestration run --dry-run` 与 `orchestration run --commit` 第一版 A-only controlled write 落地。
+- 新增 `docs/archive/release-notes/59-release-notes-orchestration-run-controlled-execution.md`，记录 `orchestration run --dry-run` 与 `orchestration run --commit` 第一版 A-only controlled write 落地。
 - 文档覆盖：
   - 阶段定位：Stage 15.6 design gate 后的 run 侧第一版实现收口。
   - 已实现命令：`orchestration run --dry-run`（只读 plan preview + plan_hash）、`orchestration run --commit`（A-only envelope draft export）。
@@ -1928,7 +1928,7 @@
 
 - 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
 - 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
-- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 新增阶段收口文档：`docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`。
 - 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
 - smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
 - 验证：
@@ -1965,12 +1965,12 @@
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
 - 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
-- 新增 `docs/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
 - 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
-- 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
-- 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+- 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 - 不说真实 adapter execution 已实现；不弱化 guardrail。
 
 ## 2026-07-09（续）— Stage 15.9：Run Lifecycle Events design gate
@@ -2000,7 +2000,7 @@
 
 - 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
 - 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
-- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 新增阶段收口文档：`docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`。
 - 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
 - smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
 - 验证：
@@ -2037,12 +2037,12 @@
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
 - 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
-- 新增 `docs/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
 - 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
-- 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
-- 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+- 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 - 不说 B 侧 events 已实现；不说真实 adapter execution 已开放；不弱化 guardrail。
 
 ## 2026-07-09（续）— Stage 15.9 实现：Run Lifecycle Events A+B
@@ -2079,7 +2079,7 @@
 
 - 审查并修正 `agent_runtime/orchestration_run_commit.py` 的 B 侧 post-check：不再对最后一条 event 走“临时模拟追加”检查，而是直接验证**实际落盘后的** events ledger，覆盖 event schema validation、task/event ledger consistency 与 runtime ledger audit。
 - 新增回归测试：`tests/test_orchestration_run_commit.py` 断言 post-check 使用正式 `events_file`，避免后续退回临时文件语义。
-- 新增阶段收口文档：`docs/61-release-notes-orchestration-run-lifecycle-events.md`。
+- 新增阶段收口文档：`docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`。
 - 同步更新入口文档与路线图：`README.md`、`README.en.md`、`docs/00-index.md`、`docs/02-roadmap.md`，把 Stage 14/15.8/15.9 的 run commit 状态统一到当前 A+B 实现。
 - smoke 验证：临时隔离 root 下跑 `orchestration run --dry-run` -> `orchestration run --commit --events-file ...`，确认成功写出 envelope draft，并追加 `run_planned` + `run_draft_exported` 两条 events。
 - 验证：
@@ -2116,12 +2116,12 @@
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
 - 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
-- 新增 `docs/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
 - 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
-- 新增 `docs/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
-- 新增 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
+- 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
+- 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
 
 ## 2026-07-11 — Stage 10 第一版：Adapter Capability Registry 内置落地
 
@@ -2593,3 +2593,13 @@
 - 真实 Windows stdio smoke 返回 `ready`，输出确定性且不回显绝对 project root；固定禁用 Python bytecode cache，不写文件、不访问网络、不启动 service、不读取 HTML、不执行真实 adapter。
 - 新增 release notes 85，同步 digest、roadmap、README、CLI usage、AGENTS、index 与最新 handoff。
 - 下一阶段为 Stage 23 Envelope-scoped Snapshot Read Design Gate（条件启动）；当前 reader 不接受 `--envelope`。
+
+
+## 2026-07-15 — Stage 22 Post-close 文档沉淀
+
+- 因活跃 `docs/` 根目录达到 51 个 Markdown 文件，按 `docs/MAINTENANCE.md` 执行阶段后整理。
+- 价值分析确认 `68` / `69` 是已完成 `v0.12.0` 的 freeze checklist / execution plan；独特历史价值需要保留，但当前事实源已由 `docs/77` 取代。
+- 使用完整移动而非删除：两份文档进入 `docs/archive/`，正文、验证证据与历史命令示例全部保留。
+- 同步 README / README.en、index、roadmap、digest、Stage 22 fact/release notes、历史与最新 handoff 及 progress 中的当前路径引用，并修复 55/57/59/61/65/67/71 release notes 的既有归档路径。
+- 更新 `docs/MAINTENANCE.md`，移除 L2 编号只到 `7x` 的过时说明，并增加根目录超过 50 时的无损归档动作。
+- 活跃根目录 Markdown 数量从 51 降至 49；Stage 23 Envelope-scoped Snapshot Read Design Gate 仍为条件启动。
