@@ -81,6 +81,14 @@ class FakeRunner:
         )
 
 
+def test_adapter_minimal_environment_disables_python_bytecode_writes() -> None:
+    adapter = _adapter()
+
+    environment = adapter._minimal_environment()
+
+    assert environment["PYTHONDONTWRITEBYTECODE"] == "1"
+
+
 def test_adapter_accepts_valid_one_shot_pipeline_without_executing_descriptor_argv() -> None:
     adapter = _adapter()
     handoff = _valid_handoff()

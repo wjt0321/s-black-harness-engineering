@@ -153,6 +153,7 @@ def _minimal_environment() -> dict[str, str]:
         "WINDIR",
     }
     environment = {key: os.environ[key] for key in allowed if key in os.environ}
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
     environment["PYTHONUNBUFFERED"] = "1"
     return environment
 

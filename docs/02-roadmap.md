@@ -818,9 +818,33 @@ codex-desktop-read-only-adapter/v1
 
 ---
 
-## Stage 22 — Host-specific Representation Read Implementation（条件启动）
+## Stage 22 — Codex Desktop Snapshot JSON Reader（已完成）
 
-只有出现明确真实消费者，并完成用户显式选择、argv allowlist、路径边界、输出脱敏/上限、timeout/cancel、identity 关联和 no-write/no-network/no-service 设计后，才启动实现。Stage 21 完成不等于自动开放 representation read。
+目标：为 Codex Desktop 本地任务进程提供第一个用户显式触发、一次性、有界的 snapshot JSON representation reader。
+
+第一拍已完成：
+
+- 新增 `tools/codex_desktop_snapshot_json_reader.py`；
+- 用户必须显式选择 `--representation snapshot-json`；
+- 固定执行 handoff producer → Stage 18 consumer → snapshot producer；
+- 不执行 descriptor argv；
+- 校验 snapshot strict JSON、schema、source、guarantees、handoff identity 与 canonical content hash；
+- 输出 `control-plane/codex-desktop-snapshot-read/v1`，包含已验证的 snapshot payload；
+- 一次性、确定性、1 MiB 有界、no-retry、no-write、no-network、no-service、no-adapter-execution；
+- 新增目标测试与真实 Windows 三段 stdio smoke。
+
+事实源：
+
+- `docs/83-codex-desktop-snapshot-json-reader-implementation.md`
+- `docs/archive/release-notes/85-release-notes-stage22-codex-desktop-snapshot-json-reader.md`
+
+继续延期：envelope 参数、HTML、浏览器、文件 export、refresh/server、UI write 与真实 adapter execution。
+
+---
+
+## Stage 23 — Envelope-scoped Snapshot Read Design Gate（条件启动）
+
+只有用户明确需要 run/approval/artifact scoped representation，并先冻结显式授权、project-relative envelope path allowlist、越界拒绝、identity 关联、输出边界和 no-write 证据后，才启动设计。Stage 22 reader 当前不接受 `--envelope`。
 
 ---
 

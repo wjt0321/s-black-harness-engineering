@@ -22,8 +22,8 @@
 
 ## 当前阶段
 
-- **Stage 21 — Read-only Representation Read Design Gate（收口完成）**
-- **下一阶段：Stage 22 — Host-specific Representation Read Implementation（条件启动）**
+- **Stage 22 — Codex Desktop Snapshot JSON Reader（收口完成）**
+- **下一阶段：Stage 23 — Envelope-scoped Snapshot Read Design Gate（条件启动）**
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
@@ -40,6 +40,9 @@
 - Stage 20 事实源：`docs/81-codex-desktop-read-only-adapter-implementation.md` 与 `docs/archive/release-notes/83-release-notes-stage20-codex-desktop-read-only-adapter.md`。
 - Stage 21 已审计 representation 消费边界并冻结 validation-only：当前不执行 descriptor argv、不读取 HTML/JSON、不新增 consume 命令、reader schema 或 service。
 - Stage 21 事实源：`docs/82-read-only-representation-read-design-gate.md` 与 `docs/archive/release-notes/84-release-notes-stage21-read-only-representation-read-design-gate.md`。
+- Stage 22 已按 TDD 实现 `tools/codex_desktop_snapshot_json_reader.py`：用户显式选择 `snapshot-json`，固定 handoff → consumer → snapshot 三段 argv，独立校验 schema/source/guarantees/identity/canonical hash 后返回有界 JSON representation。
+- Stage 22 不执行 descriptor argv、不读取 HTML、不接受 envelope/URL/任意路径、不写文件、不访问网络、不启动 service、不执行 candidate command 或真实 adapter。
+- Stage 22 事实源：`docs/83-codex-desktop-snapshot-json-reader-implementation.md` 与 `docs/archive/release-notes/85-release-notes-stage22-codex-desktop-snapshot-json-reader.md`。
 - envelope 未提供时，run/approval/artifact 区段诚实显示 unavailable；report 保持 request-scoped boundary，不伪造持久 collection。
 
 ### Stage 10 基线（保留）
@@ -114,36 +117,37 @@
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/82-read-only-representation-read-design-gate.md`
-3. 再读：`docs/81-codex-desktop-read-only-adapter-implementation.md`
-4. 再读：`docs/80-codex-desktop-read-only-adapter-design-gate.md`
-5. 再读：`tasks/handoff-2026-07-15.md`
-6. 再读：`docs/79-read-only-host-consumer-validation-boundary.md`
-7. 再读：`docs/78-control-panel-host-integration-boundary.md`
-8. 再读：`docs/77-read-only-control-plane-milestone-freeze.md`
-9. 再读：`docs/76-read-only-control-panel-mvp.md`
-10. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
-11. 再跑：`python -m agent_runtime.cli docs context --json`
-12. 需要 Stage 14 闭环事实时读：`docs/52-minimal-orchestration-loop.md`
-13. 需要 Stage 13 边界时读：`docs/51-backend-first-api-boundary.md`
-14. 需要 Stage 18 验收事实时读：`docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`
-15. 需要 Stage 17 验收事实时读：`docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`
-16. 需要 v0.13 验收事实时读：`docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`
+2. 再读：`docs/83-codex-desktop-snapshot-json-reader-implementation.md`
+3. 再读：`docs/82-read-only-representation-read-design-gate.md`
+4. 再读：`docs/81-codex-desktop-read-only-adapter-implementation.md`
+5. 再读：`docs/80-codex-desktop-read-only-adapter-design-gate.md`
+6. 再读：`tasks/handoff-2026-07-15.md`
+7. 再读：`docs/79-read-only-host-consumer-validation-boundary.md`
+8. 再读：`docs/78-control-panel-host-integration-boundary.md`
+9. 再读：`docs/77-read-only-control-plane-milestone-freeze.md`
+10. 再读：`docs/76-read-only-control-panel-mvp.md`
+11. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
+12. 再跑：`python -m agent_runtime.cli docs context --json`
+13. 需要 Stage 14 闭环事实时读：`docs/52-minimal-orchestration-loop.md`
+14. 需要 Stage 13 边界时读：`docs/51-backend-first-api-boundary.md`
+15. 需要 Stage 18 验收事实时读：`docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`
+16. 需要 Stage 17 验收事实时读：`docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`
+17. 需要 v0.13 验收事实时读：`docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`
 
 ## 下一步做什么
 
-- **Stage 22 — Host-specific Representation Read Implementation（条件启动）**
-- Stage 21 已冻结 validation-only：当前没有已确认的 representation consumer、用户动作或授权需求，因此不自动启动 Stage 22。
-- 只有在明确真实消费者、用户显式选择、argv allowlist、路径边界、输出脱敏/上限、timeout/cancel 与 no-write/no-network/no-service 证据后，才可进入新的实现拍。
-- 当前 Stage 20 adapter contract 保持不变：只做 handoff validation，不读取 HTML/JSON、不执行 descriptor argv。
-- `v0.13.0-read-only-control-plane` 仍是当前稳定冻结基线；Stage 21 为 additive 设计冻结，不追补 tag。
+- **Stage 23 — Envelope-scoped Snapshot Read Design Gate（条件启动）**
+- Stage 22 v1 只读取 project-scoped snapshot JSON；runs、approvals、artifacts 继续诚实显示 envelope_required。
+- 只有用户明确需要 envelope-scoped representation，并冻结显式授权、project-relative path allowlist、越界拒绝、identity 关联与 no-write 证据后，才启动 Stage 23。
+- 当前 reader 不接受 `--envelope`，不读取 HTML，不打开浏览器，不写文件或 artifact。
+- `v0.13.0-read-only-control-plane` 仍是稳定冻结基线；Stage 22 为 additive 本地 reader 能力，不追补 tag。
 - live server、API/auth/session、DB、实时刷新、在线探测、controlled artifact export、UI controlled write 与真实 adapter execution 继续延期。
 
 ## 重要约束
 
 - 仍然**不做真实 adapter execution**
-- Stage 16–21 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter 与 validation-only representation gate**；仍然不做 live service、DB、auth、网络访问、UI 写操作、representation 自动读取或真实 adapter execution
-- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、82/81/80/79/78/77/76 事实源与最新 handoff，并保持验证/提交边界
+- Stage 16–22 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、validation-only gate 与用户显式 snapshot JSON read**；仍然不做 live service、DB、auth、网络访问、UI 写操作、representation 自动读取或真实 adapter execution
+- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、83/82/81/80/79/78/77/76 事实源与最新 handoff，并保持验证/提交边界
 
 ## 一句话理解当前项目
 

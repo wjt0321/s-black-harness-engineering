@@ -2581,3 +2581,15 @@
 - 冻结 validation-only：不执行 descriptor argv，不读取 HTML/JSON，不打开浏览器、不写文件、不启动 service。
 - 新增归档 release notes 84，并明确 Stage 22 仅在真实消费者、显式授权、argv allowlist、路径/输出边界和 no-write/no-network/no-service 证据齐备后条件启动。
 - 同步 digest、roadmap、README、CLI usage、AGENTS、index、Stage 20 实现文档与最新 handoff；本阶段不修改生产代码、不创建 tag。
+
+
+## 2026-07-15 — Stage 22 Codex Desktop Snapshot JSON Reader 收口
+
+- 新增 `docs/83-codex-desktop-snapshot-json-reader-implementation.md`，冻结 Codex Desktop 显式 snapshot JSON reader 契约。
+- 按 TDD 新增 `tests/test_codex_desktop_snapshot_json_reader.py`，先确认 9 个测试因模块不存在而失败，再实现最小 reader。
+- 新增 `tools/codex_desktop_snapshot_json_reader.py`：要求 `--representation snapshot-json`，固定 handoff → consumer → snapshot 三段 argv。
+- `ready` 前校验 strict JSON、UTF-8、duplicate key、输出上限、schema、source、guarantees、handoff identity 与 canonical snapshot hash。
+- descriptor argv sentinel 不执行；handoff blocked/validation_failed 时 snapshot producer 不启动；timeout 不自动重试。
+- 真实 Windows stdio smoke 返回 `ready`，输出确定性且不回显绝对 project root；固定禁用 Python bytecode cache，不写文件、不访问网络、不启动 service、不读取 HTML、不执行真实 adapter。
+- 新增 release notes 85，同步 digest、roadmap、README、CLI usage、AGENTS、index 与最新 handoff。
+- 下一阶段为 Stage 23 Envelope-scoped Snapshot Read Design Gate（条件启动）；当前 reader 不接受 `--envelope`。

@@ -72,6 +72,7 @@ control-plane/codex-desktop-read-only-adapter/v1
 - 使用 argv 数组和 `shell=False`，不接受 shell 字符串；
 - cwd 固定为用户选择的 project root；
 - 子进程只获得最小运行环境白名单，不转发 credential、token、keyring 或任意用户环境变量；
+- 固定设置 `PYTHONDONTWRITEBYTECODE=1`，禁止只读子进程生成 Python bytecode cache；
 - 为兼容 Python user-site 依赖，保留 Windows 用户运行时所需的非敏感路径变量，但不将其写入结果；
 - stderr 只用于本地诊断，绝不复制到 stdout 结果。
 
