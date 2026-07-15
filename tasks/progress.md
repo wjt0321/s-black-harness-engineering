@@ -2552,3 +2552,23 @@
 - 明确 `snapshot_id` 复用规则、`renderer_version` / `render_id` identity、media type、encoding、source passthrough、determinism 与 no-write 验收标准。
 - 同步 stage digest、roadmap、index、README、AGENTS 与 `tasks/handoff-2026-07-14.md`，确保新窗口可直接恢复。
 - Stage 17 design gate 不创建 tag；controlled artifact export、live service、auth、DB、实时刷新、UI controlled write 与真实 adapter execution 继续延期。
+
+
+## 2026-07-15 — Stage 19 Codex Desktop Read-only Adapter Design Gate 冻结
+
+- 新增 `docs/80-codex-desktop-read-only-adapter-design-gate.md`，选择 Codex Desktop 本地任务进程边界作为首个真实宿主候选。
+- 冻结 `codex-desktop-read-only-adapter/v1`：固定 handoff bootstrap → Stage 18 reference consumer validation → 宿主状态映射。
+- 冻结一次性生命周期、有限超时、取消、不自动重试，以及 `pass` / `blocked` / `validation_failed` / `error` 映射。
+- 明确 v1 不读取 representation、不执行 descriptor argv、不写文件、不访问网络、不启动服务；用户授权只覆盖一次 project-root 内只读 validation。
+- 仅更新设计文档、README、roadmap、digest、index、AGENTS 与 handoff；不修改生产代码，不创建 tag，不 push。
+- 下一步为 Stage 20 启动前置确认，不得绕过前置条件直接实现专有 bridge。
+
+
+## 2026-07-15 — Stage 20 Codex Desktop Read-only Adapter Implementation 收口
+
+- 新增 `tools/codex_desktop_read_only_adapter.py`，将 Stage 19 contract 落地为一次性标准库-only producer → reference consumer adapter。
+- 固定 producer/consumer argv、project-root cwd、最小环境白名单、默认 30 秒/最大 60 秒超时、1 MiB stdout 上限和 no-retry。
+- 输出 `control-plane/codex-desktop-read-only-adapter/v1`，确定性映射 `ready` / `blocked` / `validation_failed` / `error` 与退出码 `0` / `2` / `5` / `1`。
+- 新增 `tests/test_codex_desktop_read_only_adapter.py`，覆盖 fixed argv、descriptor argv sentinel、determinism、脱敏、错误映射、timeout、project-root gate 与真实 stdio smoke。
+- 新增 `docs/81-codex-desktop-read-only-adapter-implementation.md` 与归档 release notes 83，Stage 20 收口。
+- 下一步为 Stage 21 representation read design gate；不自动读取 representation、不执行 descriptor argv。

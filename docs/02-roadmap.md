@@ -741,7 +741,67 @@ Tag 策略：design gate 与单个 additive descriptor 不自动创建 tag；待
 
 继续延期：Codex Desktop/QwenPaw 专有 bridge、representation 自动读取、live refresh/server、文件输入/export、UI 写操作与真实 adapter execution。
 
-下一拍：Stage 19 只进入 Host-specific Read-only Adapter design gate；先冻结真实宿主选择、生命周期、错误处理与授权边界，再决定是否实现。
+Stage 19 design gate 已冻结；Stage 20 已按设计落地 one-shot read-only adapter；下一拍进入 Stage 21 representation read design gate。
+
+
+---
+
+## Stage 19 — Host-specific Read-only Adapter Design Gate（已冻结）
+
+目标：在不直接实现专有 bridge 的前提下，选择一个真实宿主候选并冻结 descriptor、validation result、生命周期、错误映射、授权和 representation 读取边界。
+
+本阶段选择 **Codex Desktop 的本地任务进程边界**作为首个宿主候选，但不依赖未公开插件 API，也不在 `agent_runtime` 中新增 Codex Desktop 专有模块。冻结的 adapter contract 为：
+
+```text
+codex-desktop-read-only-adapter/v1
+```
+
+已冻结范围：
+
+- 宿主只调用固定的 handoff bootstrap，接收 Stage 17 `control-plane/control-panel-handoff/v1`；
+- descriptor 原样交给 Stage 18 stdin-only reference consumer，复用其 identity、shape、boundary 与脱敏校验；
+- 生命周期为一次性 `created → producing → validating → ready/blocked/validation_failed/error → closed`；
+- `pass` / `blocked` / `validation_failed` / `error` 的宿主状态映射、有限超时、取消和不自动重试语义；
+- v1 不读取 snapshot/HTML representation，不执行 descriptor argv，不刷新、不写文件、不访问网络、不启动服务；
+- 用户授权只覆盖指定 project root 内的一次只读 handoff validation，不扩展为 run、approval、artifact 或 adapter execution 授权。
+
+设计事实源：
+
+- `docs/80-codex-desktop-read-only-adapter-design-gate.md`
+- `docs/79-read-only-host-consumer-validation-boundary.md`
+- `docs/78-control-panel-host-integration-boundary.md`
+
+验收结论：Stage 19 design gate 已冻结，生产代码不变；Stage 20 才评估宿主侧实现与显式 representation read。
+
+继续延期：Codex Desktop/QwenPaw 专有 bridge、descriptor argv 自动执行、representation 自动读取、live refresh/server、文件输入/export、UI 写操作与真实 adapter execution。
+
+---
+
+## Stage 20 — Host-specific Read-only Adapter Implementation（已完成）
+
+目标：将 Stage 19 冻结的 Codex Desktop 本地任务进程边界落地为一次性、只读、可审计的宿主 adapter。
+
+第一拍已完成：
+
+- 新增 `tools/codex_desktop_read_only_adapter.py`；
+- 只执行固定 handoff producer 与 Stage 18 reference consumer；
+- 不执行 descriptor 中的 `snapshot.argv` / `render.argv`，不读取 representation；
+- 固定一次性生命周期、超时/取消/不自动重试、1 MiB stdout 上限与最小子进程环境；
+- 输出 `control-plane/codex-desktop-read-only-adapter/v1`，结果确定性、脱敏并映射 `ready` / `blocked` / `validation_failed` / `error`；
+- 新增单元测试与真实本地 stdio smoke test。
+
+设计与验收事实源：
+
+- `docs/81-codex-desktop-read-only-adapter-implementation.md`
+- `docs/archive/release-notes/83-release-notes-stage20-codex-desktop-read-only-adapter.md`
+
+继续延期：representation 自动读取、live refresh/server、文件输入/export、UI 写操作与真实 adapter execution。
+
+---
+
+## Stage 21 — Read-only Representation Read Design Gate（待启动）
+
+进入条件：先确认实际 representation 消费需求，再冻结用户显式授权、argv allowlist、HTML/JSON 脱敏、输出上限、no-write 和 no-service 验收边界。未完成新的 design gate 前，不扩展 Stage 20 adapter.
 
 ---
 

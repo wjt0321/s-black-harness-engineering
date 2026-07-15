@@ -57,7 +57,7 @@
 当前仓库已经形成可内部试用的**离线、可审计 CLI / Runtime 安全内核**，并完成 Stage 12 control-plane read model 验收：
 
 - 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
-- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP、Stage 17 stdio host handoff 与 Stage 18 独立 reference consumer 均已完成收口；
+- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP、Stage 17 stdio host handoff、Stage 18 独立 reference consumer、Stage 19 Codex Desktop 只读 adapter design gate 与 Stage 20 one-shot read-only adapter 均已完成收口；
 - 当前可生成本地、自包含、确定性的静态只读 Control Panel，通过版本化 descriptor 声明 snapshot/HTML representation，并用标准库-only、stdin-only consumer 独立验证 schema、identity 与只读边界；真实 adapter execution、持久化 service/DB、鉴权和 UI 写操作仍未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条
@@ -123,7 +123,9 @@
 - ✅ Stage 16 — Read-only Control Panel MVP（静态只读 snapshot/render 已收口；live UI 延期）
 - ✅ Stage 17 — Control Panel Host Integration Boundary（stdio-first handoff descriptor 已收口）
 - ✅ Stage 18 — Read-only Host Consumer Validation（独立 reference consumer 已按 TDD 收口）
-- ⏳ Stage 19 — Host-specific Read-only Adapter Design Gate（待冻结，不直接实现）
+- ✅ Stage 19 — Host-specific Read-only Adapter Design Gate（Codex Desktop 本地任务进程边界已冻结）
+- ✅ Stage 20 — Host-specific Read-only Adapter Implementation（固定 producer/consumer 的 one-shot read-only adapter 已收口）
+- ⚪ Stage 21 — Read-only Representation Read Design Gate（待启动）
 
 ### 现在最明确的位置
 
@@ -135,13 +137,13 @@
 
 ### 接下来的方向
 
-Stage 18 已完成，下一步只进入设计阶段：
+Stage 20 已完成，下一步进入 representation read 设计门：
 
-1. **Stage 19 — Host-specific Read-only Adapter Design Gate** 先选择一个真实宿主并冻结输入、生命周期、错误处理和授权模型
-2. 设计必须复用 Stage 17 descriptor 与 Stage 18 validation result，不创建平行 snapshot/identity 管线
-3. 在 design gate 冻结前，不实现 Codex Desktop/QwenPaw 专有 bridge，不自动读取 representation 或执行 descriptor argv
+1. **Stage 21 — Read-only Representation Read Design Gate** 先确认是否有真实 snapshot/HTML 消费需求
+2. 任何新能力必须复用 Stage 17 descriptor 与 Stage 18 validation result，不创建平行 snapshot/identity 管线
+3. 当前 adapter v1 只做 handoff validation，不自动读取 representation、不执行 descriptor argv
 4. live server、API/auth/session、DB、实时刷新、在线探测、controlled artifact export 和 UI controlled write 继续延期
-5. Stage 18 事实源为 `docs/79-read-only-host-consumer-validation-boundary.md` 与 release notes 82；`v0.13.0-read-only-control-plane` 仍是最新稳定 tag
+5. Stage 20 事实源为 `docs/81-codex-desktop-read-only-adapter-implementation.md`；`v0.13.0-read-only-control-plane` 仍是最新稳定 tag
 
 已落地的主线能力包括：
 
@@ -162,6 +164,7 @@ Stage 18 已完成，下一步只进入设计阶段：
 - Stage 12 post-freeze recovery read model：`orchestration run inspect --aggregate-lineage` / `orchestration report generate --aggregate-lineage`（基于现有 lifecycle events 聚合 root/latest/leaves、attempt count 与 effective plan hash，只读、不扫描 drafts）
 - post-Stage 14 CLI automation：`orchestration contract inspect/check`、`orchestration profile list/inspect/check`、`orchestration workflow plan/check`（确定性发现、协商、命名化、未执行步骤投影与 hash drift validation）
 - Stage 16/17 Read-only Control Panel：`orchestration control-panel snapshot/render/handoff`（确定性 snapshot、自包含 HTML、stdio host descriptor、可选 envelope-scoped run/approval/artifact、无 service/network/write/execute）
+- Stage 20 Codex Desktop Read-only Adapter：`python tools/codex_desktop_read_only_adapter.py --project-root . --timeout-seconds 30 --json`（固定 producer → reference consumer validation，一次性、无写入、无网络、不读取 representation）
 
 ## 当前边界
 

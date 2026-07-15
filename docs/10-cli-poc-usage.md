@@ -1769,6 +1769,21 @@ python -m agent_runtime.cli orchestration control-panel handoff \
 - `pass`/`blocked`/`validation_failed`/`error` 分别使用退出码 `0`/`2`/`5`/`1`。
 - consumer 不导入 producer 实现，不读取 snapshot/HTML representation，不执行 argv，不访问网络，不写文件或 ledger。
 
+Stage 20 Codex Desktop one-shot read-only adapter：
+
+```bash
+python tools/codex_desktop_read_only_adapter.py \
+  --project-root . \
+  --timeout-seconds 30 \
+  --json
+```
+
+- adapter 只执行固定 handoff producer 和 `tools/control_panel_handoff_consumer.py`，不执行 descriptor 中的 `snapshot.argv` / `render.argv`。
+- 输出 schema 固定为 `control-plane/codex-desktop-read-only-adapter/v1`；状态为 `ready` / `blocked` / `validation_failed` / `error`，退出码为 `0` / `2` / `5` / `1`。
+- 每次调用只消费一轮 producer → consumer；默认每个子进程 30 秒，最大 60 秒，不自动重试；stdout 上限 1 MiB。
+- `ready` 只表示 handoff validation 通过，不表示 snapshot/HTML representation 已读取；不启动 service、不访问网络、不写文件、ledger、draft 或 artifact。
+- project root 必须包含 `pyproject.toml` 与 `agent_runtime/`；公开结果只输出 `project_root` 安全摘要，不回显绝对路径、stderr、descriptor 或 argv。
+
 总览聚合：
 
 ```bash
