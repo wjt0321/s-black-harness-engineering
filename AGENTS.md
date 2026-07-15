@@ -16,22 +16,25 @@ python -m agent_runtime.cli doctor
 然后按顺序阅读：
 
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
-2. `docs/81-codex-desktop-read-only-adapter-implementation.md`：Stage 20 已收口的宿主只读 adapter 实现与验收边界。
-3. `docs/80-codex-desktop-read-only-adapter-design-gate.md`：Stage 19 已冻结的宿主只读 adapter 设计门。
-4. `docs/79-read-only-host-consumer-validation-boundary.md`：Stage 18 reference consumer 已实现契约与验收边界。
-5. `docs/78-control-panel-host-integration-boundary.md`：Stage 17 host handoff 已实现契约与验收边界。
-6. `tasks/handoff-2026-07-15.md`：Stage 20 收口事实与 Stage 21 启动前置条件。
-7. `docs/77-read-only-control-plane-milestone-freeze.md`：`v0.13.0` 里程碑冻结事实源。
-8. `docs/76-read-only-control-panel-mvp.md`：Stage 16 静态只读 Control Panel 设计事实源。
-9. `docs/75-cli-automation-contract-discovery.md`：已收口 CLI 自动化事实源。
-10. `docs/52-minimal-orchestration-loop.md`：Stage 14 收口设计事实源。
-11. `docs/51-backend-first-api-boundary.md`：Stage 13 已冻结的资源/操作边界。
-12. `docs/02-roadmap.md`：需要更完整路线图时再读。
-13. `docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`：Stage 18 consumer 验收事实。
-14. `docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`：Stage 17 handoff 验收事实。
-15. `docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`：v0.13.0 里程碑验收事实。
-16. `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`：Stage 16 MVP 验收事实。
-17. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
+2. `docs/82-read-only-representation-read-design-gate.md`：Stage 21 validation-only 冻结事实与 Stage 22 进入条件。
+3. `docs/81-codex-desktop-read-only-adapter-implementation.md`：Stage 20 已收口的宿主只读 adapter 实现与验收边界。
+4. `docs/80-codex-desktop-read-only-adapter-design-gate.md`：Stage 19 已冻结的宿主只读 adapter 设计门。
+5. `docs/79-read-only-host-consumer-validation-boundary.md`：Stage 18 reference consumer 已实现契约与验收边界。
+6. `docs/78-control-panel-host-integration-boundary.md`：Stage 17 host handoff 已实现契约与验收边界。
+7. `tasks/handoff-2026-07-15.md`：Stage 21 收口事实与 Stage 22 条件启动边界。
+8. `docs/77-read-only-control-plane-milestone-freeze.md`：`v0.13.0` 里程碑冻结事实源。
+9. `docs/76-read-only-control-panel-mvp.md`：Stage 16 静态只读 Control Panel 设计事实源。
+10. `docs/75-cli-automation-contract-discovery.md`：已收口 CLI 自动化事实源。
+11. `docs/52-minimal-orchestration-loop.md`：Stage 14 收口设计事实源。
+12. `docs/51-backend-first-api-boundary.md`：Stage 13 已冻结的资源/操作边界。
+13. `docs/02-roadmap.md`：需要更完整路线图时再读。
+14. `docs/archive/release-notes/84-release-notes-stage21-read-only-representation-read-design-gate.md`：Stage 21 设计门验收事实。
+15. `docs/archive/release-notes/83-release-notes-stage20-codex-desktop-read-only-adapter.md`：Stage 20 adapter 验收事实。
+16. `docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`：Stage 18 consumer 验收事实。
+17. `docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`：Stage 17 handoff 验收事实。
+18. `docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`：v0.13.0 里程碑验收事实。
+19. `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`：Stage 16 MVP 验收事实。
+20. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
 
 不要先遍历整个 `docs/` 或 `tasks/progress.md`。
 
@@ -39,7 +42,7 @@ python -m agent_runtime.cli doctor
 
 `s-black harness engineering`（Python 包名 `agent_runtime`）是一个轻量、可审计、可迁移的 Agent Runtime / Harness Orchestrator，逐步抽象规则门禁、任务账本、adapter envelope、能力路由和控制面 read model。
 
-当前状态：**Stage 20 — Host-specific Read-only Adapter Implementation 已收口**；Codex Desktop 本地任务进程边界已实现为固定 producer → reference consumer 的一次性只读 adapter，但尚未实现 representation read 或专有 UI bridge。下一阶段为 **Stage 21 — Read-only Representation Read Design Gate**，必须先完成新的需求与授权设计；live service、DB、auth、网络、文件 export 与 UI 写操作仍不自动启动。
+当前状态：**Stage 21 — Read-only Representation Read Design Gate 已收口**；需求审计确认当前没有已冻结的 representation consumer、用户动作或授权，因此保持 validation-only，不读取 HTML/JSON、不执行 descriptor argv。下一阶段为 **Stage 22 — Host-specific Representation Read Implementation（条件启动）**；只有明确消费者与授权边界后才启动，live service、DB、auth、网络、文件 export 与 UI 写操作仍不自动开放。
 
 - 冻结基线：`v0.13.0-read-only-control-plane` / `f401b98`；上一基线为 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation、CLI automation contract/profile/workflow，以及 `orchestration control-panel snapshot/render/handoff` 的确定性 representation、版本化 stdio descriptor 与独立 reference consumer validation。
@@ -48,7 +51,8 @@ python -m agent_runtime.cli doctor
 - 收口事实源：`docs/52-minimal-orchestration-loop.md`。Stage 14 已完成最小、可回放、可审计的本地编排闭环。
 - Stage 18 事实源：`docs/79-read-only-host-consumer-validation-boundary.md` 与 `docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`。
 - Stage 19 事实源：`docs/80-codex-desktop-read-only-adapter-design-gate.md`；design gate 已冻结。
-- Stage 20 事实源：`docs/81-codex-desktop-read-only-adapter-implementation.md`；adapter 已收口，但不得绕过 Stage 21 design gate 扩展 representation read 或专有 UI bridge。
+- Stage 20 事实源：`docs/81-codex-desktop-read-only-adapter-implementation.md`；adapter 已收口。
+- Stage 21 事实源：`docs/82-read-only-representation-read-design-gate.md`；validation-only 已冻结，不得把 `ready` 解释为 representation read 或 execution 权限。
 
 项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
 

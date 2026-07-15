@@ -1784,6 +1784,8 @@ python tools/codex_desktop_read_only_adapter.py \
 - `ready` 只表示 handoff validation 通过，不表示 snapshot/HTML representation 已读取；不启动 service、不访问网络、不写文件、ledger、draft 或 artifact。
 - project root 必须包含 `pyproject.toml` 与 `agent_runtime/`；公开结果只输出 `project_root` 安全摘要，不回显绝对路径、stderr、descriptor 或 argv。
 
+Stage 21 representation read design gate 已冻结为 validation-only：当前没有新增 representation read 命令；`ready` 不代表 HTML/JSON 已读取。只有明确真实消费者、用户显式选择、argv allowlist、路径边界、输出脱敏/上限与 no-write/no-network/no-service 证据后，才可条件启动 Stage 22。
+
 总览聚合：
 
 ```bash

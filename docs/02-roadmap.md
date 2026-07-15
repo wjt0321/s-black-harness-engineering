@@ -799,9 +799,28 @@ codex-desktop-read-only-adapter/v1
 
 ---
 
-## Stage 21 — Read-only Representation Read Design Gate（待启动）
+## Stage 21 — Read-only Representation Read Design Gate（已完成）
 
-进入条件：先确认实际 representation 消费需求，再冻结用户显式授权、argv allowlist、HTML/JSON 脱敏、输出上限、no-write 和 no-service 验收边界。未完成新的 design gate 前，不扩展 Stage 20 adapter.
+目标：确认 Stage 20 validation-only adapter 是否已经具备安全、明确的 representation read 需求，并在实现前冻结授权与读取边界。
+
+审计与决策已完成：
+
+- Stage 17 descriptor 只声明 snapshot / HTML representation；
+- Stage 18 reference consumer 与 Stage 20 host adapter 都只做 validation，不读取 representation；
+- 当前没有已冻结的真实消费者、用户动作、representation 类型选择或授权需求；
+- 自动读取与新增 `control-panel consume` 均被拒绝；
+- 当前唯一允许的宿主行为冻结为 validation-only，不执行 descriptor argv，不读取 HTML/JSON，不打开浏览器、不写文件、不启动 service。
+
+设计与验收事实源：
+
+- `docs/82-read-only-representation-read-design-gate.md`
+- `docs/archive/release-notes/84-release-notes-stage21-read-only-representation-read-design-gate.md`
+
+---
+
+## Stage 22 — Host-specific Representation Read Implementation（条件启动）
+
+只有出现明确真实消费者，并完成用户显式选择、argv allowlist、路径边界、输出脱敏/上限、timeout/cancel、identity 关联和 no-write/no-network/no-service 设计后，才启动实现。Stage 21 完成不等于自动开放 representation read。
 
 ---
 

@@ -138,4 +138,4 @@ python tools/codex_desktop_read_only_adapter.py \
 
 Stage 19 的设计 contract 已被一个独立、可测试、可回放的本地 adapter 实现承接。Stage 20 只开放“一次只读 handoff validation”这一项宿主动作，未扩大到 representation read、文件 export、UI write 或真实 execution。
 
-下一阶段建议进入 **Stage 21 — Read-only Representation Read Design Gate**：先确认是否存在实际的 snapshot/HTML 消费需求，再单独设计用户显式授权、argv allowlist、输出脱敏和 no-write 证明；在新的 design gate 通过前，不扩展当前 adapter。
+Stage 21 已完成需求审计并冻结 validation-only；结论见 `docs/82-read-only-representation-read-design-gate.md`。下一阶段 Stage 22 仅在出现明确 representation consumer、用户显式授权以及完整 no-write/no-network/no-service 设计后条件启动；当前 adapter 不扩展。

@@ -2572,3 +2572,12 @@
 - 新增 `tests/test_codex_desktop_read_only_adapter.py`，覆盖 fixed argv、descriptor argv sentinel、determinism、脱敏、错误映射、timeout、project-root gate 与真实 stdio smoke。
 - 新增 `docs/81-codex-desktop-read-only-adapter-implementation.md` 与归档 release notes 83，Stage 20 收口。
 - 下一步为 Stage 21 representation read design gate；不自动读取 representation、不执行 descriptor argv。
+
+
+## 2026-07-15 — Stage 21 Read-only Representation Read Design Gate 收口
+
+- 新增 `docs/82-read-only-representation-read-design-gate.md`，审计 Stage 17 descriptor、Stage 18 consumer 与 Stage 20 adapter 的实际 representation 消费范围。
+- 确认当前没有已冻结的真实 consumer、用户动作或授权需求，拒绝 validation 后自动读取与新增 `control-panel consume` 两种扩权方案。
+- 冻结 validation-only：不执行 descriptor argv，不读取 HTML/JSON，不打开浏览器、不写文件、不启动 service。
+- 新增归档 release notes 84，并明确 Stage 22 仅在真实消费者、显式授权、argv allowlist、路径/输出边界和 no-write/no-network/no-service 证据齐备后条件启动。
+- 同步 digest、roadmap、README、CLI usage、AGENTS、index、Stage 20 实现文档与最新 handoff；本阶段不修改生产代码、不创建 tag。

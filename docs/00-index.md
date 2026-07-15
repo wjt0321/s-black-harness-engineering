@@ -35,7 +35,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 20 Codex Desktop read-only adapter 已收口）
+### 5. 想看中枢台主线（Stage 21 representation read design gate 已收口）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -61,6 +61,7 @@
 - `79-read-only-host-consumer-validation-boundary.md` — Stage 18 本地 reference consumer validation 设计与实现边界（已收口）
 - `80-codex-desktop-read-only-adapter-design-gate.md` — Stage 19 Codex Desktop 只读 adapter 设计门（已冻结）
 - `81-codex-desktop-read-only-adapter-implementation.md` — Stage 20 Codex Desktop 只读 adapter 实现与验收边界（已收口）
+- `82-read-only-representation-read-design-gate.md` — Stage 21 representation read 设计门（validation-only 冻结）
 
 ### 6. 想看里程碑与冻结记录
 
@@ -73,17 +74,17 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/release-notes/` | 各阶段 release notes（最新为 `83-release-notes-stage20-codex-desktop-read-only-adapter.md`） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `84-release-notes-stage21-read-only-representation-read-design-gate.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `81-codex-desktop-read-only-adapter-implementation.md`
-3. 最新 handoff：`tasks/handoff-2026-07-15.md`
-4. `80-codex-desktop-read-only-adapter-design-gate.md`
-5. `79-read-only-host-consumer-validation-boundary.md`
+2. `82-read-only-representation-read-design-gate.md`
+3. `81-codex-desktop-read-only-adapter-implementation.md`
+4. 最新 handoff：`tasks/handoff-2026-07-15.md`
+5. `80-codex-desktop-read-only-adapter-design-gate.md`
 
 ## 其他入口
 
