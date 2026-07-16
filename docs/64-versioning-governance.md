@@ -337,3 +337,12 @@ v0.17.0-filtered-snapshot-display-host-integration
 ```
 
 事实源为 `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 `docs/archive/release-notes/102-release-notes-v0.17.0-filtered-snapshot-display-host-integration.md`。该 tag 未 push；专有 UI、render、file/URL、network/service、persistence/export、write 与真实 execution 继续 unavailable。
+
+## Stage 42 Presentation Handoff Design-only Gate（2026-07-16）
+
+Stage 42 仅冻结 Stage 40 ready result → future read-only presentation boundary 的 design-only contract 与启动条件，没有新增 production presenter、CLI、schema 或用户可见能力包，因此不满足新的 semver milestone tag 条件。
+
+- 稳定 tag 继续为本地 `v0.17.0-filtered-snapshot-display-host-integration`；
+- Stage 42 以阶段文档、release notes 103 与 prerequisite contract test 收口；
+- 不创建 `v0.18.0` 候选 tag；
+- 只有后续明确 consumer/action 并完成实现与全量验收后，才重新评估里程碑版本。

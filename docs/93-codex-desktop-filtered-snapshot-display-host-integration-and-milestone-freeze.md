@@ -273,6 +273,8 @@ v0.17.0-filtered-snapshot-display-host-integration
 
 专有 UI、clipboard、auto-open、file export、live refresh/service/network/DB/auth、write 与真实 execution 继续 unavailable。
 
+Stage 42 已随后按 design-only 收口，事实源为 `docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`；该收口没有授权 presentation implementation。
+
 <!-- gate-status: passed-stage39 -->
 <!-- implementation-status: completed-stage40 -->
 <!-- milestone-status: frozen-stage41 -->

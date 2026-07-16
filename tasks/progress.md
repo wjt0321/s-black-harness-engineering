@@ -2663,14 +2663,14 @@
 - 在最新 handoff 中记录 Stage 27 日终基线 `fc92de9`、下一会话恢复命令、Stage 28 条件启动判定、首轮 design audit、候选 TDD 矩阵与明确停止线。
 - 更新 stage digest 与 roadmap：Stage 28 第一拍只允许 design gate；必须先有具体宿主和有界消费需求，不能默认创建通用 consumer。
 - 冻结关键 identity 边界：consumer 可独立重算 canonical filter id 与 filtered view id；未携带 base payload 时只能关联检查 base snapshot id，不得伪称重算。
-- 下一会话若用户要求继续，应先输出 Stage 28 是否满足条件启动的审计结论，再决定是否创建 `docs/88-filtered-snapshot-host-consumer-validation-gate.md`。
+- 下一会话若用户要求继续，应先输出 Stage 28 是否满足条件启动的审计结论，再决定是否创建当时的 `docs/88-filtered-snapshot-host-consumer-validation-gate.md`（现已归档）。
 - query、lineage expansion、persistence/export、HTML/browser、service/network/write 与真实 adapter execution 继续延期。
 
 ## 2026-07-16 — Stage 28 Filtered Snapshot Host Consumer Validation Gate 收口
 
 - 用户明确要求继续推进到下一阶段收口，Stage 28 条件启动成立；具体宿主冻结为 Codex Desktop 本地一次性任务进程。
 - 审计 Stage 18 handoff consumer 与 Stage 27 filtered v3 reader，拒绝扩展既有 handoff consumer、payload-only 输入和宿主直接信任 reader stdout。
-- 新增 `docs/88-filtered-snapshot-host-consumer-validation-gate.md`，冻结未来专用标准库-only、stdin-only consumer 的完整 v3 输入、1 MiB 门禁、状态/退出码、最小输出与 no-side-effect 边界。
+- 当时新增 `docs/88-filtered-snapshot-host-consumer-validation-gate.md`（现归档为 `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`），冻结未来专用标准库-only、stdin-only consumer 的完整 v3 输入、1 MiB 门禁、状态/退出码、最小输出与 no-side-effect 边界。
 - scope/filter/view identity 允许独立 canonical 重算；base snapshot id、envelope content id 与 handoff id 因原始材料未随输入提供，只做关联和形状检查，不伪称真实性证明。
 - 固定 safe sections、counts、matched/status 与 task/request exact filter semantics；validation result 不回显 payload、filter values、relative path 或 rows。
 - 新增 `tests/test_filtered_snapshot_host_consumer_contract.py`，用真实 Stage 27 stdout 冻结 wrapper、lifecycle、guarantees、identity links、determinism、1 MiB 与 no-raw-value 前置契约；该测试不是 consumer 实现。
@@ -2766,3 +2766,14 @@
 - 40 项专用测试、164 项跨阶段回归与 924 项全量测试通过；doctor、public scan、py_compile 与四条真实 CLI 管道通过。
 - Stage 41 更新 `docs/93`、release notes 101/102、digest/index/roadmap/CLI usage/versioning/README/handoff，并冻结本地 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`，未 push。
 - 下一阶段为 Stage 42 Validated Markdown Presentation Handoff Gate（条件启动）；没有具体 consumer/user action 时保持 design-only。
+
+
+## 2026-07-16 Stage 42 — Validated Markdown Presentation Handoff Design-only Gate
+
+- 用户要求继续推进到下一阶段里程碑并只做本地提交，未授权 push。
+- 审计 Stage 40 ready host result 与 Stage 41 停止线；因没有具体 presentation consumer、用户动作或目标 destination，选择 design-only freeze，不实现 stdout presenter、UI、HTML/browser、clipboard 或 file export。
+- 新增 `docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`，冻结唯一候选输入、ready/pass/lifecycle/identity/content hash 重确认、启动条件与 no-side-effect 边界。
+- 新增 `tests/test_validated_markdown_presentation_handoff_contract.py`，以真实 Stage 40 stdout 冻结 ready candidate、non-ready withheld、determinism、128 KiB bound 与 value-safe contract；该测试不新增生产行为。
+- 新增 release notes 103；Stage 28 gate 完整归档至 `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`，活跃文档保持 50 个并修复引用。
+- 下一 implementation stage 不自动命名或启动；必须先明确 consumer identity、explicit action、transport、destination、retention、bounds 与 failure mapping。
+- 稳定基线仍为本地 `v0.17.0-filtered-snapshot-display-host-integration`；本阶段不创建 tag、不 push。

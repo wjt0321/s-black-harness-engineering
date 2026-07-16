@@ -935,7 +935,7 @@ Stage 22 收口时继续延期 envelope 参数；该项已在 Stage 23/24 通过
 
 事实源：
 
-- `docs/88-filtered-snapshot-host-consumer-validation-gate.md`
+- `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`
 - `docs/archive/release-notes/90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`
 - `tests/test_filtered_snapshot_host_consumer_contract.py`
 
@@ -1061,9 +1061,17 @@ v0.14.0-filtered-snapshot-host-integration
 
 ---
 
-## Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate（条件启动）
+## Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate（已完成，design-only）
 
-只允许审计具体 ready host result → read-only presentation boundary；没有具体 consumer/user action 时保持 design-only。
+已审计 Stage 40 ready host result → read-only presentation boundary，并冻结：
+
+- 只接受完整 Stage 40 host v1 ready result；
+- 重确认 closed lifecycle、display `ready/0`、consumer `pass/0`、五项 identity 与 content SHA-256；
+- 不重复 Stage 37 Markdown grammar / safe-field validation；
+- 没有具体 consumer/user action 时不新增 presenter、CLI、schema、renderer 或专有 API；
+- non-ready、protocol/identity/hash drift 一律 content withheld。
+
+事实源为 `docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md` 与 release notes 103。下一 implementation stage 不自动启动，必须先明确 consumer、动作、transport、destination、retention、bounds 与 failure mapping。
 
 ---
 

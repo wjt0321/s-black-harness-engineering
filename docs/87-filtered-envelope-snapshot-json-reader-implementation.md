@@ -208,7 +208,7 @@ Stage 27 仍然不：
 2. envelope-scoped、无 filter v2；
 3. envelope-scoped、结构化 exact filter v3。
 
-Stage 28 — Filtered Snapshot Host Consumer Validation Gate 已完成设计冻结，事实源为 `docs/88-filtered-snapshot-host-consumer-validation-gate.md` 与 `docs/archive/release-notes/90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`。下一阶段为 **Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）**；Stage 28 没有实现 consumer，继续不增加缓存、export、HTML 或长期进程。
+Stage 28 — Filtered Snapshot Host Consumer Validation Gate 已完成设计冻结，事实源为 `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md` 与 `docs/archive/release-notes/90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`。下一阶段为 **Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）**；Stage 28 没有实现 consumer，继续不增加缓存、export、HTML 或长期进程。
 
 <!-- implementation-status: stage27-complete -->
 <!-- compatibility: v1-v2-preserved -->

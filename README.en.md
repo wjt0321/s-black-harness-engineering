@@ -144,7 +144,7 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate
 - ✅ Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation
 - ✅ Stage 41 — `v0.17.0-filtered-snapshot-display-host-integration` Local Milestone Freeze
-- ⚪ Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate (conditional)
+- ✅ Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate (design-only gate complete)
 
 ### The Most Accurate Current Read
 
@@ -156,7 +156,7 @@ The current state is best understood as:
 
 ### What Comes Next
 
-Stage 41 is complete. Stage 42 remains conditional and may only audit a concrete, explicit, read-only validated Markdown presentation handoff; without a concrete consumer and user action it stays design-only. It must not introduce proprietary UI, HTML/browser rendering, file/URL inputs, persistence/export, services/network/DB/auth, writes, or real adapter execution.
+Stage 42 is complete as a design-only gate. It freezes the Stage 40 ready/pass/identity/content-hash evidence and the explicit entry criteria for a future read-only presentation boundary, but adds no presenter, CLI, schema, renderer, or proprietary host API. A future implementation stage will not start until a concrete consumer and user action are specified; HTML/browser rendering, file/URL inputs, persistence/export, services/network/DB/auth, writes, and real adapter execution remain unavailable.
 
 
 Implemented capability highlights:
