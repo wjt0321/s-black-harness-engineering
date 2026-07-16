@@ -1,4 +1,4 @@
-<!-- parents: ../../../docs/92-filtered-snapshot-markdown-display-consumer-validation-gate.md -->
+<!-- parents: ../../../docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md -->
 
 # Release Notes 99 — v0.16.0 Filtered Snapshot Display Consumer
 

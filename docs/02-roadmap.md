@@ -13,7 +13,7 @@
 
 ## 版本治理说明
 
-当前仓库最新里程碑基线为 `v0.16.0-filtered-snapshot-display-consumer`（本地 annotated tag，未 push）。上一基线为 `v0.15.0-filtered-snapshot-display-integration` / `b1fa0b3`（annotated tag 与 `main` 已推送）。
+当前仓库最新里程碑基线为 `v0.17.0-filtered-snapshot-display-host-integration`（本地 annotated tag，未 push）。上一基线为 `v0.16.0-filtered-snapshot-display-consumer`（本地 annotated tag，未 push）。
 
 从 orchestration 阶段开始，项目持续使用 `docs/55`、`docs/57`、`docs/59`、`docs/61`、`docs/65`、`docs/67`、`docs/72` 这类**阶段编号 + release notes**来完成阶段收口，而 semver/tag 改为只在里程碑节点冻结。
 
@@ -1022,7 +1022,7 @@ v0.14.0-filtered-snapshot-host-integration
 
 ## Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate（已完成）
 
-已冻结标准库-only、stdin-only consumer 的完整 display v1 wrapper、content hash、固定 Markdown grammar、安全 literal、count/filter/identity/empty-view 与 non-ready withheld contract。事实源为 `docs/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`。
+已冻结标准库-only、stdin-only consumer 的完整 display v1 wrapper、content hash、固定 Markdown grammar、安全 literal、count/filter/identity/empty-view 与 non-ready withheld contract。事实源为 `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`。
 
 ---
 
@@ -1037,7 +1037,7 @@ v0.14.0-filtered-snapshot-host-integration
 
 ## Stage 38 — Filtered Snapshot Display Consumer Milestone Freeze（已完成）
 
-已冻结本地 annotated tag `v0.16.0-filtered-snapshot-display-consumer`，未 push。事实源为 `docs/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` 与 release notes 98/99。
+已冻结本地 annotated tag `v0.16.0-filtered-snapshot-display-consumer`，未 push。事实源为 `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` 与 release notes 98/99。
 
 ---
 
@@ -1047,15 +1047,23 @@ v0.14.0-filtered-snapshot-host-integration
 
 ---
 
-## Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation（条件启动）
+## Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation（已完成）
 
-按 TDD 实现 `tools/codex_desktop_filtered_snapshot_display_host.py`。
+- 按 TDD 新增 fixed display → consumer one-shot host；
+- consumer pass/0 与五项 identity match 前 content withheld；
+- 40 项专用测试、164 项相关回归与 924 项全量测试通过。
 
 ---
 
-## Stage 41 — Filtered Snapshot Display Host Integration Milestone Freeze（条件启动）
+## Stage 41 — Filtered Snapshot Display Host Integration Milestone Freeze（已完成）
 
-Stage 40 全量验收后冻结候选本地 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`。
+已冻结本地 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`，未 push。事实源为 `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 release notes 101/102。
+
+---
+
+## Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate（条件启动）
+
+只允许审计具体 ready host result → read-only presentation boundary；没有具体 consumer/user action 时保持 design-only。
 
 ---
 

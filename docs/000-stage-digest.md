@@ -5,13 +5,14 @@
 ## 文档池规模
 
 - docs/ 活跃文档：50 个
-- 归档文档：72 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：约 197 个
+- 归档文档：74 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：约 199 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
 
-- 稳定基线：`v0.16.0-filtered-snapshot-display-consumer`（本地 annotated tag，未 push）
+- 稳定基线：`v0.17.0-filtered-snapshot-display-host-integration`（本地 annotated tag，未 push）
+- 上一冻结基线（v0.16）：`v0.16.0-filtered-snapshot-display-consumer`（本地 annotated tag，未 push）
 - 上一冻结基线（v0.15）：`v0.15.0-filtered-snapshot-display-integration` / `b1fa0b3`（annotated tag 与 `main` 已推送至 `origin`）
 - 上一冻结基线（v0.14）：`v0.14.0-filtered-snapshot-host-integration` / `dfae346`（annotated tag 与 `main` 已推送至 `origin`）
 - 上一冻结基线：`v0.13.0-read-only-control-plane` / `f401b98`（已 push）
@@ -24,10 +25,10 @@
 
 ## 当前阶段
 
-- **Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate（收口完成）**
-- Stage 38 — Filtered Snapshot Display Consumer Milestone Freeze（已收口）
-- Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation（已收口）
-- 下一阶段：Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation（条件启动）
+- **Stage 41 — Filtered Snapshot Display Host Integration Milestone Freeze（收口完成）**
+- Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation（已收口）
+- Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate（已收口）
+- 下一阶段：Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate（条件启动）
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
@@ -140,6 +141,15 @@
 - Stage 38 冻结本地 annotated tag `v0.16.0-filtered-snapshot-display-consumer`，未 push。
 - 下一拍只允许 Stage 39 one-shot display → consumer host integration design gate，不开放 UI、HTML/browser、file/URL、service/network、persistence/export、write 或真实 execution。
 
+### 新进落地：Stage 39–41 — Validated Markdown Release Host 与 v0.17.0 Freeze
+
+- Stage 39 冻结 fixed Stage 34 display → Stage 37 consumer 的 validation-before-release host contract。
+- Stage 40 新增 `tools/codex_desktop_filtered_snapshot_display_host.py`，consumer pass/0 与五项 identity match 前 content withheld。
+- fixed argv、minimal environment、64 KiB child I/O、128 KiB final output、timeout/cancel/no-retry 与 minimal safe result 已冻结。
+- 40 项专用测试、164 项相关回归和 924 项全量测试通过；doctor、public scan、py_compile 与四条真实 CLI 管道通过。
+- Stage 41 冻结本地 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`，未 push。
+- 下一拍只允许 Stage 42 validated Markdown presentation handoff design gate；没有具体 consumer/user action 时保持 design-only。
+
 ## 现在已经能做什么
 
 - 已冻结里程碑 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`），包含 Stage 10–12 的 registry/routing/state read model 闭环。
@@ -163,24 +173,24 @@
 4. 再读：`docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`
 5. 再读：`docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`
 6. 再读：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`
-7. 再读：`docs/87-filtered-envelope-snapshot-json-reader-implementation.md`
-8. 再读：`tasks/handoff-2026-07-16.md`
-9. 需要 Stage 39 验收事实时读：`docs/archive/release-notes/100-release-notes-stage39-filtered-snapshot-display-host-integration-gate.md`
-10. 需要 v0.16/Stage 37–36 事实时读 release notes 99/98/97 与 archive/92。
+7. 再读：`tasks/handoff-2026-07-16.md`
+8. 需要 v0.17 验收事实时读：`docs/archive/release-notes/102-release-notes-v0.17.0-filtered-snapshot-display-host-integration.md`
+9. 需要 Stage 40/39 验收事实时读 release notes 101/100。
+10. 需要 v0.16 事实时读 release notes 99/98/97 与 archive/92。
 11. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation（条件启动）**
-- 必须先写 RED tests，再实现 fixed Stage 34 display stdout → fixed Stage 37 consumer stdin → validation-before-release one-shot host。
-- consumer `pass/0` 与五项 identity cross-check 前不得释放 content；failure 一律 withheld。
-- Stage 40 验收后进入 Stage 41 milestone freeze，候选 tag 为 `v0.17.0-filtered-snapshot-display-host-integration`。
-- 专有 UI、HTML/browser、file/URL、network/service、persistence/export、写操作与真实 execution 继续 unavailable。
+- **Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate（条件启动）**
+- 第一拍只允许审计一个具体、显式、只读的 ready host result → presentation boundary。
+- 不默认新增 consumer-of-consumer、第二条 Markdown validation、HTML/browser renderer 或专有插件 API。
+- 若不存在具体 consumer 与用户动作，保持 design-only 或冻结不启动。
+- file/URL/clipboard、network/service、persistence/export、写操作与真实 execution 继续 unavailable。
 
 ## 重要约束
 
 - 仍然**不做真实 adapter execution**
-- Stage 16–38 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约与独立 filtered consumer 、validation-before-display one-shot host、escaped deterministic Markdown display 与独立 display-result consumer validation**；仍然不做 live service、DB、auth、网络访问、UI 写操作、HTML/browser 自动读取、通用 query、持久化/export 或真实 adapter execution
+- Stage 16–41 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约与独立 filtered consumer 、validation-before-display one-shot host、escaped deterministic Markdown display 与独立 display-result consumer validation 与 validation-before-release display host**；仍然不做 live service、DB、auth、网络访问、UI 写操作、HTML/browser 自动读取、通用 query、持久化/export 或真实 adapter execution
 - 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、91、archive/release-notes/96、95、94、archive/90、89/88/87/86/85/84/83/79/78/76 与 archive/77 事实源与最新 handoff；Stage 20/21/19 历史实现与设计按需读取 archive/81、archive/82 与 archive/80，并保持验证/提交边界
 
 ## 一句话理解当前项目

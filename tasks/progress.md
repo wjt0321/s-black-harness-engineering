@@ -2755,3 +2755,14 @@
 - 新增 `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 release notes 100；原 Stage 36–38 事实源归档为 `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`。
 - 冻结 fixed argv、bounded stdio、timeout/no-retry、strict protocol、五项 identity cross-check、content withheld、minimal output 与 no-side-effect。
 - 下一阶段 Stage 40 必须先 RED tests；候选 Stage 41 tag 为 `v0.17.0-filtered-snapshot-display-host-integration`。
+
+
+## 2026-07-16 Stage 40–41 — Filtered Snapshot Display Host Integration 里程碑收口
+
+- Stage 40 按 TDD 新增 40 项 host 验收测试，先确认目标工具不存在导致预期 RED。
+- 新增 `tools/codex_desktop_filtered_snapshot_display_host.py`，固定 Stage 34 display stdout → Stage 37 consumer stdin。
+- consumer pass/0、10 checks 与 base/scope/filter/view/content 五项 identity match 前不释放 Markdown content。
+- strict wrapper/status/exit/lifecycle/guarantees/checks、bounded I/O、timeout/cancel/no-retry、minimal safe output 与 no-side-effect 已冻结。
+- 40 项专用测试、164 项跨阶段回归与 924 项全量测试通过；doctor、public scan、py_compile 与四条真实 CLI 管道通过。
+- Stage 41 更新 `docs/93`、release notes 101/102、digest/index/roadmap/CLI usage/versioning/README/handoff，并冻结本地 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`，未 push。
+- 下一阶段为 Stage 42 Validated Markdown Presentation Handoff Gate（条件启动）；没有具体 consumer/user action 时保持 design-only。

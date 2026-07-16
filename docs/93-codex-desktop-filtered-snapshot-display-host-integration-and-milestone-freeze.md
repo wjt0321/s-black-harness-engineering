@@ -3,9 +3,9 @@
 
 # 93 — Codex Desktop Filtered Snapshot Display Host Integration and Milestone Freeze
 
-> 状态：**Stage 39 design gate 已冻结；Stage 40 实现与 Stage 41 milestone freeze 待完成**
+> 状态：**Stage 39 design gate、Stage 40 实现与 Stage 41 milestone freeze 均已收口**
 > 日期：2026-07-16
-> 候选里程碑：`v0.17.0-filtered-snapshot-display-host-integration`
+> 冻结里程碑：`v0.17.0-filtered-snapshot-display-host-integration`（本地 annotated tag，未 push）
 
 ## 1. 决策摘要
 
@@ -219,5 +219,60 @@ Stage 39–41 不开放：
 
 **Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate 已通过并冻结。** Stage 40 只能按上述 contract 实现 one-shot host；不得绕过 Stage 37 consumer 或形成第二条 Markdown validation 管线。
 
-<!-- gate-status: passed -->
-<!-- implementation-status: pending-stage40 -->
+## 14. Stage 40 实现事实
+
+Stage 40 按 TDD 新增：
+
+- `tools/codex_desktop_filtered_snapshot_display_host.py`；
+- `tests/test_codex_desktop_filtered_snapshot_display_host.py`。
+
+实现固定输出：
+
+```text
+control-plane/codex-desktop-filtered-snapshot-display-host/v1
+codex-desktop-filtered-snapshot-display-host/v1
+```
+
+host 仅启动 fixed Stage 34 display 与 fixed Stage 37 consumer，使用 minimal environment、`shell=False`、sequential one-shot 与 no retry。Stage 34 stdout 在 64 KiB gate 后以 exact bytes 交给 Stage 37 stdin；只有 display `ready/0`、consumer `pass/0`、十项 checks 通过且 base/scope/filter/view/content 五项 identity 完全一致时才释放 Markdown content。
+
+host 独立验证两份 wrapper 的 exact shape/schema/id/status/exit/lifecycle/guarantees/checks/next-action；不重算 content hash、不解析 Markdown，不复制 child findings/message、stderr、argv、absolute path 或 envelope。任何 process/protocol/identity/size/timeout/cancel failure 都返回 `error/1` 且 content withheld。
+
+## 15. Stage 40 验收证据
+
+- RED：40 个验收用例均因 Stage 40 工具不存在而按预期失败；
+- 专用测试：40 项通过；
+- Stage 18/20/22/29/31/34/37/40 相关回归：164 项通过；
+- 全量测试：924 项通过；
+- `python -m agent_runtime.cli doctor`：PASS；
+- `python tools/public_scan.py`：OK；
+- `python -m py_compile tools/codex_desktop_filtered_snapshot_display_host.py`：PASS；
+- 真实 request-only、task-only、AND 与 empty-view 四条完整 CLI 管道通过；
+- blocked/validation_failed/error、identity mismatch、protocol drift、timeout/cancel、bounded I/O 与 no-side-effect 均由测试冻结。
+
+最终冻结前重新运行全量测试、doctor、public scan、docs hook 与 Git diff checks。
+
+## 16. Stage 41 里程碑冻结
+
+Stage 39–40 已形成可独立引用的 validated Markdown release host 能力包，冻结本地 annotated tag：
+
+```text
+v0.17.0-filtered-snapshot-display-host-integration
+```
+
+该 tag 不推送，等待用户后续指令。它不授予 Markdown render、专有 UI、HTML/browser、file/URL、service/network、persistence/export、write 或 adapter execution 权限。
+
+## 17. 下一阶段条件入口
+
+下一阶段为 **Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate（条件启动）**。第一拍只允许审计一个具体、显式、只读的 presentation handoff 动作：
+
+- 输入只能是 Stage 40 ready host result；
+- 必须重新确认 source/content identity 与 ready/pass chain；
+- 只允许把已验证 Markdown 交给明确的 stdout/host-task presentation boundary；
+- 不默认新增 consumer-of-consumer、第二条 Markdown validation、HTML/browser renderer 或专有插件 API；
+- 若不存在具体 presentation consumer 与用户动作，Stage 42 必须保持 design-only 或冻结不启动。
+
+专有 UI、clipboard、auto-open、file export、live refresh/service/network/DB/auth、write 与真实 execution 继续 unavailable。
+
+<!-- gate-status: passed-stage39 -->
+<!-- implementation-status: completed-stage40 -->
+<!-- milestone-status: frozen-stage41 -->

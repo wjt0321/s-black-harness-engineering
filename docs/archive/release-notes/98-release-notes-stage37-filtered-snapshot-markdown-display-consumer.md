@@ -1,4 +1,4 @@
-<!-- parents: ../../../docs/92-filtered-snapshot-markdown-display-consumer-validation-gate.md -->
+<!-- parents: ../../../docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md -->
 
 # Release Notes 98 — Stage 37 Filtered Snapshot Markdown Display Consumer
 

@@ -1938,6 +1938,27 @@ consumer 规则：
 - 输出 schema 为 `control-plane/filtered-snapshot-markdown-display-consumer-validation/v1`；状态/退出码为 `pass/0`、`error/1`、`blocked/2`、`validation_failed/5`；
 - 标准库-only、one-shot、no process launch、no write、no network、no service、no persistence/export、no adapter execution。
 
+Stage 40 validated Markdown display host：
+
+```bash
+python tools/codex_desktop_filtered_snapshot_display_host.py \
+  --project-root . \
+  --envelope adapters/execution-envelope.examples.json \
+  --request-id req-20260703-001 \
+  --representation markdown \
+  --timeout-seconds 30 \
+  --json
+```
+
+host 规则：
+
+- 只启动 fixed Stage 34 display，再把 complete stdout exact bytes 交给 fixed Stage 37 consumer stdin；
+- display `ready/0`、consumer `pass/0`、10 项 checks 与 base/scope/filter/view/content 五项 identity 全部一致后才释放 Markdown content；
+- non-ready、protocol/identity/size/timeout/cancel failure 一律 `content=null`；
+- child stdout/consumer stdin 64 KiB、child stderr 64 KiB、final JSON 128 KiB，默认每 child 30 秒、最大 60 秒、no retry；
+- 输出 schema 为 `control-plane/codex-desktop-filtered-snapshot-display-host/v1`；状态/退出码为 `ready/0`、`error/1`、`blocked/2`、`validation_failed/5`；
+- 不重新解析 Markdown，不输出 child message/stderr/argv/path/envelope，不写入、不访问网络、不启动 service、不持久化/export、不执行 adapter。
+
 总览聚合：
 
 ```bash
