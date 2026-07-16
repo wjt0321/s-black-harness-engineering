@@ -159,7 +159,7 @@ Stage 22 收口后，`docs/` 根目录达到 51 个 Markdown 文件。按 `docs/
 
 - 完整移动 `docs/68-orchestration-foundation-milestone-freeze-checklist.md` 到 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md`；
 - 完整移动 `docs/69-orchestration-foundation-freeze-execution-plan.md` 到 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`；
-- 两份文档均属于已完成的 `v0.12.0-orchestration-foundation` 历史冻结记录，其后 v0.13 freeze 文档已归档，当前冻结事实源为 `docs/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`；
+- 两份文档均属于已完成的 `v0.12.0-orchestration-foundation` 历史冻结记录，其后 v0.13 freeze 文档已归档，当前冻结事实源为 `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`；
 - 文档正文与历史命令示例全部保留，没有删除独特约束、证据或操作记录；
 - README、中英文入口、roadmap、index、历史 handoff 与 progress 中的当前路径引用已同步；同时修复 55/57/59/61/65/67/71 release notes 的既有归档路径；
 - 活跃根目录 Markdown 数量从 51 降至 49，低于维护提示阈值 50。

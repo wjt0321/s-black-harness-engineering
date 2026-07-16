@@ -1,4 +1,4 @@
-<!-- parents: ../../../docs/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md -->
+<!-- parents: ../../../docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md -->
 <!-- relates: 80-release-notes-v0.13.0-read-only-control-plane.md -->
 
 # Release Notes 93 — v0.14.0 Filtered Snapshot Host Integration

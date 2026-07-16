@@ -1,6 +1,8 @@
 <!-- parents: 89-codex-desktop-filtered-snapshot-consumer-implementation.md, 87-filtered-envelope-snapshot-json-reader-implementation.md -->
 <!-- relates: 64-versioning-governance.md, archive/77-read-only-control-plane-milestone-freeze.md -->
 
+> 归档状态：2026-07-16 被 Stage 33 display integration design gate 取代后移入 archive；v0.14.0 commit/tag 随后已推送至 `origin`。
+
 # 90 — Codex Desktop Filtered Snapshot Host Integration 与里程碑冻结
 
 > 状态：**Stage 30 design gate、Stage 31 实现与 Stage 32 milestone freeze 均已收口**
@@ -251,7 +253,7 @@ host 是 additive tool；没有修改 CLI 主入口、reader/consumer schema、l
 v0.14.0-filtered-snapshot-host-integration
 ```
 
-本次 tag 只在本地创建，不 push；tag target 以本地 `git rev-parse v0.14.0-filtered-snapshot-host-integration^{commit}` 为准。
+冻结时 tag 先在本地创建；随后已按用户授权推送至 `origin`。tag target 为 `dfae346`。
 
 冻结不表示以下能力开放：专有 Codex Desktop 插件/UI、HTML/browser、live refresh/service、network/DB/auth、cache/persistence/export、arbitrary query、UI write 或真实 adapter execution。
 
@@ -268,7 +270,7 @@ v0.14.0-filtered-snapshot-host-integration
 
 ## 16. 收口结论
 
-**Stage 30、Stage 31 与 Stage 32 均已完成收口。** `v0.14.0-filtered-snapshot-host-integration` 是新的本地稳定里程碑；等待用户后续指挥再决定是否条件启动 Stage 33。
+**Stage 30、Stage 31 与 Stage 32 均已完成收口。** `v0.14.0-filtered-snapshot-host-integration` 是已推送的历史稳定里程碑；Stage 33 随后已条件启动并冻结 design gate。
 
 <!-- milestone-status: frozen-local -->
 <!-- next-stage: stage33-conditional -->

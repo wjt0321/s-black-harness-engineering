@@ -1,6 +1,6 @@
 # 77 — v0.13.0 Read-only Control Plane Milestone Freeze
 
-> 归档状态：2026-07-16 被 `docs/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` 取代后完整移入 archive；本文仍是 v0.13.0 历史事实源。
+> 归档状态：2026-07-16 被 `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` 取代后完整移入 archive；本文仍是 v0.13.0 历史事实源。
 
 <!-- parents: 64-versioning-governance.md, 76-read-only-control-panel-mvp.md -->
 <!-- relates: 51-backend-first-api-boundary.md, 52-minimal-orchestration-loop.md, 75-cli-automation-contract-discovery.md -->

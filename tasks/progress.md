@@ -2707,3 +2707,13 @@
 - 新增 release notes 92/93；旧 `v0.13.0` freeze 文档完整移入 `docs/archive/77-read-only-control-plane-milestone-freeze.md`，活跃 docs 保持 50 个。
 - Stage 32 冻结本地 annotated tag `v0.14.0-filtered-snapshot-host-integration`；不 push，等待用户指挥。
 - 下一阶段为 Stage 33 Codex Desktop Filtered Snapshot Display Integration Gate（条件启动）；没有具体展示面时保持冻结。
+
+
+## 2026-07-16 Stage 33 — Filtered Snapshot Display Integration Gate
+
+- 选择 Codex Desktop 可消费的 deterministic escaped Markdown 作为首个具体展示面。
+- 冻结 fixed Stage 31 host-owned wrapper、strict result gate、安全字段 allowlist、empty-view UX、64 KiB final output 与 one-shot/no-side-effect 边界。
+- 拒绝 arbitrary stdin presenter、专有插件 API、HTML/browser、service/network、cache/export 与写操作。
+- 新增 `docs/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` 与 release notes 94。
+- v0.14.0 commit/tag 已按后续用户授权推送至 `origin`；历史 freeze 文档移入 `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`。
+- 下一步：Stage 34 必须先写 RED tests，再实现 fixed host → escaped deterministic Markdown one-shot display wrapper。
