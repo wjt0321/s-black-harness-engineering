@@ -50,7 +50,7 @@
 - 已验证 `cli/commands.sample.json` 为合法 JSON。
 - 明确进入真实 CLI 实现时，可优先委派 Kimi Code 负责编码，Orchestrator 负责验收。
 
-- 新增 `docs/09-policy-checker-poc-plan.md`，定义最小 Policy Checker POC 的目标、非目标、推荐代码位置、输入输出、`check text` / `check path` / `check action` 行为、测试样例、安全要求和验收标准。
+- 新增 `docs/archive/09-policy-checker-poc-plan.md`，定义最小 Policy Checker POC 的目标、非目标、推荐代码位置、输入输出、`check text` / `check path` / `check action` 行为、测试样例、安全要求和验收标准。
 - 明确第一版 POC 只做只读检查，不执行外部命令、不访问网络、不写真实 task ledger、不读取密钥文件。
 - 明确后续进入代码实现时可委派 Kimi Code 编写，Orchestrator 负责安全与质量验收。
 
@@ -2665,3 +2665,16 @@
 - 冻结关键 identity 边界：consumer 可独立重算 canonical filter id 与 filtered view id；未携带 base payload 时只能关联检查 base snapshot id，不得伪称重算。
 - 下一会话若用户要求继续，应先输出 Stage 28 是否满足条件启动的审计结论，再决定是否创建 `docs/88-filtered-snapshot-host-consumer-validation-gate.md`。
 - query、lineage expansion、persistence/export、HTML/browser、service/network/write 与真实 adapter execution 继续延期。
+
+## 2026-07-16 — Stage 28 Filtered Snapshot Host Consumer Validation Gate 收口
+
+- 用户明确要求继续推进到下一阶段收口，Stage 28 条件启动成立；具体宿主冻结为 Codex Desktop 本地一次性任务进程。
+- 审计 Stage 18 handoff consumer 与 Stage 27 filtered v3 reader，拒绝扩展既有 handoff consumer、payload-only 输入和宿主直接信任 reader stdout。
+- 新增 `docs/88-filtered-snapshot-host-consumer-validation-gate.md`，冻结未来专用标准库-only、stdin-only consumer 的完整 v3 输入、1 MiB 门禁、状态/退出码、最小输出与 no-side-effect 边界。
+- scope/filter/view identity 允许独立 canonical 重算；base snapshot id、envelope content id 与 handoff id 因原始材料未随输入提供，只做关联和形状检查，不伪称真实性证明。
+- 固定 safe sections、counts、matched/status 与 task/request exact filter semantics；validation result 不回显 payload、filter values、relative path 或 rows。
+- 新增 `tests/test_filtered_snapshot_host_consumer_contract.py`，用真实 Stage 27 stdout 冻结 wrapper、lifecycle、guarantees、identity links、determinism、1 MiB 与 no-raw-value 前置契约；该测试不是 consumer 实现。
+- 新增 release notes 90 与 `tasks/handoff-2026-07-16.md`；旧 Policy Checker POC plan 完整归档至 `docs/archive/09-policy-checker-poc-plan.md`，活跃文档保持 50 个。
+- Stage 28 只完成 design/contract freeze，没有创建 `tools/codex_desktop_filtered_snapshot_consumer.py`，没有修改 reader 或 Stage 18 consumer。
+- 下一阶段为 Stage 29 Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）；只有明确授权后才按 Stage 28 TDD 顺序实现。
+- query、lineage expansion、persistence/export、HTML/browser、service/network/DB/auth/UI write 与真实 adapter execution 继续延期。

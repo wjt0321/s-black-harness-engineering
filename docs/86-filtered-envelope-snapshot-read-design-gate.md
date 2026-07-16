@@ -257,7 +257,7 @@ Stage 27 已按本设计门实现并收口，事实源为：
 - `docs/87-filtered-envelope-snapshot-json-reader-implementation.md`
 - `docs/archive/release-notes/89-release-notes-stage27-filtered-envelope-snapshot-json-reader.md`
 
-下一阶段为 **Stage 28 — Filtered Snapshot Host Consumer Validation Gate（条件启动）**。
+Stage 28 — Filtered Snapshot Host Consumer Validation Gate 已完成设计冻结，事实源为 `docs/88-filtered-snapshot-host-consumer-validation-gate.md`。下一阶段为 **Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）**。
 
 <!-- gate-status: passed -->
 <!-- implementation-status: stage27-complete -->

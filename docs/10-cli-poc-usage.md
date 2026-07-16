@@ -1852,6 +1852,8 @@ filtered mode 规则：
 - filter 不传给 handoff/consumer/snapshot child argv；仍不提供 `--filter`、`--query`、排序、分页、缓存或 export；
 - 无 filter 的 envelope-scoped 调用保持 v2；无 envelope、无 filter 保持 v1。
 
+Stage 28 已冻结未来宿主 consumer contract，但当前**没有**新增 consumer 命令或工具。Stage 29 若经明确授权，将按 `docs/88-filtered-snapshot-host-consumer-validation-gate.md` 实现专用 `tools/codex_desktop_filtered_snapshot_consumer.py`；不得扩展 Stage 18 handoff consumer，也不得自动执行 reader。
+
 总览聚合：
 
 ```bash

@@ -16,32 +16,34 @@ python -m agent_runtime.cli doctor
 然后按顺序阅读：
 
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
-2. `docs/87-filtered-envelope-snapshot-json-reader-implementation.md`：Stage 27 filtered v3 实现与验收边界。
-3. `docs/86-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 task/request filter、v3 identity 与实现契约。
-4. `docs/85-envelope-scoped-consumer-filter-design-gate.md`：Stage 25 无 filter consumer contract 与宿主展示边界。
-5. `docs/84-envelope-scoped-snapshot-read-design-gate.md`：Stage 23 设计门与 Stage 24 envelope-scoped reader 实现/验收边界。
-6. `docs/83-codex-desktop-snapshot-json-reader-implementation.md`：Stage 22 project-scoped v1 reader 实现与兼容边界。
-7. `tasks/handoff-2026-07-15.md`：Stage 27 收口事实与 Stage 28 条件启动边界。
-8. `docs/79-read-only-host-consumer-validation-boundary.md`：Stage 18 reference consumer 已实现契约与验收边界。
-9. `docs/78-control-panel-host-integration-boundary.md`：Stage 17 host handoff 已实现契约与验收边界。
-10. `docs/77-read-only-control-plane-milestone-freeze.md`：`v0.13.0` 里程碑冻结事实源。
-11. `docs/76-read-only-control-panel-mvp.md`：Stage 16 静态只读 Control Panel 设计事实源。
-12. `docs/75-cli-automation-contract-discovery.md`：已收口 CLI 自动化事实源。
-13. `docs/52-minimal-orchestration-loop.md`：Stage 14 收口设计事实源。
-14. `docs/51-backend-first-api-boundary.md`：Stage 13 已冻结的资源/操作边界。
-15. `docs/02-roadmap.md`：需要更完整路线图时再读。
-16. `docs/archive/release-notes/89-release-notes-stage27-filtered-envelope-snapshot-json-reader.md`：Stage 27 reader 验收事实。
-17. `docs/archive/release-notes/88-release-notes-stage26-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 设计门验收事实。
-18. `docs/archive/release-notes/87-release-notes-stage25-envelope-scoped-consumer-filter-design-gate.md`：Stage 25 设计门验收事实。
-19. `docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`：Stage 24 scoped reader 验收事实。
-20. `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`：Stage 20 adapter 历史实现事实源。
-21. `docs/archive/82-read-only-representation-read-design-gate.md`：Stage 21 历史 validation-only 设计门。
-22. `docs/archive/release-notes/84-release-notes-stage21-read-only-representation-read-design-gate.md`：Stage 21 验收事实。
-23. `docs/archive/release-notes/83-release-notes-stage20-codex-desktop-read-only-adapter.md`：Stage 20 adapter 验收事实。
-24. `docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`：Stage 19 历史设计门。
-25. `docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`：Stage 18 consumer 验收事实。
-26. `docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`：v0.13.0 里程碑验收事实。
-27. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
+2. `docs/88-filtered-snapshot-host-consumer-validation-gate.md`：Stage 28 host consumer validation design gate 与 Stage 29 实现契约。
+3. `docs/87-filtered-envelope-snapshot-json-reader-implementation.md`：Stage 27 filtered v3 实现与验收边界。
+4. `docs/86-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 task/request filter、v3 identity 与实现契约。
+5. `docs/85-envelope-scoped-consumer-filter-design-gate.md`：Stage 25 无 filter consumer contract 与宿主展示边界。
+6. `docs/84-envelope-scoped-snapshot-read-design-gate.md`：Stage 23 设计门与 Stage 24 envelope-scoped reader 实现/验收边界。
+7. `docs/83-codex-desktop-snapshot-json-reader-implementation.md`：Stage 22 project-scoped v1 reader 实现与兼容边界。
+8. `tasks/handoff-2026-07-16.md`：Stage 28 收口事实与 Stage 29 条件启动边界。
+9. `docs/79-read-only-host-consumer-validation-boundary.md`：Stage 18 reference consumer 已实现契约与验收边界。
+10. `docs/78-control-panel-host-integration-boundary.md`：Stage 17 host handoff 已实现契约与验收边界。
+11. `docs/77-read-only-control-plane-milestone-freeze.md`：`v0.13.0` 里程碑冻结事实源。
+12. `docs/76-read-only-control-panel-mvp.md`：Stage 16 静态只读 Control Panel 设计事实源。
+13. `docs/75-cli-automation-contract-discovery.md`：已收口 CLI 自动化事实源。
+14. `docs/52-minimal-orchestration-loop.md`：Stage 14 收口设计事实源。
+15. `docs/51-backend-first-api-boundary.md`：Stage 13 已冻结的资源/操作边界。
+16. `docs/02-roadmap.md`：需要更完整路线图时再读。
+17. `docs/archive/release-notes/90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`：Stage 28 设计门验收事实。
+18. `docs/archive/release-notes/89-release-notes-stage27-filtered-envelope-snapshot-json-reader.md`：Stage 27 reader 验收事实。
+19. `docs/archive/release-notes/88-release-notes-stage26-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 设计门验收事实。
+20. `docs/archive/release-notes/87-release-notes-stage25-envelope-scoped-consumer-filter-design-gate.md`：Stage 25 设计门验收事实。
+21. `docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`：Stage 24 scoped reader 验收事实。
+22. `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`：Stage 20 adapter 历史实现事实源。
+23. `docs/archive/82-read-only-representation-read-design-gate.md`：Stage 21 历史 validation-only 设计门。
+24. `docs/archive/release-notes/84-release-notes-stage21-read-only-representation-read-design-gate.md`：Stage 21 验收事实。
+25. `docs/archive/release-notes/83-release-notes-stage20-codex-desktop-read-only-adapter.md`：Stage 20 adapter 验收事实。
+26. `docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`：Stage 19 历史设计门。
+27. `docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`：Stage 18 consumer 验收事实。
+28. `docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`：v0.13.0 里程碑验收事实。
+29. `docs/10-cli-poc-usage.md`：需要具体 CLI 参数时再查。
 
 不要先遍历整个 `docs/` 或 `tasks/progress.md`。
 
@@ -49,7 +51,7 @@ python -m agent_runtime.cli doctor
 
 `s-black harness engineering`（Python 包名 `agent_runtime`）是一个轻量、可审计、可迁移的 Agent Runtime / Harness Orchestrator，逐步抽象规则门禁、任务账本、adapter envelope、能力路由和控制面 read model。
 
-当前状态：**Stage 27 — Filtered Envelope Snapshot JSON Reader 已收口**；既有 reader 已支持 envelope-scoped、结构化 task/request exact filter 的 v3，并冻结 AND/空视图、request→task 关系闭包、filter/base snapshot/view identity 与固定 child argv。下一阶段为 **Stage 28 — Filtered Snapshot Host Consumer Validation Gate（条件启动）**；通用 query、HTML/browser、live service、DB、auth、网络、文件 export 与 UI 写操作仍不开放。
+当前状态：**Stage 28 — Filtered Snapshot Host Consumer Validation Gate 已收口**；已选择 Codex Desktop 本地一次性任务进程作为具体宿主，冻结未来独立标准库-only、stdin-only v3 consumer 的输入、identity、safe sections、状态/退出码与 no-side-effect 契约，但本阶段没有实现 consumer。下一阶段为 **Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）**；通用 query、HTML/browser、live service、DB、auth、网络、文件 export 与 UI 写操作仍不开放。
 
 - 冻结基线：`v0.13.0-read-only-control-plane` / `f401b98`；上一基线为 `v0.12.1-orchestration-read-loop-snapshot` / `0419a04`。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation、CLI automation contract/profile/workflow，以及 `orchestration control-panel snapshot/render/handoff` 的确定性 representation、版本化 stdio descriptor 与独立 reference consumer validation。
@@ -65,6 +67,7 @@ python -m agent_runtime.cli doctor
 - Stage 25 事实源：`docs/85-envelope-scoped-consumer-filter-design-gate.md`；冻结无 filter 单-envelope v2 与一次性内存展示边界，不开放 query/persistence/export。
 - Stage 26 事实源：`docs/86-filtered-envelope-snapshot-read-design-gate.md`；v3 仅允许 task/request exact filter，filter 在 base snapshot 完整验证后作用于安全 summaries。
 - Stage 27 事实源：`docs/87-filtered-envelope-snapshot-json-reader-implementation.md`；filtered v3 已按 TDD 实现并收口，无 filter v2 与无 envelope v1 保持兼容。
+- Stage 28 事实源：`docs/88-filtered-snapshot-host-consumer-validation-gate.md`；只冻结 future consumer contract 与前置 reader 契约测试，不实现 consumer。
 
 项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
 

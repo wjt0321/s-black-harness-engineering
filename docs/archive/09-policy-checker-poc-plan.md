@@ -381,6 +381,6 @@ agent-runtime policies list
 
 本阶段只交付计划文档：
 
-- `docs/09-policy-checker-poc-plan.md`
+- `docs/archive/09-policy-checker-poc-plan.md`
 
 下一步才考虑代码实现。

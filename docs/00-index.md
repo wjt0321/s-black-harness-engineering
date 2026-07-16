@@ -35,7 +35,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 27 filtered v3 reader 已收口）
+### 5. 想看中枢台主线（Stage 28 host consumer validation gate 已收口）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -64,6 +64,7 @@
 - `85-envelope-scoped-consumer-filter-design-gate.md` — Stage 25 consumer/filter 设计门；无 filter 单-envelope v2 与宿主展示边界（已收口）
 - `86-filtered-envelope-snapshot-read-design-gate.md` — Stage 26 task/request filter、关系闭包与 v3 identity 设计门（已收口）
 - `87-filtered-envelope-snapshot-json-reader-implementation.md` — Stage 27 task/request filtered v3 reader 实现与验收事实源（已收口）
+- `88-filtered-snapshot-host-consumer-validation-gate.md` — Stage 28 Codex Desktop filtered v3 独立 consumer contract 与 Stage 29 实现边界（已收口）
 
 ### 6. 想看里程碑与冻结记录
 
@@ -77,18 +78,18 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/` | 历史设计门 / freeze checklist / execution plan（Stage 19 `80`、Stage 20 `81`、Stage 21 `82` 与 `68` / `69` 已完整归档） |
-| `archive/release-notes/` | 各阶段 release notes（最新为 `89-release-notes-stage27-filtered-envelope-snapshot-json-reader.md`） |
+| `archive/` | 历史设计门 / freeze checklist / execution plan（早期 Policy Checker `09`、Stage 19 `80`、Stage 20 `81`、Stage 21 `82` 与 `68` / `69` 已完整归档） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `87-filtered-envelope-snapshot-json-reader-implementation.md`
-3. `86-filtered-envelope-snapshot-read-design-gate.md`
-4. 最新 handoff：`tasks/handoff-2026-07-15.md`
-5. `84-envelope-scoped-snapshot-read-design-gate.md`
+2. `88-filtered-snapshot-host-consumer-validation-gate.md`
+3. `87-filtered-envelope-snapshot-json-reader-implementation.md`
+4. 最新 handoff：`tasks/handoff-2026-07-16.md`
+5. `79-read-only-host-consumer-validation-boundary.md`
 
 ## 其他入口
 

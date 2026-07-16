@@ -917,24 +917,46 @@ Stage 22 收口时继续延期 envelope 参数；该项已在 Stage 23/24 通过
 
 ---
 
-## Stage 28 — Filtered Snapshot Host Consumer Validation Gate（条件启动）
+## Stage 28 — Filtered Snapshot Host Consumer Validation Gate（已完成）
 
-只有具体宿主需要独立消费 filtered v3 时启动。Stage 28 第一拍是 design gate，不预设必须新增 consumer 工具。
+用户于 2026-07-16 明确要求继续推进到下一阶段收口，条件启动成立。已冻结：
 
-需要冻结：
+- 具体宿主为 Codex Desktop 本地一次性任务进程；
+- consumer 输入为完整 filtered v3 reader result，不接受 payload-only；
+- 未来采用专用标准库-only、stdin-only consumer，不扩展 Stage 18 handoff consumer；
+- 输入上限 1 MiB，strict UTF-8，拒绝 duplicate key、非 object 与 schema drift；
+- 只接受 ready、closed lifecycle、pass handoff/representation 与精确 guarantees；
+- 独立重算 scope/filter/view id；base snapshot payload 未提供时只做关联与形状验证；
+- 严格验证 safe sections、counts、matched/status 与 task/request exact filter semantics；
+- 输出为最小、确定性、value-safe validation result，不回显 payload/filter/path/rows；
+- 不读文件、不访问网络、不写入、不执行 reader、descriptor argv、candidate command 或 adapter。
 
-- stdin-only、bounded UTF-8 JSON 输入与 duplicate-key 拒绝；
-- v3 reader result / filtered payload 的版本 allowlist；
-- reader status、closed lifecycle、source、representation 与 guarantees 校验；
-- wrapper/payload 间 filter、scope、base snapshot、view identity 的 cross-field 一致性；
-- canonical filter id 与 filtered view id 的独立重算边界；
-- base snapshot payload 未随输入提供时，只做关联和形状验证，不伪称重算 base snapshot id；
-- 一次性状态/退出码映射、输出最小化、确定性与 no-side-effect；
-- safe summaries 展示范围，不接受 project/registry/raw envelope 扩权。
+新增 prerequisite contract test，以真实 Stage 27 stdout 冻结 Stage 29 所需的 wrapper/lifecycle/guarantees/identity/safe section 前置契约；本阶段不实现 consumer。
 
-启动前必须有具体宿主、输入对象和安全展示需求；否则继续维持 Stage 27 冻结状态。完整下一会话审计清单见 `tasks/handoff-2026-07-15.md`。
+事实源：
 
-继续延期：live service、缓存/export、HTML/browser、query、lineage expansion、文件读取、UI 写操作与真实 adapter execution。
+- `docs/88-filtered-snapshot-host-consumer-validation-gate.md`
+- `docs/archive/release-notes/90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`
+- `tests/test_filtered_snapshot_host_consumer_contract.py`
+
+---
+
+## Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）
+
+只有用户明确要求实现时启动。候选实现为：
+
+```text
+tools/codex_desktop_filtered_snapshot_consumer.py
+```
+
+实施顺序：
+
+1. 按 Stage 28 contract 新增 consumer 失败测试并确认 RED；
+2. 实现标准库-only stdin consumer，固定检查顺序、状态/退出码与 64 KiB 最小输出；
+3. 运行真实 reader stdout → consumer stdin smoke；
+4. 全量回归 Stage 18 consumer、Stage 27 reader、doctor 与 public scan。
+
+Stage 29 不得修改 Stage 18 consumer，不得自动启动 reader，不得读取文件/URL/socket/project/envelope/ledger/registry，也不得引入 query、缓存/export、HTML/browser、service/network/DB/auth/UI write 或真实 adapter execution。
 
 ---
 

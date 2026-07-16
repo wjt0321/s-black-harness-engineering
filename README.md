@@ -57,7 +57,7 @@
 当前仓库已经形成可内部试用的**离线、可审计 CLI / Runtime 安全内核**，并完成 Stage 12 control-plane read model 验收：
 
 - 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
-- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP、Stage 17 stdio host handoff、Stage 18 独立 reference consumer、Stage 19 Codex Desktop 只读 adapter design gate、Stage 20 one-shot adapter、Stage 21 representation read design gate、Stage 22 project-scoped reader、Stage 23 design gate、Stage 24 envelope-scoped reader、Stage 25 consumer contract、Stage 26 filtered-read design gate 与 Stage 27 filtered v3 reader 均已完成收口；
+- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP、Stage 17 stdio host handoff、Stage 18 独立 reference consumer、Stage 19 Codex Desktop 只读 adapter design gate、Stage 20 one-shot adapter、Stage 21 representation read design gate、Stage 22 project-scoped reader、Stage 23 design gate、Stage 24 envelope-scoped reader、Stage 25 consumer contract、Stage 26 filtered-read design gate、Stage 27 filtered v3 reader 与 Stage 28 host consumer validation design gate 均已完成收口；
 - 当前可生成本地、自包含、确定性的静态只读 Control Panel，通过版本化 descriptor 声明 snapshot/HTML representation，并用标准库-only、stdin-only consumer 独立验证 schema、identity 与只读边界；真实 adapter execution、持久化 service/DB、鉴权和 UI 写操作仍未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条
@@ -132,7 +132,8 @@
 - ✅ Stage 25 — Envelope-scoped Consumer Integration / Filter Design Gate（无 filter consumer contract 已冻结）
 - ✅ Stage 26 — Filtered Envelope Snapshot Read Design Gate（task/request exact filter 与 v3 identity 已冻结）
 - ✅ Stage 27 — Filtered Envelope Snapshot JSON Reader Implementation（task/request exact filter v3 已收口）
-- ⚪ Stage 28 — Filtered Snapshot Host Consumer Validation Gate（条件启动）
+- ✅ Stage 28 — Filtered Snapshot Host Consumer Validation Gate（独立 v3 consumer contract 已冻结，未实现 consumer）
+- ⚪ Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）
 
 ### 现在最明确的位置
 
@@ -144,7 +145,7 @@
 
 ### 接下来的方向
 
-Stage 23/24 scoped reader、Stage 25 consumer contract、Stage 26 filter design gate 与 Stage 27 filtered v3 已完成：
+Stage 23/24 scoped reader、Stage 25 consumer contract、Stage 26 filter design gate、Stage 27 filtered v3 与 Stage 28 host consumer validation gate 已完成：
 
 1. 用户必须同时显式选择 `snapshot-json` 并提供 allowlist 内的 project-relative `--envelope`
 2. allowlist 为 `adapters/*.json` 与 `drafts/runtime/**/*.envelope.json`，绝对路径、`..`、越界和 arbitrary JSON 均拒绝
@@ -154,6 +155,7 @@ Stage 23/24 scoped reader、Stage 25 consumer contract、Stage 26 filter design 
 6. Stage 25 保持单-envelope、无 filter v2；宿主只能一次性读取并内存展示已验证 JSON，不新增 query/persistence/export；事实源为 `docs/85-envelope-scoped-consumer-filter-design-gate.md`
 7. Stage 26 冻结 v3 的 task/request exact filter、AND/空视图、关系闭包与 filter/view identity；事实源为 `docs/86-filtered-envelope-snapshot-read-design-gate.md`
 8. Stage 27 在既有 reader 上实现 filtered v3；filter 仅作用于已验证安全 summaries，fixed child argv 不携带 filter，v1/v2 保持兼容；事实源为 `docs/87-filtered-envelope-snapshot-json-reader-implementation.md`
+9. Stage 28 选择 Codex Desktop 一次性本地任务进程作为具体宿主，冻结未来专用 stdin-only consumer 的完整 v3 输入、scope/filter/view identity、safe sections、最小输出与 no-side-effect contract；本阶段不实现 consumer，事实源为 `docs/88-filtered-snapshot-host-consumer-validation-gate.md`，下一阶段为 Stage 29 条件实现。
 
 已落地的主线能力包括：
 
