@@ -3,9 +3,9 @@
 
 # 91 — Codex Desktop Filtered Snapshot Markdown Display Integration 与里程碑冻结
 
-> 状态：**Stage 33 design gate 已冻结；Stage 34 实现与 Stage 35 milestone freeze 待完成**
+> 状态：**Stage 33 design gate、Stage 34 实现与 Stage 35 milestone freeze 均已收口**
 > 日期：2026-07-16
-> 候选里程碑：`v0.15.0-filtered-snapshot-display-integration`
+> 冻结里程碑：`v0.15.0-filtered-snapshot-display-integration`（本地 annotated tag）
 
 ## 1. 决策摘要
 
@@ -198,5 +198,50 @@ Stage 33–35 不开放：
 
 **Stage 33 — Codex Desktop Filtered Snapshot Display Integration Gate 已通过并冻结。** Stage 34 只允许实现固定 Stage 31 host 到 escaped deterministic Markdown 的 one-shot projection。
 
+## 12. Stage 34 实现事实
+
+新增：
+
+```text
+tools/codex_desktop_filtered_snapshot_display.py
+tests/test_codex_desktop_filtered_snapshot_display.py
+```
+
+工具只运行固定 `codex_desktop_filtered_snapshot_host.py --json`，不 import 或直接调用 reader/consumer。实现冻结：
+
+- exact top-level/host schema/id/source/lifecycle/guarantees/status-exit gate；
+- ready 时验证 reader/consumer pass、identity links、filtered payload、safe row allowlist、count/matched/status 与 exact filter semantics；
+- non-ready 时 `content/content_id` 固定 withheld，不复制 host payload、stderr 或 finding message；
+- 动态值统一转为 ASCII JSON inline literal，并对 Markdown/HTML/link/backtick/pipe/control characters 做可见转义；
+- 固定 overview/filter/identity → runs → approvals → artifacts → reports 顺序；合法空视图输出固定 no-match 文案；
+- Markdown `content_id` 为 content UTF-8 bytes 的 SHA-256；最终 JSON 超过 64 KiB 时 fail closed；
+- fixed argv array、`shell=False`、minimal environment、one-shot、no retry。
+
+## 13. Stage 34 验证证据
+
+- RED：11 项专用测试最初因 display 工具不存在而全部预期失败；
+- GREEN：11 项 Stage 34 专用测试通过；
+- Stage 22/27/29/31/34 相关 78 项回归通过；
+- `python -m pytest tests -q`：868 项通过；
+- `python -m agent_runtime.cli doctor`：PASS；
+- `python tools/public_scan.py`：OK；
+- `python -m py_compile tools/codex_desktop_filtered_snapshot_display.py`：PASS；
+- request-only、task-only、task+request AND、合法空视图真实 one-shot smoke 均 `ready/0`；missing envelope 真实 smoke 为 `blocked/2` 且 content withheld。
+
+## 14. Stage 35 里程碑冻结
+
+Stage 33–34 已形成独立、可引用的安全展示能力包，冻结本地 annotated tag：
+
+```text
+v0.15.0-filtered-snapshot-display-integration
+```
+
+本次里程碑不改变安全边界：不开放专有插件/UI、HTML/browser、service/network/DB/auth、cache/export、任意 query、写操作或真实 adapter execution。未获本轮 push 指令，因此 commit/tag 保持本地。
+
+## 15. 下一阶段条件入口
+
+下一阶段为 **Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate（条件启动）**。第一拍只审计独立 consumer 对 display v1 wrapper、content/content-id、escaping invariant、empty-view 与 non-ready withheld 的验证边界；不得直接信任 arbitrary Markdown、重跑 reader/host、启动 UI/service 或持久化 content。
+
 <!-- gate-status: passed -->
-<!-- implementation-status: pending-stage34 -->
+<!-- implementation-status: completed-stage34 -->
+<!-- milestone-status: frozen-stage35 -->

@@ -1895,6 +1895,28 @@ host 规则：
 - 输出 schema 为 `control-plane/codex-desktop-filtered-snapshot-host/v1`；状态/退出码为 `ready/0`、`error/1`、`blocked/2`、`validation_failed/5`；
 - 该工具只提供本地 one-shot JSON host contract，不是 Codex Desktop 专有插件或 UI；不写文件/ledger、不访问网络、不启动 service、不执行 descriptor argv、candidate command 或 adapter。
 
+Stage 34 filtered snapshot Markdown display：
+
+```bash
+python tools/codex_desktop_filtered_snapshot_display.py \
+  --project-root . \
+  --envelope adapters/execution-envelope.examples.json \
+  --request-id req-20260703-001 \
+  --representation markdown \
+  --timeout-seconds 30 \
+  --json
+```
+
+display 规则：
+
+- 只启动固定 Stage 31 host，不直接启动 reader/consumer，不接受 arbitrary stdin/file/URL；
+- 只有 host `ready/0` 且 shape、lifecycle、guarantees、identity、safe rows、counts/matched/filter semantics 全部通过后才生成 content；
+- 动态值以 escaped ASCII JSON inline literal 投影到固定 Markdown 模板；不输出 raw HTML、图片、链接或输入 Markdown；
+- 顺序固定为 overview/filter/identity、runs、approvals、artifacts、reports；合法空视图显示固定 no-match 文案；
+- `content_id` 是 Markdown UTF-8 bytes 的 SHA-256；最终 JSON 最大 64 KiB，超限 fail closed；
+- host 非 ready 时 `content/content_id=null`；状态/退出码保持 `ready/0`、`error/1`、`blocked/2`、`validation_failed/5`；
+- one-shot、no retry、no write、no network、no service、no cache/export、no adapter execution。
+
 总览聚合：
 
 ```bash

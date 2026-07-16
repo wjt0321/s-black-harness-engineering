@@ -13,7 +13,7 @@
 
 ## 版本治理说明
 
-当前仓库最新里程碑基线为 `v0.14.0-filtered-snapshot-host-integration`（commit `dfae346`，annotated tag 与 `main` 已推送）。上一基线为 `v0.13.0-read-only-control-plane`（commit `f401b98`，已 push）。
+当前仓库最新里程碑基线为 `v0.15.0-filtered-snapshot-display-integration`（本地 annotated tag，未 push）。上一基线为 `v0.14.0-filtered-snapshot-host-integration`（commit `dfae346`，已 push）。
 
 从 orchestration 阶段开始，项目持续使用 `docs/55`、`docs/57`、`docs/59`、`docs/61`、`docs/65`、`docs/67`、`docs/72` 这类**阶段编号 + release notes**来完成阶段收口，而 semver/tag 改为只在里程碑节点冻结。
 
@@ -1004,15 +1004,25 @@ v0.14.0-filtered-snapshot-host-integration
 
 ---
 
-## Stage 34 — Codex Desktop Filtered Snapshot Markdown Display Implementation（条件启动）
+## Stage 34 — Codex Desktop Filtered Snapshot Markdown Display Implementation（已完成）
 
-按 TDD 实现 `tools/codex_desktop_filtered_snapshot_display.py`。只能固定启动 Stage 31 host；不得接受 arbitrary stdin/file/URL，不得绕过 consumer，不得输出 raw Markdown/HTML 或新增持久化。
+- 按 TDD 新增 `tools/codex_desktop_filtered_snapshot_display.py` 与 11 项专用测试；
+- 只启动固定 Stage 31 host，严格验证 host result 后投影 escaped deterministic Markdown；
+- 支持 request-only、task-only、AND 与合法空视图；
+- content hash、64 KiB final bound、non-ready withheld 与 no-side-effect 已冻结；
+- 868 项全量测试、doctor、public scan 与真实 smoke 通过。
 
 ---
 
-## Stage 35 — Filtered Snapshot Display Integration Milestone Freeze（条件启动）
+## Stage 35 — Filtered Snapshot Display Integration Milestone Freeze（已完成）
 
-Stage 34 全量验收后冻结候选 annotated tag `v0.15.0-filtered-snapshot-display-integration`，同步 release notes、digest、handoff 与版本治理。
+已冻结本地 annotated tag `v0.15.0-filtered-snapshot-display-integration`；未获本轮 push 指令。事实源为 `docs/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` 与 release notes 95/96。
+
+---
+
+## Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate（条件启动）
+
+只审计独立 stdin consumer 对 display v1 wrapper、content hash、escaping invariant、empty-view 和 withheld contract 的验证边界；不启动 display/host/reader，不引入 UI/service/persistence/write。
 
 ---
 

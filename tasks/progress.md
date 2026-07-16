@@ -2717,3 +2717,12 @@
 - 新增 `docs/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` 与 release notes 94。
 - v0.14.0 commit/tag 已按后续用户授权推送至 `origin`；历史 freeze 文档移入 `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`。
 - 下一步：Stage 34 必须先写 RED tests，再实现 fixed host → escaped deterministic Markdown one-shot display wrapper。
+
+
+## 2026-07-16 Stage 34–35 — Filtered Snapshot Display Integration
+
+- Stage 34 按 TDD 新增 fixed Stage 31 host → strict validation → escaped deterministic Markdown display wrapper。
+- 11 项专用测试先 RED 后 GREEN；78 项相关回归与 868 项全量测试通过。
+- doctor、public scan、py_compile、Git diff check 与真实 request/task/AND/empty/blocked smoke 通过。
+- Stage 35 冻结本地 annotated tag `v0.15.0-filtered-snapshot-display-integration`；本轮未获 push 指令。
+- 下一阶段为 Stage 36 independent display-result consumer validation design gate（条件启动）。

@@ -280,3 +280,22 @@ v0.14.0-filtered-snapshot-host-integration
 冻结事实源为 `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` 与 `docs/archive/release-notes/93-release-notes-v0.14.0-filtered-snapshot-host-integration.md`。
 
 冻结后已按用户授权将 commit/tag 推送至 `origin`，target 为 `dfae346`。该 tag 不开放专有 Codex Desktop 插件/UI、HTML/browser、live service、network/DB/auth、cache/export、arbitrary query、UI controlled write 或真实 adapter execution。
+
+
+## v0.15.0 Filtered Snapshot Display Integration 里程碑冻结（2026-07-16）
+
+Stage 33–34 在 v0.14.0 fixed host 上形成新的 one-shot safe display 能力包：
+
+- strict host result validation；
+- safe allowlist projection；
+- deterministic escaped Markdown；
+- content hash、empty-view UX 与 bounded output；
+- non-ready withheld 与 no-side-effect contract。
+
+冻结本地 annotated tag：
+
+```text
+v0.15.0-filtered-snapshot-display-integration
+```
+
+冻结事实源为 `docs/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` 与 `docs/archive/release-notes/96-release-notes-v0.15.0-filtered-snapshot-display-integration.md`。未获本轮 push 指令，因此 commit/tag 保持本地；专有 UI、HTML/browser、network/service、persistence/export、write 与真实 execution 继续 unavailable。
