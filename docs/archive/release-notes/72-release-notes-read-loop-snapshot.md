@@ -1,7 +1,7 @@
 # 72 — Release Notes: Read-Loop Snapshot（Stage 12 第二拍）
 
 <!-- parents: 50-control-plane-state-model.md -->
-<!-- relates: 53-minimal-orchestration-loop-cli-draft.md, 58-orchestration-run-controlled-execution-design.md, 60-orchestration-run-lifecycle-events-design.md -->
+<!-- relates: ../53-minimal-orchestration-loop-cli-draft.md, 58-orchestration-run-controlled-execution-design.md, 60-orchestration-run-lifecycle-events-design.md -->
 
 ## 阶段定位
 
@@ -61,7 +61,7 @@ Registry → Routing → Constraints/Trace → Routing Snapshot → Run Preview 
 | `python -m agent_runtime.cli doctor` PASS | ✅ |
 | `python tools/public_scan.py` OK | ✅ |
 | `git diff --check` 无空白错误 | ✅ |
-| 文档更新：`000-stage-digest.md`、`02-roadmap.md`、`10-cli-poc-usage.md`、`50-control-plane-state-model.md`、`51-backend-first-api-boundary.md`、`52-minimal-orchestration-loop.md`、`53-minimal-orchestration-loop-cli-draft.md` | ✅ |
+| 文档更新：`000-stage-digest.md`、`02-roadmap.md`、`10-cli-poc-usage.md`、`50-control-plane-state-model.md`、`51-backend-first-api-boundary.md`、`52-minimal-orchestration-loop.md`、`archive/53-minimal-orchestration-loop-cli-draft.md` | ✅ |
 | 进度账本与 handoff 更新 | ✅ |
 
 ## 建议里程碑版本

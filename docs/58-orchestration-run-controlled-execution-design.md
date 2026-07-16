@@ -271,7 +271,7 @@ commit 后至少执行：
 
 - `docs/51-backend-first-api-boundary.md` 定义了 Run / Approval / Artifact / Report 等资源与操作边界；本文档把 `Run.execute` 操作的 dry-run/commit 语义细化到可执行层面。
 - `docs/52-minimal-orchestration-loop.md` 描述了“执行受控运行”这一步；本文档定义这一步的产物与 freeze guard。
-- `docs/53-minimal-orchestration-loop-cli-draft.md` 提供了 `orchestration run` 命令草案；本文档为其进入实现提供设计前置。
+- `docs/archive/53-minimal-orchestration-loop-cli-draft.md` 提供了 `orchestration run` 命令草案；本文档为其进入实现提供设计前置。
 - `docs/54-backend-preparation-before-ui.md` 定义了执行页 read model；本文档说明执行页操作入口（run dry-run/commit）在写入侧应如何沉淀产物。
 - `docs/56-orchestration-controlled-write-boundary.md` 定义了 dry-run/commit 统一语义；本文档将其应用到 run 命令。
 - `docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md` 记录了 route preview / preflight / approval resolve 落地；本文档是 run 侧落地的直接前置。

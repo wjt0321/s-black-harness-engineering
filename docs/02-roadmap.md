@@ -338,7 +338,7 @@
 主要交付物：
 
 - `docs/52-minimal-orchestration-loop.md`
-- `docs/53-minimal-orchestration-loop-cli-draft.md`（命令面草案参考，非正式 API 边界）
+- `docs/archive/53-minimal-orchestration-loop-cli-draft.md`（命令面草案参考，非正式 API 边界）
 
 实施入口（已完成）：将 Stage 13 已冻结的 stable/preview/unavailable 契约应用到最小闭环的 use-case 与回放验证；全过程保持不选 HTTP/RPC、不启动 service、不执行真实 adapter。
 
@@ -479,7 +479,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 - `agent_runtime/orchestration_run_dry_run.py`
 - `tests/test_orchestration_run_dry_run.py`
-- `docs/10-cli-poc-usage.md` / `docs/53-minimal-orchestration-loop-cli-draft.md` 更新
+- `docs/10-cli-poc-usage.md` / `docs/archive/53-minimal-orchestration-loop-cli-draft.md` 更新
 
 已落地能力：
 
@@ -503,7 +503,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 - `agent_runtime/orchestration_run_commit.py`
 - `tests/test_orchestration_run_commit.py`
 - `docs/archive/release-notes/59-release-notes-orchestration-run-controlled-execution.md`
-- `docs/10-cli-poc-usage.md` / `docs/53-minimal-orchestration-loop-cli-draft.md` / `docs/58-orchestration-run-controlled-execution-design.md` 更新
+- `docs/10-cli-poc-usage.md` / `docs/archive/53-minimal-orchestration-loop-cli-draft.md` / `docs/58-orchestration-run-controlled-execution-design.md` 更新
 
 已落地能力：
 
@@ -1087,9 +1087,34 @@ v0.14.0-filtered-snapshot-host-integration
 
 完成全量文档沉淀和旧文档归档。本阶段不创建 tag、不 push；稳定 tag 仍为 v0.17.0。事实源为 `docs/95-single-user-real-execution-readiness-gate-and-milestone.md` 与 release notes 104/105。
 
-## Stage 46 — Fixed Git Status Executor Design Gate（条件启动）
+## Stage 46 — Fixed Git Status Executor Design Gate（已完成，design-only）
 
-只允许设计 fixed `git status --short --branch` executor 的 executable resolution、spawn/cancel、output validation、no-write evidence 与 failure mapping；不开放通用 shell，不直接实现 subprocess。
+已冻结：
+
+- sanitized PATH 只做候选发现；production 需要 operator-reviewed trust binding、publisher/owner/ACL、digest/file-id 与 actual image binding；
+- child PATH 与 resolver 使用的 canonical sanitized PATH 精确一致，并绑定同一 identity digest；
+- project-root/direct `.git` 与 repository config preflight；拒绝 `commondir`、object alternates、external worktree/excludes/attributes 和 submodule surface；
+- Git 核心 metadata 使用 lstat-first、never-follow containment，拒绝 index/HEAD/refs/objects/pack 的 symlink、junction、reparse、hardlink 与 root escape；
+- exact `git status --short --branch`、`shell=false`、minimal fixed environment；
+- bounded `Popen` + POSIX process group / Windows Job Object、64 KiB 双流 hard stop、timeout/cancel/tree reap、no retry；
+- finite branch grammar、完整 porcelain-v1 XY allowlist/计数映射与 path/branch/raw output withheld；
+- contract controls + bounded guard evidence + `filesystem_write_proof=false` 的诚实 no-write 分层；
+- `execution_attempt_started` 不宣称 child 已创建；execution audit 成功前不得释放 result；
+- reserved execution event 只能由专用 writer 写入，通用 append/import 必须拒绝。
+
+本阶段没有新增 executor、CLI、schema、event type，也没有执行 Git。事实源为 `docs/96-fixed-git-status-executor-design-gate.md` 与 release notes 106。
+
+## Stage 47 — Execution Lifecycle Audit Writer Design Gate（条件启动）
+
+冻结 `execution_attempt_started/succeeded/failed/cancelled` reserved schema、专用 writer provenance、通用 append/import 拒绝、safe metadata、controlled append/rollback、attempt-started/terminal recovery 与 release gate；不执行命令。
+
+## Stage 48 — Execution Lifecycle Audit Writer Implementation（条件启动）
+
+按 TDD 落地受控 writer，并运行全量测试、doctor、public scan 与 controlled-write regression。
+
+## Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（条件启动）
+
+只有 Stage 48 完成，且 executable trust/image binding、sanitized child PATH、process-tree containment、有限 porcelain parser 都能满足 Stage 46，用户再次明确授权真实 subprocess 后，才允许实现 fixed executor。无法闭合 hash-to-spawn TOCTOU 或平台 process-tree containment 时保持 unavailable。仍不开放通用 shell、network adapter、linked worktree、raw path reveal 或 multi-user auth。
 
 ---
 

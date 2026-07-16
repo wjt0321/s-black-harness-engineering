@@ -1362,7 +1362,7 @@
 - 修复 `RoutePreviewResult.to_dict()`：始终输出 `selected_adapter_id`（含 `null`），保证 blocked/needs_input 结果也有稳定 key。
 - 调整测试期望：blocked 时的 fallback candidates 应为支持该 capability 的 adapter（如 `github-cli`），而非不支持 capability 的显式 `--adapter`。
 - 文档同步：
-  - 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration route preview` 从候选草案改为已存在只读命令，补充命令示例与边界说明。
+  - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration route preview` 从候选草案改为已存在只读命令，补充命令示例与边界说明。
   - 更新 `docs/56-orchestration-controlled-write-boundary.md`：标记 route preview 已落地，并说明其字段与约束语义。
   - 更新 `docs/10-cli-poc-usage.md`：在「Orchestration Read-Model CLI」章节新增 routing handoff 预览示例。
 - 安全边界保持不变：
@@ -1440,7 +1440,7 @@
 - 在 `agent_runtime/cli.py` 注册 `orchestration preflight` 子命令，支持 `--capability`、`--task-id`、`--adapter`、`--operation`、`--target`、`--mode`、`--json`、全局 `--root` / `--policy` / `--policy-profile` / `--agent` / `--assignee`。
 - 新增 `tests/test_orchestration_preflight.py`，覆盖 JSON 结构、human smoke、route blocked 跳过 guardrail、missing operation、missing target、local commit allowed、external commit 降级、guardrail blocked、task 上下文、只读不写文件。
 - 文档同步：
-  - 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration preflight` 从候选草案改为已存在只读命令，更新命令示例与脚本示例。
+  - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration preflight` 从候选草案改为已存在只读命令，更新命令示例与脚本示例。
   - 更新 `docs/56-orchestration-controlled-write-boundary.md`：标记 preflight 已落地，说明输入/处理/输出语义。
   - 更新 `docs/10-cli-poc-usage.md`：新增 preflight 示例。
 - 安全边界保持不变：
@@ -1526,7 +1526,7 @@
   - human / JSON 输出、granted 后 next_action 要求新 preflight、denied 记录 decision。
   - 完整 reason / secret / `decision_ref` 不回显到 CLI 输出。
 - 文档同步：
-  - 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration approval resolve` 从候选草案改为已存在受控写入命令，补充 dry-run / commit 示例与边界说明。
+  - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration approval resolve` 从候选草案改为已存在受控写入命令，补充 dry-run / commit 示例与边界说明。
   - 更新 `docs/56-orchestration-controlled-write-boundary.md`：标记 `approval resolve` 已按 event-ledger append 方案落地，更新产物形态与下一步。
   - 更新 `docs/10-cli-poc-usage.md`：新增 `orchestration approval resolve` 示例，并更新当前安全边界说明。
 - 安全边界保持不变：
@@ -1750,7 +1750,7 @@
   - 覆盖 CLI JSON/人类可读输出。
   - 修正人类可读 smoke 测试，使其使用 `read_file` capability 以匹配期望 `pass` 状态。
 - 文档同步：
-  - 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration run --dry-run` 标为已存在，`orchestration run --commit` 仍草案。
+  - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration run --dry-run` 标为已存在，`orchestration run --commit` 仍草案。
   - 更新 `docs/58-orchestration-run-controlled-execution-design.md`：标记 dry-run 已落地，commit 待实现。
   - 更新 `docs/10-cli-poc-usage.md`：新增 `orchestration run --dry-run` 示例与边界说明。
 - 验证：
@@ -1835,7 +1835,7 @@
 - 修正 `tests/test_orchestration_run_dry_run.py`：
   - `test_cli_commit_returns_needs_input` 断言改为提示 `--output`/`--expected-plan-hash`。
 - 文档同步：
-  - 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration run --commit` 标为已存在第一版 A-only controlled write。
+  - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration run --commit` 标为已存在第一版 A-only controlled write。
   - 更新 `docs/58-orchestration-run-controlled-execution-design.md`：标记 commit A-only 已落地，B lifecycle events 仍后续。
   - 更新 `docs/10-cli-poc-usage.md`：新增 `orchestration run --commit` 示例与边界说明，更新安全边界与限制。
 - 验证：
@@ -2061,7 +2061,7 @@
   - `tests/test_orchestration_run_commit.py`：所有 commit 测试传入 `events_file`；新增事件顺序、metadata 脱敏、B 失败回滚、CLI `--events-file`、不修改已有合法事件等测试；删除旧 A-only「不追加事件」测试。
   - `tests/test_task_validation.py`：新增 schema enum 接受 `run_planned` / `run_draft_exported` / `run_blocked` / `approval_resolved` 的参数化测试。
 - 文档同步：
-  - `docs/53-minimal-orchestration-loop-cli-draft.md`：`orchestration run --commit` 从 A-only 改为 A+B。
+  - `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：`orchestration run --commit` 从 A-only 改为 A+B。
   - `docs/58-orchestration-run-controlled-execution-design.md`：标记 B lifecycle events 已落地。
   - `docs/60-orchestration-run-lifecycle-events-design.md`：标记 schema 与 A+B 实现已落地。
   - `docs/10-cli-poc-usage.md`：更新 run commit 示例与边界说明，加入 `--events-file`。
@@ -2364,7 +2364,7 @@
   - `docs/50-control-plane-state-model.md`：新增 Run Preview → Event / Report Read-Loop Snapshot 小节。
   - `docs/51-backend-first-api-boundary.md`：Task 操作表后说明 `--dry-run --snapshot` 产生 ephemeral read model。
   - `docs/52-minimal-orchestration-loop.md`：Adapter Dry-run / Commit 步骤补充 `--snapshot` 语义。
-  - `docs/53-minimal-orchestration-loop-cli-draft.md`：`orchestration run --dry-run` 说明追加 `--snapshot`。
+  - `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：`orchestration run --dry-run` 说明追加 `--snapshot`。
   - `docs/10-cli-poc-usage.md`：新增 run dry-run `--snapshot` 示例与说明。
   - `docs/000-stage-digest.md`：新增“Run Preview → Event / Report 只读投影闭环”小节；更新“现在已经能做什么”。
   - `docs/02-roadmap.md`：Stage 12 已落地第一拍追加 read-loop snapshot 闭环说明。
@@ -2796,3 +2796,20 @@
 - Stage 45 新增 release notes 104/105，维护 digest/index/roadmap/CLI usage/versioning/README/AGENTS/handoff，并归档 Stage 25 文档，活跃 docs 保持 50 个。
 - 本阶段为提交级里程碑，不创建 tag、不 push；稳定 semver 仍为已推送 v0.17.0。
 - 下一阶段 Stage 46 只允许 fixed Git Status Executor Design Gate，不直接实现 subprocess，不开放通用 shell。
+
+## 2026-07-16 Stage 46 — Fixed Git Status Executor Design Gate
+
+- Stage 43–45 经安全负向测试和独立复审后提交为 `49a517b`；readiness v1 永久冻结为 blocked snapshot。
+- 初稿选择 fixed resolver + bounded one-shot `Popen` runner，拒绝通用 shell、任意 argv/cwd/env 与无界 collector；独立安全复审后收紧为 trusted executable/image binding + process-tree containment。
+- 冻结 project-root/direct `.git`、sanitized PATH discovery、repository config value-safe scan、minimal Git config overrides。
+- 冻结 10/30 秒 timeout、64 KiB stdout/stderr hard stop、tree terminate → kill → wait、no retry/no background。
+- raw path/branch/stdout/stderr/executable path/environment withheld，只允许 dirty/count/ahead-behind/digest 安全摘要。
+- no-write 诚实区分 contract controls、bounded guard evidence 与当前不存在的 OS filesystem proof。
+- execution audit 写入和 post-run guard 完成前不得释放 result。
+- 独立安全复审发现并闭合 5 项 Important：PATH discovery 不等于 executable trust、child PATH 必须绑定 sanitized PATH、直接 child reap 不等于 process-tree containment、short-status 需要有限完整 grammar、execution audit 必须防通用 append/import 伪造。
+- Stage 46 现冻结 operator-reviewed trust binding、image identity / TOCTOU 停止线、POSIX process group / Windows Job Object、完整 config denylist/submodule block、porcelain-v1 XY 映射及 `execution_attempt_started` 语义。
+- 二次复审继续补齐 repository read containment：拒绝 `core.worktree`、external excludes/attributes、`.git/commondir`、object alternates，并把 `.git/info/exclude` / `attributes` 纳入 bounded fingerprint。
+- 三次复审把 containment 提升为统一前置规则：Git 核心 metadata 必须 lstat-first、never-follow；index/HEAD/packed-refs/refs/objects/pack 的 symlink、junction、reparse、hardlink/root escape 在任何读取或 hash 前 blocked。
+- 新增 `docs/96-fixed-git-status-executor-design-gate.md` 与 release notes 106；旧 Stage 14 CLI draft 归档，活跃 docs 保持 50 个。
+- 本阶段没有新增 production code、CLI/schema/event type，没有执行 Git，不创建 tag、不 push。
+- 下一阶段为 Stage 47 Execution Lifecycle Audit Writer Design Gate；Stage 49 真实 subprocess 仍需用户再次明确授权。

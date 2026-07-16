@@ -1,5 +1,5 @@
 <!-- parents: ../../../51-backend-first-api-boundary.md -->
-<!-- relates: ../../../52-minimal-orchestration-loop.md, ../../../53-minimal-orchestration-loop-cli-draft.md -->
+<!-- relates: ../../../52-minimal-orchestration-loop.md, ../53-minimal-orchestration-loop-cli-draft.md -->
 
 # 76 — Release Notes — Stage 13 Backend-first API Boundary
 

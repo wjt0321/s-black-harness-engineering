@@ -101,6 +101,8 @@ Stage 44 不扩展 event schema、不写 event；它必须检测上述 event typ
 
 readiness gate 会验证 `tasks/event.schema.json` 自身是合法 JSON Schema，并确认上述 execution lifecycle event types 当前尚未进入 `event_type.enum`。event schema 结构漂移会阻断 `audit_contract`；schema 本身非法则返回固定、脱敏的 `validation_failed`。
 
+> Stage 46 后续校正：pre-spawn 事实名改为 `execution_attempt_started`，明确表示“尝试已受控提交、child 可能尚未创建”；reserved execution event 必须由专用 writer 写入，通用 append/import 必须拒绝。Stage 44 readiness v1 保持历史 blocked snapshot，不回改为执行权限。
+
 ## 7. Source-backed readiness profile
 
 新增固定文件：

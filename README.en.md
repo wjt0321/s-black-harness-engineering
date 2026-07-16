@@ -58,7 +58,7 @@ The repository now provides an **offline, auditable CLI/runtime security core su
 
 - it can already support policy validation, task/event ledgers, capability routing, dry-runs, controlled writes, and recovery-lineage auditing;
 - Stage 13 resource/operation reconciliation and the Stage 14 replayable minimal orchestration loop are both complete;
-- a local, deterministic, self-contained read-only Control Panel is now available; real adapter execution, persistent services/databases, authentication, and UI write operations remain unavailable, so this is not yet an auto-executing production orchestration hub.
+- Stage 13–45 backend/read-model/controlled-write/host/display/readiness work is closed, and Stage 46 now freezes a fixed Git-status executor contract covering trusted executable/image binding, an identical sanitized child PATH, process-tree containment, a finite porcelain parser, safe output, honest no-write evidence, and dedicated audit provenance. Real adapter execution remains unavailable.
 - Stage 16 closure commit: `b46c013`; this closure has been pushed to `origin/main` with user authorization.
 
 ## Progress Bar
@@ -146,6 +146,7 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 41 — `v0.17.0-filtered-snapshot-display-host-integration` Milestone Freeze (pushed)
 - ✅ Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate (design-only gate complete)
 - ✅ Stage 43–45 — Single-user Real Execution Readiness (commit-level milestone complete; execution still blocked)
+- ✅ Stage 46 — Fixed Git Status Executor Design Gate (design-only complete; Git was not executed)
 
 ### The Most Accurate Current Read
 
@@ -153,11 +154,11 @@ The current state is best understood as:
 
 - **guardrails / ledgers / controlled writes are no longer a sketch; they are already a formed security core**
 - **the orchestration backend now has source-backed registry, constraint routing, read-loop snapshots, and recovery lineage aggregation v1**
-- **real adapter execution remains blocked; fixed `git_status` readiness is now auditable, while long-running services/APIs, interactive write-capable UI, and DB remain out of scope**
+- **real adapter execution remains blocked; the fixed `git_status` trust/image-binding, sanitized-PATH, process-tree-runner, output/no-write/audit-release contract is frozen, but the audit writer and executor are not implemented**
 
 ### What Comes Next
 
-Stage 43–45 are complete as a single-user execution-readiness milestone. The repository now exposes a deterministic read-only gate for one fixed `shell-local/git_status` candidate and freezes exact argv, bounded process, approval binding, and audit contracts. Ten design checks pass while the executor, approval binding implementation, and audit writer remain explicitly blocked. No process is executed; multi-user auth, generic shell, network adapters, services/DB, and write-capable UI remain unavailable.
+Stage 46 is complete as a design-only fixed Git-status executor gate. PATH is discovery only, not authorization. The gate freezes operator-reviewed executable/image trust binding, the same canonical sanitized PATH for discovery and the child, repository/config/submodule preflight, POSIX process groups or Windows Job Objects, a finite porcelain-v1 grammar, safe summary projection, honest no-write evidence levels, and reserved execution-event provenance. The next conditional stage is the execution-lifecycle audit-writer design gate; no Git process was executed.
 
 
 Implemented capability highlights:
@@ -220,7 +221,7 @@ If this is your first time in the repository, read in this order:
 7. `docs/50-control-plane-state-model.md`
 8. `docs/51-backend-first-api-boundary.md`
 9. `docs/52-minimal-orchestration-loop.md`
-10. `docs/53-minimal-orchestration-loop-cli-draft.md`
+10. `docs/archive/53-minimal-orchestration-loop-cli-draft.md`
 11. `docs/54-backend-preparation-before-ui.md`
 12. `docs/archive/release-notes/55-release-notes-orchestration-read-models.md`
 13. `docs/56-orchestration-controlled-write-boundary.md`

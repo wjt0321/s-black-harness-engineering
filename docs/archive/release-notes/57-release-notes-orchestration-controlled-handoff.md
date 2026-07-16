@@ -128,7 +128,7 @@ python -m agent_runtime.cli orchestration approval resolve \
 - 更新 `docs/00-index.md`：在中枢台后端主线与发布/阶段收口列表中加入 57。
 - 更新 `docs/02-roadmap.md`：Stage 15.5 状态从「design gate」调整为「第一批 controlled handoff / approval resolve 已落地」。
 - 更新 `docs/10-cli-poc-usage.md`：把三个命令从草案标记为已存在命令，并补充示例。
-- 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：同步 route preview / preflight / approval resolve 状态。
+- 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：同步 route preview / preflight / approval resolve 状态。
 - 更新 `docs/56-orchestration-controlled-write-boundary.md`：标记三个命令已落地，更新产物形态与下一步。
 - 更新 `README.md` / `README.en.md`：同步 Stage 15.5 状态与已落地能力列表。
 - 更新 `tasks/progress.md`：追加 2026-07-09 阶段收口记录。

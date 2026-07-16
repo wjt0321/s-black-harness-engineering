@@ -356,3 +356,13 @@ Stage 43–44 已形成真实执行前的可引用 readiness 能力，但 execut
 - readiness CLI 作为 preview/read-only contract；
 - future fixed executor、binding、audit writer 全部实现并验收后，再评估 v0.18 milestone；
 - 未经用户明确要求不创建 tag、不 push。
+
+## Stage 46 Fixed Git Status Executor Design-only Gate（2026-07-16）
+
+Stage 46 只冻结 executable/image trust binding、sanitized child PATH、repository/config/submodule preflight、process-tree containment、有限 porcelain parser、safe output、no-write evidence 分层与 dedicated audit release ordering，没有新增 production executor、CLI、schema、event type 或可执行能力包，因此继续不满足新的 semver tag 条件。
+
+- 稳定 tag 继续为已推送的 `v0.17.0-filtered-snapshot-display-host-integration`；
+- Stage 46 以 `docs/96-fixed-git-status-executor-design-gate.md` 与 release notes 106 收口；
+- 不创建 `v0.18.0` tag，不 push；
+- Stage 47–48 先完成 reserved execution lifecycle schema、专用 provenance 与不可由通用 append/import 伪造的 audit writer；
+- Stage 49 只有 trust/image binding、sanitized child PATH、process-tree containment、有限 porcelain parser 全部闭合，用户再次明确授权真实 subprocess 且全量验收通过后，才重新评估 v0.18 milestone。

@@ -73,7 +73,7 @@ lifecycle event metadata 仅保留安全摘要字段：
 - `agent_runtime/orchestration_run_commit.py`：实现 A+B commit、event batch 生成、schema/security scan、post-check 与 A/B rollback。
 - `tasks/event.schema.json`：新增 run lifecycle event types。
 - `docs/10-cli-poc-usage.md`：更新 run commit 示例与边界说明，加入 `--events-file`。
-- `docs/53-minimal-orchestration-loop-cli-draft.md`：把 run commit 状态从 A-only 更新为 A+B。
+- `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 run commit 状态从 A-only 更新为 A+B。
 - `docs/58-orchestration-run-controlled-execution-design.md`：标记 A+B 已落地。
 - `docs/60-orchestration-run-lifecycle-events-design.md`：标记 B 侧实现已落地。
 - `tasks/progress.md`：追加 Stage 15.9 实现账本。

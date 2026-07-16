@@ -129,7 +129,7 @@ python -m agent_runtime.cli orchestration run \
 - 更新 `docs/00-index.md`：在中枢台后端主线与发布/阶段收口列表中加入 59。
 - 更新 `docs/02-roadmap.md`：Stage 15.6/15.7/15.8 状态调整为 run dry-run / commit A-only 已落地，B lifecycle events 仍后续。
 - 更新 `docs/10-cli-poc-usage.md`：把 `orchestration run --commit` 从草案标记为已存在命令，并补充示例。
-- 更新 `docs/53-minimal-orchestration-loop-cli-draft.md`：同步 run dry-run / run commit 状态。
+- 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：同步 run dry-run / run commit 状态。
 - 更新 `docs/58-orchestration-run-controlled-execution-design.md`：标记 commit A-only 已落地，B 仍后续。
 - 更新 `README.md` / `README.en.md`：同步 Stage 15.6/15.7/15.8 状态与已落地能力列表。
 - 更新 `tasks/progress.md`：追加 2026-07-09 阶段收口记录。
