@@ -57,7 +57,7 @@
 当前仓库已经形成可内部试用的**离线、可审计 CLI / Runtime 安全内核**，并完成 Stage 12 control-plane read model 验收：
 
 - 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
-- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP、Stage 17 stdio host handoff、Stage 18 独立 reference consumer、Stage 19 Codex Desktop 只读 adapter design gate、Stage 20 one-shot adapter、Stage 21 representation read design gate、Stage 22 project-scoped reader、Stage 23 design gate、Stage 24 envelope-scoped reader、Stage 25 consumer contract、Stage 26 filtered-read design gate、Stage 27 filtered v3 reader、Stage 28 host consumer validation design gate、Stage 29 filtered snapshot consumer、Stage 30 host design gate、Stage 31 one-shot host implementation、Stage 32 milestone freeze、Stage 33 Markdown display design gate、Stage 34 implementation、Stage 35 milestone freeze 与 Stage 36 display consumer design gate 均已完成收口；
+- Stage 13 资源/操作边界、Stage 14 最小可回放编排闭环、Stage 16 Read-only Control Panel MVP、Stage 17 stdio host handoff、Stage 18 独立 reference consumer、Stage 19 Codex Desktop 只读 adapter design gate、Stage 20 one-shot adapter、Stage 21 representation read design gate、Stage 22 project-scoped reader、Stage 23 design gate、Stage 24 envelope-scoped reader、Stage 25 consumer contract、Stage 26 filtered-read design gate、Stage 27 filtered v3 reader、Stage 28 host consumer validation design gate、Stage 29 filtered snapshot consumer、Stage 30 host design gate、Stage 31 one-shot host implementation、Stage 32 milestone freeze、Stage 33 Markdown display design gate、Stage 34 implementation、Stage 35 milestone freeze、Stage 36 display consumer design gate、Stage 37 implementation 与 Stage 38 milestone freeze 均已完成收口；
 - 当前可生成本地、自包含、确定性的静态只读 Control Panel，通过版本化 descriptor 声明 snapshot/HTML representation；filtered v3 还可通过独立标准库-only、stdin-only consumer 验证 schema、lifecycle、identity、safe sections 与 filter semantics，并由 one-shot host 在 validation pass 后返回安全内存投影。真实 adapter execution、持久化 service/DB、鉴权和 UI 写操作仍未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条
@@ -78,7 +78,7 @@
 
 ### 版本号说明
 
-当前仓库最新里程碑基线为 `v0.15.0-filtered-snapshot-display-integration` / `b1fa0b3`（annotated tag 与 `main` 已推送），覆盖 Stage 33–34 的 strict host validation、safe projection 与 deterministic escaped Markdown。上一基线为 `v0.14.0-filtered-snapshot-host-integration`（commit `dfae346`，已 push）。
+当前仓库最新里程碑基线为 `v0.16.0-filtered-snapshot-display-consumer`（本地 annotated tag，未 push），覆盖 Stage 36–37 的独立 stdin-only display wrapper/content/Markdown contract validation。上一基线为 `v0.15.0-filtered-snapshot-display-integration` / `b1fa0b3`（已推送）。
 
 在 `v0.11.0-runtime-event-import` 之后，项目进入 orchestration 主线，实际改用“**阶段编号 + release notes 文档**”做阶段收口，例如 `55`、`57`、`59`、`61`、`65`、`67`、`72`。这代表：
 
@@ -86,12 +86,12 @@
 - semver / tag 不再按每个阶段同步增长；
 - 版本治理改为“阶段推进 + release notes 收口 + 里程碑打 tag”。
 
-当前已通过 `docs/64-versioning-governance.md` 正式定义该策略，并已在 `v0.12.0-orchestration-foundation`、`v0.12.1-orchestration-read-loop-snapshot`、`v0.13.0-read-only-control-plane` 与 `v0.14.0-filtered-snapshot-host-integration` 四次实际冻结：
+当前已通过 `docs/64-versioning-governance.md` 正式定义该策略，并已在 `v0.12.0-orchestration-foundation`、`v0.12.1-orchestration-read-loop-snapshot`、`v0.13.0-read-only-control-plane`、`v0.14.0-filtered-snapshot-host-integration`、`v0.15.0-filtered-snapshot-display-integration` 与 `v0.16.0-filtered-snapshot-display-consumer` 六次实际冻结：
 
 - 阶段编号继续用于推进顺序；
 - release notes 用于单阶段收口；
 - semver / Git tag 只用于里程碑级冻结点，不再逐阶段补 tag；
-- 当前最新冻结里程碑为 `v0.14.0-filtered-snapshot-host-integration`，在 `v0.13.0` 基础上补齐 Stage 17–31 的 stdio handoff、scoped/filtered reader、独立 consumer 与 validation-before-display one-shot host。
+- 当前最新冻结里程碑为本地 `v0.16.0-filtered-snapshot-display-consumer`，在已推送的 `v0.15.0` deterministic Markdown display 上补齐独立 display-result contract validation。
 
 ### 阶段闭环进度
 
@@ -141,8 +141,9 @@
 - ✅ Stage 34 — Codex Desktop Filtered Snapshot Markdown Display Implementation
 - ✅ Stage 35 — Filtered Snapshot Display Integration Milestone Freeze（`v0.15.0` 已推送）
 - ✅ Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate
-- ⚪ Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation（条件启动）
-- ⚪ Stage 33 — Codex Desktop Filtered Snapshot Display Integration Gate（条件启动）
+- ✅ Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation
+- ✅ Stage 38 — Filtered Snapshot Display Consumer Milestone Freeze（`v0.16.0` 本地 tag，未 push）
+- ⚪ Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate（条件启动）
 
 ### 现在最明确的位置
 
@@ -154,7 +155,7 @@
 
 ### 接下来的方向
 
-Stage 23/24 scoped reader、Stage 25 consumer contract、Stage 26 filter design gate、Stage 27 filtered v3、Stage 28/29 consumer 与 Stage 30–32 host milestone 已完成：
+Stage 23–35 scoped/filtered reader、consumer、host 与 Markdown display，以及 Stage 36–38 display consumer milestone 已完成：
 
 1. 用户必须同时显式选择 `snapshot-json` 并提供 allowlist 内的 project-relative `--envelope`
 2. allowlist 为 `adapters/*.json` 与 `drafts/runtime/**/*.envelope.json`，绝对路径、`..`、越界和 arbitrary JSON 均拒绝
@@ -168,7 +169,7 @@ Stage 23/24 scoped reader、Stage 25 consumer contract、Stage 26 filter design 
 10. Stage 29 已实现 `tools/codex_desktop_filtered_snapshot_consumer.py`：只消费完整 v3 stdin，固定 11 项验证、1 MiB 输入、64 KiB 最小输出与状态/退出码；不自动执行 reader、不读写文件、不访问网络。
 11. Stage 31 已实现 `tools/codex_desktop_filtered_snapshot_host.py`：固定 reader → consumer 管道，consumer pass 与 identity cross-check 前不释放 payload；事实源为 `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`。
 12. Stage 33–35 已完成 fixed Stage 31 host → strict validation → deterministic escaped Markdown，并冻结、推送 `v0.15.0`；事实源为 `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`。
-13. Stage 36 已冻结独立 display-result consumer contract；下一阶段为 Stage 37 条件实现，不默认引入专有 UI/HTML/browser/service/persistence/write。
+13. Stage 36–38 已完成独立 display-result consumer design、实现与本地 `v0.16.0` 里程碑冻结；下一阶段为 Stage 39 host integration design gate，不默认引入专有 UI/HTML/browser/service/persistence/write。
 
 已落地的主线能力包括：
 

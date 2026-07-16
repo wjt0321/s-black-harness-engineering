@@ -299,3 +299,22 @@ v0.15.0-filtered-snapshot-display-integration
 ```
 
 冻结事实源为 `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` 与 `docs/archive/release-notes/96-release-notes-v0.15.0-filtered-snapshot-display-integration.md`。commit/tag 随后已按用户授权推送至 `origin`；专有 UI、HTML/browser、network/service、persistence/export、write 与真实 execution 继续 unavailable。
+
+
+## v0.16.0 Filtered Snapshot Display Consumer 里程碑冻结（2026-07-16）
+
+Stage 36–37 在 v0.15.0 deterministic Markdown display 上形成独立、可引用的 consumer validation 能力包：
+
+- 完整 display v1 wrapper/status/lifecycle/guarantees validation；
+- bounded strict stdin parsing 与 duplicate-key rejection；
+- independent content hash、fixed Markdown grammar 与 escaping invariant validation；
+- identity/count/filter/empty-view/report coherence；
+- minimal value-safe output 与 non-ready withheld contract。
+
+因此再次满足里程碑冻结条件，创建本地 annotated tag：
+
+```text
+v0.16.0-filtered-snapshot-display-consumer
+```
+
+冻结事实源为 `docs/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` 与 `docs/archive/release-notes/99-release-notes-v0.16.0-filtered-snapshot-display-consumer.md`。该 tag 未 push；自动启动上游、专有 UI、HTML/browser、file/URL、network/service、persistence/export、write 与真实 execution 继续 unavailable。

@@ -34,7 +34,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 36 display consumer validation design gate 已冻结）
+### 5. 想看中枢台主线（Stage 36–38 display consumer milestone 已冻结）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -64,15 +64,15 @@
 - `87-filtered-envelope-snapshot-json-reader-implementation.md` — Stage 27 task/request filtered v3 reader 实现与验收事实源（已收口）
 - `88-filtered-snapshot-host-consumer-validation-gate.md` — Stage 28 Codex Desktop filtered v3 独立 consumer contract 与 Stage 29 实现边界（已收口）
 - `89-codex-desktop-filtered-snapshot-consumer-implementation.md` — Stage 29 独立标准库-only stdin consumer 实现与验收事实源（已收口）
-- `92-filtered-snapshot-markdown-display-consumer-validation-gate.md` — Stage 36 display v1 stdin consumer contract 与 Stage 37/38 边界（已收口）
+- `92-filtered-snapshot-markdown-display-consumer-validation-gate.md` — Stage 36–38 display v1 stdin consumer design、实现、验收与 `v0.16.0` 冻结事实源（已收口）
 - `archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` — Stage 33–35 Markdown display 与 `v0.15.0` 历史事实源
 - `archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` — Stage 30–32 host design、实现、验收与 `v0.14.0` 历史冻结事实源
 
 ### 6. 想看里程碑与冻结记录
 
 - 当前设计事实源：`92-filtered-snapshot-markdown-display-consumer-validation-gate.md`
-- 当前稳定里程碑事实源：`archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`
-- 上一稳定里程碑事实源：`archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`
+- 当前稳定里程碑事实源：`92-filtered-snapshot-markdown-display-consumer-validation-gate.md` 与 `archive/release-notes/99-release-notes-v0.16.0-filtered-snapshot-display-consumer.md`
+- 上一稳定里程碑事实源：`archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`
 - 上一冻结事实源：`archive/77-read-only-control-plane-milestone-freeze.md`
 - 历史 `v0.12.0` freeze checklist：`archive/68-orchestration-foundation-milestone-freeze-checklist.md`
 - 历史 `v0.12.0` freeze execution plan：`archive/69-orchestration-foundation-freeze-execution-plan.md`
@@ -84,7 +84,7 @@
 | 目录 | 内容 |
 |:---|:---|
 | `archive/` | 历史设计门 / freeze checklist / execution plan（含 v0.13 freeze `77`、Stage 19–21 `80`–`82`、v0.14 freeze `90`） |
-| `archive/release-notes/` | 各阶段 release notes（最新为 `97-release-notes-stage36-filtered-snapshot-markdown-display-consumer-validation-gate.md`） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `99-release-notes-v0.16.0-filtered-snapshot-display-consumer.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
@@ -92,9 +92,9 @@
 
 1. `000-stage-digest.md`
 2. `92-filtered-snapshot-markdown-display-consumer-validation-gate.md`
-3. `archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`
+3. `archive/release-notes/99-release-notes-v0.16.0-filtered-snapshot-display-consumer.md`
 4. 最新 handoff：`tasks/handoff-2026-07-16.md`
-5. `89-codex-desktop-filtered-snapshot-consumer-implementation.md`
+5. `archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`
 
 ## 其他入口
 

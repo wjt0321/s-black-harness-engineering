@@ -79,7 +79,7 @@ Current estimate:
 
 ### Versioning Note
 
-The latest milestone baseline is `v0.15.0-filtered-snapshot-display-integration` (commit `b1fa0b3`, pushed), covering Stage 33–34 strict host validation, safe projection, and deterministic escaped Markdown. The previous baseline is `v0.14.0-filtered-snapshot-host-integration` (commit `dfae346`, pushed).
+The latest milestone baseline is `v0.16.0-filtered-snapshot-display-consumer` (local annotated tag, not pushed), covering the Stage 36–37 independent stdin-only display wrapper/content/Markdown contract validation. The previous baseline is `v0.15.0-filtered-snapshot-display-integration` (commit `b1fa0b3`, pushed).
 
 After `v0.11.0-runtime-event-import`, the project entered the orchestration line and effectively switched to **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, `65`, `67`, and `72`. That means:
 
@@ -87,12 +87,12 @@ After `v0.11.0-runtime-event-import`, the project entered the orchestration line
 - semver / tags no longer advanced stage-by-stage;
 - versioning moved to a "stage progression + release-notes closure + milestone tags" model.
 
-The repository formalizes this through `docs/64-versioning-governance.md`. The policy has now been applied to `v0.12.0-orchestration-foundation`, `v0.12.1-orchestration-read-loop-snapshot`, `v0.13.0-read-only-control-plane`, and `v0.14.0-filtered-snapshot-host-integration`:
+The repository formalizes this through `docs/64-versioning-governance.md`. The policy has now been applied to `v0.12.0-orchestration-foundation`, `v0.12.1-orchestration-read-loop-snapshot`, `v0.13.0-read-only-control-plane`, `v0.14.0-filtered-snapshot-host-integration`, `v0.15.0-filtered-snapshot-display-integration`, and `v0.16.0-filtered-snapshot-display-consumer`:
 
 - stage numbers continue to represent internal progression order;
 - release-notes documents close individual stages;
 - semver / Git tags are reserved for milestone-level freeze points rather than every stage;
-- the current freeze baseline is `v0.14.0-filtered-snapshot-host-integration`, adding the Stage 17–31 read-only host consumption chain on top of `v0.13.0`.
+- the current freeze baseline is the local `v0.16.0-filtered-snapshot-display-consumer`, adding independent display-result contract validation on top of the pushed `v0.15.0` deterministic Markdown display.
 
 ### Stage Closure Progress
 
@@ -137,9 +137,11 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 32 — `v0.14.0-filtered-snapshot-host-integration` Milestone Freeze
 - ✅ Stage 33 — Filtered Snapshot Display Integration Gate
 - ✅ Stage 34 — Filtered Snapshot Markdown Display Implementation
-- ✅ Stage 35 — `v0.15.0-filtered-snapshot-display-integration` Local Milestone Freeze
+- ✅ Stage 35 — `v0.15.0-filtered-snapshot-display-integration` Milestone Freeze (pushed)
 - ✅ Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate
-- ⚪ Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation (conditional)
+- ✅ Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation
+- ✅ Stage 38 — `v0.16.0-filtered-snapshot-display-consumer` Local Milestone Freeze
+- ⚪ Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate (conditional)
 
 ### The Most Accurate Current Read
 
@@ -151,7 +153,7 @@ The current state is best understood as:
 
 ### What Comes Next
 
-Stage 36 is complete. Stage 37 remains conditional and implements the frozen stdin-only contract for an independent stdin-only consumer of the display v1 wrapper, content hash, escaping invariants, empty-view UX, and non-ready withholding. It must not start the display/host/reader or introduce proprietary UI, HTML/browser rendering, persistence/export, services/network/DB/auth, writes, or real adapter execution.
+Stage 38 is complete. Stage 39 remains conditional and may only design a fixed Stage 34 display-to-Stage 37 consumer validation-before-release one-shot host contract. It must not introduce proprietary UI, HTML/browser rendering, file/URL inputs, persistence/export, services/network/DB/auth, writes, or real adapter execution.
 
 
 Implemented capability highlights:

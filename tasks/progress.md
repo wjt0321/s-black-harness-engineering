@@ -2734,3 +2734,15 @@
 - 覆盖 wrapper/status/lifecycle/guarantees、content hash、固定 Markdown grammar、安全 literal、identity/count/filter/empty-view 与 withheld validation。
 - consumer 不启动上游进程，不接受 file/URL/raw Markdown，不复制或持久化 content。
 - 下一阶段 Stage 37 必须先 RED tests；候选 Stage 38 tag 为 `v0.16.0-filtered-snapshot-display-consumer`。
+
+
+## 2026-07-16 Stage 37–38 — Filtered Snapshot Display Consumer 里程碑收口
+
+- 用户授权直接推进到下一阶段里程碑，仅本地提交与打标，不 push；代理关闭。
+- Stage 37 按 TDD 新增 `tests/test_codex_desktop_filtered_snapshot_display_consumer.py`，先确认工具缺失导致预期 RED。
+- 新增独立标准库-only、stdin-only `tools/codex_desktop_filtered_snapshot_display_consumer.py`，固定完整 display v1 wrapper、10 项 checks 与 pass/error/blocked/validation_failed 状态映射。
+- ready 时独立重算 content SHA-256，验证固定 Markdown grammar、安全 ASCII JSON inline literal 与 identity/count/filter/empty-view/report coherence；non-ready 只接受 withheld contract。
+- consumer 不启动任何上游进程，不接受参数/file/URL/raw Markdown，不复制或持久化 content，不访问网络、不写入、不执行 adapter。
+- 16 项专用测试、124 项跨阶段回归与 884 项全量测试通过；doctor、public scan、py_compile 和真实 ready/blocked stdio pipe 通过。
+- Stage 38 更新 `docs/92`、release notes 98/99、digest/index/roadmap/CLI usage/versioning/README/handoff，并冻结本地 annotated tag `v0.16.0-filtered-snapshot-display-consumer`，未 push。
+- 下一阶段为 Stage 39 Filtered Snapshot Markdown Display Consumer Host Integration Gate（条件启动）；第一拍只允许 design gate。

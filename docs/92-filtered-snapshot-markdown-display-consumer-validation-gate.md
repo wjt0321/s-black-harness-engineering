@@ -3,9 +3,9 @@
 
 # 92 — Filtered Snapshot Markdown Display Consumer Validation Gate
 
-> 状态：**Stage 36 design gate 已冻结；Stage 37 实现与 Stage 38 milestone freeze 待完成**
+> 状态：**Stage 36 design gate、Stage 37 实现与 Stage 38 milestone freeze 均已收口**
 > 日期：2026-07-16
-> 候选里程碑：`v0.16.0-filtered-snapshot-display-consumer`
+> 冻结里程碑：`v0.16.0-filtered-snapshot-display-consumer`（本地 annotated tag，未 push）
 
 ## 1. 决策摘要
 
@@ -203,5 +203,72 @@ Stage 36–38 不开放：
 
 **Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate 已通过并冻结。** Stage 37 只允许实现上述 stdin-only validator；不得形成第二条 display/reader 管线。
 
-<!-- gate-status: passed -->
-<!-- implementation-status: pending-stage37 -->
+## 13. Stage 37 实现事实
+
+Stage 37 按 TDD 新增：
+
+- `tools/codex_desktop_filtered_snapshot_display_consumer.py`；
+- `tests/test_codex_desktop_filtered_snapshot_display_consumer.py`。
+
+实现保持标准库-only、stdin-only，固定输出：
+
+```text
+control-plane/filtered-snapshot-markdown-display-consumer-validation/v1
+codex-desktop-filtered-snapshot-markdown-display-consumer/v1
+```
+
+冻结的十项检查为：
+
+```text
+document_shape
+schema_version
+display_status
+lifecycle
+guarantees
+representation_metadata
+content_identity
+markdown_structure
+escaping_invariants
+view_coherence
+```
+
+实现只读取一份最大 64 KiB 的 strict UTF-8 JSON object，拒绝 duplicate key、未知字段、file/path/URL/payload-only/raw Markdown 和命令行参数。ready 时独立重算 Markdown UTF-8 content SHA-256，并以固定状态机解析 Stage 34 grammar、安全 ASCII JSON inline literal、identity/count/filter/empty-view/report coherence；non-ready 只接受 withheld contract。输出只保留 value-safe ids、checks、rule id 与 action，不复制 content 或上游 finding message。
+
+## 14. Stage 37 验收证据
+
+- RED：首个有效 display 用例因 Stage 37 工具不存在而按预期失败；
+- 专用测试：16 项通过；
+- Stage 18/20/22/24/27/29/31/34/37 相关回归：124 项通过；
+- 全量测试：884 项通过；
+- `python -m agent_runtime.cli doctor`：PASS；
+- `python tools/public_scan.py`：OK；
+- `python -m py_compile tools/codex_desktop_filtered_snapshot_display_consumer.py`：PASS；
+- 真实 Stage 34 display → Stage 37 consumer 管道：ready 映射为 `pass/0`，missing-envelope 映射为 `blocked/2`，输出不包含 Markdown content。
+
+最终冻结前必须重新运行全量测试、doctor、public scan、docs hook 与 Git diff checks；release note 只记录实际通过的证据。
+
+## 15. Stage 38 里程碑冻结
+
+Stage 36–37 已形成可独立引用的 display-result validation 能力包，冻结本地 annotated tag：
+
+```text
+v0.16.0-filtered-snapshot-display-consumer
+```
+
+该 tag 不推送，等待用户后续指令。它不扩大 Stage 34 display 的信任边界，不授予 representation render、UI、file/URL、service/network、persistence/export、write 或 adapter execution 权限。
+
+## 16. 下一阶段条件入口
+
+下一阶段为 **Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate（条件启动）**。第一拍只允许设计 one-shot integration：
+
+```text
+fixed Stage 34 display stdout
+  -> fixed Stage 37 consumer stdin validation
+  -> validation-before-release host result
+```
+
+Stage 39 必须冻结固定 argv ownership、bounded stdout/stderr、timeout/cancel/no-retry、consumer pass 前不释放 content、identity cross-check、failure withheld、memory cleanup 与 no-side-effect；不得直接实现专有 Codex Desktop UI、HTML/browser、file/URL、live service、network/DB/auth、cache/export、write 或真实 adapter execution。
+
+<!-- gate-status: passed-stage36 -->
+<!-- implementation-status: completed-stage37 -->
+<!-- milestone-status: frozen-stage38 -->

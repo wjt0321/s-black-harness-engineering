@@ -1917,6 +1917,27 @@ display 规则：
 - host 非 ready 时 `content/content_id=null`；状态/退出码保持 `ready/0`、`error/1`、`blocked/2`、`validation_failed/5`；
 - one-shot、no retry、no write、no network、no service、no cache/export、no adapter execution。
 
+Stage 37 filtered snapshot Markdown display consumer：
+
+```bash
+python tools/codex_desktop_filtered_snapshot_display.py \
+  --project-root . \
+  --envelope adapters/execution-envelope.examples.json \
+  --request-id req-20260703-001 \
+  --representation markdown \
+  --json \
+| python tools/codex_desktop_filtered_snapshot_display_consumer.py
+```
+
+consumer 规则：
+
+- 只从 stdin 读取一份完整 display v1 JSON，最大 64 KiB；不接受参数、file、path、URL、payload-only 或 raw Markdown；
+- strict UTF-8、duplicate-key、exact wrapper/status/lifecycle/guarantees gate；
+- ready 时独立重算 Markdown UTF-8 content SHA-256，并验证固定 section/row grammar、安全 ASCII JSON inline literal、identity/count/filter/empty-view/report coherence；
+- non-ready 只验证 withheld contract；输出不包含 content、absolute path、envelope、host payload 或上游 finding message；
+- 输出 schema 为 `control-plane/filtered-snapshot-markdown-display-consumer-validation/v1`；状态/退出码为 `pass/0`、`error/1`、`blocked/2`、`validation_failed/5`；
+- 标准库-only、one-shot、no process launch、no write、no network、no service、no persistence/export、no adapter execution。
+
 总览聚合：
 
 ```bash
