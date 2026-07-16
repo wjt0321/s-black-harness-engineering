@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/execution-readiness.schema.json",
+  "title": "Single-user Execution Readiness Profile",
+  "type": "object",
+  "required": [
+    "version",
+    "identity",
+    "candidate",
+    "process_contract",
+    "approval_binding",
+    "audit_contract",
+    "implementation"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "identity": {
+      "type": "object",
+      "required": ["mode", "actor", "multi_user_authorization", "future_extension"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "const": "single_user_local" },
+        "actor": { "const": "local-operator" },
+        "multi_user_authorization": { "const": false },
+        "future_extension": { "const": "actor_context" }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "required": ["adapter_id", "capability", "operation", "risk_level"],
+      "additionalProperties": false,
+      "properties": {
+        "adapter_id": { "const": "shell-local" },
+        "capability": { "const": "git_status" },
+        "operation": { "const": "git_status" },
+        "risk_level": { "const": "local" }
+      }
+    },
+    "process_contract": {
+      "type": "object",
+      "required": [
+        "executable", "argv", "shell", "cwd", "stdin", "environment",
+        "timeout_seconds", "max_timeout_seconds", "max_stdout_bytes",
+        "max_stderr_bytes", "retry_count", "network_access",
+        "writes_project_files", "background"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "executable": { "const": "git" },
+        "argv": {
+          "const": ["git", "status", "--short", "--branch"]
+        },
+        "shell": { "const": false },
+        "cwd": { "const": "project_root" },
+        "stdin": { "const": "closed" },
+        "environment": {
+          "type": "object",
+          "required": ["inherit_allowlist", "set"],
+          "additionalProperties": false,
+          "properties": {
+            "inherit_allowlist": { "const": ["PATH", "SYSTEMROOT", "WINDIR"] },
+            "set": {
+              "type": "object",
+              "required": ["GIT_OPTIONAL_LOCKS"],
+              "additionalProperties": false,
+              "properties": {
+                "GIT_OPTIONAL_LOCKS": { "const": "0" }
+              }
+            }
+          }
+        },
+        "timeout_seconds": { "const": 10 },
+        "max_timeout_seconds": { "const": 30 },
+        "max_stdout_bytes": { "const": 65536 },
+        "max_stderr_bytes": { "const": 65536 },
+        "retry_count": { "const": 0 },
+        "network_access": { "const": false },
+        "writes_project_files": { "const": false },
+        "background": { "const": false }
+      }
+    },
+    "approval_binding": {
+      "type": "object",
+      "required": [
+        "required_for_approval_adapters", "bound_fields", "decision_event_type",
+        "recheck_before_spawn", "retry_reuses_approval"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "required_for_approval_adapters": { "const": true },
+        "bound_fields": {
+          "const": [
+            "adapter_id", "capability", "operation", "plan_hash",
+            "request_id", "target_digest", "task_id"
+          ]
+        },
+        "decision_event_type": { "const": "approval_resolved" },
+        "recheck_before_spawn": { "const": true },
+        "retry_reuses_approval": { "const": false }
+      }
+    },
+    "audit_contract": {
+      "type": "object",
+      "required": [
+        "event_types", "controlled_append", "rollback_on_failure",
+        "stores_raw_stdout", "stores_raw_stderr"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "event_types": {
+          "const": [
+            "execution_started", "execution_succeeded",
+            "execution_failed", "execution_cancelled"
+          ]
+        },
+        "controlled_append": { "const": true },
+        "rollback_on_failure": { "const": true },
+        "stores_raw_stdout": { "const": false },
+        "stores_raw_stderr": { "const": false }
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "description": "Immutable Stage 44 known-gap snapshot; future implementation readiness requires a v2 gate.",
+      "required": ["executor", "approval_binding", "audit_writer"],
+      "additionalProperties": false,
+      "properties": {
+        "executor": { "const": false },
+        "approval_binding": { "const": false },
+        "audit_writer": { "const": false }
+      }
+    }
+  }
+}

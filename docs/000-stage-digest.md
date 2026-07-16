@@ -5,8 +5,8 @@
 ## 文档池规模
 
 - docs/ 活跃文档：50 个
-- 归档文档：76 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：约 202 个
+- 归档文档：79 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：约 205 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,10 +25,10 @@
 
 ## 当前阶段
 
-- **Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate（收口完成；design-only）**
-- Stage 41 — Filtered Snapshot Display Host Integration Milestone Freeze（已收口）
-- Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation（已收口）
-- 下一 implementation stage：未自动启动；等待具体 presentation consumer 与用户动作
+- **Stage 45 — Single-user Real Execution Readiness Milestone Closure（收口完成；提交级）**
+- Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
+- Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
+- 下一阶段：Stage 46 — Fixed Git Status Executor Design Gate（条件启动）
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
@@ -55,7 +55,7 @@
 - Stage 23/24 事实源：`docs/84-envelope-scoped-snapshot-read-design-gate.md` 与 `docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`。
 - Stage 25 已审计 consumer/filter 需求并冻结无 filter 方案：单个显式 envelope 的 v2 仍是唯一 scoped contract，reader 不新增 task/request/query/sort/page/export。
 - 宿主只可一次性读取 `status=ready` 的 bounded stdout JSON 并在内存展示；不得保存、cache、export、打开 HTML/browser、自动刷新、访问网络或执行 adapter。
-- Stage 25 事实源：`docs/85-envelope-scoped-consumer-filter-design-gate.md` 与 `docs/archive/release-notes/87-release-notes-stage25-envelope-scoped-consumer-filter-design-gate.md`。
+- Stage 25 事实源：`docs/archive/85-envelope-scoped-consumer-filter-design-gate.md` 与 `docs/archive/release-notes/87-release-notes-stage25-envelope-scoped-consumer-filter-design-gate.md`。
 - Stage 19 历史设计门已被 Stage 20 implementation 事实源取代，完整归档至 `docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`；活跃文档保持 50 个。
 - 用户明确要求进入下一阶段后，Stage 26 已冻结未来 v3 的 task/request exact filter、双参数 AND、合法空视图和 request→task 关系闭包。
 - filter 仅作用于完整验证后的 runs/approvals/artifacts 安全 summaries；不传入 child argv，不触碰 raw envelope，不自动扩展 lineage。
@@ -157,6 +157,16 @@
 - 新增 3 项 characterization contract tests；Stage 28 gate 完整归档，活跃文档保持 50 个。
 - 下一 implementation stage 不自动启动；等待用户给出具体 consumer identity、explicit action、transport、destination、retention、bounds 与 failure mapping。
 
+### 新进落地：Stage 43–45 — Single-user Real Execution Readiness
+
+- 明确单用户本地 operator，不实现 account/role/tenant/auth；保留 `actor_context` future extension。
+- 选定唯一首个候选 `shell-local/git_status`，future argv 固定 `git status --short --branch`、`shell=false`。
+- 新增 strict source-backed readiness schema/profile 与 `orchestration execution readiness` 只读命令。
+- 固定 cwd、环境白名单、10/30 秒 timeout、64 KiB stdout/stderr、no retry/network/write/background。
+- 固定 approval → plan binding 与 controlled execution audit contract。
+- 13 项 checks 中 10 项 design pass；executor、approval binding、audit writer 3 项按预期 blocked。
+- Stage 45 完成提交级里程碑与文档维护；不创建 tag、不 push，稳定 tag 仍为 v0.17.0。
+
 ## 现在已经能做什么
 
 - 已冻结里程碑 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`），包含 Stage 10–12 的 registry/routing/state read model 闭环。
@@ -174,30 +184,26 @@
 
 ## 下次恢复顺序
 
-1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`
-3. 再读：`docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`
-4. 再读：`docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`
-5. 再读：`docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`
-6. 再读：`docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`
-7. 再读：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`
-8. 再读：`tasks/handoff-2026-07-16.md`
-9. 需要 Stage 42 验收事实时读：`docs/archive/release-notes/103-release-notes-stage42-validated-markdown-presentation-handoff-gate.md`
-10. 需要 v0.17 验收事实时读 release notes 102/101/100。
-11. 需要 v0.16 事实时读 release notes 99/98/97 与 archive/92。
-12. 再跑：`python -m agent_runtime.cli docs context --json`
+1. `docs/000-stage-digest.md`
+2. `docs/95-single-user-real-execution-readiness-gate-and-milestone.md`
+3. `docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`
+4. `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`
+5. `tasks/handoff-2026-07-16.md`
+6. Stage 45/44 验收读 release notes 105/104。
+7. 历史里程碑按需读 archive/92、archive/91、archive/90。
+8. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- Stage 42 已按 design-only gate 收口；当前没有可自动启动的下一阶段。
-- 下一 implementation stage 不自动命名或启动；必须先明确 consumer identity、explicit user action、transport ownership、presentation destination、retention、bounds 与 failure mapping。
-- future boundary 只做 Stage 40 wrapper/ready/pass/identity/content hash 重确认，不新增第二条 Markdown validation。
-- file/URL/clipboard、HTML/browser、network/service、persistence/export、写操作与真实 execution 继续 unavailable。
+- **Stage 46 — Fixed Git Status Executor Design Gate（条件启动）**。
+- 第一拍只允许冻结 fixed executor 的 executable resolution、spawn/cancel、output validation 与 no-write evidence，不直接实现 subprocess。
+- 必须保持 exact argv、project-root cwd、minimal env、bounded I/O、no network/no retry，不开放通用 shell。
+- approval binding 与 audit writer 在各自实现 gate 前继续 blocked；多用户 auth 明确延期但保留扩展点。
 
 ## 重要约束
 
 - 仍然**不做真实 adapter execution**
-- Stage 16–42 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约与独立 filtered consumer 、validation-before-display one-shot host、escaped deterministic Markdown display 与独立 display-result consumer validation 与 validation-before-release display host与 design-only presentation handoff gate**；仍然不做 live service、DB、auth、网络访问、UI 写操作、HTML/browser 自动读取、通用 query、持久化/export 或真实 adapter execution
+- Stage 16–45 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约与独立 filtered consumer 、validation-before-display one-shot host、escaped deterministic Markdown display 与独立 display-result consumer validation 与 validation-before-release display host与 design-only presentation handoff gate**；仍然不做 live service、DB、auth、网络访问、UI 写操作、HTML/browser 自动读取、通用 query、持久化/export 或真实 adapter execution
 - 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、91、archive/release-notes/96、95、94、archive/90、89/88/87/86/85/84/83/79/78/76 与 archive/77 事实源与最新 handoff；Stage 20/21/19 历史实现与设计按需读取 archive/81、archive/82 与 archive/80，并保持验证/提交边界
 
 ## 一句话理解当前项目

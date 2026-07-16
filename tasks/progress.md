@@ -2625,7 +2625,7 @@
 ## 2026-07-15 — Stage 25 Envelope-scoped Consumer / Filter Design Gate 收口
 
 - 审计 Stage 24 scoped v2、现有 consumer/handoff 与宿主需求，确认当前没有具体 task/request filter 消费者。
-- 新增 `docs/85-envelope-scoped-consumer-filter-design-gate.md`，拒绝自动 task/request filter 与通用 query 两种扩权方案。
+- 新增 `docs/archive/85-envelope-scoped-consumer-filter-design-gate.md`，拒绝自动 task/request filter 与通用 query 两种扩权方案。
 - 冻结当前唯一 scoped consumer contract：单个显式 envelope、无 filter 的 v2；宿主只可一次性读取 `status=ready` 的 bounded stdout JSON 并内存展示。
 - 新增 parser contract test，确保 reader 不暴露 `--task-id`、`--request-id`、`--filter`、`--query`、排序、分页或 export。
 - Stage 24 v1/v2 schema、reader id、scope id 与 snapshot identity 保持不变；不修改生产 reader。
@@ -2785,3 +2785,14 @@
 - `main` 已从 `b1fa0b3` 推送至 `281b33c`，包含 Stage 36–42 的 5 个本地提交。
 - annotated tags `v0.16.0-filtered-snapshot-display-consumer` 与 `v0.17.0-filtered-snapshot-display-host-integration` 已推送至 `origin`。
 - Stage 42 不创建新 tag；当前稳定里程碑仍为 v0.17.0，当前阶段为 Stage 42 design-only completed。
+
+## 2026-07-16 Stage 43–45 — Single-user Real Execution Readiness
+
+- 用户明确工具暂时单人使用，多用户身份/授权不做但保留扩展点，并授权稳步推进下一里程碑后集中维护文档。
+- Stage 43 冻结单用户 `local-operator`、future `actor_context`、唯一 `shell-local/git_status` candidate、exact non-shell argv 与 bounded process contract。
+- Stage 43 同时冻结 approval → plan hash binding 与 controlled execution audit contract；现有 approval_resolved 仍只表示 decision。
+- Stage 44 先新增 10 项 RED tests，确认 CLI/profile/module/contract entry 缺失；随后实现 strict schema/profile、`orchestration execution readiness` 与 doctor/contract 接入。
+- readiness 固定 13 checks：10 项 design pass，executor、approval binding、audit writer 3 项 blocked；status=blocked/exit 2，不执行 Git 或任何 adapter。
+- Stage 45 新增 release notes 104/105，维护 digest/index/roadmap/CLI usage/versioning/README/AGENTS/handoff，并归档 Stage 25 文档，活跃 docs 保持 50 个。
+- 本阶段为提交级里程碑，不创建 tag、不 push；稳定 semver 仍为已推送 v0.17.0。
+- 下一阶段 Stage 46 只允许 fixed Git Status Executor Design Gate，不直接实现 subprocess，不开放通用 shell。

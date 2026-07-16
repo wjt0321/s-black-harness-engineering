@@ -37,6 +37,7 @@ from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
 from .orchestration_contract import build_contract_manifest
 from .orchestration_contract_check import check_contract_requirements
+from .orchestration_execution_readiness import check_execution_readiness
 from .orchestration_control_panel import (
     build_control_panel_handoff,
     build_control_panel_snapshot,
@@ -1576,6 +1577,16 @@ def _cmd_orchestration_contract_check(args: argparse.Namespace) -> int:
         allow_preview=args.allow_preview,
         max_access=args.max_access,
     )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_execution_readiness(args: argparse.Namespace) -> int:
+    """Render the deterministic single-user execution readiness gate."""
+    result = check_execution_readiness(_root_path(args))
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
@@ -3186,6 +3197,21 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(orchestration_contract_check_parser)
     orchestration_contract_check_parser.set_defaults(
         func=_cmd_orchestration_contract_check
+    )
+
+    # orchestration single-user real-execution readiness (read-only)
+    orchestration_execution_parser = orchestration_subparsers.add_parser(
+        "execution", help="Inspect real-execution readiness without executing"
+    )
+    orchestration_execution_subparsers = orchestration_execution_parser.add_subparsers(
+        dest="execution_command", required=True
+    )
+    orchestration_execution_readiness_parser = orchestration_execution_subparsers.add_parser(
+        "readiness", help="Validate the fixed single-user execution readiness profile"
+    )
+    _add_global_args(orchestration_execution_readiness_parser)
+    orchestration_execution_readiness_parser.set_defaults(
+        func=_cmd_orchestration_execution_readiness
     )
 
     # orchestration read-only Control Panel snapshot/render

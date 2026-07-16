@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "identity": {
+    "mode": "single_user_local",
+    "actor": "local-operator",
+    "multi_user_authorization": false,
+    "future_extension": "actor_context"
+  },
+  "candidate": {
+    "adapter_id": "shell-local",
+    "capability": "git_status",
+    "operation": "git_status",
+    "risk_level": "local"
+  },
+  "process_contract": {
+    "executable": "git",
+    "argv": ["git", "status", "--short", "--branch"],
+    "shell": false,
+    "cwd": "project_root",
+    "stdin": "closed",
+    "environment": {
+      "inherit_allowlist": ["PATH", "SYSTEMROOT", "WINDIR"],
+      "set": {"GIT_OPTIONAL_LOCKS": "0"}
+    },
+    "timeout_seconds": 10,
+    "max_timeout_seconds": 30,
+    "max_stdout_bytes": 65536,
+    "max_stderr_bytes": 65536,
+    "retry_count": 0,
+    "network_access": false,
+    "writes_project_files": false,
+    "background": false
+  },
+  "approval_binding": {
+    "required_for_approval_adapters": true,
+    "bound_fields": [
+      "adapter_id", "capability", "operation", "plan_hash",
+      "request_id", "target_digest", "task_id"
+    ],
+    "decision_event_type": "approval_resolved",
+    "recheck_before_spawn": true,
+    "retry_reuses_approval": false
+  },
+  "audit_contract": {
+    "event_types": [
+      "execution_started", "execution_succeeded",
+      "execution_failed", "execution_cancelled"
+    ],
+    "controlled_append": true,
+    "rollback_on_failure": true,
+    "stores_raw_stdout": false,
+    "stores_raw_stderr": false
+  },
+  "implementation": {
+    "executor": false,
+    "approval_binding": false,
+    "audit_writer": false
+  }
+}

@@ -2382,3 +2382,18 @@ python tools/public_scan.py
 到这一版为止，项目已经从纯文档推进到一个可运行、可测试、可审查的只读 POC。
 
 这可以作为后续 Runtime 实现的第一块稳定地基：先验证规则、schema、registry 和 CLI 边界，再逐步扩展真实执行能力。
+
+## Single-user real-execution readiness（Stage 44，只读）
+
+```bash
+python -m agent_runtime.cli orchestration execution readiness
+python -m agent_runtime.cli orchestration execution readiness --json
+```
+
+该命令读取固定 `adapters/execution-readiness.sample.json`、对应 schema、adapter registry 与 event schema，审计 future fixed executor 的准备状态。当前固定候选为 `shell-local/git_status`，future argv 为 `git status --short --branch`，但命令本身不探测或执行 Git。
+
+当前预期返回 `blocked` / exit 2：13 项 checks 中 10 项 design contract pass，`executor_implementation`、`approval_binding_implementation`、`audit_writer_implementation` 3 项 blocked。这表示设计可实施但真实执行仍不可用，不是运行故障。
+
+安全边界：单用户 `local-operator`、只读、确定性；不接受 profile/path/argv/actor 参数，不启动 subprocess，不读 credential，不访问网络，不写文件或 ledger，不开放通用 shell。
+
+兼容语义：v1 是 Stage 44 的永久 blocked snapshot。未来实现 fixed executor 后必须使用 v2 或独立 implementation gate；不能直接修改 v1 profile 的 implementation 字段来宣称执行已就绪。

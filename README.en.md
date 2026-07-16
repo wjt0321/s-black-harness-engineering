@@ -145,6 +145,7 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation
 - ✅ Stage 41 — `v0.17.0-filtered-snapshot-display-host-integration` Milestone Freeze (pushed)
 - ✅ Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate (design-only gate complete)
+- ✅ Stage 43–45 — Single-user Real Execution Readiness (commit-level milestone complete; execution still blocked)
 
 ### The Most Accurate Current Read
 
@@ -152,11 +153,11 @@ The current state is best understood as:
 
 - **guardrails / ledgers / controlled writes are no longer a sketch; they are already a formed security core**
 - **the orchestration backend now has source-backed registry, constraint routing, read-loop snapshots, and recovery lineage aggregation v1**
-- **real adapter execution, long-running services/APIs, interactive write-capable UI, and DB remain out of implementation scope**
+- **real adapter execution remains blocked; fixed `git_status` readiness is now auditable, while long-running services/APIs, interactive write-capable UI, and DB remain out of scope**
 
 ### What Comes Next
 
-Stage 42 is complete as a design-only gate. It freezes the Stage 40 ready/pass/identity/content-hash evidence and the explicit entry criteria for a future read-only presentation boundary, but adds no presenter, CLI, schema, renderer, or proprietary host API. A future implementation stage will not start until a concrete consumer and user action are specified; HTML/browser rendering, file/URL inputs, persistence/export, services/network/DB/auth, writes, and real adapter execution remain unavailable.
+Stage 43–45 are complete as a single-user execution-readiness milestone. The repository now exposes a deterministic read-only gate for one fixed `shell-local/git_status` candidate and freezes exact argv, bounded process, approval binding, and audit contracts. Ten design checks pass while the executor, approval binding implementation, and audit writer remain explicitly blocked. No process is executed; multi-user auth, generic shell, network adapters, services/DB, and write-capable UI remain unavailable.
 
 
 Implemented capability highlights:

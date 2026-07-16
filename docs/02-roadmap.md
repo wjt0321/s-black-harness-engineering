@@ -875,7 +875,7 @@ Stage 22 收口时继续延期 envelope 参数；该项已在 Stage 23/24 通过
 
 事实源：
 
-- `docs/85-envelope-scoped-consumer-filter-design-gate.md`
+- `docs/archive/85-envelope-scoped-consumer-filter-design-gate.md`
 - `docs/archive/release-notes/87-release-notes-stage25-envelope-scoped-consumer-filter-design-gate.md`
 
 ---
@@ -1071,7 +1071,25 @@ v0.14.0-filtered-snapshot-host-integration
 - 没有具体 consumer/user action 时不新增 presenter、CLI、schema、renderer 或专有 API；
 - non-ready、protocol/identity/hash drift 一律 content withheld。
 
-事实源为 `docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md` 与 release notes 103。下一 implementation stage 不自动启动，必须先明确 consumer、动作、transport、destination、retention、bounds 与 failure mapping。
+事实源为 `docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md` 与 release notes 103。后续真实落地主线已由 Stage 43 接续。
+
+---
+
+## Stage 43 — Single-user Real Execution Readiness Design Gate（已完成）
+
+冻结单用户本地 operator、`actor_context` future extension、唯一 `shell-local/git_status` 候选、exact non-shell argv、bounded process、approval plan binding 与 execution audit contract。
+
+## Stage 44 — Single-user Real Execution Readiness Gate Implementation（已完成）
+
+新增 strict schema/profile 与 `orchestration execution readiness`。固定 13 项 checks：10 项 design contract pass，executor、approval binding、audit writer 3 项 blocked；命令不启动进程、不读凭据、不访问网络、不写 ledger。
+
+## Stage 45 — Single-user Execution Readiness Milestone Closure（已完成，提交级）
+
+完成全量文档沉淀和旧文档归档。本阶段不创建 tag、不 push；稳定 tag 仍为 v0.17.0。事实源为 `docs/95-single-user-real-execution-readiness-gate-and-milestone.md` 与 release notes 104/105。
+
+## Stage 46 — Fixed Git Status Executor Design Gate（条件启动）
+
+只允许设计 fixed `git status --short --branch` executor 的 executable resolution、spawn/cancel、output validation、no-write evidence 与 failure mapping；不开放通用 shell，不直接实现 subprocess。
 
 ---
 

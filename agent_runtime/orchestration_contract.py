@@ -191,6 +191,13 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Evaluates declared requirements without executing their commands.",
         ),
         _entry(
+            "execution_readiness",
+            "preview",
+            "read_only",
+            commands=(("orchestration", "execution", "readiness"),),
+            boundary="Validates a fixed single-user execution design profile and does not execute processes or adapters.",
+        ),
+        _entry(
             "external_execution_service_stack",
             "unavailable",
             "unavailable",

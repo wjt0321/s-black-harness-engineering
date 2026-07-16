@@ -19,7 +19,7 @@ Stage 25 已完成设计审计并收口。当前没有具体 task/request filter
 
 ## 文档维护
 
-- 新增活跃事实源 `docs/85-envelope-scoped-consumer-filter-design-gate.md`；
+- 新增活跃事实源 `docs/archive/85-envelope-scoped-consumer-filter-design-gate.md`；
 - Stage 19 旧设计门已被 Stage 20 implementation 事实源取代，完整移动到 `docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`；
 - 活跃文档仍保持 50 个，没有删除历史内容；
 - 同步 digest、index、roadmap、README、AGENTS、handoff 与 progress。

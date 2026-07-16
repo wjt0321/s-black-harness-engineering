@@ -346,3 +346,13 @@ Stage 42 仅冻结 Stage 40 ready result → future read-only presentation bound
 - Stage 42 以阶段文档、release notes 103 与 prerequisite contract test 收口；
 - 不创建 `v0.18.0` 候选 tag；
 - 只有后续明确 consumer/action 并完成实现与全量验收后，才重新评估里程碑版本。
+
+## Stage 43–45 Single-user Execution Readiness 提交级里程碑（2026-07-16）
+
+Stage 43–44 已形成真实执行前的可引用 readiness 能力，但 executor、approval plan binding 与 audit writer 仍明确 blocked，尚未形成可执行能力包。因此 Stage 45 采用提交级里程碑收口：
+
+- 不创建 `v0.18.0` tag；
+- 稳定 semver 继续为已推送的 `v0.17.0-filtered-snapshot-display-host-integration`；
+- readiness CLI 作为 preview/read-only contract；
+- future fixed executor、binding、audit writer 全部实现并验收后，再评估 v0.18 milestone；
+- 未经用户明确要求不创建 tag、不 push。
