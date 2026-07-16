@@ -1852,7 +1852,26 @@ filtered mode 规则：
 - filter 不传给 handoff/consumer/snapshot child argv；仍不提供 `--filter`、`--query`、排序、分页、缓存或 export；
 - 无 filter 的 envelope-scoped 调用保持 v2；无 envelope、无 filter 保持 v1。
 
-Stage 28 已冻结未来宿主 consumer contract，但当前**没有**新增 consumer 命令或工具。Stage 29 若经明确授权，将按 `docs/88-filtered-snapshot-host-consumer-validation-gate.md` 实现专用 `tools/codex_desktop_filtered_snapshot_consumer.py`；不得扩展 Stage 18 handoff consumer，也不得自动执行 reader。
+Stage 29 filtered snapshot consumer：
+
+```bash
+python tools/codex_desktop_snapshot_json_reader.py \
+  --project-root . \
+  --representation snapshot-json \
+  --envelope adapters/execution-envelope.examples.json \
+  --request-id req-20260703-001 \
+  --json \
+| python tools/codex_desktop_filtered_snapshot_consumer.py
+```
+
+consumer 规则：
+
+- 只从 stdin 消费一份完整 filtered v3 reader result，不接受文件、URL、payload-only 或 v1/v2；
+- 最大输入 1 MiB，strict UTF-8，拒绝 duplicate key；最大输出 64 KiB；
+- 验证 ready lifecycle、guarantees、scope/filter/view identity、safe sections 与 filter semantics；
+- 输出只保留 base/scope/filter/view ids、checks、value-safe findings、guarantees 与 next action；
+- consumer 不自动启动 reader，不执行 argv/command/adapter，不读写文件、不访问网络；
+- `pass` 只表示输入符合只读展示 contract，不是 execution permission。
 
 总览聚合：
 

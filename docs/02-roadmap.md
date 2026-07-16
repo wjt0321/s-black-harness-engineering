@@ -941,22 +941,38 @@ Stage 22 收口时继续延期 envelope 参数；该项已在 Stage 23/24 通过
 
 ---
 
-## Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）
+## Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（已完成）
 
-只有用户明确要求实现时启动。候选实现为：
+用户明确要求继续推进后，已按 Stage 28 contract 完成：
 
-```text
-tools/codex_desktop_filtered_snapshot_consumer.py
-```
+- 新增独立 `tools/codex_desktop_filtered_snapshot_consumer.py`；
+- 标准库-only、stdin-only，最大输入 1 MiB，最大输出 64 KiB；
+- 只接受完整 filtered v3 reader result，不接受 payload-only、v1/v2、文件或 URL；
+- 固定 11 项检查和 `pass/error/blocked/validation_failed` 状态/退出码；
+- 独立重算 scope/filter/view identity，base/envelope/handoff identity 只做 shape/link 检查；
+- 严格验证 lifecycle、guarantees、safe sections、counts、matched/status 与 task/request filter semantics；
+- 输出只包含四个 content ids、checks、value-safe findings、guarantees 与 next action；
+- 不自动启动 reader，不读写文件，不访问网络，不执行 command/adapter，不修改 Stage 18 consumer。
 
-实施顺序：
+事实源：
 
-1. 按 Stage 28 contract 新增 consumer 失败测试并确认 RED；
-2. 实现标准库-only stdin consumer，固定检查顺序、状态/退出码与 64 KiB 最小输出；
-3. 运行真实 reader stdout → consumer stdin smoke；
-4. 全量回归 Stage 18 consumer、Stage 27 reader、doctor 与 public scan。
+- `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`
+- `docs/archive/release-notes/91-release-notes-stage29-codex-desktop-filtered-snapshot-consumer.md`
+- `tests/test_codex_desktop_filtered_snapshot_consumer.py`
 
-Stage 29 不得修改 Stage 18 consumer，不得自动启动 reader，不得读取文件/URL/socket/project/envelope/ledger/registry，也不得引入 query、缓存/export、HTML/browser、service/network/DB/auth/UI write 或真实 adapter execution。
+---
+
+## Stage 30 — Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）
+
+仅当具体宿主需要将固定 reader → consumer 管道映射为一次性展示状态时启动。第一拍只冻结：
+
+- 宿主拥有的固定 argv 与本地 stdin pipe；
+- one-shot timeout、stdout/stderr bounds 与取消语义；
+- consumer `pass/blocked/validation_failed/error` 到宿主状态的确定性映射；
+- 只在内存中展示已验证 safe summaries；
+- 不绕过 Stage 29 consumer，不执行 descriptor argv 或真实 adapter。
+
+Stage 30 不默认引入专有插件 API、UI、HTML/browser、文件读取、缓存/export、service/network/DB/auth 或写操作。
 
 ---
 

@@ -102,7 +102,7 @@ JSON 输出结构与 `RuntimeReportResult.to_dict()` 一致，所有字符串值
 
 ## 相关文档
 
-- `docs/14-task-runtime-bridge.md`
+- `docs/archive/14-task-runtime-bridge.md`
 - `docs/15-runtime-ledger-audit.md`
 - `docs/16-runtime-plan.md`
 - `docs/17-runtime-planning-bridge.md`

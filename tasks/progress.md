@@ -530,13 +530,13 @@
 - 更新 README 中英文文档列表，加入 `docs/13-release-notes-adapter-envelope.md`。
 
 - 进入下一阶段：Task Runtime Bridge / Runtime Gate POC。
-- 新增 `docs/14-task-runtime-bridge.md`，中文说明 task preflight / runtime gate / task event draft 如何衔接 adapter gate 与 task ledger：定义数据流、聚合规则、event draft 生成规则、CLI 用法和只读安全边界。
+- 新增 `docs/archive/14-task-runtime-bridge.md`，中文说明 task preflight / runtime gate / task event draft 如何衔接 adapter gate 与 task ledger：定义数据流、聚合规则、event draft 生成规则、CLI 用法和只读安全边界。
 - 新增 `agent_runtime/runtime_gate.py`：实现 `check_runtime_gate`，按 `task_id` + `request_id` 读取 task snapshot、task event stream 和 adapter envelope，复用 `adapter_gate.check_adapter_gate`，聚合 task 状态与 gate 状态，生成建议的 task event draft。
 - 更新 `agent_runtime/tasks.py`：`load_tasks` / `load_events` / `find_task` / `find_task_events` 支持可选的 `explicit_file` 参数，方便 `runtime gate check` 显式指定 ledger 文件；`_load_records` 兼容绝对路径输入。
 - 更新 `agent_runtime/cli.py`：新增 `runtime gate check` 子命令，支持 `--task-id`、`--request-id`、`--envelope`、`--tasks-file`、`--events-file` 与全局 `--json`；输出包含 task 状态、gate 摘要和建议 event draft，均不回显完整 payload/evidence/raw_ref。
 - 补充 `tests/test_runtime_gate.py`：覆盖 task running + gate pass、approval pending/denied、missing response、task 终态阻断、task 不存在、request 不存在、envelope 非法、人类输出脱敏、显式 ledger 文件、拒绝根目录外/不安全 ledger 路径、不写 ledger、终态优先阻断。
 - 更新 `docs/10-cli-poc-usage.md`：新增 `runtime gate check` 用法、JSON 结构、聚合规则、event draft 说明和行为约束。
-- 更新 `README.md` 与 `README.en.md`：加入 `docs/14-task-runtime-bridge.md` 与 runtime gate check 能力说明。
+- 更新 `README.md` 与 `README.en.md`：加入 `docs/archive/14-task-runtime-bridge.md` 与 runtime gate check 能力说明。
 - 保持只读边界：不执行 adapter、不访问网络、不发送消息、不删除文件、不写真实 ledger、不读取 `.env`/credential；输出不回显完整 `input` / `evidence` / `raw_ref` / `decision_ref`。
 - 已跑 `python -m pytest`：167 passed。
 - 已跑 `python -m agent_runtime.cli doctor`：PASS。
@@ -577,7 +577,7 @@
 - 补充 `tests/test_runtime_ledger.py`：覆盖正常通过、缺失 request task_id、缺失 event task_id、缺失 event request_id、无 event metadata 线索 warn、task 终态 warn、ledger 一致性失败、非法 envelope、人类输出脱敏、不写 ledger。
 - 新增 `docs/15-runtime-ledger-audit.md`：说明命令目标、非目标、核心概念、数据流、检查规则表、输出格式、CLI 用法、模块关系和安全边界。
 - 更新 `docs/10-cli-poc-usage.md`：新增 `runtime check-ledger` 用法说明。
-- 更新 `docs/14-task-runtime-bridge.md`：将 `runtime check-ledger` 从候选列表中移除，并指向 `docs/15-runtime-ledger-audit.md`。
+- 更新 `docs/archive/14-task-runtime-bridge.md`：将 `runtime check-ledger` 从候选列表中移除，并指向 `docs/15-runtime-ledger-audit.md`。
 - 更新 `README.md`：在文档索引中加入 `docs/15-runtime-ledger-audit.md`，并在当前状态中补充 `runtime check-ledger`。
 - 保持只读边界：不执行 adapter、不访问网络、不发送消息、不删除文件、不写真实 ledger、不读取 `.env`/credential；输出不回显完整 `input` / `evidence` / `raw_ref` / `decision_ref` / `target`。
 - 已跑 `python -m pytest`：177 passed。
@@ -2678,3 +2678,17 @@
 - Stage 28 只完成 design/contract freeze，没有创建 `tools/codex_desktop_filtered_snapshot_consumer.py`，没有修改 reader 或 Stage 18 consumer。
 - 下一阶段为 Stage 29 Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）；只有明确授权后才按 Stage 28 TDD 顺序实现。
 - query、lineage expansion、persistence/export、HTML/browser、service/network/DB/auth/UI write 与真实 adapter execution 继续延期。
+
+## 2026-07-16 — Stage 29 Codex Desktop Filtered Snapshot Consumer 收口
+
+- 用户明确要求继续推进到下一阶段收口，Stage 29 条件启动成立。
+- 按 Stage 28 TDD 顺序新增 `tests/test_codex_desktop_filtered_snapshot_consumer.py`，先确认 valid v3 用例因 consumer 文件不存在而 RED。
+- 新增独立 `tools/codex_desktop_filtered_snapshot_consumer.py`，标准库-only、stdin-only，不导入 Stage 18 consumer、Stage 27 reader 或项目 package。
+- consumer 最大输入 1 MiB、最大输出 64 KiB，拒绝空输入、非 UTF-8、非法 JSON、duplicate key、非 object、payload-only 与 unsupported schema。
+- 固定 11 项检查和 `pass/error/blocked/validation_failed` 状态/退出码；nested payload/filter schema allowlist 修正也先新增 RED 测试再实现。
+- 独立重算 scope/filter/view identity；base snapshot、envelope content 与 source handoff identity 只做 shape/link 检查，不伪称真实性证明。
+- 严格验证 safe sections、row 字段/标量类型、counts、section statuses、matched 与 request/task relation semantics。
+- 输出只包含 base/scope/filter/view ids、checks、value-safe finding、guarantees 与 next action，不回显 filter/path/rows/raw input。
+- 真实 Stage 27 reader stdout → Stage 29 consumer stdin smoke 返回 pass；Stage 18 consumer 与 Stage 27 reader 兼容回归通过。
+- 新增 `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md` 与 release notes 91；早期 Runtime bridge 文档完整归档至 `docs/archive/14-task-runtime-bridge.md`，活跃文档保持 50 个。
+- 下一阶段为 Stage 30 Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）；第一拍只允许 design gate，不默认引入 UI、service、persistence 或真实 adapter execution。

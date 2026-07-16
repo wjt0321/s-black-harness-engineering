@@ -5,8 +5,8 @@
 ## 文档池规模
 
 - docs/ 活跃文档：50 个
-- 归档文档：57 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：约 183 个
+- 归档文档：59 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：约 185 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -22,10 +22,10 @@
 
 ## 当前阶段
 
-- **Stage 28 — Filtered Snapshot Host Consumer Validation Gate（收口完成）**
+- **Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（收口完成）**
+- Stage 28 — Filtered Snapshot Host Consumer Validation Gate（已收口）
 - Stage 27 — Filtered Envelope Snapshot JSON Reader Implementation（已收口）
-- Stage 26 — Filtered Envelope Snapshot Read Design Gate（已收口）
-- 下一阶段：Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）
+- 下一阶段：Stage 30 — Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
@@ -67,6 +67,11 @@
 - 新增 `tests/test_filtered_snapshot_host_consumer_contract.py`，以真实 Stage 27 stdout 冻结 wrapper/lifecycle/guarantees/identity/safe sections 前置契约；本阶段没有实现 consumer。
 - Stage 28 事实源：`docs/88-filtered-snapshot-host-consumer-validation-gate.md` 与 `docs/archive/release-notes/90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`。
 - 旧 `docs/09-policy-checker-poc-plan.md` 已完整移入 `docs/archive/09-policy-checker-poc-plan.md`；活跃文档保持 50 个。
+- 2026-07-16 Stage 29 已按 TDD 实现 `tools/codex_desktop_filtered_snapshot_consumer.py`：标准库-only、stdin-only、1 MiB 输入、64 KiB 输出，不自动启动 reader。
+- consumer 固定 11 项检查，独立重算 scope/filter/view identity，严格验证 safe sections、counts、matched/status 与 task/request filter semantics；base/envelope/handoff identity 只关联检查。
+- 新增 `tests/test_codex_desktop_filtered_snapshot_consumer.py`，覆盖 valid/blocked/validation_failed/error、输入门禁、value-safe determinism、禁止依赖与真实 reader → consumer stdio smoke。
+- Stage 29 事实源：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md` 与 `docs/archive/release-notes/91-release-notes-stage29-codex-desktop-filtered-snapshot-consumer.md`。
+- 早期 `docs/14-task-runtime-bridge.md` 已完整移入 `docs/archive/14-task-runtime-bridge.md`；活跃文档保持 50 个。
 - Stage 20 实现文档已完整归档至 `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`；活跃文档保持 50 个。
 - Stage 21 历史 validation-only 设计门已被 Stage 22 及后续事实源取代，完整归档至 `docs/archive/82-read-only-representation-read-design-gate.md`；活跃文档仍为 50 个。
 
@@ -142,43 +147,45 @@
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/88-filtered-snapshot-host-consumer-validation-gate.md`
-3. 再读：`docs/87-filtered-envelope-snapshot-json-reader-implementation.md`
-4. 再读：`docs/86-filtered-envelope-snapshot-read-design-gate.md`
-5. 再读：`docs/85-envelope-scoped-consumer-filter-design-gate.md`
-6. 再读：`docs/84-envelope-scoped-snapshot-read-design-gate.md`
-7. 再读：`docs/83-codex-desktop-snapshot-json-reader-implementation.md`
-8. 再读：`tasks/handoff-2026-07-16.md`
-9. 再读：`docs/79-read-only-host-consumer-validation-boundary.md`
-10. 再读：`docs/78-control-panel-host-integration-boundary.md`
-11. 再读：`docs/77-read-only-control-plane-milestone-freeze.md`
-12. 再读：`docs/76-read-only-control-panel-mvp.md`
-13. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
-14. 再跑：`python -m agent_runtime.cli docs context --json`
-15. 需要 Stage 28 验收事实时读：`docs/archive/release-notes/90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`
-16. 需要 Stage 27 验收事实时读：`docs/archive/release-notes/89-release-notes-stage27-filtered-envelope-snapshot-json-reader.md`
-17. 需要 Stage 26 验收事实时读：`docs/archive/release-notes/88-release-notes-stage26-filtered-envelope-snapshot-read-design-gate.md`
-18. 需要 Stage 24 验收事实时读：`docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`
-19. 需要 Stage 20 历史实现时读：`docs/archive/81-codex-desktop-read-only-adapter-implementation.md`
-20. 需要 Stage 21 历史设计时读：`docs/archive/82-read-only-representation-read-design-gate.md`
-21. 需要 Stage 19 历史设计时读：`docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`
-22. 需要 v0.13 验收事实时读：`docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`
+2. 再读：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`
+3. 再读：`docs/88-filtered-snapshot-host-consumer-validation-gate.md`
+4. 再读：`docs/87-filtered-envelope-snapshot-json-reader-implementation.md`
+5. 再读：`docs/86-filtered-envelope-snapshot-read-design-gate.md`
+6. 再读：`docs/85-envelope-scoped-consumer-filter-design-gate.md`
+7. 再读：`docs/84-envelope-scoped-snapshot-read-design-gate.md`
+8. 再读：`docs/83-codex-desktop-snapshot-json-reader-implementation.md`
+9. 再读：`tasks/handoff-2026-07-16.md`
+10. 再读：`docs/79-read-only-host-consumer-validation-boundary.md`
+11. 再读：`docs/78-control-panel-host-integration-boundary.md`
+12. 再读：`docs/77-read-only-control-plane-milestone-freeze.md`
+13. 再读：`docs/76-read-only-control-panel-mvp.md`
+14. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
+15. 再跑：`python -m agent_runtime.cli docs context --json`
+16. 需要 Stage 29 验收事实时读：`docs/archive/release-notes/91-release-notes-stage29-codex-desktop-filtered-snapshot-consumer.md`
+17. 需要 Stage 28 验收事实时读：`docs/archive/release-notes/90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`
+18. 需要 Stage 27 验收事实时读：`docs/archive/release-notes/89-release-notes-stage27-filtered-envelope-snapshot-json-reader.md`
+19. 需要 Stage 26 验收事实时读：`docs/archive/release-notes/88-release-notes-stage26-filtered-envelope-snapshot-read-design-gate.md`
+20. 需要 Stage 24 验收事实时读：`docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`
+21. 需要 Stage 20 历史实现时读：`docs/archive/81-codex-desktop-read-only-adapter-implementation.md`
+22. 需要 Stage 21 历史设计时读：`docs/archive/82-read-only-representation-read-design-gate.md`
+23. 需要 Stage 19 历史设计时读：`docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`
+24. 需要 v0.13 验收事实时读：`docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`
 
 ## 下一步做什么
 
-- **Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（条件启动）**
-- 只有用户明确要求实现 Stage 29 时才启动；否则维持 Stage 28 设计冻结，不创建 consumer 空壳。
-- 按 `docs/88-filtered-snapshot-host-consumer-validation-gate.md` 与 `tasks/handoff-2026-07-16.md` 的固定 TDD 顺序，先新增失败测试并确认 RED，再实现 `tools/codex_desktop_filtered_snapshot_consumer.py`。
-- consumer 只接受 stdin 中完整 `control-plane/codex-desktop-snapshot-read/v3`，独立校验 ready/closed lifecycle、guarantees、scope/filter/view identity、safe sections 与 task/request exact filter semantics。
-- 不修改 Stage 18 `tools/control_panel_handoff_consumer.py`，不自动执行 reader，不接受文件/URL/socket，不读取 project/envelope/ledger/registry。
-- `v0.13.0-read-only-control-plane` 仍是稳定冻结基线；Stage 28 为 additive design/contract freeze，不追补 tag。
+- **Stage 30 — Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）**
+- 只有具体宿主需要把固定 reader → consumer 管道映射为一次性展示状态时才启动；否则维持 Stage 29 冻结。
+- 第一拍只做 design gate：冻结宿主固定 argv/stdio ownership、timeout/output bounds、consumer 状态映射、取消语义与一次性内存展示边界。
+- 必须复用 Stage 29 consumer，不得让宿主绕过 consumer 直接信任 reader stdout，也不得修改 Stage 18 consumer contract。
+- 不默认创建 Codex Desktop 专有插件 bridge、UI、后台服务、缓存、export 或文件读取入口。
+- `v0.13.0-read-only-control-plane` 仍是稳定冻结基线；Stage 29 为 additive local consumer，不追补 tag。
 - 通用 query、lineage 自动扩展、sort/page、persistence/export、HTML/browser、service/network/write 与真实 adapter execution 继续延期。
 
 ## 重要约束
 
 - 仍然**不做真实 adapter execution**
-- Stage 16–28 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约与 future consumer 设计冻结**；Stage 28 没有实现 consumer，仍然不做 live service、DB、auth、网络访问、UI 写操作、HTML/browser 自动读取、通用 query、持久化/export 或真实 adapter execution
-- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、88/87/86/85/84/83/79/78/77/76 事实源与最新 handoff；Stage 20/21/19 历史实现与设计按需读取 archive/81、archive/82 与 archive/80，并保持验证/提交边界
+- Stage 16–29 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约与独立 filtered consumer**；仍然不做 live service、DB、auth、网络访问、UI 写操作、HTML/browser 自动读取、通用 query、持久化/export 或真实 adapter execution
+- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、89/88/87/86/85/84/83/79/78/77/76 事实源与最新 handoff；Stage 20/21/19 历史实现与设计按需读取 archive/81、archive/82 与 archive/80，并保持验证/提交边界
 
 ## 一句话理解当前项目
 
