@@ -16,31 +16,26 @@ python -m agent_runtime.cli doctor
 然后按顺序阅读：
 
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
-2. `docs/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`：Stage 33–35 display design、实现、验收与 v0.15.0 冻结事实源。
-3. `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`：Stage 30–32 与 v0.14.0 历史事实源。
-4. `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`：Stage 29 stdin consumer 实现与验收边界。
-5. `docs/87-filtered-envelope-snapshot-json-reader-implementation.md`：Stage 27 filtered v3 实现与验收边界。
-6. `tasks/handoff-2026-07-16.md`：Stage 35 收口事实与 Stage 36 条件启动边界。
-7. `docs/88-filtered-snapshot-host-consumer-validation-gate.md`：Stage 28 consumer design gate。
-8. `docs/86-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 filter、identity 与关系闭包契约。
-9. `docs/84-envelope-scoped-snapshot-read-design-gate.md`：Stage 23/24 envelope-scoped reader 边界。
-10. `docs/83-codex-desktop-snapshot-json-reader-implementation.md`：Stage 22 project-scoped v1 reader。
-11. `docs/79-read-only-host-consumer-validation-boundary.md`：Stage 18 reference consumer。
-12. `docs/78-control-panel-host-integration-boundary.md`：Stage 17 stdio handoff。
-13. `docs/76-read-only-control-panel-mvp.md`：Stage 16 静态只读 Control Panel。
-14. `docs/75-cli-automation-contract-discovery.md`：CLI 自动化事实源。
-15. `docs/52-minimal-orchestration-loop.md`：Stage 14 收口设计事实源。
-16. `docs/51-backend-first-api-boundary.md`：Stage 13 资源/操作边界。
-17. `docs/02-roadmap.md`：完整路线图。
-18. `docs/archive/release-notes/96-release-notes-v0.15.0-filtered-snapshot-display-integration.md`：v0.15.0 验收事实。
-19. `docs/archive/release-notes/95-release-notes-stage34-codex-desktop-filtered-snapshot-markdown-display.md`：Stage 34 验收事实。
-20. `docs/archive/release-notes/94-release-notes-stage33-filtered-snapshot-display-integration-gate.md`：Stage 33 验收事实。
-21. `docs/archive/release-notes/93-release-notes-v0.14.0-filtered-snapshot-host-integration.md`：v0.14.0 验收事实。
-22. `docs/archive/release-notes/92-release-notes-stage30-stage31-codex-desktop-filtered-snapshot-host-integration.md`：Stage 30/31 验收事实。
-23. `docs/archive/77-read-only-control-plane-milestone-freeze.md`：v0.13.0 历史冻结事实源。
-24. `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`：Stage 20 历史实现。
-25. `docs/archive/82-read-only-representation-read-design-gate.md`：Stage 21 历史 validation-only 设计门。
-26. `docs/10-cli-poc-usage.md`：具体 CLI 参数。
+2. `docs/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`：Stage 36 consumer design gate 与 Stage 37/38 边界。
+3. `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`：Stage 33–35 与 v0.15.0 历史事实源。
+4. `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`：Stage 30–32 与 v0.14.0 历史事实源。
+5. `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`：Stage 29 stdin consumer。
+6. `docs/87-filtered-envelope-snapshot-json-reader-implementation.md`：Stage 27 filtered v3 reader。
+7. `tasks/handoff-2026-07-16.md`：Stage 36 收口与 Stage 37 条件实现边界。
+8. `docs/88-filtered-snapshot-host-consumer-validation-gate.md`：Stage 28 consumer gate。
+9. `docs/86-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 filter contract。
+10. `docs/84-envelope-scoped-snapshot-read-design-gate.md`：Stage 23/24 reader 边界。
+11. `docs/83-codex-desktop-snapshot-json-reader-implementation.md`：Stage 22 reader。
+12. `docs/79-read-only-host-consumer-validation-boundary.md`：Stage 18 consumer。
+13. `docs/78-control-panel-host-integration-boundary.md`：Stage 17 handoff。
+14. `docs/76-read-only-control-panel-mvp.md`：Stage 16 Control Panel。
+15. `docs/75-cli-automation-contract-discovery.md`：CLI 自动化。
+16. `docs/52-minimal-orchestration-loop.md`：Stage 14。
+17. `docs/51-backend-first-api-boundary.md`：Stage 13。
+18. `docs/02-roadmap.md`：完整路线图。
+19. `docs/archive/release-notes/97-release-notes-stage36-filtered-snapshot-markdown-display-consumer-validation-gate.md`：Stage 36 验收。
+20. `docs/archive/release-notes/96-release-notes-v0.15.0-filtered-snapshot-display-integration.md`：v0.15.0 验收。
+21. `docs/10-cli-poc-usage.md`：具体 CLI 参数。
 
 不要先遍历整个 `docs/` 或 `tasks/progress.md`。
 
@@ -48,9 +43,9 @@ python -m agent_runtime.cli doctor
 
 `s-black harness engineering`（Python 包名 `agent_runtime`）是一个轻量、可审计、可迁移的 Agent Runtime / Harness Orchestrator，逐步抽象规则门禁、任务账本、adapter envelope、能力路由和控制面 read model。
 
-当前状态：**Stage 35 — Filtered Snapshot Display Integration Milestone Freeze 已收口**；Stage 34 已实现固定 Stage 31 host → strict validation → escaped deterministic Markdown，并冻结本地 `v0.15.0-filtered-snapshot-display-integration`。下一阶段为 **Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate（条件启动）**；通用 query、HTML/browser、live service、DB、auth、网络、文件 export 与 UI 写操作仍不开放。
+当前状态：**Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate 已收口**；已冻结独立 stdin-only consumer 的 display v1、content hash、固定 Markdown grammar、安全 literal 与 withheld contract。下一阶段为 **Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation（条件启动）**；通用 query、HTML/browser、live service、DB、auth、网络、文件 export 与 UI 写操作仍不开放。
 
-- 冻结基线：`v0.15.0-filtered-snapshot-display-integration`（本地 tag，未 push）；上一基线为 `v0.14.0-filtered-snapshot-host-integration` / `dfae346`（已 push）。
+- 冻结基线：`v0.15.0-filtered-snapshot-display-integration` / `b1fa0b3`（已推送）；上一基线为 `v0.14.0-filtered-snapshot-host-integration` / `dfae346`（已 push）。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation、CLI automation contract/profile/workflow，以及 `orchestration control-panel snapshot/render/handoff` 的确定性 representation、版本化 stdio descriptor 与独立 reference consumer validation。
 - Stage 12 已完成：routing/read-loop snapshot 与 recovery lineage read model 已冻结并通过验收。
 - Stage 13 已完成：真实 CLI/read models 的 stable/preview/unavailable 边界已对账，并由契约测试冻结命令 surface 与关键 flag。
@@ -67,7 +62,8 @@ python -m agent_runtime.cli doctor
 - Stage 28 事实源：`docs/88-filtered-snapshot-host-consumer-validation-gate.md`；只冻结 future consumer contract 与前置 reader 契约测试，不实现 consumer。
 - Stage 29 事实源：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`；专用 consumer 已按 TDD 实现并收口，不修改 Stage 18 consumer 或 Stage 27 reader。
 - Stage 30–32 事实源：`docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`；one-shot host 与已推送 v0.14.0 里程碑已冻结。
-- Stage 33–35 事实源：`docs/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`；Markdown display 已按 TDD 实现并冻结本地 v0.15.0 里程碑。
+- Stage 33–35 事实源：`docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`；Markdown display 与已推送 v0.15.0 已冻结。
+- Stage 36 事实源：`docs/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`；只冻结 consumer contract，Stage 37 必须先 RED tests。
 
 项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
 

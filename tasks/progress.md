@@ -2714,7 +2714,7 @@
 - 选择 Codex Desktop 可消费的 deterministic escaped Markdown 作为首个具体展示面。
 - 冻结 fixed Stage 31 host-owned wrapper、strict result gate、安全字段 allowlist、empty-view UX、64 KiB final output 与 one-shot/no-side-effect 边界。
 - 拒绝 arbitrary stdin presenter、专有插件 API、HTML/browser、service/network、cache/export 与写操作。
-- 新增 `docs/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` 与 release notes 94。
+- 新增 `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` 与 release notes 94。
 - v0.14.0 commit/tag 已按后续用户授权推送至 `origin`；历史 freeze 文档移入 `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`。
 - 下一步：Stage 34 必须先写 RED tests，再实现 fixed host → escaped deterministic Markdown one-shot display wrapper。
 
@@ -2726,3 +2726,11 @@
 - doctor、public scan、py_compile、Git diff check 与真实 request/task/AND/empty/blocked smoke 通过。
 - Stage 35 冻结本地 annotated tag `v0.15.0-filtered-snapshot-display-integration`；本轮未获 push 指令。
 - 下一阶段为 Stage 36 independent display-result consumer validation design gate（条件启动）。
+
+
+## 2026-07-16 Stage 36 — Display Consumer Validation Gate
+
+- 冻结标准库-only、stdin-only display v1 consumer contract。
+- 覆盖 wrapper/status/lifecycle/guarantees、content hash、固定 Markdown grammar、安全 literal、identity/count/filter/empty-view 与 withheld validation。
+- consumer 不启动上游进程，不接受 file/URL/raw Markdown，不复制或持久化 content。
+- 下一阶段 Stage 37 必须先 RED tests；候选 Stage 38 tag 为 `v0.16.0-filtered-snapshot-display-consumer`。

@@ -13,7 +13,7 @@
 
 ## 版本治理说明
 
-当前仓库最新里程碑基线为 `v0.15.0-filtered-snapshot-display-integration`（本地 annotated tag，未 push）。上一基线为 `v0.14.0-filtered-snapshot-host-integration`（commit `dfae346`，已 push）。
+当前仓库最新里程碑基线为 `v0.15.0-filtered-snapshot-display-integration` / `b1fa0b3`（annotated tag 与 `main` 已推送）。上一基线为 `v0.14.0-filtered-snapshot-host-integration`（commit `dfae346`，已 push）。
 
 从 orchestration 阶段开始，项目持续使用 `docs/55`、`docs/57`、`docs/59`、`docs/61`、`docs/65`、`docs/67`、`docs/72` 这类**阶段编号 + release notes**来完成阶段收口，而 semver/tag 改为只在里程碑节点冻结。
 
@@ -1000,7 +1000,7 @@ v0.14.0-filtered-snapshot-host-integration
 
 ## Stage 33 — Codex Desktop Filtered Snapshot Display Integration Gate（已完成）
 
-已选择 Codex Desktop 可消费的 deterministic escaped Markdown 作为首个具体展示面，冻结 fixed Stage 31 host、strict result gate、安全字段投影、空视图 UX、64 KiB 输出与 one-shot/no-side-effect 边界。事实源为 `docs/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`。
+已选择 Codex Desktop 可消费的 deterministic escaped Markdown 作为首个具体展示面，冻结 fixed Stage 31 host、strict result gate、安全字段投影、空视图 UX、64 KiB 输出与 one-shot/no-side-effect 边界。事实源为 `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`。
 
 ---
 
@@ -1016,13 +1016,25 @@ v0.14.0-filtered-snapshot-host-integration
 
 ## Stage 35 — Filtered Snapshot Display Integration Milestone Freeze（已完成）
 
-已冻结本地 annotated tag `v0.15.0-filtered-snapshot-display-integration`；未获本轮 push 指令。事实源为 `docs/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` 与 release notes 95/96。
+已冻结并推送 annotated tag `v0.15.0-filtered-snapshot-display-integration`，target 为 `b1fa0b3`。事实源为 `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` 与 release notes 95/96。
 
 ---
 
-## Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate（条件启动）
+## Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate（已完成）
 
-只审计独立 stdin consumer 对 display v1 wrapper、content hash、escaping invariant、empty-view 和 withheld contract 的验证边界；不启动 display/host/reader，不引入 UI/service/persistence/write。
+已冻结标准库-only、stdin-only consumer 的完整 display v1 wrapper、content hash、固定 Markdown grammar、安全 literal、count/filter/identity/empty-view 与 non-ready withheld contract。事实源为 `docs/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`。
+
+---
+
+## Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation（条件启动）
+
+按 TDD 实现 `tools/codex_desktop_filtered_snapshot_display_consumer.py`；不启动任何上游进程，不接受 file/URL/raw Markdown，不持久化 content。
+
+---
+
+## Stage 38 — Filtered Snapshot Display Consumer Milestone Freeze（条件启动）
+
+Stage 37 全量验收后冻结候选本地 annotated tag `v0.16.0-filtered-snapshot-display-consumer`。
 
 ---
 

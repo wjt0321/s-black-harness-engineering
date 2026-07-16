@@ -1,11 +1,13 @@
 <!-- parents: archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md -->
 <!-- relates: 89-codex-desktop-filtered-snapshot-consumer-implementation.md, 64-versioning-governance.md -->
 
+> 归档状态：2026-07-16 被 Stage 36 display consumer validation design gate 取代后移入 archive；v0.15.0 commit/tag 已推送至 `origin`。
+
 # 91 — Codex Desktop Filtered Snapshot Markdown Display Integration 与里程碑冻结
 
 > 状态：**Stage 33 design gate、Stage 34 实现与 Stage 35 milestone freeze 均已收口**
 > 日期：2026-07-16
-> 冻结里程碑：`v0.15.0-filtered-snapshot-display-integration`（本地 annotated tag）
+> 冻结里程碑：`v0.15.0-filtered-snapshot-display-integration`（annotated tag，已推送）
 
 ## 1. 决策摘要
 
@@ -236,7 +238,7 @@ Stage 33–34 已形成独立、可引用的安全展示能力包，冻结本地
 v0.15.0-filtered-snapshot-display-integration
 ```
 
-本次里程碑不改变安全边界：不开放专有插件/UI、HTML/browser、service/network/DB/auth、cache/export、任意 query、写操作或真实 adapter execution。未获本轮 push 指令，因此 commit/tag 保持本地。
+本次里程碑不改变安全边界：不开放专有插件/UI、HTML/browser、service/network/DB/auth、cache/export、任意 query、写操作或真实 adapter execution。commit/tag 随后已按用户授权推送至 `origin`。
 
 ## 15. 下一阶段条件入口
 

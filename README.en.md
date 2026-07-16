@@ -79,7 +79,7 @@ Current estimate:
 
 ### Versioning Note
 
-The latest milestone baseline is `v0.15.0-filtered-snapshot-display-integration` (local annotated tag, not pushed), covering Stage 33–34 strict host validation, safe projection, and deterministic escaped Markdown. The previous baseline is `v0.14.0-filtered-snapshot-host-integration` (commit `dfae346`, pushed).
+The latest milestone baseline is `v0.15.0-filtered-snapshot-display-integration` (commit `b1fa0b3`, pushed), covering Stage 33–34 strict host validation, safe projection, and deterministic escaped Markdown. The previous baseline is `v0.14.0-filtered-snapshot-host-integration` (commit `dfae346`, pushed).
 
 After `v0.11.0-runtime-event-import`, the project entered the orchestration line and effectively switched to **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, `65`, `67`, and `72`. That means:
 
@@ -138,7 +138,8 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 33 — Filtered Snapshot Display Integration Gate
 - ✅ Stage 34 — Filtered Snapshot Markdown Display Implementation
 - ✅ Stage 35 — `v0.15.0-filtered-snapshot-display-integration` Local Milestone Freeze
-- ⚪ Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate (conditional)
+- ✅ Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate
+- ⚪ Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation (conditional)
 
 ### The Most Accurate Current Read
 
@@ -150,7 +151,7 @@ The current state is best understood as:
 
 ### What Comes Next
 
-Stage 36 remains conditional. Its first step is a design gate for an independent stdin-only consumer of the display v1 wrapper, content hash, escaping invariants, empty-view UX, and non-ready withholding. It must not start the display/host/reader or introduce proprietary UI, HTML/browser rendering, persistence/export, services/network/DB/auth, writes, or real adapter execution.
+Stage 36 is complete. Stage 37 remains conditional and implements the frozen stdin-only contract for an independent stdin-only consumer of the display v1 wrapper, content hash, escaping invariants, empty-view UX, and non-ready withholding. It must not start the display/host/reader or introduce proprietary UI, HTML/browser rendering, persistence/export, services/network/DB/auth, writes, or real adapter execution.
 
 
 Implemented capability highlights:

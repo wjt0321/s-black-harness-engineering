@@ -1,4 +1,4 @@
-<!-- parents: ../../../docs/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md -->
+<!-- parents: ../../../docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md -->
 
 # Release Notes 94 — Stage 33 Filtered Snapshot Display Integration Gate
 
