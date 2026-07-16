@@ -1041,9 +1041,21 @@ v0.14.0-filtered-snapshot-host-integration
 
 ---
 
-## Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate（条件启动）
+## Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate（已完成）
 
-第一拍只允许设计 fixed Stage 34 display → fixed Stage 37 consumer 的 validation-before-release one-shot host contract；不得直接引入专有 UI、HTML/browser、file/URL、service/network、persistence/export、write 或真实 adapter execution。
+已冻结 fixed Stage 34 display → exact stdout → fixed Stage 37 consumer → validation-before-release host contract、bounded stdio、status/exit、identity cross-check、withheld 与 no-side-effect。事实源为 `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`。
+
+---
+
+## Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation（条件启动）
+
+按 TDD 实现 `tools/codex_desktop_filtered_snapshot_display_host.py`。
+
+---
+
+## Stage 41 — Filtered Snapshot Display Host Integration Milestone Freeze（条件启动）
+
+Stage 40 全量验收后冻结候选本地 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`。
 
 ---
 

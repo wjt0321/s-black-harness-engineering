@@ -143,7 +143,8 @@
 - ✅ Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate
 - ✅ Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation
 - ✅ Stage 38 — Filtered Snapshot Display Consumer Milestone Freeze（`v0.16.0` 本地 tag，未 push）
-- ⚪ Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate（条件启动）
+- ✅ Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate
+- ⚪ Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation（条件启动）
 
 ### 现在最明确的位置
 

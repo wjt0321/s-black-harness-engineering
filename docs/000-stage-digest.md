@@ -5,8 +5,8 @@
 ## 文档池规模
 
 - docs/ 活跃文档：50 个
-- 归档文档：70 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：约 196 个
+- 归档文档：72 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：约 197 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -24,10 +24,10 @@
 
 ## 当前阶段
 
-- **Stage 38 — Filtered Snapshot Display Consumer Milestone Freeze（收口完成）**
+- **Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate（收口完成）**
+- Stage 38 — Filtered Snapshot Display Consumer Milestone Freeze（已收口）
 - Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation（已收口）
-- Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate（已收口）
-- 下一阶段：Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate（条件启动）
+- 下一阶段：Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation（条件启动）
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
@@ -158,27 +158,24 @@
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`
-3. 再读：`docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`
-4. 再读：`docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`
-5. 再读：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`
-6. 再读：`docs/87-filtered-envelope-snapshot-json-reader-implementation.md`
-7. 再读：`tasks/handoff-2026-07-16.md`
-8. 需要 v0.16 验收事实时读：`docs/archive/release-notes/99-release-notes-v0.16.0-filtered-snapshot-display-consumer.md`
-9. 需要 Stage 37/36 验收事实时读 release notes 98/97。
-10. 需要 v0.15 验收事实时读 release note 96 与 archive/91。
-11. 再读：`docs/88-filtered-snapshot-host-consumer-validation-gate.md`
-12. 再读：`docs/86-filtered-envelope-snapshot-read-design-gate.md`
-13. 再读：`docs/84-envelope-scoped-snapshot-read-design-gate.md`
-14. 再读：`docs/83-codex-desktop-snapshot-json-reader-implementation.md`
-15. 再跑：`python -m agent_runtime.cli docs context --json`
+2. 再读：`docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`
+3. 再读：`docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`
+4. 再读：`docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`
+5. 再读：`docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`
+6. 再读：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`
+7. 再读：`docs/87-filtered-envelope-snapshot-json-reader-implementation.md`
+8. 再读：`tasks/handoff-2026-07-16.md`
+9. 需要 Stage 39 验收事实时读：`docs/archive/release-notes/100-release-notes-stage39-filtered-snapshot-display-host-integration-gate.md`
+10. 需要 v0.16/Stage 37–36 事实时读 release notes 99/98/97 与 archive/92。
+11. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate（条件启动）**
-- 第一拍只允许设计 fixed Stage 34 display stdout → fixed Stage 37 consumer stdin → validation-before-release host result。
-- 必须先冻结 fixed argv ownership、bounded stdio、timeout/cancel/no-retry、identity cross-check、consumer pass 前 content withheld、failure mapping、memory cleanup 与 no-side-effect。
-- 本阶段不直接实现 host；专有 UI、HTML/browser、file/URL、network/service、persistence/export、写操作与真实 execution 继续 unavailable。
+- **Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation（条件启动）**
+- 必须先写 RED tests，再实现 fixed Stage 34 display stdout → fixed Stage 37 consumer stdin → validation-before-release one-shot host。
+- consumer `pass/0` 与五项 identity cross-check 前不得释放 content；failure 一律 withheld。
+- Stage 40 验收后进入 Stage 41 milestone freeze，候选 tag 为 `v0.17.0-filtered-snapshot-display-host-integration`。
+- 专有 UI、HTML/browser、file/URL、network/service、persistence/export、写操作与真实 execution 继续 unavailable。
 
 ## 重要约束
 

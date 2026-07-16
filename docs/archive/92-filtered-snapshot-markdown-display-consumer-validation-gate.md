@@ -1,3 +1,4 @@
+<!-- archived: Stage 39 started; retained as the Stage 36-38 / v0.16.0 fact source -->
 <!-- parents: archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md -->
 <!-- relates: 89-codex-desktop-filtered-snapshot-consumer-implementation.md, 79-read-only-host-consumer-validation-boundary.md, 64-versioning-governance.md -->
 

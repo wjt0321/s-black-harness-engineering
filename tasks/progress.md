@@ -2746,3 +2746,12 @@
 - 16 项专用测试、124 项跨阶段回归与 884 项全量测试通过；doctor、public scan、py_compile 和真实 ready/blocked stdio pipe 通过。
 - Stage 38 更新 `docs/92`、release notes 98/99、digest/index/roadmap/CLI usage/versioning/README/handoff，并冻结本地 annotated tag `v0.16.0-filtered-snapshot-display-consumer`，未 push。
 - 下一阶段为 Stage 39 Filtered Snapshot Markdown Display Consumer Host Integration Gate（条件启动）；第一拍只允许 design gate。
+
+
+## 2026-07-16 Stage 39 — Filtered Snapshot Display Host Integration Gate
+
+- 用户授权继续推进下一本地里程碑，不 push。
+- 审计 Stage 34 display 与 Stage 37 consumer，选择 fixed display stdout → consumer stdin 的 validation-before-release one-shot host。
+- 新增 `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 release notes 100；原 Stage 36–38 事实源归档为 `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`。
+- 冻结 fixed argv、bounded stdio、timeout/no-retry、strict protocol、五项 identity cross-check、content withheld、minimal output 与 no-side-effect。
+- 下一阶段 Stage 40 必须先 RED tests；候选 Stage 41 tag 为 `v0.17.0-filtered-snapshot-display-host-integration`。

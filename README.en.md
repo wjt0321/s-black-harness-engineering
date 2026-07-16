@@ -141,7 +141,8 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate
 - ✅ Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation
 - ✅ Stage 38 — `v0.16.0-filtered-snapshot-display-consumer` Local Milestone Freeze
-- ⚪ Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate (conditional)
+- ✅ Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate
+- ⚪ Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation (conditional)
 
 ### The Most Accurate Current Read
 
@@ -153,7 +154,7 @@ The current state is best understood as:
 
 ### What Comes Next
 
-Stage 38 is complete. Stage 39 remains conditional and may only design a fixed Stage 34 display-to-Stage 37 consumer validation-before-release one-shot host contract. It must not introduce proprietary UI, HTML/browser rendering, file/URL inputs, persistence/export, services/network/DB/auth, writes, or real adapter execution.
+Stage 39 is complete. Stage 40 remains conditional and may only implement the frozen fixed Stage 34 display-to-Stage 37 consumer validation-before-release one-shot host contract. It must not introduce proprietary UI, HTML/browser rendering, file/URL inputs, persistence/export, services/network/DB/auth, writes, or real adapter execution.
 
 
 Implemented capability highlights:
