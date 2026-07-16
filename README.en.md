@@ -79,7 +79,7 @@ Current estimate:
 
 ### Versioning Note
 
-The latest milestone baseline is `v0.13.0-read-only-control-plane` (commit `f401b98`, annotated tag pushed), covering the Stage 13–16 backend boundary, replay, CLI automation, and static read-only Control Panel. The previous baseline is `v0.12.1-orchestration-read-loop-snapshot` (commit `0419a04`).
+The latest milestone baseline is `v0.14.0-filtered-snapshot-host-integration` (local annotated tag, intentionally not pushed), covering the Stage 17–31 stdio handoff, scoped/filtered snapshot reader, independent consumer, and validation-before-display one-shot host. The previous baseline is `v0.13.0-read-only-control-plane` (commit `f401b98`, pushed).
 
 After `v0.11.0-runtime-event-import`, the project entered the orchestration line and effectively switched to **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, `65`, `67`, and `72`. That means:
 
@@ -87,12 +87,12 @@ After `v0.11.0-runtime-event-import`, the project entered the orchestration line
 - semver / tags no longer advanced stage-by-stage;
 - versioning moved to a "stage progression + release-notes closure + milestone tags" model.
 
-The repository formalizes this through `docs/64-versioning-governance.md`. The policy has now been applied to `v0.12.0-orchestration-foundation`, `v0.12.1-orchestration-read-loop-snapshot`, and `v0.13.0-read-only-control-plane`:
+The repository formalizes this through `docs/64-versioning-governance.md`. The policy has now been applied to `v0.12.0-orchestration-foundation`, `v0.12.1-orchestration-read-loop-snapshot`, `v0.13.0-read-only-control-plane`, and `v0.14.0-filtered-snapshot-host-integration`:
 
 - stage numbers continue to represent internal progression order;
 - release-notes documents close individual stages;
 - semver / Git tags are reserved for milestone-level freeze points rather than every stage;
-- the current freeze baseline is `v0.13.0-read-only-control-plane`, adding the Stage 13–16 backend boundary, replay/recovery, CLI automation, and static read-only Control Panel on top of `v0.12.1`.
+- the current freeze baseline is `v0.14.0-filtered-snapshot-host-integration`, adding the Stage 17–31 read-only host consumption chain on top of `v0.13.0`.
 
 ### Stage Closure Progress
 
@@ -122,7 +122,20 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 15.98 — Orchestration Run Retry / Fallback Commit landed
 - ✅ Stage 15.99 — Run Lineage / Recovery single-run read models landed
 - ✅ Stage 16 — Read-only Control Panel MVP (static snapshot/render closed; live UI deferred)
-- ⚪ Stage 17 — Control Panel Host Integration Boundary (stdio-first handoff design gate frozen; implementation next)
+- ✅ Stage 17 — Control Panel Host Integration Boundary
+- ✅ Stage 18 — Independent Read-only Host Consumer Validation
+- ✅ Stage 19 — Codex Desktop Read-only Adapter Design Gate
+- ✅ Stage 20 — Codex Desktop One-shot Read-only Adapter
+- ✅ Stage 21 — Representation Read Design Gate
+- ✅ Stage 22 — Project-scoped Snapshot JSON Reader
+- ✅ Stage 23/24 — Envelope-scoped Reader Design and Implementation
+- ✅ Stage 25/26 — Consumer and Filter Design Gates
+- ✅ Stage 27 — Filtered Envelope Snapshot JSON Reader v3
+- ✅ Stage 28/29 — Filtered Snapshot Consumer Gate and Implementation
+- ✅ Stage 30 — Filtered Snapshot Host Integration Gate
+- ✅ Stage 31 — Validation-before-display One-shot Host Implementation
+- ✅ Stage 32 — `v0.14.0-filtered-snapshot-host-integration` Local Milestone Freeze
+- ⚪ Stage 33 — Filtered Snapshot Display Integration Gate (conditional)
 
 ### The Most Accurate Current Read
 
@@ -134,13 +147,8 @@ The current state is best understood as:
 
 ### What Comes Next
 
-The next step is explicit but remains narrowly bounded:
+Stage 33 remains conditional. It should start only when a concrete host display surface and explicit user need exist. Its first step is a design gate for one-shot display, cancellation/window-close behavior, memory cleanup, and empty-view UX. It must reuse the Stage 31 host and must not introduce proprietary plugins, HTML/browser rendering, persistence/export, services/network/DB/auth, write operations, or real adapter execution by default.
 
-1. use `docs/78-control-panel-host-integration-boundary.md` as the Stage 17 design source of truth
-2. implement a read-only `orchestration control-panel handoff --json` descriptor with TDD, reusing the existing snapshot/render pipeline
-3. keep the descriptor free of embedded HTML, file writes, server startup, and command execution
-4. continue deferring live service, authentication, database, real-time refresh, controlled artifact export, and UI write operations
-5. do not create a tag when Stage 17 starts; reassess milestone tagging only after a stable host contract and an accepted consumer exist
 
 Implemented capability highlights:
 
@@ -160,6 +168,7 @@ Implemented capability highlights:
 - Stage 15.7/15.8/15.9 run controlled execution: `orchestration run --dry-run` (read-only plan preview + plan_hash), controlled-write `orchestration run --commit` (A+B envelope draft export + `run_planned` / `run_draft_exported` lifecycle events, no real adapter execution)
 - Stage 12 post-freeze recovery read model: `orchestration run inspect --aggregate-lineage` / `orchestration report generate --aggregate-lineage` (aggregates root/latest/leaves, attempt count, and effective plan hash from existing lifecycle events; read-only and does not scan drafts)
 - Stage 16 Read-only Control Panel: `orchestration control-panel snapshot/render` (deterministic snapshot, self-contained HTML, optional envelope-scoped run/approval/artifact projection, no service/network/write/execute)
+- Stage 17–31 read-only host chain: stdio handoff, independent consumers, project/envelope/filtered snapshot JSON reads, and `tools/codex_desktop_filtered_snapshot_host.py` validation-before-display one-shot integration
 
 ## Current Boundaries
 

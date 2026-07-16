@@ -13,7 +13,7 @@
 
 ## 版本治理说明
 
-当前仓库最新里程碑基线为 `v0.13.0-read-only-control-plane`（commit `f401b98`，annotated tag 已 push）。上一基线为 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`）。
+当前仓库最新里程碑基线为 `v0.14.0-filtered-snapshot-host-integration`（本地 annotated tag，按用户要求未 push）。上一基线为 `v0.13.0-read-only-control-plane`（commit `f401b98`，已 push）。
 
 从 orchestration 阶段开始，项目持续使用 `docs/55`、`docs/57`、`docs/59`、`docs/61`、`docs/65`、`docs/67`、`docs/72` 这类**阶段编号 + release notes**来完成阶段收口，而 semver/tag 改为只在里程碑节点冻结。
 
@@ -21,7 +21,7 @@
 
 - release notes 与阶段文档持续更新；
 - semver/tag 不再逐阶段增长；
-- `docs/64-versioning-governance.md` 定义的“阶段推进 + release notes 收口 + 里程碑打 tag”策略，已经在 `v0.12.0-orchestration-foundation`、`v0.12.1-orchestration-read-loop-snapshot` 与 `v0.13.0-read-only-control-plane` 三次得到实际执行。
+- `docs/64-versioning-governance.md` 定义的“阶段推进 + release notes 收口 + 里程碑打 tag”策略，已经在 `v0.12.0-orchestration-foundation`、`v0.12.1-orchestration-read-loop-snapshot`、`v0.13.0-read-only-control-plane` 与 `v0.14.0-filtered-snapshot-host-integration` 四次得到实际执行。
 
 两条主线并行推进，但优先级上仍遵循：先把底层边界和状态模型打稳，再逐步放开接入、编排和未来 UI 可操作性。
 
@@ -962,17 +962,45 @@ Stage 22 收口时继续延期 envelope 参数；该项已在 Stage 23/24 通过
 
 ---
 
-## Stage 30 — Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）
+## Stage 30 — Codex Desktop Filtered Snapshot Host Integration Gate（已完成）
 
-仅当具体宿主需要将固定 reader → consumer 管道映射为一次性展示状态时启动。第一拍只冻结：
+已冻结固定 reader/consumer argv、本地 stdin pipe、timeout/stdout/stderr bounds、consumer 状态映射、validation-before-display 与一次性内存展示边界。事实源为 `docs/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`。
 
-- 宿主拥有的固定 argv 与本地 stdin pipe；
-- one-shot timeout、stdout/stderr bounds 与取消语义；
-- consumer `pass/blocked/validation_failed/error` 到宿主状态的确定性映射；
-- 只在内存中展示已验证 safe summaries；
-- 不绕过 Stage 29 consumer，不执行 descriptor argv 或真实 adapter。
+---
 
-Stage 30 不默认引入专有插件 API、UI、HTML/browser、文件读取、缓存/export、service/network/DB/auth 或写操作。
+## Stage 31 — Codex Desktop Filtered Snapshot Host Integration Implementation（已完成）
+
+- 新增 `tools/codex_desktop_filtered_snapshot_host.py`；
+- 至少一个 exact task/request filter，两个同时提供时为 AND；
+- 固定运行 Stage 27 filtered v3 reader，再通过 stdin 运行 Stage 29 consumer；
+- consumer pass 和 base/scope/filter/view identity cross-check 前不释放 payload；
+- ready 后只返回 validated safe summaries；failure payload 为 null；
+- no retry、no write、no network、no service、no descriptor argv/adapter execution；
+- 15 项专用测试、99 项相关回归和 857 项全量测试通过。
+
+---
+
+## Stage 32 — Filtered Snapshot Host Integration Milestone Freeze（已完成）
+
+冻结本地 annotated tag：
+
+```text
+v0.14.0-filtered-snapshot-host-integration
+```
+
+本能力包覆盖 Stage 17–31 的 stdio handoff、独立 consumer、project/envelope/filtered reader、filtered consumer 与 validation-before-display host。按用户要求 commit/tag 只保留本地，不 push。
+
+事实源：
+
+- `docs/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`
+- `docs/archive/release-notes/92-release-notes-stage30-stage31-codex-desktop-filtered-snapshot-host-integration.md`
+- `docs/archive/release-notes/93-release-notes-v0.14.0-filtered-snapshot-host-integration.md`
+
+---
+
+## Stage 33 — Codex Desktop Filtered Snapshot Display Integration Gate（条件启动）
+
+只有出现具体宿主展示面与显式用户需求时启动。第一拍只做 design gate；不得默认引入专有插件/UI、HTML/browser、cache/export、service/network/DB/auth、写操作或真实 adapter execution。
 
 ---
 

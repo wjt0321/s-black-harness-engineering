@@ -5,34 +5,34 @@
 ## 文档池规模
 
 - docs/ 活跃文档：50 个
-- 归档文档：59 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：约 185 个
+- 归档文档：62 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：约 188 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
 
-- 稳定基线：`v0.13.0-read-only-control-plane` / `f401b98`（annotated tag 已 push）
-- 冻结 commit：`f401b98`
-- 上一冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`
+- 稳定基线：`v0.14.0-filtered-snapshot-host-integration`（本地 annotated tag，未 push；target 以本地 tag 为准）
+- 上一冻结基线：`v0.13.0-read-only-control-plane` / `f401b98`（已 push）
+- 再上一冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`
 - Stage 13 最终收口提交：`9625ba2`
 - Stage 14 Evidence projection 提交：`4a64ace`
 - Stage 14 最终收口提交：`03b64dd`（已推送至 `origin/main`）
 - 上一 foundation 基线：`v0.12.0-orchestration-foundation`（commit `38b4b69`）
-- 本轮按 Stage 13–16 能力包创建 annotated milestone tag：`v0.13.0-read-only-control-plane`
+- 本轮按 Stage 17–31 filtered snapshot host 能力包创建本地 annotated milestone tag：`v0.14.0-filtered-snapshot-host-integration`
 
 ## 当前阶段
 
-- **Stage 29 — Codex Desktop Filtered Snapshot Consumer Implementation（收口完成）**
-- Stage 28 — Filtered Snapshot Host Consumer Validation Gate（已收口）
-- Stage 27 — Filtered Envelope Snapshot JSON Reader Implementation（已收口）
-- 下一阶段：Stage 30 — Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）
+- **Stage 32 — Filtered Snapshot Host Integration Milestone Freeze（收口完成）**
+- Stage 31 — Codex Desktop Filtered Snapshot Host Integration Implementation（已收口）
+- Stage 30 — Codex Desktop Filtered Snapshot Host Integration Gate（已收口）
+- 下一阶段：Stage 33 — Codex Desktop Filtered Snapshot Display Integration Gate（条件启动）
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
 - Stage 16 收口提交：`b46c013`（`Complete Stage 16 read-only control panel`）；已按用户授权推送到 `origin/main`。
 - 2026-07-14 Stage 17 第一拍已落地：`control-panel handoff` 输出版本化 stdio descriptor，复用 snapshot identity 并声明 JSON/HTML representation、renderer identity 与只读安全边界。
 - project-local 绝对 envelope 路径会归一化为 root-relative 表示；descriptor 不内嵌 HTML、不执行 argv、不启动 service、不访问网络、不写文件或 ledger。
-- Stage 17 以 release notes 收口，不追补 tag；`v0.13.0-read-only-control-plane` 仍是稳定冻结基线。
+- Stage 17 当时以 release notes 收口且未追补 tag；其后已由 `v0.14.0-filtered-snapshot-host-integration` 汇总冻结。
 - Stage 18 第一拍已按 TDD 完成：标准库-only、stdin-only reference consumer 独立校验 handoff schema、identity、representation metadata、argv shape 与 boundary，绝不执行 argv。
 - 输入门禁覆盖 1 MiB 上限、空输入、非 UTF-8、非法 JSON、duplicate key；输出为确定性的 `control-plane/control-panel-host-consumer-validation/v1`。
 - Stage 18 事实源：`docs/79-read-only-host-consumer-validation-boundary.md` 与 `docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`。
@@ -147,45 +147,35 @@
 ## 下次恢复顺序
 
 1. 先读：`docs/000-stage-digest.md`（本文件）
-2. 再读：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`
-3. 再读：`docs/88-filtered-snapshot-host-consumer-validation-gate.md`
+2. 再读：`docs/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`
+3. 再读：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`
 4. 再读：`docs/87-filtered-envelope-snapshot-json-reader-implementation.md`
-5. 再读：`docs/86-filtered-envelope-snapshot-read-design-gate.md`
-6. 再读：`docs/85-envelope-scoped-consumer-filter-design-gate.md`
-7. 再读：`docs/84-envelope-scoped-snapshot-read-design-gate.md`
-8. 再读：`docs/83-codex-desktop-snapshot-json-reader-implementation.md`
-9. 再读：`tasks/handoff-2026-07-16.md`
-10. 再读：`docs/79-read-only-host-consumer-validation-boundary.md`
-11. 再读：`docs/78-control-panel-host-integration-boundary.md`
-12. 再读：`docs/77-read-only-control-plane-milestone-freeze.md`
-13. 再读：`docs/76-read-only-control-panel-mvp.md`
-14. 需要 CLI 自动化事实时读：`docs/75-cli-automation-contract-discovery.md`
-15. 再跑：`python -m agent_runtime.cli docs context --json`
-16. 需要 Stage 29 验收事实时读：`docs/archive/release-notes/91-release-notes-stage29-codex-desktop-filtered-snapshot-consumer.md`
-17. 需要 Stage 28 验收事实时读：`docs/archive/release-notes/90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`
-18. 需要 Stage 27 验收事实时读：`docs/archive/release-notes/89-release-notes-stage27-filtered-envelope-snapshot-json-reader.md`
-19. 需要 Stage 26 验收事实时读：`docs/archive/release-notes/88-release-notes-stage26-filtered-envelope-snapshot-read-design-gate.md`
-20. 需要 Stage 24 验收事实时读：`docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`
-21. 需要 Stage 20 历史实现时读：`docs/archive/81-codex-desktop-read-only-adapter-implementation.md`
-22. 需要 Stage 21 历史设计时读：`docs/archive/82-read-only-representation-read-design-gate.md`
-23. 需要 Stage 19 历史设计时读：`docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`
-24. 需要 v0.13 验收事实时读：`docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`
+5. 再读：`tasks/handoff-2026-07-16.md`
+6. 再读：`docs/88-filtered-snapshot-host-consumer-validation-gate.md`
+7. 再读：`docs/86-filtered-envelope-snapshot-read-design-gate.md`
+8. 再读：`docs/84-envelope-scoped-snapshot-read-design-gate.md`
+9. 再读：`docs/83-codex-desktop-snapshot-json-reader-implementation.md`
+10. 需要 v0.14 验收事实时读：`docs/archive/release-notes/93-release-notes-v0.14.0-filtered-snapshot-host-integration.md`
+11. 需要 Stage 30/31 验收事实时读：`docs/archive/release-notes/92-release-notes-stage30-stage31-codex-desktop-filtered-snapshot-host-integration.md`
+12. 需要 v0.13 历史冻结事实时读：`docs/archive/77-read-only-control-plane-milestone-freeze.md`
+13. 需要 Stage 20/21/19 历史时按需读：`docs/archive/81-codex-desktop-read-only-adapter-implementation.md`、`docs/archive/82-read-only-representation-read-design-gate.md`、`docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`
+14. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 30 — Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）**
-- 只有具体宿主需要把固定 reader → consumer 管道映射为一次性展示状态时才启动；否则维持 Stage 29 冻结。
-- 第一拍只做 design gate：冻结宿主固定 argv/stdio ownership、timeout/output bounds、consumer 状态映射、取消语义与一次性内存展示边界。
-- 必须复用 Stage 29 consumer，不得让宿主绕过 consumer 直接信任 reader stdout，也不得修改 Stage 18 consumer contract。
-- 不默认创建 Codex Desktop 专有插件 bridge、UI、后台服务、缓存、export 或文件读取入口。
-- `v0.13.0-read-only-control-plane` 仍是稳定冻结基线；Stage 29 为 additive local consumer，不追补 tag。
-- 通用 query、lineage 自动扩展、sort/page、persistence/export、HTML/browser、service/network/write 与真实 adapter execution 继续延期。
+- **Stage 33 — Codex Desktop Filtered Snapshot Display Integration Gate（条件启动）**
+- 只有出现具体宿主展示面和显式用户需求时才启动；否则保持 `v0.14.0` 冻结。
+- 第一拍只审计 host result 到一次性展示组件的数据边界、取消/窗口关闭/内存清理与空视图 UX。
+- 必须继续复用 Stage 31 host，不允许 UI 绕过 consumer 或直接信任 reader stdout。
+- 不默认创建专有插件、HTML/browser、后台 service、cache/export、network/DB/auth 或写操作。
+- `v0.14.0-filtered-snapshot-host-integration` 是当前本地稳定基线；按用户要求未 push。
+- 真实 adapter execution、candidate command、approval resolve 与 UI controlled write 继续 unavailable。
 
 ## 重要约束
 
 - 仍然**不做真实 adapter execution**
-- Stage 16–29 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约与独立 filtered consumer**；仍然不做 live service、DB、auth、网络访问、UI 写操作、HTML/browser 自动读取、通用 query、持久化/export 或真实 adapter execution
-- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、89/88/87/86/85/84/83/79/78/77/76 事实源与最新 handoff；Stage 20/21/19 历史实现与设计按需读取 archive/81、archive/82 与 archive/80，并保持验证/提交边界
+- Stage 16–32 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约与独立 filtered consumer 与 validation-before-display one-shot host**；仍然不做 live service、DB、auth、网络访问、UI 写操作、HTML/browser 自动读取、通用 query、持久化/export 或真实 adapter execution
+- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、90/89/88/87/86/85/84/83/79/78/76 与 archive/77 事实源与最新 handoff；Stage 20/21/19 历史实现与设计按需读取 archive/81、archive/82 与 archive/80，并保持验证/提交边界
 
 ## 一句话理解当前项目
 

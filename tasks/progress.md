@@ -2536,7 +2536,7 @@
 ## 2026-07-14 — v0.13.0 Read-only Control Plane Milestone Freeze
 
 - 将 Stage 13 Backend-first API Boundary、Stage 14 Minimal Orchestration Loop、CLI automation consumer 与 Stage 16 Read-only Control Panel 统一判定为新里程碑能力包。
-- 新增 `docs/77-read-only-control-plane-milestone-freeze.md` 与 `docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`。
+- 新增 `docs/archive/77-read-only-control-plane-milestone-freeze.md` 与 `docs/archive/release-notes/80-release-notes-v0.13.0-read-only-control-plane.md`。
 - 冻结名：`v0.13.0-read-only-control-plane`；采用 annotated tag，不为单个 Stage 追补 tag。
 - 同步 version governance、digest、roadmap、README、AGENTS、index 与 handoff。
 - 真实 adapter execution、live service、auth、DB、实时刷新与 UI controlled write 继续延期。
@@ -2692,3 +2692,18 @@
 - 真实 Stage 27 reader stdout → Stage 29 consumer stdin smoke 返回 pass；Stage 18 consumer 与 Stage 27 reader 兼容回归通过。
 - 新增 `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md` 与 release notes 91；早期 Runtime bridge 文档完整归档至 `docs/archive/14-task-runtime-bridge.md`，活跃文档保持 50 个。
 - 下一阶段为 Stage 30 Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）；第一拍只允许 design gate，不默认引入 UI、service、persistence 或真实 adapter execution。
+
+## 2026-07-16 — Stage 30–32 Filtered Snapshot Host Integration 里程碑收口
+
+- 用户授权无需继续询问，直接推进到下一阶段里程碑结束，并要求只在本地提交和打标后等待指挥。
+- Stage 30 新增 `docs/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`，冻结固定 reader → consumer argv/stdio ownership、validation-before-display、timeout/output bounds、状态映射与 no-side-effect 边界。
+- Stage 31 按 TDD 新增 `tests/test_codex_desktop_filtered_snapshot_host.py`：首批 12 项测试因 host 文件不存在而 RED；实现后扩展为 15 项并全部 GREEN。
+- 新增 `tools/codex_desktop_filtered_snapshot_host.py`，输出 `control-plane/codex-desktop-filtered-snapshot-host/v1`。
+- host 只执行固定 Stage 27 filtered v3 reader，再把完整 stdout 通过 stdin 交给固定 Stage 29 consumer；使用 argv array、`shell=False`、最小环境和 bytecode write 禁用。
+- consumer pass / exit 0 前不释放 payload；pass 后 strict parse reader result 并交叉核对 base/scope/filter/view ids；failure 固定 withheld/null payload。
+- 冻结 30 秒默认/60 秒最大 timeout、reader/host stdout 1 MiB、consumer stdout/child stderr 64 KiB、filter 128 bytes、envelope argv 512 bytes。
+- 状态/退出码冻结为 ready/0、error/1、blocked/2、validation_failed/5；无 retry、network、service、write、descriptor argv、candidate command 或 adapter execution。
+- Stage 18/20 与 Stage 22–29 相关 99 项回归通过；全量 857 项 pytest、doctor、public scan、py_compile 与真实 request-only/AND smoke 通过。
+- 新增 release notes 92/93；旧 `v0.13.0` freeze 文档完整移入 `docs/archive/77-read-only-control-plane-milestone-freeze.md`，活跃 docs 保持 50 个。
+- Stage 32 冻结本地 annotated tag `v0.14.0-filtered-snapshot-host-integration`；不 push，等待用户指挥。
+- 下一阶段为 Stage 33 Codex Desktop Filtered Snapshot Display Integration Gate（条件启动）；没有具体展示面时保持冻结。

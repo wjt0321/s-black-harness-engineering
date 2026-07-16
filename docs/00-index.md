@@ -34,7 +34,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 29 filtered snapshot consumer 已收口）
+### 5. 想看中枢台主线（Stage 32 filtered snapshot host integration milestone 已冻结）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -55,7 +55,6 @@
 - `74-recovery-lineage-report-reuse.md` — Recovery lineage 在 report generate 的显式复用契约
 - `75-cli-automation-contract-discovery.md` — CLI 自动化 discovery、gate、profile、workflow plan 与 drift validation（已收口）
 - `76-read-only-control-panel-mvp.md` — Stage 16 本地静态只读 Control Panel 设计与验收边界（已收口）
-- `77-read-only-control-plane-milestone-freeze.md` — `v0.13.0-read-only-control-plane` 冻结范围、证据与 tag 入口
 - `78-control-panel-host-integration-boundary.md` — Stage 17 本地只读 stdio handoff contract 设计与实现边界
 - `79-read-only-host-consumer-validation-boundary.md` — Stage 18 本地 reference consumer validation 设计与实现边界（已收口）
 - `83-codex-desktop-snapshot-json-reader-implementation.md` — Stage 22 Codex Desktop 显式 snapshot JSON reader（已收口）
@@ -65,10 +64,12 @@
 - `87-filtered-envelope-snapshot-json-reader-implementation.md` — Stage 27 task/request filtered v3 reader 实现与验收事实源（已收口）
 - `88-filtered-snapshot-host-consumer-validation-gate.md` — Stage 28 Codex Desktop filtered v3 独立 consumer contract 与 Stage 29 实现边界（已收口）
 - `89-codex-desktop-filtered-snapshot-consumer-implementation.md` — Stage 29 独立标准库-only stdin consumer 实现与验收事实源（已收口）
+- `90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` — Stage 30–32 host design、实现、验收与 `v0.14.0` 本地里程碑冻结事实源
 
 ### 6. 想看里程碑与冻结记录
 
-- 当前冻结事实源：`77-read-only-control-plane-milestone-freeze.md`
+- 当前冻结事实源：`90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`
+- 上一冻结事实源：`archive/77-read-only-control-plane-milestone-freeze.md`
 - 历史 `v0.12.0` freeze checklist：`archive/68-orchestration-foundation-milestone-freeze-checklist.md`
 - 历史 `v0.12.0` freeze execution plan：`archive/69-orchestration-foundation-freeze-execution-plan.md`
 
@@ -78,16 +79,16 @@
 
 | 目录 | 内容 |
 |:---|:---|
-| `archive/` | 历史设计门 / freeze checklist / execution plan（早期 Policy Checker `09`、Runtime bridge `14`、Stage 19 `80`、Stage 20 `81`、Stage 21 `82` 与 `68` / `69` 已完整归档） |
-| `archive/release-notes/` | 各阶段 release notes（最新为 `91-release-notes-stage29-codex-desktop-filtered-snapshot-consumer.md`） |
+| `archive/` | 历史设计门 / freeze checklist / execution plan（早期 Policy Checker `09`、Runtime bridge `14`、v0.13 freeze `77`、Stage 19 `80`、Stage 20 `81`、Stage 21 `82` 与 `68` / `69` 已完整归档） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `93-release-notes-v0.14.0-filtered-snapshot-host-integration.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `89-codex-desktop-filtered-snapshot-consumer-implementation.md`
-3. `88-filtered-snapshot-host-consumer-validation-gate.md`
+2. `90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`
+3. `89-codex-desktop-filtered-snapshot-consumer-implementation.md`
 4. 最新 handoff：`tasks/handoff-2026-07-16.md`
 5. `87-filtered-envelope-snapshot-json-reader-implementation.md`
 

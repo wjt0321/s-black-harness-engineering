@@ -53,7 +53,7 @@ bash .githooks/pre-commit
 
 ## 冻结入口
 
-- Freeze checklist：`docs/77-read-only-control-plane-milestone-freeze.md`；
+- Freeze checklist：`docs/archive/77-read-only-control-plane-milestone-freeze.md`；
 - Version governance：`docs/64-versioning-governance.md`；
 - Stage digest：`docs/000-stage-digest.md`；
 - Handoff：`tasks/handoff-2026-07-14.md`。

@@ -1873,6 +1873,28 @@ consumer 规则：
 - consumer 不自动启动 reader，不执行 argv/command/adapter，不读写文件、不访问网络；
 - `pass` 只表示输入符合只读展示 contract，不是 execution permission。
 
+
+Stage 31 filtered snapshot one-shot host：
+
+```bash
+python tools/codex_desktop_filtered_snapshot_host.py \
+  --project-root . \
+  --envelope adapters/execution-envelope.examples.json \
+  --request-id req-20260703-001 \
+  --timeout-seconds 30 \
+  --json
+```
+
+host 规则：
+
+- `--task-id` / `--request-id` 至少一个，可同时提供并使用 AND；
+- host 只启动固定 filtered v3 reader，再把完整 stdout 通过 stdin 交给固定 Stage 29 consumer；
+- 只有 consumer `pass` / exit 0 且 base/scope/filter/view identity 交叉核对成功后，才返回 filtered payload；
+- failure 时 `representation.payload` 固定为 `null`，不回显未验证 input、absolute root、relative envelope 或 stderr；
+- 默认每个固定子进程 30 秒、最大 60 秒，不 retry；reader/host stdout 最大 1 MiB，consumer stdout 与 child stderr 最大 64 KiB；
+- 输出 schema 为 `control-plane/codex-desktop-filtered-snapshot-host/v1`；状态/退出码为 `ready/0`、`error/1`、`blocked/2`、`validation_failed/5`；
+- 该工具只提供本地 one-shot JSON host contract，不是 Codex Desktop 专有插件或 UI；不写文件/ledger、不访问网络、不启动 service、不执行 descriptor argv、candidate command 或 adapter。
+
 总览聚合：
 
 ```bash

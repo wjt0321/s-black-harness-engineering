@@ -1,6 +1,6 @@
 # 69 — Orchestration Foundation Freeze Execution Plan
 
-> 归档状态：2026-07-15 按 `docs/MAINTENANCE.md` 移入 `docs/archive/`；正文与历史命令示例完整保留，不应再作为当前执行计划。当前冻结事实源为 `docs/77-read-only-control-plane-milestone-freeze.md`。
+> 归档状态：2026-07-15 按 `docs/MAINTENANCE.md` 移入 `docs/archive/`；正文与历史命令示例完整保留，不应再作为当前执行计划。当前冻结事实源为 `docs/archive/77-read-only-control-plane-milestone-freeze.md`。
 
 
 ## 目标
