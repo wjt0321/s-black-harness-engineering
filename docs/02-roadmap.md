@@ -13,7 +13,7 @@
 
 ## 版本治理说明
 
-当前仓库最新里程碑基线为 `v0.17.0-filtered-snapshot-display-host-integration`（本地 annotated tag，未 push）。上一基线为 `v0.16.0-filtered-snapshot-display-consumer`（本地 annotated tag，未 push）。
+当前仓库最新里程碑基线为 `v0.17.0-filtered-snapshot-display-host-integration`（annotated tag 已推送至 `origin`）。上一基线 `v0.16.0-filtered-snapshot-display-consumer` 也已推送至 `origin`。
 
 从 orchestration 阶段开始，项目持续使用 `docs/55`、`docs/57`、`docs/59`、`docs/61`、`docs/65`、`docs/67`、`docs/72` 这类**阶段编号 + release notes**来完成阶段收口，而 semver/tag 改为只在里程碑节点冻结。
 
@@ -1037,7 +1037,7 @@ v0.14.0-filtered-snapshot-host-integration
 
 ## Stage 38 — Filtered Snapshot Display Consumer Milestone Freeze（已完成）
 
-已冻结本地 annotated tag `v0.16.0-filtered-snapshot-display-consumer`，未 push。事实源为 `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` 与 release notes 98/99。
+已冻结 annotated tag `v0.16.0-filtered-snapshot-display-consumer`，并于 2026-07-16 按用户授权推送至 `origin`。事实源为 `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` 与 release notes 98/99。
 
 ---
 
@@ -1057,7 +1057,7 @@ v0.14.0-filtered-snapshot-host-integration
 
 ## Stage 41 — Filtered Snapshot Display Host Integration Milestone Freeze（已完成）
 
-已冻结本地 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`，未 push。事实源为 `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 release notes 101/102。
+已冻结 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`，并于 2026-07-16 按用户授权推送至 `origin`。事实源为 `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 release notes 101/102。
 
 ---
 

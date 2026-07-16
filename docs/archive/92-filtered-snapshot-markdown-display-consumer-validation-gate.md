@@ -6,7 +6,7 @@
 
 > 状态：**Stage 36 design gate、Stage 37 实现与 Stage 38 milestone freeze 均已收口**
 > 日期：2026-07-16
-> 冻结里程碑：`v0.16.0-filtered-snapshot-display-consumer`（本地 annotated tag，未 push）
+> 冻结里程碑：`v0.16.0-filtered-snapshot-display-consumer`（annotated tag 已推送至 `origin`）
 
 ## 1. 决策摘要
 
@@ -256,7 +256,7 @@ Stage 36–37 已形成可独立引用的 display-result validation 能力包，
 v0.16.0-filtered-snapshot-display-consumer
 ```
 
-该 tag 不推送，等待用户后续指令。它不扩大 Stage 34 display 的信任边界，不授予 representation render、UI、file/URL、service/network、persistence/export、write 或 adapter execution 权限。
+该 tag 冻结时保持本地，后于 2026-07-16 按用户授权推送至 `origin`。它不扩大 Stage 34 display 的信任边界，不授予 representation render、UI、file/URL、service/network、persistence/export、write 或 adapter execution 权限。
 
 ## 16. 下一阶段条件入口
 

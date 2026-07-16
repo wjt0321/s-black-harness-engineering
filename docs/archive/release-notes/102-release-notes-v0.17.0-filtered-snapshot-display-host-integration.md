@@ -14,4 +14,4 @@
 - bounded one-shot lifecycle、minimal environment、timeout/cancel/no-retry；
 - complete regression、doctor、public scan、docs maintenance 与 Git diff verification。
 
-继续 unavailable：专有 Codex Desktop 插件/API/UI、Markdown/HTML/browser render、file/URL/clipboard、service/network/DB/auth、cache/export/persistence、query/sort/page、UI write 与真实 adapter execution。该 tag 保持本地，未 push。
+继续 unavailable：专有 Codex Desktop 插件/API/UI、Markdown/HTML/browser render、file/URL/clipboard、service/network/DB/auth、cache/export/persistence、query/sort/page、UI write 与真实 adapter execution。该 tag 冻结时保持本地，后于 2026-07-16 按用户授权推送至 `origin`。

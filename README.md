@@ -78,7 +78,7 @@
 
 ### 版本号说明
 
-当前仓库最新里程碑基线为 `v0.17.0-filtered-snapshot-display-host-integration`（本地 annotated tag，未 push），覆盖 Stage 39–40 的 validation-before-release one-shot Markdown display host。上一基线为 `v0.16.0-filtered-snapshot-display-consumer`（本地 tag，未 push）。
+当前仓库最新里程碑基线为 `v0.17.0-filtered-snapshot-display-host-integration`（已推送至 `origin`），覆盖 Stage 39–40 的 validation-before-release one-shot Markdown display host。上一基线 `v0.16.0-filtered-snapshot-display-consumer` 也已推送至 `origin`。
 
 在 `v0.11.0-runtime-event-import` 之后，项目进入 orchestration 主线，实际改用“**阶段编号 + release notes 文档**”做阶段收口，例如 `55`、`57`、`59`、`61`、`65`、`67`、`72`。这代表：
 
@@ -142,10 +142,10 @@
 - ✅ Stage 35 — Filtered Snapshot Display Integration Milestone Freeze（`v0.15.0` 已推送）
 - ✅ Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate
 - ✅ Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation
-- ✅ Stage 38 — Filtered Snapshot Display Consumer Milestone Freeze（`v0.16.0` 本地 tag，未 push）
+- ✅ Stage 38 — Filtered Snapshot Display Consumer Milestone Freeze（`v0.16.0` 已推送）
 - ✅ Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate
 - ✅ Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation
-- ✅ Stage 41 — Filtered Snapshot Display Host Integration Milestone Freeze（`v0.17.0` 本地 tag，未 push）
+- ✅ Stage 41 — Filtered Snapshot Display Host Integration Milestone Freeze（`v0.17.0` 已推送）
 - ✅ Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate（design-only 已收口）
 
 ### 现在最明确的位置

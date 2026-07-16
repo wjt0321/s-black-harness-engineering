@@ -79,7 +79,7 @@ Current estimate:
 
 ### Versioning Note
 
-The latest milestone baseline is `v0.17.0-filtered-snapshot-display-host-integration` (local annotated tag, not pushed), covering the Stage 39–40 validation-before-release one-shot Markdown display host. The previous baseline is `v0.16.0-filtered-snapshot-display-consumer` (local tag, not pushed).
+The latest milestone baseline is `v0.17.0-filtered-snapshot-display-host-integration` (pushed to `origin`), covering the Stage 39–40 validation-before-release one-shot Markdown display host. The previous baseline, `v0.16.0-filtered-snapshot-display-consumer`, has also been pushed to `origin`.
 
 After `v0.11.0-runtime-event-import`, the project entered the orchestration line and effectively switched to **stage numbers + release-notes documents** for stage closure, such as `55`, `57`, `59`, `61`, `65`, `67`, and `72`. That means:
 
@@ -140,10 +140,10 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 35 — `v0.15.0-filtered-snapshot-display-integration` Milestone Freeze (pushed)
 - ✅ Stage 36 — Filtered Snapshot Markdown Display Consumer Validation Gate
 - ✅ Stage 37 — Filtered Snapshot Markdown Display Consumer Implementation
-- ✅ Stage 38 — `v0.16.0-filtered-snapshot-display-consumer` Local Milestone Freeze
+- ✅ Stage 38 — `v0.16.0-filtered-snapshot-display-consumer` Milestone Freeze (pushed)
 - ✅ Stage 39 — Filtered Snapshot Markdown Display Consumer Host Integration Gate
 - ✅ Stage 40 — Filtered Snapshot Markdown Display Consumer Host Integration Implementation
-- ✅ Stage 41 — `v0.17.0-filtered-snapshot-display-host-integration` Local Milestone Freeze
+- ✅ Stage 41 — `v0.17.0-filtered-snapshot-display-host-integration` Milestone Freeze (pushed)
 - ✅ Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate (design-only gate complete)
 
 ### The Most Accurate Current Read

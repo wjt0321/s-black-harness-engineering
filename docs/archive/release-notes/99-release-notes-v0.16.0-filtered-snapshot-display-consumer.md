@@ -14,4 +14,4 @@
 - ready/pass、blocked、validation_failed、error 状态/退出码映射；
 - full regression、doctor、public scan、docs maintenance 与 Git diff verification。
 
-继续 unavailable：自动启动上游、专有 Codex Desktop 插件/UI、HTML/browser、file/URL、raw arbitrary Markdown、service/network/DB/auth、cache/export、query/sort/page、UI write 与真实 adapter execution。该 tag 保持本地，未 push。
+继续 unavailable：自动启动上游、专有 Codex Desktop 插件/UI、HTML/browser、file/URL、raw arbitrary Markdown、service/network/DB/auth、cache/export、query/sort/page、UI write 与真实 adapter execution。该 tag 冻结时保持本地，后于 2026-07-16 按用户授权推送至 `origin`。

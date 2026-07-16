@@ -5,7 +5,7 @@
 
 > 状态：**Stage 39 design gate、Stage 40 实现与 Stage 41 milestone freeze 均已收口**
 > 日期：2026-07-16
-> 冻结里程碑：`v0.17.0-filtered-snapshot-display-host-integration`（本地 annotated tag，未 push）
+> 冻结里程碑：`v0.17.0-filtered-snapshot-display-host-integration`（annotated tag 已推送至 `origin`）
 
 ## 1. 决策摘要
 
@@ -259,7 +259,7 @@ Stage 39–40 已形成可独立引用的 validated Markdown release host 能力
 v0.17.0-filtered-snapshot-display-host-integration
 ```
 
-该 tag 不推送，等待用户后续指令。它不授予 Markdown render、专有 UI、HTML/browser、file/URL、service/network、persistence/export、write 或 adapter execution 权限。
+该 tag 冻结时保持本地，后于 2026-07-16 按用户授权推送至 `origin`。它不授予 Markdown render、专有 UI、HTML/browser、file/URL、service/network、persistence/export、write 或 adapter execution 权限。
 
 ## 17. 下一阶段条件入口
 

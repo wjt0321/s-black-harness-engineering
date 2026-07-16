@@ -2777,3 +2777,11 @@
 - 新增 release notes 103；Stage 28 gate 完整归档至 `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`，活跃文档保持 50 个并修复引用。
 - 下一 implementation stage 不自动命名或启动；必须先明确 consumer identity、explicit action、transport、destination、retention、bounds 与 failure mapping。
 - 稳定基线仍为本地 `v0.17.0-filtered-snapshot-display-host-integration`；本阶段不创建 tag、不 push。
+
+## 2026-07-16 — Stage 42 与 v0.16/v0.17 远端同步
+
+- 用户明确授权使用 `127.0.0.1:10808` 临时代理执行推送。
+- 使用命令级 `http.proxy`，未修改任何持久 Git 或系统代理配置。
+- `main` 已从 `b1fa0b3` 推送至 `281b33c`，包含 Stage 36–42 的 5 个本地提交。
+- annotated tags `v0.16.0-filtered-snapshot-display-consumer` 与 `v0.17.0-filtered-snapshot-display-host-integration` 已推送至 `origin`。
+- Stage 42 不创建新 tag；当前稳定里程碑仍为 v0.17.0，当前阶段为 Stage 42 design-only completed。

@@ -11,8 +11,8 @@
 
 ## 当前基线
 
-- 稳定基线：`v0.17.0-filtered-snapshot-display-host-integration`（本地 annotated tag，未 push）
-- 上一冻结基线（v0.16）：`v0.16.0-filtered-snapshot-display-consumer`（本地 annotated tag，未 push）
+- 稳定基线：`v0.17.0-filtered-snapshot-display-host-integration`（annotated tag 已推送至 `origin`）
+- 上一冻结基线（v0.16）：`v0.16.0-filtered-snapshot-display-consumer`（annotated tag 已推送至 `origin`）
 - 上一冻结基线（v0.15）：`v0.15.0-filtered-snapshot-display-integration` / `b1fa0b3`（annotated tag 与 `main` 已推送至 `origin`）
 - 上一冻结基线（v0.14）：`v0.14.0-filtered-snapshot-host-integration` / `dfae346`（annotated tag 与 `main` 已推送至 `origin`）
 - 上一冻结基线：`v0.13.0-read-only-control-plane` / `f401b98`（已 push）
@@ -138,7 +138,7 @@
 - Stage 37 新增 `tools/codex_desktop_filtered_snapshot_display_consumer.py`，不启动任何上游进程，独立验证 content hash、固定 Markdown grammar、安全 literal 与 view coherence。
 - 固定 10 项 checks，输出只保留 value-safe ids/checks/findings，不复制 Markdown content 或上游 finding message。
 - 16 项专用测试、124 项相关回归和 884 项全量测试通过；doctor、public scan、py_compile 与真实 ready/blocked 管道通过。
-- Stage 38 冻结本地 annotated tag `v0.16.0-filtered-snapshot-display-consumer`，未 push。
+- Stage 38 冻结 annotated tag `v0.16.0-filtered-snapshot-display-consumer`；后于 2026-07-16 按用户授权推送至 `origin`。
 - 下一拍只允许 Stage 39 one-shot display → consumer host integration design gate，不开放 UI、HTML/browser、file/URL、service/network、persistence/export、write 或真实 execution。
 
 ### 新进落地：Stage 39–41 — Validated Markdown Release Host 与 v0.17.0 Freeze
@@ -147,7 +147,7 @@
 - Stage 40 新增 `tools/codex_desktop_filtered_snapshot_display_host.py`，consumer pass/0 与五项 identity match 前 content withheld。
 - fixed argv、minimal environment、64 KiB child I/O、128 KiB final output、timeout/cancel/no-retry 与 minimal safe result 已冻结。
 - 40 项专用测试、164 项相关回归和 924 项全量测试通过；doctor、public scan、py_compile 与四条真实 CLI 管道通过。
-- Stage 41 冻结本地 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`，未 push。
+- Stage 41 冻结 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`；后于 2026-07-16 按用户授权推送至 `origin`。
 
 ### 新进落地：Stage 42 — Validated Markdown Presentation Handoff Design-only Gate
 

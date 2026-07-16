@@ -52,7 +52,7 @@ python -m agent_runtime.cli doctor
 
 当前状态：**Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate 已按 design-only 收口**；Stage 40 ready host result 的 presentation 候选契约、identity/hash 重确认职责与后续启动条件已冻结，但没有新增 presentation consumer、CLI、schema 或 renderer。下一 implementation stage 不自动启动，必须先由用户明确具体 consumer 与 presentation action；通用 query、HTML/browser、live service、DB、auth、网络、文件 export 与 UI 写操作仍不开放。
 
-- 冻结基线：`v0.17.0-filtered-snapshot-display-host-integration`（本地 tag，未 push）；上一基线为 `v0.16.0-filtered-snapshot-display-consumer`（本地 tag，未 push）。
+- 冻结基线：`v0.17.0-filtered-snapshot-display-host-integration`（已推送至 `origin`）；上一基线为 `v0.16.0-filtered-snapshot-display-consumer`（已推送至 `origin`）。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation、CLI automation contract/profile/workflow，以及 `orchestration control-panel snapshot/render/handoff` 的确定性 representation、版本化 stdio descriptor 与独立 reference consumer validation。
 - Stage 12 已完成：routing/read-loop snapshot 与 recovery lineage read model 已冻结并通过验收。
 - Stage 13 已完成：真实 CLI/read models 的 stable/preview/unavailable 边界已对账，并由契约测试冻结命令 surface 与关键 flag。

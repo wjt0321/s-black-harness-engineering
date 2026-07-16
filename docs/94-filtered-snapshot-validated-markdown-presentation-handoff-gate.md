@@ -6,7 +6,7 @@
 > 状态：**Stage 42 design-only gate 已收口；presentation implementation 未授权**
 > 日期：2026-07-16
 > 前置事实源：`docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`
-> 稳定基线：`v0.17.0-filtered-snapshot-display-host-integration`（本地 tag，未 push）
+> 稳定基线：`v0.17.0-filtered-snapshot-display-host-integration`（已推送至 `origin`）
 
 ## 1. 决策摘要
 
@@ -135,7 +135,7 @@ Stage 42 收口必须满足：
 3. 全量 pytest、doctor、public scan、docs hook 与 `git diff --check` 通过；
 4. 仓库没有新增 presentation production tool、schema、CLI 或外部依赖；
 5. 活跃文档数量不膨胀，旧 Stage 28 gate 完整归档且引用修复；
-6. 不创建 tag、不 push。
+6. Stage 42 不创建新 tag；其提交与既有 v0.16/v0.17 tags 后于收口按用户授权推送至 `origin`。
 
 ## 10. Stage 42 结论
 
