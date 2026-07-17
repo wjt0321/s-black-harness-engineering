@@ -1,4 +1,4 @@
-<!-- parents: ../../../docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md -->
+<!-- parents: ../94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md -->
 
 # Release Notes 103 — Stage 42 Validated Markdown Presentation Handoff Gate
 
@@ -24,7 +24,7 @@ Stage 42 已完成 Stage 40 ready host result → read-only presentation boundar
 
 ## 文档维护
 
-- 新增 `docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`；
+- 新增并现已归档 `docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`；
 - Stage 28 gate 完整归档为 `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`；
 - 同步 digest、index、roadmap、README、AGENTS、handoff 与 progress；
 - Stage 42 不创建新 tag；其提交与既有 v0.16/v0.17 tags 后于收口按用户授权推送至 `origin`。

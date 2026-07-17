@@ -2813,3 +2813,18 @@
 - 新增 `docs/96-fixed-git-status-executor-design-gate.md` 与 release notes 106；旧 Stage 14 CLI draft 归档，活跃 docs 保持 50 个。
 - 本阶段没有新增 production code、CLI/schema/event type，没有执行 Git，不创建 tag、不 push。
 - 下一阶段为 Stage 47 Execution Lifecycle Audit Writer Design Gate；Stage 49 真实 subprocess 仍需用户再次明确授权。
+
+## 2026-07-17 Stage 47–48 — Execution Lifecycle Audit Writer
+
+- 用户要求继续推进到下一里程碑并在完成后只提交到本地；未授权 push、tag 或真实外部执行。
+- Stage 47 新增 `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md` 与实施计划，冻结 dedicated schema、internal-only writer、generic-entry rejection、started/terminal 分离事务和 recovery state。
+- shared event schema 增加四类 reserved event；独立 schema 固定 actor/origin/version、phase、identity 与 safe evidence allowlist。
+- generic `runtime event append/import` 在 dry-run/commit 均以 `reserved-execution-event-type` 拒绝 reserved event，ledger bytes 不变。
+- Stage 48 按 TDD 新增 `agent_runtime/execution_audit_writer.py`：started/terminal writer、同一 locked file descriptor 单行 append、writer-only append token、path/file identity byte-size rollback、persisted scan、audit validator 与 read-only inspection；并发 ledger 漂移或 file replacement 时拒绝 committed/truncate。
+- terminal 写入或 post-check 失败只回滚 terminal，保留 started，并以 `audit_incomplete=true` 阻止结果释放。
+- `task validate --schema event` 对 reserved event 叠加 dedicated schema；duplicate/orphan/reference/identity/order drift 均返回 value-safe validation finding。
+- Stage 44 readiness v1 兼容规则调整为冻结 legacy `execution_started` 缺席，继续保持 10 pass / 3 blocked 历史输出。
+- controlled-write regression 新增临时 root 的 started → terminal 链与真实仓库 ledger no-write 证明。
+- Stage 42 文档完整归档至 `docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`，活跃 docs 保持 50 个。
+- 新增 release notes 107 与 `tasks/handoff-2026-07-17.md`；稳定 tag 仍为已推送 v0.17.0，本轮不创建 tag、不 push。
+- 下一阶段为 Stage 49 Fixed Git Status Executor Implementation and Limited Enablement（条件启动）；必须由用户再次明确授权真实 subprocess，并闭合 Stage 46 trust/image binding、sanitized PATH、process-tree containment 与 finite parser。

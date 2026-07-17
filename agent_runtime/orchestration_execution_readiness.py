@@ -199,7 +199,12 @@ def _profile_checks(profile: dict[str, Any]) -> dict[str, bool]:
 
 
 def _event_schema_matches_pre_execution_state(schema: object) -> bool:
-    """Confirm lifecycle execution events are not yet accepted by the ledger."""
+    """Preserve the historical v1 boundary after later audit schema work.
+
+    Stage 44 froze the absence of the legacy ``execution_started`` type. Later
+    stages may add dedicated, provenance-checked execution audit types without
+    changing this permanent readiness snapshot.
+    """
     if not isinstance(schema, dict) or schema.get("type") != "object":
         return False
     required = schema.get("required")
@@ -215,7 +220,7 @@ def _event_schema_matches_pre_execution_state(schema: object) -> bool:
     return (
         isinstance(allowed, list)
         and all(isinstance(item, str) for item in allowed)
-        and not set(EXECUTION_EVENT_TYPES).intersection(allowed)
+        and "execution_started" not in allowed
     )
 
 

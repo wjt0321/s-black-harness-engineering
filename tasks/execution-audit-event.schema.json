@@ -102,6 +102,7 @@
       "required": [
         "writer_origin",
         "writer_schema_version",
+        "append_token",
         "attempt_id",
         "request_id",
         "plan_hash",
@@ -116,6 +117,9 @@
         },
         "writer_schema_version": {
           "const": "execution-audit/v1"
+        },
+        "append_token": {
+          "$ref": "#/$defs/safeToken"
         },
         "attempt_id": {
           "$ref": "#/$defs/safeToken"

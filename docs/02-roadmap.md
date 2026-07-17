@@ -1071,7 +1071,7 @@ v0.14.0-filtered-snapshot-host-integration
 - 没有具体 consumer/user action 时不新增 presenter、CLI、schema、renderer 或专有 API；
 - non-ready、protocol/identity/hash drift 一律 content withheld。
 
-事实源为 `docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md` 与 release notes 103。后续真实落地主线已由 Stage 43 接续。
+事实源为 `docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md` 与 release notes 103。后续真实落地主线已由 Stage 43 接续。
 
 ---
 
@@ -1104,17 +1104,36 @@ v0.14.0-filtered-snapshot-host-integration
 
 本阶段没有新增 executor、CLI、schema、event type，也没有执行 Git。事实源为 `docs/96-fixed-git-status-executor-design-gate.md` 与 release notes 106。
 
-## Stage 47 — Execution Lifecycle Audit Writer Design Gate（条件启动）
+## Stage 47 — Execution Lifecycle Audit Writer Design Gate（已完成）
 
-冻结 `execution_attempt_started/succeeded/failed/cancelled` reserved schema、专用 writer provenance、通用 append/import 拒绝、safe metadata、controlled append/rollback、attempt-started/terminal recovery 与 release gate；不执行命令。
+已冻结：
 
-## Stage 48 — Execution Lifecycle Audit Writer Implementation（条件启动）
+- 四类 reserved lifecycle event 与独立 strict schema；
+- 固定 `local-operator`、writer origin/version 和 safe metadata/evidence allowlist；
+- internal-only writer，不新增 CLI，不接受 caller-supplied event/provenance；
+- 通用 append/import 对 reserved type 的显式负向门禁；
+- started/terminal 分离的同一 locked file descriptor append、writer-only append token、path/file identity byte-size rollback 与 recovery state；
+- terminal 失败保留 started、result withheld/audit incomplete 的 release ordering。
 
-按 TDD 落地受控 writer，并运行全量测试、doctor、public scan 与 controlled-write regression。
+事实源为 `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`。
+
+## Stage 48 — Execution Lifecycle Audit Writer Implementation（已完成）
+
+已按 TDD 落地：
+
+- `tasks/execution-audit-event.schema.json`；
+- `agent_runtime/execution_audit_writer.py` 的 started/terminal writer、audit validator 与 inspection；
+- shared + dedicated schema 双重 ledger validation；
+- generic append/import reserved rejection；
+- open/closed/missing/invalid recovery states；
+- partial write、post-check/rollback/stat failure、并发 append、duplicate/orphan/order/reference/mismatch、persisted scan 与 controlled-write isolation tests；
+- Stage 44 readiness v1 历史 10 pass / 3 blocked 兼容。
+
+本阶段没有新增 execution CLI、subprocess、network、service 或 tag，也没有执行 Git。事实源为 `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md` 与 release notes 107。
 
 ## Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（条件启动）
 
-只有 Stage 48 完成，且 executable trust/image binding、sanitized child PATH、process-tree containment、有限 porcelain parser 都能满足 Stage 46，用户再次明确授权真实 subprocess 后，才允许实现 fixed executor。无法闭合 hash-to-spawn TOCTOU 或平台 process-tree containment 时保持 unavailable。仍不开放通用 shell、network adapter、linked worktree、raw path reveal 或 multi-user auth。
+Stage 48 前置现已完成；但只有 executable trust/image binding、sanitized child PATH、process-tree containment、有限 porcelain parser 都能满足 Stage 46，且用户再次明确授权真实 subprocess 后，才允许实现 fixed executor。无法闭合 hash-to-spawn TOCTOU 或平台 process-tree containment 时保持 unavailable。仍不开放通用 shell、network adapter、linked worktree、raw path reveal 或 multi-user auth。
 
 ---
 

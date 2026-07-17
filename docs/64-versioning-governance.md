@@ -366,3 +366,21 @@ Stage 46 只冻结 executable/image trust binding、sanitized child PATH、repos
 - 不创建 `v0.18.0` tag，不 push；
 - Stage 47–48 先完成 reserved execution lifecycle schema、专用 provenance 与不可由通用 append/import 伪造的 audit writer；
 - Stage 49 只有 trust/image binding、sanitized child PATH、process-tree containment、有限 porcelain parser 全部闭合，用户再次明确授权真实 subprocess 且全量验收通过后，才重新评估 v0.18 milestone。
+
+## Stage 47–48 Execution Lifecycle Audit Writer 提交级里程碑（2026-07-17）
+
+Stage 47–48 已形成可复用的内部 controlled-write 能力包：
+
+- 四类 reserved execution lifecycle event 的 shared + dedicated schema；
+- 固定 provenance、safe evidence allowlist 与通用 append/import 来源隔离；
+- started/terminal 使用同一 locked file descriptor、writer-only append token 与 path/file identity byte-size rollback；检测到并发 ledger 漂移或 file replacement 时拒绝 committed/truncate；
+- audit chain validator 与 open/closed/missing/invalid recovery inspection；
+- Stage 44 readiness v1 历史兼容和 controlled-write isolation regression。
+
+但本能力没有 CLI，也不启动 subprocess、执行 Git、访问网络或开放 adapter execution，因此仍不满足新的 semver tag 条件：
+
+- 稳定 tag 继续为已推送的 `v0.17.0-filtered-snapshot-display-host-integration`；
+- Stage 47–48 以 `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md` 与 release notes 107 收口；
+- 本轮只创建本地提交，不创建 `v0.18.0` tag，不 push；
+- Stage 49 必须在用户再次明确授权真实 subprocess，并闭合 Stage 46 trust/image binding、sanitized child PATH、process-tree containment 与有限 parser 后，才允许实现；
+- audit writer 完成不得被解释为 execution permission。

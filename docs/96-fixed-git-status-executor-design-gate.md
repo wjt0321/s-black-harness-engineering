@@ -372,7 +372,7 @@ execution_failed
 execution_cancelled
 ```
 
-每次 append 使用现有 byte-size rollback 语义。已成功写入的 `execution_attempt_started` 不因后续 terminal append 失败而删除；删除它会破坏审计事实。terminal writer 失败时 result withheld，返回 audit-incomplete error，后续通过恢复流程处理。
+每次 append 使用 Stage 48 已收口的 byte-size rollback 语义：同一 locked file descriptor 写入 writer-only append token，并在 committed/rollback 前复核 path/file identity 与原始 boundary provenance；检测到并发 ledger 漂移或 file replacement 时拒绝 committed/truncate。已成功写入的 `execution_attempt_started` 不因后续 terminal append 失败而删除；删除它会破坏审计事实。terminal writer 失败时 result withheld，返回 audit-incomplete error，后续通过恢复流程处理。
 
 event metadata 只允许 actor、task/request/plan/adapter/operation identity、exit code、duration bucket、output digest/count、guard status 和 truncation flags；禁止 raw output、path、branch、environment、config value。
 
@@ -482,6 +482,8 @@ Stage 46 设计门通过，但真实 execution 仍 unavailable。合理后续顺
 3. **Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement**：只有 executable trust/image binding、sanitized child PATH、process-tree containment、有限 porcelain grammar 全部可实现，且用户再次明确授权真实 subprocess 后才允许启动。
 
 approval plan binding 对 `requires_approval=false` 的 `git_status` 不构成 Stage 49 前置，但仍是任何 future approval-required adapter 的硬门禁。
+
+> 2026-07-17 post-close：Stage 47–48 已按 `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md` 实现并收口。该完成只解除 audit-writer 前置，不解除本文件的 executable/image trust、TOCTOU、sanitized PATH、repository containment、process-tree runner 与用户显式 subprocess 授权条件；Stage 49 继续 unavailable。
 
 <!-- gate-status: passed-stage46-design-only -->
 <!-- execution-status: unavailable -->

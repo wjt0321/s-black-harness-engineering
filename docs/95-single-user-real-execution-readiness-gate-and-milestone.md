@@ -1,4 +1,4 @@
-<!-- parents: 94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md, 58-orchestration-run-controlled-execution-design.md -->
+<!-- parents: archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md, 58-orchestration-run-controlled-execution-design.md -->
 <!-- relates: 48-adapter-runtime-interface.md, 56-orchestration-controlled-write-boundary.md, 64-versioning-governance.md -->
 
 # 95 — Single-user Real Execution Readiness Gate and Milestone

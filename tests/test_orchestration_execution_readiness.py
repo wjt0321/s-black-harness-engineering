@@ -306,6 +306,40 @@ def test_event_schema_structure_drift_blocks_audit_contract(capsys, tmp_path) ->
     assert result["readiness"] == "contract_drift_blocked"
 
 
+def test_v1_readiness_accepts_new_dedicated_audit_enum_while_legacy_started_is_absent(
+    capsys, tmp_path
+) -> None:
+    root = _fake_root(tmp_path)
+    event_schema_path = root / "tasks" / "event.schema.json"
+    event_schema = json.loads(event_schema_path.read_text(encoding="utf-8"))
+    allowed = event_schema["properties"]["event_type"]["enum"]
+    assert "execution_attempt_started" in allowed
+    assert "execution_succeeded" in allowed
+    assert "execution_started" not in allowed
+
+    code, result = _run_json(capsys, root)
+
+    assert code == 2
+    checks = {check["check_id"]: check for check in result["checks"]}
+    assert checks["audit_contract"]["status"] == "pass"
+    assert result["readiness"] == "design_ready_implementation_blocked"
+
+
+def test_v1_readiness_blocks_legacy_execution_started_enum(capsys, tmp_path) -> None:
+    root = _fake_root(tmp_path)
+    event_schema_path = root / "tasks" / "event.schema.json"
+    event_schema = json.loads(event_schema_path.read_text(encoding="utf-8"))
+    event_schema["properties"]["event_type"]["enum"].append("execution_started")
+    event_schema_path.write_text(json.dumps(event_schema), encoding="utf-8")
+
+    code, result = _run_json(capsys, root)
+
+    assert code == 2
+    checks = {check["check_id"]: check for check in result["checks"]}
+    assert checks["audit_contract"]["status"] == "blocked"
+    assert result["readiness"] == "contract_drift_blocked"
+
+
 def test_event_schema_requires_event_type_for_audit_alignment(capsys, tmp_path) -> None:
     root = _fake_root(tmp_path)
     event_schema_path = root / "tasks" / "event.schema.json"

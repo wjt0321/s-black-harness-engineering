@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 import json
 from pathlib import Path
+import re
 from typing import Any
 
-from jsonschema import validate, ValidationError as JsonSchemaValidationError
+from jsonschema import FormatChecker
+from jsonschema import ValidationError as JsonSchemaValidationError
+from jsonschema import validate
 
 from .loader import is_safe_to_read, load_schema
 from .result import CheckResult, Finding
@@ -16,6 +20,32 @@ SCHEMA_MAP = {
     "task": "tasks/task.schema.json",
     "event": "tasks/event.schema.json",
 }
+
+_EXECUTION_AUDIT_EVENT_TYPES = {
+    "execution_attempt_started",
+    "execution_succeeded",
+    "execution_failed",
+    "execution_cancelled",
+}
+_RFC3339_RE = re.compile(
+    r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T"
+    r"[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?"
+    r"(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+)
+DATE_TIME_FORMAT_CHECKER = FormatChecker()
+
+
+@DATE_TIME_FORMAT_CHECKER.checks("date-time")
+def _is_rfc3339_date_time(value: object) -> bool:
+    if not isinstance(value, str):
+        return True
+    if _RFC3339_RE.fullmatch(value) is None:
+        return False
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return parsed.tzinfo is not None
 
 
 def _safe_error_message(line_no: int, schema_type: str, exc: JsonSchemaValidationError) -> str:
@@ -136,7 +166,11 @@ def validate_records(
                     continue
 
                 try:
-                    validate(instance=record, schema=schema)
+                    validate(
+                        instance=record,
+                        schema=schema,
+                        format_checker=DATE_TIME_FORMAT_CHECKER,
+                    )
                 except JsonSchemaValidationError as exc:
                     findings.append(
                         Finding(
@@ -147,6 +181,34 @@ def validate_records(
                             line=line_no,
                         )
                     )
+                    continue
+
+                if (
+                    schema_type == "event"
+                    and isinstance(record, dict)
+                    and record.get("event_type") in _EXECUTION_AUDIT_EVENT_TYPES
+                ):
+                    execution_schema = load_schema(
+                        root, "tasks/execution-audit-event.schema.json"
+                    )
+                    try:
+                        validate(
+                            instance=record,
+                            schema=execution_schema,
+                            format_checker=DATE_TIME_FORMAT_CHECKER,
+                        )
+                    except JsonSchemaValidationError as exc:
+                        findings.append(
+                            Finding(
+                                rule_id="execution-audit-schema-validation-failed",
+                                severity="error",
+                                action="error",
+                                message=_safe_error_message(
+                                    line_no, "execution-audit-event", exc
+                                ),
+                                line=line_no,
+                            )
+                        )
     except OSError as exc:
         return CheckResult(
             status="error",

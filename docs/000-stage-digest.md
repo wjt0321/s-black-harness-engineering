@@ -5,8 +5,8 @@
 ## 文档池规模
 
 - docs/ 活跃文档：50 个
-- 归档文档：81 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：约 207 个
+- 归档文档：83 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：约 210 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,11 +25,12 @@
 
 ## 当前阶段
 
-- **Stage 46 — Fixed Git Status Executor Design Gate（收口完成；design-only）**
+- **Stage 47–48 — Execution Lifecycle Audit Writer（design + TDD implementation 已完成并收口）**
+- Stage 46 — Fixed Git Status Executor Design Gate（已收口；design-only）
 - Stage 45 — Single-user Real Execution Readiness Milestone Closure（已收口；提交 `49a517b`）
 - Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
 - Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
-- 下一阶段：Stage 47 — Execution Lifecycle Audit Writer Design Gate（条件启动）
+- 下一阶段：Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（条件启动；真实 subprocess 仍未授权）
 - Stage 46 已明确：PATH 只做候选发现，production 还需可信 executable/image binding；child 使用同一 sanitized PATH；POSIX process group / Windows Job Object 收口进程树；short-status 使用有限 grammar；execution event 只能由专用 writer 写入。
 - hash-to-spawn TOCTOU、平台 image binding 或 process-tree containment 任一无法闭合时，Stage 49 必须保持 unavailable，不能以 fixed argv 代替执行信任。
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
@@ -183,6 +184,17 @@
 - `execution_attempt_started` 写入成功前不得 spawn，且不宣称 child 已创建；reserved execution event 只能由专用 writer 写入，terminal audit 与 post-run guard 成功前不得释放 result。
 - Stage 46 仅新增设计文档和 release notes 106；没有 production executor/CLI/schema/event type，也没有执行 Git。
 
+### 新进落地：Stage 47–48 — Execution Lifecycle Audit Writer
+
+- Stage 47 冻结独立 reserved schema + internal-only writer + 通用入口负向门禁方案，拒绝 caller-supplied event/provenance。
+- 共享 `tasks/event.schema.json` 新增 `execution_attempt_started`、`execution_succeeded`、`execution_failed`、`execution_cancelled`；独立 schema 固定 `local-operator`、writer origin/version、phase 与 safe evidence allowlist。
+- `runtime event append/import` 在 dry-run/commit 均显式拒绝四类 reserved event，不能借共享 enum 伪造 execution audit。
+- 新增 `agent_runtime/execution_audit_writer.py`：started 与 terminal 在同一 locked file descriptor 上各自单行追加、flush/fsync、共享/专用 schema、task/event consistency 与 execution audit consistency post-check；成功与回滚均核对 writer-only append token 和 path/file identity，检测到并发漂移或 file replacement 则拒绝 committed/truncate。
+- terminal 写入失败不得删除 started；result 固定 `audit_incomplete=true`，read-only inspection 可区分 `awaiting_terminal`、三类 closed、`missing` 与 `invalid`。
+- `task validate --schema event` 对 reserved event 自动叠加 dedicated schema；普通历史 event 保持兼容。
+- Stage 44 readiness v1 永久保持历史 10 pass / 3 blocked；新增 reserved enum 不把旧 `audit_writer_implementation` 回改为 pass。
+- 本阶段没有新增 execution CLI、subprocess、network、service、DB、UI、tag 或 push；没有执行 Git。
+
 ## 现在已经能做什么
 
 - 已冻结里程碑 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`），包含 Stage 10–12 的 registry/routing/state read model 闭环。
@@ -201,27 +213,26 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/96-fixed-git-status-executor-design-gate.md`
-3. `docs/95-single-user-real-execution-readiness-gate-and-milestone.md`
-4. `docs/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`
-5. `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`
-6. `tasks/handoff-2026-07-16.md`
-7. Stage 46/45/44 验收读 release notes 106/105/104。
-8. 历史里程碑按需读 archive/92、archive/91、archive/90。
-9. 再跑：`python -m agent_runtime.cli docs context --json`
+2. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+3. `docs/96-fixed-git-status-executor-design-gate.md`
+4. `docs/95-single-user-real-execution-readiness-gate-and-milestone.md`
+5. `tasks/handoff-2026-07-17.md`
+6. Stage 47–48/46/45 验收读 release notes 107/106/105。
+7. 历史 presentation/display 事实源按需读 archive/94、archive/92、archive/91、archive/90。
+8. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 47 — Execution Lifecycle Audit Writer Design Gate（条件启动）**。
-- 先冻结 reserved `execution_attempt_started`、`execution_succeeded`、`execution_failed`、`execution_cancelled` schema，专用 writer provenance、通用 append/import 拒绝、controlled append/rollback、attempt-started/terminal recovery 与 safe metadata。
-- Stage 48 再按 TDD 实现 writer，并用负向测试证明通用入口不能伪造 execution audit；修改 event schema/writer 必须运行 controlled-write regression。
-- Stage 49 fixed Git status executor 只有在 writer、trust/image binding、sanitized child PATH、process-tree containment、有限 porcelain parser 全部就绪，且用户再次明确授权真实 subprocess 后才允许实现。
+- **Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（条件启动）**。
+- Stage 47–48 audit writer 前置已完成，但这不等于 subprocess permission。
+- 只有 operator-reviewed trust/image binding、hash-to-spawn identity、sanitized child PATH、repository/config/submodule preflight、POSIX process group / Windows Job Object、有限 porcelain parser 与 post-run guard 都能按 Stage 46 闭合，且用户再次明确授权真实 subprocess 后，才允许实现。
+- 任一平台无法闭合 image binding、TOCTOU 或 process-tree containment时保持 unavailable；不得降级为 PATH 信任、普通 `subprocess.run` 或 direct-child-only cleanup。
 - approval binding 对 `requires_approval=false` 的 git_status 不是前置，但任何 approval-required adapter 仍必须等待 binding。
 
 ## 重要约束
 
 - 仍然**不做真实 adapter execution**
-- Stage 16–46 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约、独立 consumer、validation-before-release host、design-only presentation handoff、readiness gate 与 fixed executor design contract**；仍然不做 live service、DB、auth、网络访问、UI 写操作、通用 query、持久化/export 或真实 adapter execution
+- Stage 16–48 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约、独立 consumer、validation-before-release host、design-only presentation handoff、readiness gate、fixed executor design contract 与内部 execution audit controlled writer**；仍然不做 live service、DB、auth、网络访问、UI 写操作、通用 query、持久化/export 或真实 adapter execution
 - 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、91、archive/release-notes/96、95、94、archive/90、89/88/87/86/85/84/83/79/78/76 与 archive/77 事实源与最新 handoff；Stage 20/21/19 历史实现与设计按需读取 archive/81、archive/82 与 archive/80，并保持验证/提交边界
 
 ## 一句话理解当前项目

@@ -19,6 +19,11 @@ import shutil
 from pathlib import Path
 
 from agent_runtime.cli import main
+from agent_runtime.execution_audit_writer import (
+    inspect_execution_attempt,
+    record_execution_attempt_started,
+    record_execution_terminal,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -31,6 +36,7 @@ def _setup_fake_root(tmp_path: Path) -> Path:
     for src_rel in (
         "tasks/task.schema.json",
         "tasks/event.schema.json",
+        "tasks/execution-audit-event.schema.json",
         "adapters/execution-envelope.schema.json",
     ):
         src = ROOT / src_rel
@@ -570,5 +576,76 @@ def test_controlled_write_regression_event_import_strict_freeze(
     assert tasks_file.read_text(encoding="utf-8").count("\n") == 1
 
     # Repository real ledgers must be unchanged.
+    assert real_tasks.read_bytes() == real_tasks_before
+    assert real_events.read_bytes() == real_events_before
+
+
+def test_execution_audit_writer_controlled_write_chain_is_isolated(
+    tmp_path: Path,
+) -> None:
+    real_tasks = ROOT / "tasks" / "tasks.jsonl"
+    real_events = ROOT / "tasks" / "events.jsonl"
+    real_tasks_before = real_tasks.read_bytes() if real_tasks.is_file() else b""
+    real_events_before = real_events.read_bytes() if real_events.is_file() else b""
+    root = _setup_fake_root(tmp_path)
+    task_id = "task-20260717-991"
+    tasks_file = root / "tasks" / "tasks.jsonl"
+    events_file = root / "tasks" / "events.jsonl"
+    tasks_file.parent.mkdir(parents=True, exist_ok=True)
+    tasks_file.write_text(
+        json.dumps(
+            {
+                "id": task_id,
+                "title": "execution audit regression",
+                "status": "running",
+                "created_at": "2026-07-17T01:00:00+00:00",
+                "updated_at": "2026-07-17T01:00:00+00:00",
+                "created_by": "cli",
+                "source": "cli",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    events_file.write_text(
+        json.dumps(
+            {
+                "event_id": "evt-20260717-991001",
+                "task_id": task_id,
+                "timestamp": "2026-07-17T01:00:00+00:00",
+                "actor": "cli",
+                "event_type": "created",
+                "from_status": None,
+                "to_status": "running",
+                "message": "created",
+                "metadata": {},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    started = record_execution_attempt_started(
+        root,
+        task_id=task_id,
+        request_id="req-20260717-991",
+        plan_hash="sha256:" + "a" * 64,
+        adapter_id="shell-local",
+        capability="git_status",
+        operation="git_status",
+    )
+    assert started.status == "pass"
+    assert started.child_created is False
+    terminal = record_execution_terminal(
+        root,
+        attempt_id=started.attempt_id,
+        event_type="execution_failed",
+        phase="audit",
+        failure_code="executor_unavailable",
+    )
+    assert terminal.status == "pass"
+    inspected = inspect_execution_attempt(root, started.attempt_id)
+    assert inspected.state == "closed_failed"
+    assert events_file.read_text(encoding="utf-8").count("\n") == 3
     assert real_tasks.read_bytes() == real_tasks_before
     assert real_events.read_bytes() == real_events_before

@@ -58,7 +58,7 @@ The repository now provides an **offline, auditable CLI/runtime security core su
 
 - it can already support policy validation, task/event ledgers, capability routing, dry-runs, controlled writes, and recovery-lineage auditing;
 - Stage 13 resource/operation reconciliation and the Stage 14 replayable minimal orchestration loop are both complete;
-- Stage 13–45 backend/read-model/controlled-write/host/display/readiness work is closed, and Stage 46 now freezes a fixed Git-status executor contract covering trusted executable/image binding, an identical sanitized child PATH, process-tree containment, a finite porcelain parser, safe output, honest no-write evidence, and dedicated audit provenance. Real adapter execution remains unavailable.
+- Stage 13–45 backend/read-model/controlled-write/host/display/readiness work is closed. Stage 46 freezes the fixed Git-status executor trust, sanitized-PATH, process-tree, finite-parser, safe-output, and no-write contract. Stage 47–48 now implement a strict execution-lifecycle audit schema, an internal controlled writer, generic-entry provenance isolation, rollback, and recovery inspection. Real adapter execution remains unavailable.
 - Stage 16 closure commit: `b46c013`; this closure has been pushed to `origin/main` with user authorization.
 
 ## Progress Bar
@@ -147,6 +147,8 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 42 — Filtered Snapshot Validated Markdown Presentation Handoff Gate (design-only gate complete)
 - ✅ Stage 43–45 — Single-user Real Execution Readiness (commit-level milestone complete; execution still blocked)
 - ✅ Stage 46 — Fixed Git Status Executor Design Gate (design-only complete; Git was not executed)
+- ✅ Stage 47 — Execution Lifecycle Audit Writer Design Gate
+- ✅ Stage 48 — Execution Lifecycle Audit Writer Implementation (no CLI and no subprocess)
 
 ### The Most Accurate Current Read
 
@@ -154,11 +156,11 @@ The current state is best understood as:
 
 - **guardrails / ledgers / controlled writes are no longer a sketch; they are already a formed security core**
 - **the orchestration backend now has source-backed registry, constraint routing, read-loop snapshots, and recovery lineage aggregation v1**
-- **real adapter execution remains blocked; the fixed `git_status` trust/image-binding, sanitized-PATH, process-tree-runner, output/no-write/audit-release contract is frozen, but the audit writer and executor are not implemented**
+- **real adapter execution remains blocked; the execution audit writer is implemented, while the fixed `git_status` executor, production trust/image binding, and platform process-tree containment are not**
 
 ### What Comes Next
 
-Stage 46 is complete as a design-only fixed Git-status executor gate. PATH is discovery only, not authorization. The gate freezes operator-reviewed executable/image trust binding, the same canonical sanitized PATH for discovery and the child, repository/config/submodule preflight, POSIX process groups or Windows Job Objects, a finite porcelain-v1 grammar, safe summary projection, honest no-write evidence levels, and reserved execution-event provenance. The next conditional stage is the execution-lifecycle audit-writer design gate; no Git process was executed.
+Stage 47–48 are complete. Four reserved lifecycle events now use a strict dedicated schema and an internal-only controlled writer; generic append/import paths reject them, each started/terminal append uses one locked file descriptor, a writer-only append token, and path/file identity checks before commit or byte-size rollback. Concurrent ledger drift or file replacement refuses commit/truncation, and read-only inspection reports open, closed, missing, or invalid attempts. No execution CLI or subprocess was added. Stage 49 remains conditional on explicit user authorization plus the Stage 46 trust/image-binding, sanitized-PATH, process-tree, and finite-parser requirements.
 
 
 Implemented capability highlights:
