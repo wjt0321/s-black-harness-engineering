@@ -1085,7 +1085,7 @@ v0.14.0-filtered-snapshot-host-integration
 
 ## Stage 45 — Single-user Execution Readiness Milestone Closure（已完成，提交级）
 
-完成全量文档沉淀和旧文档归档。本阶段不创建 tag、不 push；稳定 tag 仍为 v0.17.0。事实源为 `docs/95-single-user-real-execution-readiness-gate-and-milestone.md` 与 release notes 104/105。
+完成全量文档沉淀和旧文档归档。本阶段不创建 tag、不 push；稳定 tag 仍为 v0.17.0。事实源为 `docs/archive/95-single-user-real-execution-readiness-gate-and-milestone.md` 与 release notes 104/105。
 
 ## Stage 46 — Fixed Git Status Executor Design Gate（已完成，design-only）
 
@@ -1131,9 +1131,24 @@ v0.14.0-filtered-snapshot-host-integration
 
 本阶段没有新增 execution CLI、subprocess、network、service 或 tag，也没有执行 Git。事实源为 `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md` 与 release notes 107。
 
-## Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（条件启动）
+## Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（已完成）
 
-Stage 48 前置现已完成；但只有 executable trust/image binding、sanitized child PATH、process-tree containment、有限 porcelain parser 都能满足 Stage 46，且用户再次明确授权真实 subprocess 后，才允许实现 fixed executor。无法闭合 hash-to-spawn TOCTOU 或平台 process-tree containment 时保持 unavailable。仍不开放通用 shell、network adapter、linked worktree、raw path reveal 或 multi-user auth。
+用户已明确授权唯一 fixed subprocess。Windows limited enablement 已按 TDD 落地：
+
+- machine-local reviewed trust binding preview/commit/replace；
+- SHA-256、volume/file id、Authenticode signer、approved root 与 actor-writable parent/PATH filtering；
+- non-shareable executable handle + suspended process actual image recheck；
+- lstat-first repository/config/submodule/lock containment；
+- `KILL_ON_JOB_CLOSE` Job Object、64 KiB 双流、10/30 秒 timeout、no retry；
+- finite porcelain-v1 parser 与 path/branch/raw-output withheld；
+- started audit → final recheck → spawn → post-run guard → terminal audit → safe release；
+- 显式真实 Windows temporary repository smoke。
+
+事实源为 `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108。POSIX、linked worktree、submodule、alternate object store、OS filesystem write proof、通用 shell、network adapter 与第二个 operation 继续 unavailable。
+
+## Stage 50 — Fixed Execution Operational Recovery Design Gate（条件启动）
+
+下一阶段不自动开放更多 command。优先审计 machine-local trust rotation、open attempt recovery、Windows Job accounting/no-orphan verification 与 operator workflow；如选择 POSIX enablement，必须单独闭合 executable image identity 和 process-group contract。任何第二个真实 operation、approval-required adapter 或 OS-enforced filesystem proof 都需要独立设计与用户授权。
 
 ---
 

@@ -38,6 +38,8 @@ from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_a
 from .orchestration_contract import build_contract_manifest
 from .orchestration_contract_check import check_contract_requirements
 from .orchestration_execution_readiness import check_execution_readiness
+from .execution_trust import create_execution_trust_binding
+from .orchestration_git_status_execution import execute_fixed_git_status
 from .orchestration_control_panel import (
     build_control_panel_handoff,
     build_control_panel_snapshot,
@@ -1587,6 +1589,39 @@ def _cmd_orchestration_contract_check(args: argparse.Namespace) -> int:
 def _cmd_orchestration_execution_readiness(args: argparse.Namespace) -> int:
     """Render the deterministic single-user execution readiness gate."""
     result = check_execution_readiness(_root_path(args))
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_execution_trust_bind(args: argparse.Namespace) -> int:
+    """Create or preview the fixed machine-local executable trust binding."""
+    result = create_execution_trust_binding(
+        _root_path(args),
+        expected_sha256=args.expected_sha256,
+        expected_publisher_thumbprint=args.expected_publisher_thumbprint,
+        commit=args.commit,
+        replace=args.replace,
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_execution_git_status(args: argparse.Namespace) -> int:
+    """Run the single fixed Git status executor."""
+    result = execute_fixed_git_status(
+        _root_path(args),
+        task_id=args.task_id,
+        request_id=args.request_id,
+        commit=args.commit,
+        expected_plan_hash=args.expected_plan_hash,
+        timeout_seconds=args.timeout_seconds,
+    )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
@@ -3212,6 +3247,76 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(orchestration_execution_readiness_parser)
     orchestration_execution_readiness_parser.set_defaults(
         func=_cmd_orchestration_execution_readiness
+    )
+    orchestration_execution_trust_parser = orchestration_execution_subparsers.add_parser(
+        "trust", help="Manage the machine-local fixed executable trust binding"
+    )
+    orchestration_execution_trust_subparsers = (
+        orchestration_execution_trust_parser.add_subparsers(
+            dest="execution_trust_command", required=True
+        )
+    )
+    orchestration_execution_trust_bind_parser = (
+        orchestration_execution_trust_subparsers.add_parser(
+            "bind", help="Create a reviewed machine-local Git executable binding"
+        )
+    )
+    orchestration_execution_trust_bind_parser.add_argument(
+        "--expected-sha256",
+        required=True,
+        help="Reviewed lowercase SHA-256 of the fixed Git executable",
+    )
+    orchestration_execution_trust_bind_parser.add_argument(
+        "--expected-publisher-thumbprint",
+        required=True,
+        help="Reviewed uppercase Authenticode signer certificate thumbprint",
+    )
+    orchestration_execution_trust_bind_parser.add_argument(
+        "--commit",
+        action="store_true",
+        help="Create the machine-local binding after review",
+    )
+    orchestration_execution_trust_bind_parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="Explicitly rotate an existing valid machine-local binding",
+    )
+    _add_global_args(orchestration_execution_trust_bind_parser)
+    orchestration_execution_trust_bind_parser.set_defaults(
+        func=_cmd_orchestration_execution_trust_bind
+    )
+    orchestration_execution_git_status_parser = (
+        orchestration_execution_subparsers.add_parser(
+            "git-status", help="Run the single fixed Git status executor"
+        )
+    )
+    orchestration_execution_git_status_parser.add_argument(
+        "--task-id", required=True, help="Existing task ledger id for execution audit"
+    )
+    orchestration_execution_git_status_parser.add_argument(
+        "--request-id", required=True, help="Bounded request id for execution audit"
+    )
+    orchestration_execution_git_status_parser.add_argument(
+        "--expected-plan-hash",
+        default=None,
+        help="Optional reviewed canonical execution plan hash",
+    )
+    orchestration_execution_git_status_parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        choices=range(1, 31),
+        default=10,
+        metavar="1..30",
+        help="Bounded fixed process timeout",
+    )
+    orchestration_execution_git_status_parser.add_argument(
+        "--commit",
+        action="store_true",
+        help="Write execution audit and run the fixed subprocess",
+    )
+    _add_global_args(orchestration_execution_git_status_parser)
+    orchestration_execution_git_status_parser.set_defaults(
+        func=_cmd_orchestration_execution_git_status
     )
 
     # orchestration read-only Control Panel snapshot/render

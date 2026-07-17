@@ -2345,11 +2345,12 @@ python -m agent_runtime.cli orchestration approval resolve \
 
 ## 当前安全边界
 
-- 不执行外部命令。
+- 唯一外部命令例外为 Windows fixed `git status --short --branch`，必须通过 Stage 49 trust/repository/audit gate 并显式使用 `--commit`。
+- 不执行通用 shell、caller-supplied argv 或其他真实 adapter。
 - 不访问网络。
 - 不发送消息。
 - 不删除文件。
-- 受控写入命令仅限 `orchestration approval resolve --commit` 与 `orchestration run --commit`：两者都遵循 `--dry-run | --commit` 显式模式、写前/写后校验、失败回滚；`run --commit` 沉淀 envelope draft 文件并追加 run lifecycle events。
+- 受控写入还包括 execution audit writer 与 machine-local execution trust binding；fixed Git status 在 started/terminal audit 成功闭合前不释放结果。
 - 不读取 `.env`、`.env.local` 或密钥文件。
 - 不回显完整 secret match。
 
@@ -2375,7 +2376,7 @@ python tools/public_scan.py
 - `check action` 仍然只做 preflight 判断，不执行真实外部动作。
 - `tasks/tasks.jsonl` 目前只支持 CLI 查询；`tasks/events.jsonl` 可通过 `runtime event append --commit`、`runtime event import --commit`、`orchestration approval resolve --commit` 和 `orchestration run --commit` 受控追加，但必须有显式 `--commit`、写后校验与失败回滚；`orchestration run --commit` 追加 `run_planned` + `run_draft_exported` lifecycle events。
 - 还没有后台服务。
-- 还没有插件系统或真实 adapter 执行。
+- 还没有插件系统或通用真实 adapter 执行；唯一 limited execution 是 Windows fixed Git status。
 
 ## 阶段性结论
 
@@ -2397,3 +2398,90 @@ python -m agent_runtime.cli orchestration execution readiness --json
 安全边界：单用户 `local-operator`、只读、确定性；不接受 profile/path/argv/actor 参数，不启动 subprocess，不读 credential，不访问网络，不写文件或 ledger，不开放通用 shell。
 
 兼容语义：v1 是 Stage 44 的永久 blocked snapshot。未来实现 fixed executor 后必须使用 v2 或独立 implementation gate；不能直接修改 v1 profile 的 implementation 字段来宣称执行已就绪。
+
+## Fixed Git status execution（Stage 49，Windows limited）
+
+Stage 49 没有修改上面的 readiness v1；它通过独立 trust binding 和 execution result contract 开放一个固定 operation。
+
+### 1. 审阅并 provision machine-local Git trust binding
+
+先由 operator 独立审阅当前 system Git 的 SHA-256 与 Authenticode signer certificate thumbprint。CLI 默认只做 preview：
+
+```bash
+python -m agent_runtime.cli orchestration execution trust bind \
+  --expected-sha256 <reviewed-lowercase-sha256> \
+  --expected-publisher-thumbprint <reviewed-uppercase-thumbprint> \
+  --json
+```
+
+确认 preview 后显式创建：
+
+```bash
+python -m agent_runtime.cli orchestration execution trust bind \
+  --expected-sha256 <reviewed-lowercase-sha256> \
+  --expected-publisher-thumbprint <reviewed-uppercase-thumbprint> \
+  --commit \
+  --json
+```
+
+Git 升级或 sanitized PATH identity 变化时，已有 binding 不会被静默覆盖。必须重新审阅，并显式 rotation：
+
+```bash
+python -m agent_runtime.cli orchestration execution trust bind \
+  --expected-sha256 <new-reviewed-lowercase-sha256> \
+  --expected-publisher-thumbprint <new-reviewed-uppercase-thumbprint> \
+  --replace \
+  --commit \
+  --json
+```
+
+约束：
+
+- binding 存放在 Windows machine-local 固定位置，不在项目仓库内；
+- CLI 不接受 binding path、Git path、PATH 或 reviewer override；
+- preview/commit 公共输出只包含 binding、executable 与 sanitized PATH identity digest，不输出绝对路径；
+- existing binding 必须先通过 strict validation，才能 rotation；
+- POSIX backend 当前固定 unavailable。
+
+### 2. 执行唯一 fixed Git status
+
+`task-id` 必须已存在于 task ledger，`request-id` 必须满足 bounded identifier 规则：
+
+```bash
+python -m agent_runtime.cli orchestration execution git-status \
+  --task-id <existing-task-id> \
+  --request-id <new-request-id> \
+  --commit \
+  --json
+```
+
+可先通过不带 `--commit` 的调用确认 gate 会阻止执行；该调用不写 audit、不启动 child。需要绑定 operator-reviewed plan 时：
+
+```bash
+python -m agent_runtime.cli orchestration execution git-status \
+  --task-id <existing-task-id> \
+  --request-id <new-request-id> \
+  --expected-plan-hash sha256:<64-lowercase-hex> \
+  --timeout-seconds 10 \
+  --commit \
+  --json
+```
+
+执行契约：
+
+- argv 永久固定为 `git status --short --branch`，`shell=false`；
+- 不接受 command、argv、cwd、environment、executable path、binding path 或 actor 参数；
+- timeout 范围为 1–30 秒，默认 10 秒；
+- stdout/stderr 每流 64 KiB hard limit，无 retry、无 background；
+- started audit 写入成功前不 spawn；
+- final trust/repository recheck、post-run guard 和 terminal audit 全部成功后才释放 ready summary；
+- output 只包含 dirty/count/ahead-behind/byte-count/digest 等安全字段，不包含 filename、branch、raw stdout/stderr、绝对 cwd、Git path 或 PATH；
+- ready 中 `filesystem_write_proof=false`，表示没有 OS-enforced read-only filesystem，不能把 guard evidence 解释为完整写保护；
+- linked worktree、submodule、alternate object store、危险 config、lock、symlink/reparse/hardlink surface 会被拒绝。
+
+真实 smoke 测试默认 skip，只有 operator 已 provision binding 且明确允许本次真实 subprocess 时运行：
+
+```powershell
+$env:AGENT_RUNTIME_RUN_REAL_GIT_STATUS_SMOKE = "1"
+python -m pytest tests/test_stage49_real_git_status_smoke.py -q
+```

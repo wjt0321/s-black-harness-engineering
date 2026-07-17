@@ -198,10 +198,26 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Validates a fixed single-user execution design profile and does not execute processes or adapters.",
         ),
         _entry(
+            "execution_trust_binding",
+            "stable_limited",
+            "controlled_write",
+            commands=(("orchestration", "execution", "trust", "bind"),),
+            key_flags=("--commit", "--expected-publisher-thumbprint", "--expected-sha256", "--replace"),
+            boundary="Creates one machine-local reviewed Git executable binding outside the project; no subprocess is started.",
+        ),
+        _entry(
             "external_execution_service_stack",
             "unavailable",
             "unavailable",
-            boundary="Real adapter execution, long-running service, auth, database, and interactive write-capable UI are unavailable.",
+            boundary="Generic adapter execution, long-running service, auth, database, and interactive write-capable UI are unavailable; the separate fixed Git status operation is the only limited exception.",
+        ),
+        _entry(
+            "fixed_git_status_execution",
+            "stable_limited",
+            "controlled_write",
+            commands=(("orchestration", "execution", "git-status"),),
+            key_flags=("--commit", "--expected-plan-hash", "--request-id", "--task-id", "--timeout-seconds"),
+            boundary="Windows-only fixed Git status execution with external trust binding, Job Object containment, audit, bounded output, and path-free summary.",
         ),
         _entry(
             "orchestration_artifact_export",

@@ -93,8 +93,13 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "render",
     }
     assert _subparser_names(_nested_parser(orchestration, "execution")) == {
+        "git-status",
         "readiness",
+        "trust",
     }
+    assert _subparser_names(
+        _nested_parser(_nested_parser(orchestration, "execution"), "trust")
+    ) == {"bind"}
 
 
 def test_stage13_run_flags_keep_explicit_preview_and_lineage_boundaries() -> None:

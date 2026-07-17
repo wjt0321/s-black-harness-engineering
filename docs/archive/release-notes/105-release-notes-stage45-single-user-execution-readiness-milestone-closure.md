@@ -1,4 +1,4 @@
-<!-- parents: ../../../docs/95-single-user-real-execution-readiness-gate-and-milestone.md -->
+<!-- parents: ../95-single-user-real-execution-readiness-gate-and-milestone.md -->
 
 # Release Notes 105 — Stage 45 Single-user Execution Readiness Milestone Closure
 

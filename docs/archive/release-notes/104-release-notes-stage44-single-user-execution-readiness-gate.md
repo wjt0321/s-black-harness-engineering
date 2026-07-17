@@ -1,4 +1,4 @@
-<!-- parents: ../../../docs/95-single-user-real-execution-readiness-gate-and-milestone.md -->
+<!-- parents: ../95-single-user-real-execution-readiness-gate-and-milestone.md -->
 
 # Release Notes 104 — Stage 44 Single-user Execution Readiness Gate
 

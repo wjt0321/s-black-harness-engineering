@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/execution-trust-binding.schema.json",
+  "title": "Machine-local Fixed Execution Trust Binding",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "platform",
+    "binding_id",
+    "path_identity",
+    "executable",
+    "reviewer"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "execution-trust-binding/v1"
+    },
+    "platform": {
+      "const": "windows"
+    },
+    "binding_id": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "path_identity": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "executable": {
+      "type": "object",
+      "required": [
+        "canonical_path",
+        "approved_root",
+        "sha256",
+        "file_identity",
+        "publisher_thumbprint",
+        "owner_policy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "canonical_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32768
+        },
+        "approved_root": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32768
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "file_identity": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9:-]{1,128}$"
+        },
+        "publisher_thumbprint": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{40}$"
+        },
+        "owner_policy": {
+          "const": "windows-system-install"
+        }
+      }
+    },
+    "reviewer": {
+      "type": "object",
+      "required": ["actor", "reviewed_at", "provenance"],
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "const": "local-operator"
+        },
+        "reviewed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "provenance": {
+          "const": "explicit-cli-review"
+        }
+      }
+    }
+  }
+}

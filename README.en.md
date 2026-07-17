@@ -58,7 +58,7 @@ The repository now provides an **offline, auditable CLI/runtime security core su
 
 - it can already support policy validation, task/event ledgers, capability routing, dry-runs, controlled writes, and recovery-lineage auditing;
 - Stage 13 resource/operation reconciliation and the Stage 14 replayable minimal orchestration loop are both complete;
-- Stage 13–45 backend/read-model/controlled-write/host/display/readiness work is closed. Stage 46 freezes the fixed Git-status executor trust, sanitized-PATH, process-tree, finite-parser, safe-output, and no-write contract. Stage 47–48 now implement a strict execution-lifecycle audit schema, an internal controlled writer, generic-entry provenance isolation, rollback, and recovery inspection. Real adapter execution remains unavailable.
+- Stage 13–48 backend/read-model/controlled-write/host/display/readiness/audit work is closed. Stage 49 now implements the first strictly limited Windows fixed Git-status executor with machine-local reviewed trust, sanitized PATH, actual-image rechecking, repository containment, Job Object lifecycle control, a finite parser, and audit-before-release. Generic adapter execution remains unavailable.
 - Stage 16 closure commit: `b46c013`; this closure has been pushed to `origin/main` with user authorization.
 
 ## Progress Bar
@@ -149,6 +149,7 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 46 — Fixed Git Status Executor Design Gate (design-only complete; Git was not executed)
 - ✅ Stage 47 — Execution Lifecycle Audit Writer Design Gate
 - ✅ Stage 48 — Execution Lifecycle Audit Writer Implementation (no CLI and no subprocess)
+- ✅ Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement (Windows only)
 
 ### The Most Accurate Current Read
 
@@ -156,11 +157,11 @@ The current state is best understood as:
 
 - **guardrails / ledgers / controlled writes are no longer a sketch; they are already a formed security core**
 - **the orchestration backend now has source-backed registry, constraint routing, read-loop snapshots, and recovery lineage aggregation v1**
-- **real adapter execution remains blocked; the execution audit writer is implemented, while the fixed `git_status` executor, production trust/image binding, and platform process-tree containment are not**
+- **one Windows fixed `git_status` operation is enabled; generic adapters, POSIX execution, a second operation, and OS-enforced filesystem write protection remain blocked**
 
 ### What Comes Next
 
-Stage 47–48 are complete. Four reserved lifecycle events now use a strict dedicated schema and an internal-only controlled writer; generic append/import paths reject them, each started/terminal append uses one locked file descriptor, a writer-only append token, and path/file identity checks before commit or byte-size rollback. Concurrent ledger drift or file replacement refuses commit/truncation, and read-only inspection reports open, closed, missing, or invalid attempts. No execution CLI or subprocess was added. Stage 49 remains conditional on explicit user authorization plus the Stage 46 trust/image-binding, sanitized-PATH, process-tree, and finite-parser requirements.
+Stage 49 is complete on Windows for one fixed operation only. The operator first provisions a machine-local reviewed Git binding; execution then requires explicit `--commit`, exact `git status --short --branch`, pre/post repository guards, a suspended actual-image check, Job Object containment, bounded output, finite porcelain validation, and closed execution audit before a path-free summary is released. POSIX, arbitrary commands, network adapters, and additional operations remain unavailable.
 
 
 Implemented capability highlights:
@@ -187,7 +188,7 @@ Implemented capability highlights:
 
 The runtime still keeps conservative boundaries:
 
-- no real adapter execution
+- no real adapter or external-command execution except the Windows fixed `git status --short --branch`
 - no network access
 - no message sending
 - no reading `.env` / credential / token / keyring files

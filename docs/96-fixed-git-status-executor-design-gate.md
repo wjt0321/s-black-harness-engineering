@@ -1,4 +1,4 @@
-<!-- parents: 95-single-user-real-execution-readiness-gate-and-milestone.md, 58-orchestration-run-controlled-execution-design.md -->
+<!-- parents: archive/95-single-user-real-execution-readiness-gate-and-milestone.md, 58-orchestration-run-controlled-execution-design.md -->
 <!-- relates: 48-adapter-runtime-interface.md, 56-orchestration-controlled-write-boundary.md, 64-versioning-governance.md -->
 
 # 96 — Fixed Git Status Executor Design Gate
@@ -485,5 +485,7 @@ approval plan binding 对 `requires_approval=false` 的 `git_status` 不构成 S
 
 > 2026-07-17 post-close：Stage 47–48 已按 `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md` 实现并收口。该完成只解除 audit-writer 前置，不解除本文件的 executable/image trust、TOCTOU、sanitized PATH、repository containment、process-tree runner 与用户显式 subprocess 授权条件；Stage 49 继续 unavailable。
 
+> 2026-07-17 Stage 49 implementation：用户已再次明确授权真实 subprocess；Windows trust binding、non-shareable executable handle、suspended image recheck、sanitized child PATH、repository guard、Job Object runner、finite parser、post-run guard 与 audit release gate 已按 `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 实现并通过一次真实临时仓库 smoke。该实现只开放 fixed `git status --short --branch`，POSIX 与任何第二个 operation 继续 unavailable。
+
 <!-- gate-status: passed-stage46-design-only -->
-<!-- execution-status: unavailable -->
+<!-- execution-status: superseded-by-stage49-windows-limited-enablement -->

@@ -2828,3 +2828,21 @@
 - Stage 42 文档完整归档至 `docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`，活跃 docs 保持 50 个。
 - 新增 release notes 107 与 `tasks/handoff-2026-07-17.md`；稳定 tag 仍为已推送 v0.17.0，本轮不创建 tag、不 push。
 - 下一阶段为 Stage 49 Fixed Git Status Executor Implementation and Limited Enablement（条件启动）；必须由用户再次明确授权真实 subprocess，并闭合 Stage 46 trust/image binding、sanitized PATH、process-tree containment 与 finite parser。
+
+## 2026-07-17 Stage 49 — Fixed Git Status Executor Limited Enablement
+
+- 用户明确授权推进下一里程碑并完成唯一 fixed subprocess，要求只提交到本地，不 push、不打 tag。
+- 先创建隔离 worktree/branch 与实施计划，按 TDD 分解 trust binding、repository guard、finite parser、bounded runner、audit orchestration、CLI contract 和真实 smoke。
+- 新增 `adapters/execution-trust-binding.schema.json` 与 `agent_runtime/execution_trust.py`：machine-local strict binding、preview/commit/replace、sanitized PATH、actor-writable directory removal、SHA-256/file-id/approved-root/Authenticode signer binding。
+- Windows executable 通过禁止 write/delete share 的 read-only handle保持 identity；child 使用 suspended create，加入 `KILL_ON_JOB_CLOSE` Job Object，actual image identity/digest recheck 后 resume。
+- 新增 `agent_runtime/git_repository_guard.py`：direct root/`.git`、lstat-first parent chain、config denylist、refs/objects/pack/info/logs bounded traversal、locks/submodule/alternates/commondir/hardlink/reparse blocking 与 pre/post fingerprint。
+- 新增 `agent_runtime/fixed_process_runner.py`：exact argv、64 KiB 双流 hard stop、10/30 秒 timeout、tree terminate/kill/wait、no retry/no background；POSIX 明确 unavailable。
+- 新增 `agent_runtime/git_status_porcelain.py`：finite branch grammar、porcelain-v1 XY allowlist、LF/UTF-8/NUL/control/bounds validation 与 path-free summary。
+- 新增 `agent_runtime/orchestration_git_status_execution.py`：root/registry/trust/guard/plan、started audit、final recheck、runner、post-run guard、parser、terminal audit、release gate；process failure 也执行 post-run guard。
+- CLI 新增 `orchestration execution trust bind` 与 `orchestration execution git-status`；contract manifest 新增 trust binding/fixed execution entries，doctor 接入 schema。
+- 新增六组专用测试和默认 skip 的 `test_stage49_real_git_status_smoke.py`；显式环境开关下在临时 direct `.git/` 仓库执行真实 CLI，返回 ready、closed audit、post-run guard pass，且不泄露 root/file/ref/PATH/raw output。
+- 提交前独立安全复审发现六项 Important；补齐 repository locked/no-follow handles 与 pre-read bounds、Job assignment 前 direct cleanup、Job close failure withheld、Windows independent fail-closed rights、terminal `awaiting_terminal`、binding parent/project gate，以及默认 real-audit-writer orchestration regression。二次复审确认无剩余 Critical/Important。
+- Stage 44 readiness v1 保持永久 blocked 历史 snapshot；generic execution service、POSIX、linked worktree、submodule、network、第二个 operation 与 OS filesystem write proof 继续 unavailable。
+- 新增 `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108；Stage 43–45 事实源移入 archive，活跃 docs 保持 50 个。
+- 稳定 semver 仍为已推送 v0.17.0；本阶段不创建 tag、不 push。
+- 下一阶段为 Stage 50 Fixed Execution Operational Recovery Design Gate（条件启动），不自动开放更多 command。

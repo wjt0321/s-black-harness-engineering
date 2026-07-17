@@ -5,8 +5,8 @@
 ## 文档池规模
 
 - docs/ 活跃文档：50 个
-- 归档文档：83 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：约 210 个
+- 归档文档：85 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：177 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,14 +25,15 @@
 
 ## 当前阶段
 
-- **Stage 47–48 — Execution Lifecycle Audit Writer（design + TDD implementation 已完成并收口）**
+- **Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（Windows limited enablement 已完成并收口）**
+- Stage 47–48 — Execution Lifecycle Audit Writer（design + TDD implementation 已完成并收口）
 - Stage 46 — Fixed Git Status Executor Design Gate（已收口；design-only）
 - Stage 45 — Single-user Real Execution Readiness Milestone Closure（已收口；提交 `49a517b`）
 - Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
 - Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
-- 下一阶段：Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（条件启动；真实 subprocess 仍未授权）
-- Stage 46 已明确：PATH 只做候选发现，production 还需可信 executable/image binding；child 使用同一 sanitized PATH；POSIX process group / Windows Job Object 收口进程树；short-status 使用有限 grammar；execution event 只能由专用 writer 写入。
-- hash-to-spawn TOCTOU、平台 image binding 或 process-tree containment 任一无法闭合时，Stage 49 必须保持 unavailable，不能以 fixed argv 代替执行信任。
+- 下一阶段：Stage 50 — Fixed Execution Operational Recovery Design Gate（条件启动）
+- Stage 49 只在 Windows 开放唯一 fixed operation `git status --short --branch`；必须显式 `--commit`，并依赖 machine-local reviewed trust binding。
+- POSIX、通用 shell、任意 argv/cwd/env/path override、network adapter、linked worktree、submodule、alternate object store、第二个 operation 和 OS-enforced filesystem write proof 仍 unavailable。
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
@@ -195,6 +196,18 @@
 - Stage 44 readiness v1 永久保持历史 10 pass / 3 blocked；新增 reserved enum 不把旧 `audit_writer_implementation` 回改为 pass。
 - 本阶段没有新增 execution CLI、subprocess、network、service、DB、UI、tag 或 push；没有执行 Git。
 
+### 新进落地：Stage 49 — Fixed Git Status Executor Limited Enablement
+
+- 新增 machine-local strict trust binding schema 与 `orchestration execution trust bind` preview/commit/replace；CLI 不接受 binding path 或 executable path。
+- Windows trust backend 删除 project-local、reparse、重复和 actor-writable PATH 目录，只接受固定 `git.exe`；绑定 SHA-256、volume/file id、approved root 与 Authenticode signer。
+- executable 以禁止 write/delete share 的 read-only handle 持有到 image validation 完成；child 以 suspended 状态创建，加入 `KILL_ON_JOB_CLOSE` Job Object，核对 actual image 后才 resume。
+- repository guard 在 spawn 前后执行 lstat-first containment，拒绝 linked worktree、submodule、alternates、commondir、lock、dangerous config、symlink/reparse/hardlink 与 bounded traversal 超限。
+- runner 固定 exact argv、10 秒默认/30 秒上限、64 KiB stdout/stderr、no retry/no background；POSIX 明确 unavailable。
+- finite porcelain-v1 parser 丢弃 filename、branch 与 upstream token，只释放 dirty/count/ahead-behind/digest 等 safe summary。
+- execution chain 固定 started audit → final trust/guard recheck → spawn → post-run guard → terminal audit → safe release；terminal audit 失败时保留 started 并 withheld。
+- 2026-07-17 已在 pytest 临时 direct `.git/` 仓库完成一次显式授权真实 smoke；真实项目 ledger 未修改。
+- 本阶段不创建 tag、不 push，稳定 semver 仍为已推送的 v0.17.0。
+
 ## 现在已经能做什么
 
 - 已冻结里程碑 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`），包含 Stage 10–12 的 registry/routing/state read model 闭环。
@@ -213,30 +226,29 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
-3. `docs/96-fixed-git-status-executor-design-gate.md`
-4. `docs/95-single-user-real-execution-readiness-gate-and-milestone.md`
+2. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+3. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+4. `docs/96-fixed-git-status-executor-design-gate.md`
 5. `tasks/handoff-2026-07-17.md`
-6. Stage 47–48/46/45 验收读 release notes 107/106/105。
-7. 历史 presentation/display 事实源按需读 archive/94、archive/92、archive/91、archive/90。
+6. Stage 49/47–48/46 验收读 release notes 108/107/106。
+7. 历史 readiness/presentation/display 事实源按需读 archive/95、archive/94、archive/92、archive/91、archive/90。
 8. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（条件启动）**。
-- Stage 47–48 audit writer 前置已完成，但这不等于 subprocess permission。
-- 只有 operator-reviewed trust/image binding、hash-to-spawn identity、sanitized child PATH、repository/config/submodule preflight、POSIX process group / Windows Job Object、有限 porcelain parser 与 post-run guard 都能按 Stage 46 闭合，且用户再次明确授权真实 subprocess 后，才允许实现。
-- 任一平台无法闭合 image binding、TOCTOU 或 process-tree containment时保持 unavailable；不得降级为 PATH 信任、普通 `subprocess.run` 或 direct-child-only cleanup。
-- approval binding 对 `requires_approval=false` 的 git_status 不是前置，但任何 approval-required adapter 仍必须等待 binding。
+- **Stage 50 — Fixed Execution Operational Recovery Design Gate（条件启动）**。
+- 优先审计 trust rotation、open attempt recovery、Windows Job accounting/no-orphan evidence 与 operator workflow。
+- 如选择 POSIX enablement，必须单独闭合 executable image identity、process-group containment 与同等输出/审计停止线。
+- 任何第二个 command、approval-required adapter、network operation 或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。
 
 ## 重要约束
 
-- 仍然**不做真实 adapter execution**
-- Stage 16–48 只允许**本地静态只读表示、stdio descriptor、stdin-only validation、one-shot host adapter、显式 project/envelope-scoped snapshot JSON read、结构化 filtered v3、内存展示契约、独立 consumer、validation-before-release host、design-only presentation handoff、readiness gate、fixed executor design contract 与内部 execution audit controlled writer**；仍然不做 live service、DB、auth、网络访问、UI 写操作、通用 query、持久化/export 或真实 adapter execution
-- 后续实现可由任意受控编码 Agent 承担，但必须先消费本 digest、91、archive/release-notes/96、95、94、archive/90、89/88/87/86/85/84/83/79/78/76 与 archive/77 事实源与最新 handoff；Stage 20/21/19 历史实现与设计按需读取 archive/81、archive/82 与 archive/80，并保持验证/提交边界
+- 唯一真实执行例外是 **Windows fixed Git status**；通用 adapter execution、shell、任意命令和网络执行仍禁止。
+- Stage 49 的 `--commit` 同时授权 started/terminal audit controlled write 与唯一 fixed subprocess，不授权更多 Git command。
+- 后续实现必须先消费本 digest、98、97、96、archive/95 与最新 handoff，并保持验证、用户授权和本地提交边界。
 
 ## 一句话理解当前项目
 
 这项目现在的重点不是继续堆零散功能，而是：
 
-> 在不服务化的前提下，把现有 CLI/read models 收敛为稳定、可由未来入口复用的后端资源与操作契约。
+> 在不服务化、不泛化执行权限的前提下，把唯一 fixed Git status 纳入可审计、可恢复、可继续收紧的受控执行契约。

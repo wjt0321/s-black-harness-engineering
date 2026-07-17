@@ -31,6 +31,7 @@ SCHEMA_FILES = [
     "adapters/adapter.schema.json",
     "adapters/execution-envelope.schema.json",
     "adapters/execution-readiness.schema.json",
+    "adapters/execution-trust-binding.schema.json",
     "automation/automation-profiles.schema.json",
     "tasks/task.schema.json",
     "tasks/event.schema.json",

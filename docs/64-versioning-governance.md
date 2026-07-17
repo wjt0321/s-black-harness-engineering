@@ -384,3 +384,24 @@ Stage 47–48 已形成可复用的内部 controlled-write 能力包：
 - 本轮只创建本地提交，不创建 `v0.18.0` tag，不 push；
 - Stage 49 必须在用户再次明确授权真实 subprocess，并闭合 Stage 46 trust/image binding、sanitized child PATH、process-tree containment 与有限 parser 后，才允许实现；
 - audit writer 完成不得被解释为 execution permission。
+
+## Stage 49 Fixed Git Status Executor 提交级里程碑（2026-07-17）
+
+Stage 49 已形成第一个真实但严格有限的 Windows execution 能力包：
+
+- machine-local operator-reviewed executable trust binding；
+- non-shareable handle、SHA-256/file-id/AuthentiCode signer 与 suspended process image recheck；
+- sanitized PATH、repository/config containment 与 pre/post no-write guard evidence；
+- Windows Job Object bounded one-shot runner；
+- finite porcelain parser、安全摘要与 dedicated execution audit release gate；
+- 一次显式授权真实 temporary repository smoke。
+
+本轮仍不创建 `v0.18.0` tag：
+
+- enablement 仅限 Windows 和一个 fixed operation；
+- POSIX 等价实现不存在；
+- `filesystem_write_proof=false`，尚无 OS-enforced read-only filesystem；
+- machine-local trust binding 需要 operator provisioning，不是跨机器即开即用能力；
+- 用户要求只提交到本地，不 push。
+
+稳定 semver 继续为已推送的 `v0.17.0-filtered-snapshot-display-host-integration`。Stage 49 以 `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108 收口；后续是否形成 v0.18 必须在 operational recovery、平台覆盖和 stronger isolation 重新评估后决定。

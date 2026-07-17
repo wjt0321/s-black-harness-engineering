@@ -24,6 +24,10 @@ from agent_runtime.execution_audit_writer import (
     record_execution_attempt_started,
     record_execution_terminal,
 )
+from agent_runtime.execution_trust import ExecutableIdentity, VerifiedTrustResult
+from agent_runtime.fixed_process_runner import FixedProcessResult
+from agent_runtime.git_repository_guard import RepositoryGuard, RepositoryGuardResult
+from agent_runtime.orchestration_git_status_execution import execute_fixed_git_status
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -648,4 +652,106 @@ def test_execution_audit_writer_controlled_write_chain_is_isolated(
     assert inspected.state == "closed_failed"
     assert events_file.read_text(encoding="utf-8").count("\n") == 3
     assert real_tasks.read_bytes() == real_tasks_before
+    assert real_events.read_bytes() == real_events_before
+
+
+def test_fixed_git_status_orchestration_uses_real_audit_writer_in_temp_root(
+    tmp_path: Path,
+) -> None:
+    real_events = ROOT / "tasks" / "events.jsonl"
+    real_events_before = real_events.read_bytes() if real_events.is_file() else b""
+    root = _setup_fake_root(tmp_path)
+    task_id = "task-20260717-992"
+    tasks_file = root / "tasks" / "tasks.jsonl"
+    events_file = root / "tasks" / "events.jsonl"
+    tasks_file.parent.mkdir(parents=True, exist_ok=True)
+    tasks_file.write_text(
+        json.dumps(
+            {
+                "id": task_id,
+                "title": "fixed execution audit regression",
+                "status": "running",
+                "created_at": "2026-07-17T02:00:00+00:00",
+                "updated_at": "2026-07-17T02:00:00+00:00",
+                "created_by": "cli",
+                "source": "cli",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    events_file.write_text(
+        json.dumps(
+            {
+                "event_id": "evt-20260717-992001",
+                "task_id": task_id,
+                "timestamp": "2026-07-17T02:00:00+00:00",
+                "actor": "cli",
+                "event_type": "created",
+                "from_status": None,
+                "to_status": "running",
+                "message": "created",
+                "metadata": {},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    executable = root.parent / "git.exe"
+    executable.write_bytes(b"git")
+
+    def trust(project: Path) -> VerifiedTrustResult:
+        return VerifiedTrustResult(
+            status="pass",
+            identity=ExecutableIdentity(
+                canonical_path=executable,
+                approved_root=root.parent,
+                sha256="a" * 64,
+                file_identity="volume:file",
+                publisher_thumbprint="B" * 40,
+                owner_policy="windows-system-install",
+                path_identity="sha256:" + "1" * 64,
+                sanitized_path="trusted",
+            ),
+            binding_id="sha256:" + "2" * 64,
+            executable_identity="sha256:" + "3" * 64,
+            path_identity="sha256:" + "1" * 64,
+        )
+
+    def guard(project: Path) -> RepositoryGuardResult:
+        return RepositoryGuardResult(
+            status="pass",
+            guard=RepositoryGuard(
+                identity="sha256:" + "4" * 64,
+                manifest=(("x", "file", 1, 1, 1, 1, "1:x"),),
+            ),
+        )
+
+    def run(*args: object, **kwargs: object) -> FixedProcessResult:
+        return FixedProcessResult(
+            status="pass",
+            exit_code=0,
+            stdout=b"## main\n",
+            stderr=b"",
+            duration_bucket="lt-1s",
+        )
+
+    result = execute_fixed_git_status(
+        root,
+        task_id=task_id,
+        request_id="req-20260717-992",
+        commit=True,
+        services={
+            "verify_trust": trust,
+            "build_guard": guard,
+            "run_process": run,
+        },
+        registry_check=lambda project: True,
+    )
+
+    assert result.status == "ready"
+    assert result.audit["state"] == "closed_succeeded"
+    assert events_file.read_text(encoding="utf-8").count("\n") == 3
+    inspected = inspect_execution_attempt(root, result.audit["attempt_id"])
+    assert inspected.state == "closed_succeeded"
     assert real_events.read_bytes() == real_events_before
