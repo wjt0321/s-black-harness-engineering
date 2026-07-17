@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/execution-audit-event.schema.json",
+  "title": "Agent Runtime Execution Audit Event",
+  "type": "object",
+  "required": [
+    "event_id",
+    "task_id",
+    "timestamp",
+    "actor",
+    "event_type",
+    "message",
+    "metadata"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^evt-[0-9]{8}-[0-9]{3,}$"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^task-[0-9]{8}-[0-9]{3,}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor": {
+      "const": "local-operator"
+    },
+    "event_type": {
+      "enum": [
+        "execution_attempt_started",
+        "execution_succeeded",
+        "execution_failed",
+        "execution_cancelled"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "event_type": {
+          "const": "execution_attempt_started"
+        },
+        "metadata": {
+          "$ref": "#/$defs/startedMetadata"
+        }
+      }
+    },
+    {
+      "properties": {
+        "event_type": {
+          "const": "execution_succeeded"
+        },
+        "metadata": {
+          "$ref": "#/$defs/succeededMetadata"
+        }
+      }
+    },
+    {
+      "properties": {
+        "event_type": {
+          "const": "execution_failed"
+        },
+        "metadata": {
+          "$ref": "#/$defs/failedMetadata"
+        }
+      }
+    },
+    {
+      "properties": {
+        "event_type": {
+          "const": "execution_cancelled"
+        },
+        "metadata": {
+          "$ref": "#/$defs/cancelledMetadata"
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "safeToken": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+    },
+    "sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "commonMetadata": {
+      "type": "object",
+      "required": [
+        "writer_origin",
+        "writer_schema_version",
+        "attempt_id",
+        "request_id",
+        "plan_hash",
+        "adapter_id",
+        "capability",
+        "operation",
+        "phase"
+      ],
+      "properties": {
+        "writer_origin": {
+          "const": "agent_runtime.execution_audit_writer"
+        },
+        "writer_schema_version": {
+          "const": "execution-audit/v1"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/safeToken"
+        },
+        "request_id": {
+          "$ref": "#/$defs/safeToken"
+        },
+        "plan_hash": {
+          "$ref": "#/$defs/sha256Digest"
+        },
+        "adapter_id": {
+          "$ref": "#/$defs/safeToken"
+        },
+        "capability": {
+          "$ref": "#/$defs/safeToken"
+        },
+        "operation": {
+          "$ref": "#/$defs/safeToken"
+        },
+        "phase": {
+          "type": "string"
+        }
+      }
+    },
+    "terminalMetadata": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/commonMetadata"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "started_event_id"
+      ],
+      "properties": {
+        "started_event_id": {
+          "type": "string",
+          "pattern": "^evt-[0-9]{8}-[0-9]{3,}$"
+        },
+        "exit_code": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        },
+        "duration_bucket": {
+          "$ref": "#/$defs/safeToken"
+        },
+        "output_digest": {
+          "$ref": "#/$defs/sha256Digest"
+        },
+        "stdout_byte_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65536
+        },
+        "stderr_byte_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65536
+        },
+        "stdout_truncated": {
+          "type": "boolean"
+        },
+        "stderr_truncated": {
+          "type": "boolean"
+        },
+        "guard_status": {
+          "enum": [
+            "pass",
+            "failed",
+            "not_run"
+          ]
+        },
+        "failure_code": {
+          "$ref": "#/$defs/safeToken"
+        }
+      }
+    },
+    "startedMetadata": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/commonMetadata"
+        },
+        {
+          "properties": {
+            "phase": {
+              "const": "pre_spawn_committed"
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "succeededMetadata": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/terminalMetadata"
+        },
+        {
+          "required": [
+            "exit_code",
+            "guard_status",
+            "stdout_truncated",
+            "stderr_truncated"
+          ],
+          "properties": {
+            "phase": {
+              "const": "post_run_validated"
+            },
+            "exit_code": {
+              "const": 0
+            },
+            "guard_status": {
+              "const": "pass"
+            },
+            "stdout_truncated": {
+              "const": false
+            },
+            "stderr_truncated": {
+              "const": false
+            },
+            "stderr_byte_count": {
+              "const": 0
+            }
+          },
+          "not": {
+            "required": [
+              "failure_code"
+            ]
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "failedMetadata": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/terminalMetadata"
+        },
+        {
+          "required": [
+            "failure_code"
+          ],
+          "properties": {
+            "phase": {
+              "enum": [
+                "pre_spawn_recheck",
+                "spawn",
+                "child",
+                "output_validation",
+                "post_run_guard",
+                "audit"
+              ]
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "cancelledMetadata": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/terminalMetadata"
+        },
+        {
+          "required": [
+            "failure_code"
+          ],
+          "properties": {
+            "phase": {
+              "const": "cancelled"
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

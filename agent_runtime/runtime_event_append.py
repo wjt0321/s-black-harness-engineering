@@ -119,6 +119,31 @@ VALID_EVENT_TYPES = {
     "failed",
 }
 
+RESERVED_EXECUTION_EVENT_TYPES = frozenset(
+    {
+        "execution_attempt_started",
+        "execution_succeeded",
+        "execution_failed",
+        "execution_cancelled",
+    }
+)
+
+
+def reserved_execution_event_type_finding(
+    candidate: dict[str, Any], *, line: int | None = None
+) -> Finding | None:
+    """Return a value-safe finding when a generic entry uses a reserved type."""
+    event_type = candidate.get("event_type")
+    if not isinstance(event_type, str) or event_type not in RESERVED_EXECUTION_EVENT_TYPES:
+        return None
+    return Finding(
+        rule_id="reserved-execution-event-type",
+        severity="block",
+        action="deny",
+        message="Execution lifecycle events require the dedicated audit writer.",
+        line=line,
+    )
+
 
 def _line_number(text: str, pos: int) -> int:
     return text.count("\n", 0, pos) + 1
@@ -440,6 +465,14 @@ def _prepare_append(
         if isinstance(loaded, CheckResult):
             return loaded
         candidate, source = loaded
+
+    reserved_finding = reserved_execution_event_type_finding(candidate)
+    if reserved_finding is not None:
+        return CheckResult(
+            status="blocked",
+            findings=[reserved_finding],
+            next_action="Use the dedicated execution audit writer for reserved lifecycle events.",
+        )
 
     schema_result = _validate_event_schema(root, candidate)
     if schema_result is not None:

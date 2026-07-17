@@ -277,6 +277,116 @@ def test_commit_schema_invalid_does_not_write(tmp_path):
     assert events_file.read_text(encoding="utf-8").count("\n") == 1
 
 
+@pytest.mark.parametrize(
+    "event_type",
+    (
+        "execution_attempt_started",
+        "execution_succeeded",
+        "execution_failed",
+        "execution_cancelled",
+    ),
+)
+@pytest.mark.parametrize("commit", (False, True))
+def test_generic_append_blocks_reserved_execution_event_without_writing(
+    tmp_path, event_type, commit
+):
+    root = _setup_fake_root(tmp_path)
+    task_id = "task-20260705-001"
+    _write_task(root, task_id, status="running")
+    events_file = _write_events(
+        root,
+        _evt(
+            "evt-20260705-001",
+            task_id,
+            "created",
+            None,
+            "planned",
+            "c",
+            "2026-07-05T10:00:00+08:00",
+        ),
+    )
+    original_bytes = events_file.read_bytes()
+    candidate = _evt(
+        "evt-20260705-002",
+        task_id,
+        event_type,
+        "running",
+        "running",
+        "reserved",
+        "2026-07-05T10:01:00+08:00",
+    )
+
+    result = append_event(
+        root,
+        file=None,
+        stdin=False,
+        commit=commit,
+        tasks_file="tasks/tasks.jsonl",
+        events_file="tasks/events.jsonl",
+        candidate=candidate,
+    )
+
+    assert result.status == "blocked"
+    assert [finding.rule_id for finding in result.findings] == [
+        "reserved-execution-event-type"
+    ]
+    assert events_file.read_bytes() == original_bytes
+
+
+@pytest.mark.parametrize(
+    "invalid_event_type",
+    (
+        ["withheld-event-type"],
+        {"withheld-event-type": True},
+    ),
+)
+def test_generic_append_non_string_event_type_is_value_safe_validation_failure(
+    tmp_path, invalid_event_type
+):
+    root = _setup_fake_root(tmp_path)
+    task_id = "task-20260705-001"
+    _write_task(root, task_id, status="running")
+    events_file = _write_events(
+        root,
+        _evt(
+            "evt-20260705-001",
+            task_id,
+            "created",
+            None,
+            "planned",
+            "c",
+            "2026-07-05T10:00:00+08:00",
+        ),
+    )
+    original_bytes = events_file.read_bytes()
+    candidate = _evt(
+        "evt-20260705-002",
+        task_id,
+        invalid_event_type,
+        "running",
+        "running",
+        "invalid",
+        "2026-07-05T10:01:00+08:00",
+    )
+
+    result = append_event(
+        root,
+        file=None,
+        stdin=False,
+        commit=True,
+        tasks_file="tasks/tasks.jsonl",
+        events_file="tasks/events.jsonl",
+        candidate=candidate,
+    )
+
+    assert result.status == "validation_failed"
+    assert [finding.rule_id for finding in result.findings] == [
+        "event-schema-validation-failed"
+    ]
+    assert "withheld-event-type" not in result.render_json()
+    assert events_file.read_bytes() == original_bytes
+
+
 def test_commit_missing_task_does_not_write(tmp_path):
     root = _setup_fake_root(tmp_path)
     _write_task(root, "task-20260705-001", status="running")

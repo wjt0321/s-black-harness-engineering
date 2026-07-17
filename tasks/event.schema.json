@@ -38,7 +38,11 @@
         "approval_resolved",
         "run_planned",
         "run_draft_exported",
-        "run_blocked"
+        "run_blocked",
+        "execution_attempt_started",
+        "execution_succeeded",
+        "execution_failed",
+        "execution_cancelled"
       ]
     },
     "from_status": {

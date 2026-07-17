@@ -30,6 +30,7 @@ from .ledger_consistency import check_ledger_consistency
 from .loader import is_safe_to_read, load_schema, normalize_path
 from .policy import check_text
 from .result import CheckResult, Finding
+from .runtime_event_append import reserved_execution_event_type_finding
 from .task_validation import validate_records
 
 _TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
@@ -626,6 +627,13 @@ def _run_preflight(
                             line=line_no,
                         )
                     )
+                    continue
+
+                reserved_finding = reserved_execution_event_type_finding(
+                    record, line=line_no
+                )
+                if reserved_finding is not None:
+                    findings.append(reserved_finding)
                     continue
 
                 schema_result = _validate_candidate_event_schema(root, record)

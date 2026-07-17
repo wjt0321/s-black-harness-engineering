@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from agent_runtime.cli import main
-from agent_runtime.runtime_event_import import import_events_dry_run
+from agent_runtime.runtime_event_import import import_events_commit, import_events_dry_run
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -240,6 +240,158 @@ def test_import_event_dry_run_schema_invalid(tmp_path):
     result = import_events_dry_run(root, file="candidates.jsonl")
     assert result.status == "validation_failed"
     assert any(f.rule_id == "event-schema-validation-failed" for f in result.findings)
+
+
+@pytest.mark.parametrize("commit", (False, True))
+def test_generic_import_blocks_reserved_execution_event_at_original_line(
+    tmp_path, commit
+):
+    root = _setup_fake_root(tmp_path)
+    task_id = "task-20260707-001"
+    _write_task(root, task_id, status="running")
+    events_file = _write_events(
+        root,
+        _evt(
+            "evt-20260707-001",
+            task_id,
+            "created",
+            None,
+            "planned",
+            "c",
+            "2026-07-07T10:00:00+08:00",
+        ),
+    )
+    original_bytes = events_file.read_bytes()
+    candidates = root / "candidates.jsonl"
+    candidates.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    _evt(
+                        "evt-20260707-002",
+                        task_id,
+                        "progress",
+                        "running",
+                        "running",
+                        "p1",
+                        "2026-07-07T10:01:00+08:00",
+                    )
+                ),
+                "",
+                json.dumps(
+                    _evt(
+                        "evt-20260707-003",
+                        task_id,
+                        "execution_attempt_started",
+                        "running",
+                        "running",
+                        "reserved",
+                        "2026-07-07T10:02:00+08:00",
+                    )
+                ),
+                json.dumps(
+                    _evt(
+                        "evt-20260707-004",
+                        task_id,
+                        "progress",
+                        "running",
+                        "running",
+                        "p2",
+                        "2026-07-07T10:03:00+08:00",
+                    )
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    if commit:
+        result = import_events_commit(
+            root,
+            file="candidates.jsonl",
+            tasks_file="tasks/tasks.jsonl",
+            events_file="tasks/events.jsonl",
+        )
+    else:
+        result = import_events_dry_run(
+            root,
+            file="candidates.jsonl",
+            tasks_file="tasks/tasks.jsonl",
+            events_file="tasks/events.jsonl",
+        )
+
+    reserved = [
+        finding
+        for finding in result.findings
+        if finding.rule_id == "reserved-execution-event-type"
+    ]
+    assert result.status == "blocked"
+    assert len(reserved) == 1
+    assert reserved[0].line == 3
+    assert result.event_count == 2
+    assert result.event_type_counts == {}
+    assert events_file.read_bytes() == original_bytes
+
+
+@pytest.mark.parametrize(
+    "invalid_event_type",
+    (
+        ["withheld-event-type"],
+        {"withheld-event-type": True},
+    ),
+)
+def test_generic_import_non_string_event_type_is_value_safe_validation_failure(
+    tmp_path, invalid_event_type
+):
+    root = _setup_fake_root(tmp_path)
+    task_id = "task-20260707-001"
+    _write_task(root, task_id, status="running")
+    events_file = _write_events(
+        root,
+        _evt(
+            "evt-20260707-001",
+            task_id,
+            "created",
+            None,
+            "planned",
+            "c",
+            "2026-07-07T10:00:00+08:00",
+        ),
+    )
+    original_bytes = events_file.read_bytes()
+    _write_candidates(
+        root,
+        "candidates.jsonl",
+        _evt(
+            "evt-20260707-002",
+            task_id,
+            invalid_event_type,
+            "running",
+            "running",
+            "invalid",
+            "2026-07-07T10:01:00+08:00",
+        ),
+    )
+
+    result = import_events_dry_run(
+        root,
+        file="candidates.jsonl",
+        tasks_file="tasks/tasks.jsonl",
+        events_file="tasks/events.jsonl",
+    )
+
+    assert result.status == "validation_failed"
+    schema_findings = [
+        finding
+        for finding in result.findings
+        if finding.rule_id == "event-schema-validation-failed"
+    ]
+    assert len(schema_findings) == 1
+    assert schema_findings[0].line == 1
+    assert "withheld-event-type" not in result.render_json()
+    assert result.event_count == 0
+    assert events_file.read_bytes() == original_bytes
 
 
 def test_import_event_dry_run_duplicate_within_candidates(tmp_path):
