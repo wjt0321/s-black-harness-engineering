@@ -1,4 +1,4 @@
-<!-- parents: 96-fixed-git-status-executor-design-gate.md, 97-execution-lifecycle-audit-writer-design-and-implementation.md -->
+<!-- parents: archive/96-fixed-git-status-executor-design-gate.md, 97-execution-lifecycle-audit-writer-design-and-implementation.md -->
 <!-- relates: archive/95-single-user-real-execution-readiness-gate-and-milestone.md, 58-orchestration-run-controlled-execution-design.md -->
 
 # 98 — Fixed Git Status Executor Implementation and Limited Enablement
@@ -232,6 +232,8 @@ python -m pytest tests/test_stage49_real_git_status_smoke.py -q
 ```
 
 提交前独立安全复审曾发现 repository pathname reopen/无界读取、Job assignment 前清理、Windows access-right fail-open、terminal state、binding location 与默认 real-writer regression 六项 Important。实现已补齐 locked/no-follow handle lifetime、pre-read bounds、direct child fallback、close failure withheld、independent fail-closed rights、`awaiting_terminal`、binding parent/project gate 与真实 writer 回归；第二轮复审确认无剩余 Critical/Important。
+
+2026-07-17 post-close CI portability correction：首次推送 `bf0b990` 后，Ubuntu Python 3.11 job 的两个 Windows PATH sanitization 单测错误使用宿主 `os.pathsep` 构造模拟输入，导致 Linux 上生成 `:` 而被 Windows contract 的 `;` parser 正确拒绝。本次仅把测试 fixture 改为显式 Windows `;`，未放宽 production sanitization；定向测试恢复为 11 passed。
 
 ## 12. 后续停止线
 

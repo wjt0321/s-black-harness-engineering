@@ -1102,7 +1102,7 @@ v0.14.0-filtered-snapshot-host-integration
 - `execution_attempt_started` 不宣称 child 已创建；execution audit 成功前不得释放 result；
 - reserved execution event 只能由专用 writer 写入，通用 append/import 必须拒绝。
 
-本阶段没有新增 executor、CLI、schema、event type，也没有执行 Git。事实源为 `docs/96-fixed-git-status-executor-design-gate.md` 与 release notes 106。
+本阶段没有新增 executor、CLI、schema、event type，也没有执行 Git。事实源为 `docs/archive/96-fixed-git-status-executor-design-gate.md` 与 release notes 106。
 
 ## Stage 47 — Execution Lifecycle Audit Writer Design Gate（已完成）
 
@@ -1146,9 +1146,24 @@ v0.14.0-filtered-snapshot-host-integration
 
 事实源为 `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108。POSIX、linked worktree、submodule、alternate object store、OS filesystem write proof、通用 shell、network adapter 与第二个 operation 继续 unavailable。
 
-## Stage 50 — Fixed Execution Operational Recovery Design Gate（条件启动）
+## Stage 50 — Fixed Execution Operational Recovery Design Gate（已完成，design-only）
 
-下一阶段不自动开放更多 command。优先审计 machine-local trust rotation、open attempt recovery、Windows Job accounting/no-orphan verification 与 operator workflow；如选择 POSIX enablement，必须单独闭合 executable image identity 和 process-group contract。任何第二个真实 operation、approval-required adapter 或 OS-enforced filesystem proof 都需要独立设计与用户授权。
+已冻结：
+
+- execution、trust rotation 与 recovery close 共用 replacement-resistant fixed machine-local exclusive lease；
+- trust binding missing/current/drifted/invalid/candidate/platform 状态，以及绑定 old binding/full new candidate identity 的 reviewed rotation workflow；
+- invalid binding 不允许 force overwrite、自动删除或静默替换；
+- open attempt 使用 16 MiB/50,000 record/64 KiB line/depth-32 bounded list/inspect，`awaiting_terminal` 固定解释为 historical process outcome unknown；
+- 唯一 recovery close 为 `execution_failed` / `phase=audit` / `execution.recovery_outcome_unknown`，并绑定 expected started event id 与 plan hash；
+- Windows Job accounting active-zero、direct-child reap 与 containment close release gate；
+- 历史 `execution-audit/v1` 兼容与 future v2 Job evidence；
+- no auto retry、no second operation、no POSIX、no network/service/DB/UI、no filesystem write proof。
+
+本阶段没有新增 production CLI、schema、writer 或 subprocess。事实源为 `docs/99-fixed-execution-operational-recovery-design-gate.md` 与 release notes 109。
+
+## Stage 51 — Fixed Execution Operational Recovery Implementation（条件启动）
+
+只允许按 Stage 50 冻结 contract 实现 machine-local lease、trust/audit recovery inspection、fixed open-attempt closure、Windows Job accounting 与 audit v2。任何第二个真实 operation、approval-required adapter、POSIX enablement 或 OS-enforced filesystem proof 都需要独立设计与用户明确授权。
 
 ---
 

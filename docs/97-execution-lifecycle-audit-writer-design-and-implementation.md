@@ -1,4 +1,4 @@
-<!-- parents: 96-fixed-git-status-executor-design-gate.md, 56-orchestration-controlled-write-boundary.md -->
+<!-- parents: archive/96-fixed-git-status-executor-design-gate.md, 56-orchestration-controlled-write-boundary.md -->
 <!-- relates: 60-orchestration-run-lifecycle-events-design.md, archive/95-single-user-real-execution-readiness-gate-and-milestone.md -->
 
 # 97 — Execution Lifecycle Audit Writer Design and Implementation

@@ -1,4 +1,4 @@
-<!-- parents: ../../../docs/96-fixed-git-status-executor-design-gate.md -->
+<!-- parents: ../../../docs/archive/96-fixed-git-status-executor-design-gate.md -->
 
 # Release Notes 106 — Stage 46 Fixed Git Status Executor Design Gate
 
@@ -35,7 +35,7 @@ Stage 46 已把 `shell-local/git_status` readiness candidate 细化为 fixed exe
 
 ## 文档维护
 
-- 新增 `docs/96-fixed-git-status-executor-design-gate.md`；
+- 当时新增、现归档为 `docs/archive/96-fixed-git-status-executor-design-gate.md`；
 - 旧 Stage 14 CLI draft 完整归档为 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`；
 - 同步 digest、index、roadmap、README、AGENTS、versioning、handoff 与 progress；
 - 活跃 docs 保持 50 个；

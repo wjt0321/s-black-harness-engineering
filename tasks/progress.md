@@ -2810,7 +2810,7 @@
 - Stage 46 现冻结 operator-reviewed trust binding、image identity / TOCTOU 停止线、POSIX process group / Windows Job Object、完整 config denylist/submodule block、porcelain-v1 XY 映射及 `execution_attempt_started` 语义。
 - 二次复审继续补齐 repository read containment：拒绝 `core.worktree`、external excludes/attributes、`.git/commondir`、object alternates，并把 `.git/info/exclude` / `attributes` 纳入 bounded fingerprint。
 - 三次复审把 containment 提升为统一前置规则：Git 核心 metadata 必须 lstat-first、never-follow；index/HEAD/packed-refs/refs/objects/pack 的 symlink、junction、reparse、hardlink/root escape 在任何读取或 hash 前 blocked。
-- 新增 `docs/96-fixed-git-status-executor-design-gate.md` 与 release notes 106；旧 Stage 14 CLI draft 归档，活跃 docs 保持 50 个。
+- 当时新增、现归档为 `docs/archive/96-fixed-git-status-executor-design-gate.md`，并新增 release notes 106；旧 Stage 14 CLI draft 归档，活跃 docs 保持 50 个。
 - 本阶段没有新增 production code、CLI/schema/event type，没有执行 Git，不创建 tag、不 push。
 - 下一阶段为 Stage 47 Execution Lifecycle Audit Writer Design Gate；Stage 49 真实 subprocess 仍需用户再次明确授权。
 
@@ -2846,3 +2846,22 @@
 - 新增 `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108；Stage 43–45 事实源移入 archive，活跃 docs 保持 50 个。
 - 稳定 semver 仍为已推送 v0.17.0；本阶段不创建 tag、不 push。
 - 下一阶段为 Stage 50 Fixed Execution Operational Recovery Design Gate（条件启动），不自动开放更多 command。
+
+## 2026-07-17 Stage 50 — Fixed Execution Operational Recovery Design Gate
+
+- 用户要求继续推进到下一阶段里程碑；按路线图启动 Stage 50 design-only gate，未授权 push、tag 或新的真实外部操作。
+- 审计 Stage 49 trust rotation、open attempt、terminal audit incomplete、Windows Job Object 与 operator workflow。
+- 比较 auto retry、read-only inspect only 与 single-flight recovery 三种方案，选择 machine-local lease + safe inspection + outcome-unknown closure + Job accounting。
+- 冻结 fixed execution、trust commit/rotation 与 recovery close 共用 fixed machine-local exclusive lease；read-only inspect 不创建或修改 lease 文件。
+- 冻结 trust binding missing/current/drifted/invalid/candidate/platform 状态；normal rotation 绑定 expected old binding id 与完整 new executable/PATH identity，invalid binding 不允许 force overwrite 或自动删除。
+- lease contract 增加 atomic create、persistent no-unlink、deny replacement sharing 与 handle/path identity recheck，防止 split-brain lock domain。
+- 冻结 16 MiB/50,000 record/64 KiB line/depth-32 bounded open-attempt list/inspect；`awaiting_terminal` 必须解释为 historical process outcome unknown，禁止自动 retry 和历史 summary release。
+- 冻结唯一 recovery close：`execution_failed` / `phase=audit` / `execution.recovery_outcome_unknown` / `guard_status=not_run`，并绑定 expected started event id 与 plan hash。
+- 冻结 Windows Job accounting active-zero、direct-child reap、containment close release gate；该 evidence 不构成 filesystem write proof。
+- 冻结历史 `execution-audit/v1` 兼容与 future `execution-audit/v2` Job evidence，不静默修改 v1。
+- 新增 `docs/99-fixed-execution-operational-recovery-design-gate.md` 与 release notes 109；Stage 46 文档移入 archive，活跃 docs 保持 50 个。
+- Stage 50 没有新增 production CLI、schema、writer 或 subprocess；唯一 Windows fixed Git status 行为保持不变。
+- 下一阶段为 Stage 51 Fixed Execution Operational Recovery Implementation（条件启动），只允许实现 Stage 50 contract。
+- 检查首次推送 `bf0b990` 的 GitHub Actions run `29554296000`：Ubuntu Python 3.11 有两个 Windows PATH sanitization 测试失败，1120 passed / 2 failed / 2 skipped。
+- 根因是测试通过宿主 `os.pathsep` 构造 `platform="windows"` 输入，Linux 产生 `:`，而 production contract 固定使用 Windows `;`；修复测试 fixture 为显式 `;`，不修改 production code。
+- 中英文 README 的首次阅读顺序从 30 份历史文档收敛为 7 个当前阶段入口；历史导航保留在 `docs/00-index.md`。

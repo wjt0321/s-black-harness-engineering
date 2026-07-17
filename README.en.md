@@ -58,7 +58,7 @@ The repository now provides an **offline, auditable CLI/runtime security core su
 
 - it can already support policy validation, task/event ledgers, capability routing, dry-runs, controlled writes, and recovery-lineage auditing;
 - Stage 13 resource/operation reconciliation and the Stage 14 replayable minimal orchestration loop are both complete;
-- Stage 13–48 backend/read-model/controlled-write/host/display/readiness/audit work is closed. Stage 49 now implements the first strictly limited Windows fixed Git-status executor with machine-local reviewed trust, sanitized PATH, actual-image rechecking, repository containment, Job Object lifecycle control, a finite parser, and audit-before-release. Generic adapter execution remains unavailable.
+- Stage 13–49 backend/read-model/controlled-write/host/display/readiness/audit/fixed-execution work is closed. The [Stage 50 operational recovery design](docs/99-fixed-execution-operational-recovery-design-gate.md) freezes a machine-local execution lease, identity-bound trust rotation, bounded open-attempt recovery, Windows Job accounting, and audit-v2 contract without expanding production execution permission. Generic adapter execution remains unavailable.
 - Stage 16 closure commit: `b46c013`; this closure has been pushed to `origin/main` with user authorization.
 
 ## Progress Bar
@@ -150,6 +150,8 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 47 — Execution Lifecycle Audit Writer Design Gate
 - ✅ Stage 48 — Execution Lifecycle Audit Writer Implementation (no CLI and no subprocess)
 - ✅ Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement (Windows only)
+- ✅ Stage 50 — Fixed Execution Operational Recovery Design Gate (design only)
+- ⏳ Stage 51 — Fixed Execution Operational Recovery Implementation (conditional)
 
 ### The Most Accurate Current Read
 
@@ -158,10 +160,11 @@ The current state is best understood as:
 - **guardrails / ledgers / controlled writes are no longer a sketch; they are already a formed security core**
 - **the orchestration backend now has source-backed registry, constraint routing, read-loop snapshots, and recovery lineage aggregation v1**
 - **one Windows fixed `git_status` operation is enabled; generic adapters, POSIX execution, a second operation, and OS-enforced filesystem write protection remain blocked**
+- **Stage 51 is not implemented; there is currently no recovery CLI, automatic retry, invalid-binding force repair, or additional real operation**
 
 ### What Comes Next
 
-Stage 49 is complete on Windows for one fixed operation only. The operator first provisions a machine-local reviewed Git binding; execution then requires explicit `--commit`, exact `git status --short --branch`, pre/post repository guards, a suspended actual-image check, Job Object containment, bounded output, finite porcelain validation, and closed execution audit before a path-free summary is released. POSIX, arbitrary commands, network adapters, and additional operations remain unavailable.
+Stage 49 is complete on Windows for one fixed operation only. The operator first provisions a machine-local reviewed Git binding; execution then requires explicit `--commit`, exact `git status --short --branch`, pre/post repository guards, a suspended actual-image check, Job Object containment, bounded output, finite porcelain validation, and closed execution audit before a path-free summary is released. Stage 50 adds only a recovery design contract for a replacement-resistant single-flight lease, old-binding/full-candidate-bound rotation, input-bounded open-attempt handling, active-zero Job accounting, and future audit v2. POSIX, arbitrary commands, network adapters, and additional operations remain unavailable.
 
 
 Implemented capability highlights:
@@ -200,6 +203,7 @@ The implemented writes are all **controlled writes**: project-local safe paths o
 ## Quick Start
 
 ```bash
+python -m agent_runtime.cli docs context --json
 python -m agent_runtime.cli doctor
 python -m agent_runtime.cli check text --text hello
 python -m agent_runtime.cli check path ./docs/06-adapter-layer.md --read
@@ -213,44 +217,17 @@ For more CLI usage, see `docs/10-cli-poc-usage.md`.
 
 ## Recommended Reading
 
-If this is your first time in the repository, read in this order:
+For a new session, recover the current stage first; there is no need to read the full history in sequence:
 
-1. `docs/00-index.md`
-2. `docs/01-vision-and-boundaries.md`
-3. `docs/02-roadmap.md`
-4. `docs/47-orchestration-hub-vision.md`
-5. `docs/48-adapter-runtime-interface.md`
-6. `docs/49-capability-routing-model.md`
-7. `docs/50-control-plane-state-model.md`
-8. `docs/51-backend-first-api-boundary.md`
-9. `docs/52-minimal-orchestration-loop.md`
-10. `docs/archive/53-minimal-orchestration-loop-cli-draft.md`
-11. `docs/54-backend-preparation-before-ui.md`
-12. `docs/archive/release-notes/55-release-notes-orchestration-read-models.md`
-13. `docs/56-orchestration-controlled-write-boundary.md`
-14. `docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md`
-15. `docs/58-orchestration-run-controlled-execution-design.md`
-16. `docs/archive/release-notes/59-release-notes-orchestration-run-controlled-execution.md`
-17. `docs/60-orchestration-run-lifecycle-events-design.md`
-18. `docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`
-19. `docs/62-orchestration-task-submit-controlled-write-design.md`
-20. `docs/63-orchestration-task-submit-created-event-design.md`
-21. `docs/64-versioning-governance.md`
-22. `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`
-23. `docs/66-orchestration-run-retry-fallback-design.md`
-24. `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`
-25. `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md`
-26. `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`
-27. `docs/70-orchestration-run-retry-fallback-commit-design.md`
-28. `docs/archive/release-notes/71-release-notes-run-lineage-read-models.md`
-29. `docs/10-cli-poc-usage.md`
-30. `docs/21-controlled-write-boundaries.md`
+1. [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current stage, stable baseline, and next step.
+2. [`docs/99-fixed-execution-operational-recovery-design-gate.md`](docs/99-fixed-execution-operational-recovery-design-gate.md): authoritative Stage 50 design contract.
+3. [`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`](docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md): the only real execution capability and its stop lines.
+4. [`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`](docs/97-execution-lifecycle-audit-writer-design-and-implementation.md): execution audit writer source of truth.
+5. [`tasks/handoff-2026-07-17.md`](tasks/handoff-2026-07-17.md): latest handoff and Stage 51 conditional boundary.
+6. [`docs/02-roadmap.md`](docs/02-roadmap.md): complete stage roadmap.
+7. [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md): CLI flags and examples.
 
-The documents `docs/47-orchestration-hub-vision.md` through `docs/54-backend-preparation-before-ui.md` form the orchestration-hub backend backbone; read them in numbered order.
-
-If you only want the full progress ledger:
-
-- `tasks/progress.md`
+See [`docs/00-index.md`](docs/00-index.md) for the complete topic/archive map and [`tasks/progress.md`](tasks/progress.md) for the full progress ledger.
 
 ## Repository Layout
 
@@ -273,6 +250,7 @@ On push and pull request to `main`, GitHub Actions runs:
 - `pytest`
 - `doctor`
 - ledger CLI smoke checks
+- controlled-write regression
 - `public_scan`
 
 See `.github/workflows/ci.yml` for details.

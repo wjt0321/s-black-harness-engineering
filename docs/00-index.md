@@ -34,7 +34,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 49 fixed Git status executor 已收口）
+### 5. 想看中枢台主线（Stage 50 operational recovery design gate 已收口）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -67,18 +67,20 @@
 - `93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` — Stage 39–41 display host design、实现、验收与 `v0.17.0` 冻结事实源（已收口）
 - `archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md` — Stage 42 ready host result → presentation boundary design-only gate（历史事实源，未实现 presenter）
 - `archive/95-single-user-real-execution-readiness-gate-and-milestone.md` — Stage 43–45 单用户真实执行 readiness 历史事实源
-- `96-fixed-git-status-executor-design-gate.md` — Stage 46 trusted executable/image binding、sanitized PATH、process-tree containment、finite porcelain parser、no-write evidence 与 dedicated audit release gate（design-only 已收口）
+- `archive/96-fixed-git-status-executor-design-gate.md` — Stage 46 trusted executable/image binding、sanitized PATH、process-tree containment、finite porcelain parser、no-write evidence 与 dedicated audit release gate（历史 design-only 事实源）
 - `97-execution-lifecycle-audit-writer-design-and-implementation.md` — Stage 47–48 reserved schema、internal writer、通用入口隔离、rollback 与 recovery inspection 事实源（已收口）
 - `98-fixed-git-status-executor-implementation-and-limited-enablement.md` — Stage 49 Windows trust binding、repository guard、Job Object runner、finite parser、audit release 与真实 smoke 事实源（已收口）
+- `99-fixed-execution-operational-recovery-design-gate.md` — Stage 50 machine-local lease、trust/open-attempt recovery、fixed closure、Windows Job accounting 与 audit v2 design gate（已收口）
 - `archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` — Stage 36–38 display v1 consumer 与 `v0.16.0` 历史事实源
 - `archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` — Stage 33–35 Markdown display 与 `v0.15.0` 历史事实源
 - `archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` — Stage 30–32 host design、实现、验收与 `v0.14.0` 历史冻结事实源
 
 ### 6. 想看里程碑与冻结记录
 
-- 当前提交级里程碑：`98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108
+- 当前设计 gate：`99-fixed-execution-operational-recovery-design-gate.md` 与 release notes 109
+- 上一提交级里程碑：`98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108
 - 上一提交级里程碑：`97-execution-lifecycle-audit-writer-design-and-implementation.md` 与 release notes 107
-- 上一设计 gate：`96-fixed-git-status-executor-design-gate.md` 与 release notes 106
+- 历史设计 gate：`archive/96-fixed-git-status-executor-design-gate.md` 与 release notes 106
 - 历史 readiness 里程碑：`archive/95-single-user-real-execution-readiness-gate-and-milestone.md` 与 release notes 104/105
 - 历史 presentation gate：`archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md` 与 release notes 103
 - 当前稳定里程碑事实源：`93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 `archive/release-notes/102-release-notes-v0.17.0-filtered-snapshot-display-host-integration.md`
@@ -95,17 +97,17 @@
 | 目录 | 内容 |
 |:---|:---|
 | `archive/` | 历史设计门 / freeze checklist / execution plan（含 v0.13 freeze `77`、Stage 19–21 `80`–`82`、v0.14 freeze `90`） |
-| `archive/release-notes/` | 各阶段 release notes（最新为 `108-release-notes-stage49-fixed-git-status-executor.md`） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `109-release-notes-stage50-fixed-execution-operational-recovery-design-gate.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+2. `99-fixed-execution-operational-recovery-design-gate.md`
 3. 最新 handoff：`tasks/handoff-2026-07-17.md`
-4. `97-execution-lifecycle-audit-writer-design-and-implementation.md`
-5. `96-fixed-git-status-executor-design-gate.md`
+4. `98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+5. `97-execution-lifecycle-audit-writer-design-and-implementation.md`
 
 ## 其他入口
 

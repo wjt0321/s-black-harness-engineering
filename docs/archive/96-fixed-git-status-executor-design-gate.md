@@ -8,6 +8,7 @@
 > 前置提交：`49a517b`（Stage 43–45 single-user execution readiness）
 > 稳定版本：`v0.17.0-filtered-snapshot-display-host-integration`
 > 本阶段不新增 executor、CLI、schema、event type，不执行 Git
+> 归档状态：Stage 49 implementation 与 Stage 50 recovery design 已形成后续事实源
 
 ## 1. 目标
 

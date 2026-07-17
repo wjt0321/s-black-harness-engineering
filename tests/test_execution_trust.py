@@ -53,7 +53,7 @@ def test_sanitize_path_drops_unsafe_entries_and_is_deterministic(tmp_path: Path)
     local.mkdir()
 
     result = sanitize_path(
-        os.pathsep.join(
+        ";".join(
             [
                 "",
                 ".",
@@ -87,7 +87,7 @@ def test_sanitize_path_can_remove_actor_writable_directories(
     writable.mkdir()
 
     result = sanitize_path(
-        os.pathsep.join([str(writable), str(trusted)]),
+        ";".join([str(writable), str(trusted)]),
         root,
         platform="windows",
         allow_directory=lambda path: path == trusted,

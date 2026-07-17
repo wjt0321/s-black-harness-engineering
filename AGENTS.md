@@ -16,35 +16,37 @@ python -m agent_runtime.cli doctor
 然后按顺序阅读：
 
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
-2. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`：Stage 49 Windows fixed Git status executor 实现、真实 smoke 与停止线事实源。
-3. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`：Stage 47–48 专用 execution audit writer 设计、实现与验收事实源。
-4. `docs/96-fixed-git-status-executor-design-gate.md`：Stage 46 fixed executor design contract。
-5. `docs/archive/95-single-user-real-execution-readiness-gate-and-milestone.md`：Stage 43–45 readiness 历史事实源。
-6. `docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`：Stage 42 design-only 历史事实源。
-7. `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`：Stage 39–41 与 v0.17.0 事实源。
-8. `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`：Stage 36–38 与 v0.16.0 历史事实源。
-9. `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`：Stage 33–35 与 v0.15.0 历史事实源。
-10. `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`：Stage 30–32 与 v0.14.0 历史事实源。
-11. `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`：Stage 29 stdin consumer。
-12. `tasks/handoff-2026-07-17.md`：Stage 49 收口事实与 Stage 50 条件边界。
-13. `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`：Stage 28 consumer gate。
-14. `docs/86-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 filter contract。
-15. `docs/84-envelope-scoped-snapshot-read-design-gate.md`：Stage 23/24 reader 边界。
-16. `docs/83-codex-desktop-snapshot-json-reader-implementation.md`：Stage 22 reader。
-17. `docs/79-read-only-host-consumer-validation-boundary.md`：Stage 18 consumer。
-18. `docs/78-control-panel-host-integration-boundary.md`：Stage 17 handoff。
-19. `docs/76-read-only-control-panel-mvp.md`：Stage 16 Control Panel。
-20. `docs/75-cli-automation-contract-discovery.md`：CLI 自动化。
-21. `docs/52-minimal-orchestration-loop.md`：Stage 14。
-22. `docs/51-backend-first-api-boundary.md`：Stage 13。
-23. `docs/02-roadmap.md`：完整路线图。
-24. `docs/archive/release-notes/108-release-notes-stage49-fixed-git-status-executor.md`：Stage 49 验收。
-25. `docs/archive/release-notes/107-release-notes-stage47-stage48-execution-audit-writer.md`：Stage 47–48 验收。
-26. `docs/archive/release-notes/106-release-notes-stage46-fixed-git-status-executor-design-gate.md`：Stage 46 验收。
-27. `docs/archive/release-notes/105-release-notes-stage45-single-user-execution-readiness-milestone-closure.md`：Stage 45 收口。
-28. `docs/archive/release-notes/104-release-notes-stage44-single-user-execution-readiness-gate.md`：Stage 44 验收。
-29. `docs/archive/release-notes/102-release-notes-v0.17.0-filtered-snapshot-display-host-integration.md`：v0.17.0 验收。
-30. `docs/10-cli-poc-usage.md`：具体 CLI 参数。
+2. `docs/99-fixed-execution-operational-recovery-design-gate.md`：Stage 50 lease、trust/open-attempt recovery、Job accounting 与 audit v2 design contract。
+3. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`：Stage 49 Windows fixed Git status executor 实现、真实 smoke 与停止线事实源。
+4. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`：Stage 47–48 专用 execution audit writer 设计、实现与验收事实源。
+5. `docs/archive/96-fixed-git-status-executor-design-gate.md`：Stage 46 fixed executor 历史 design contract。
+6. `docs/archive/95-single-user-real-execution-readiness-gate-and-milestone.md`：Stage 43–45 readiness 历史事实源。
+7. `docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`：Stage 42 design-only 历史事实源。
+8. `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`：Stage 39–41 与 v0.17.0 事实源。
+9. `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`：Stage 36–38 与 v0.16.0 历史事实源。
+10. `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`：Stage 33–35 与 v0.15.0 历史事实源。
+11. `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`：Stage 30–32 与 v0.14.0 历史事实源。
+12. `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`：Stage 29 stdin consumer。
+13. `tasks/handoff-2026-07-17.md`：Stage 50 收口事实与 Stage 51 条件边界。
+14. `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`：Stage 28 consumer gate。
+15. `docs/86-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 filter contract。
+16. `docs/84-envelope-scoped-snapshot-read-design-gate.md`：Stage 23/24 reader 边界。
+17. `docs/83-codex-desktop-snapshot-json-reader-implementation.md`：Stage 22 reader。
+18. `docs/79-read-only-host-consumer-validation-boundary.md`：Stage 18 consumer。
+19. `docs/78-control-panel-host-integration-boundary.md`：Stage 17 handoff。
+20. `docs/76-read-only-control-panel-mvp.md`：Stage 16 Control Panel。
+21. `docs/75-cli-automation-contract-discovery.md`：CLI 自动化。
+22. `docs/52-minimal-orchestration-loop.md`：Stage 14。
+23. `docs/51-backend-first-api-boundary.md`：Stage 13。
+24. `docs/02-roadmap.md`：完整路线图。
+25. `docs/archive/release-notes/109-release-notes-stage50-fixed-execution-operational-recovery-design-gate.md`：Stage 50 验收。
+26. `docs/archive/release-notes/108-release-notes-stage49-fixed-git-status-executor.md`：Stage 49 验收。
+27. `docs/archive/release-notes/107-release-notes-stage47-stage48-execution-audit-writer.md`：Stage 47–48 验收。
+28. `docs/archive/release-notes/106-release-notes-stage46-fixed-git-status-executor-design-gate.md`：Stage 46 验收。
+29. `docs/archive/release-notes/105-release-notes-stage45-single-user-execution-readiness-milestone-closure.md`：Stage 45 收口。
+30. `docs/archive/release-notes/104-release-notes-stage44-single-user-execution-readiness-gate.md`：Stage 44 验收。
+31. `docs/archive/release-notes/102-release-notes-v0.17.0-filtered-snapshot-display-host-integration.md`：v0.17.0 验收。
+32. `docs/10-cli-poc-usage.md`：具体 CLI 参数。
 
 不要先遍历整个 `docs/` 或 `tasks/progress.md`。
 
@@ -52,7 +54,7 @@ python -m agent_runtime.cli doctor
 
 `s-black harness engineering`（Python 包名 `agent_runtime`）是一个轻量、可审计、可迁移的 Agent Runtime / Harness Orchestrator，逐步抽象规则门禁、任务账本、adapter envelope、能力路由和控制面 read model。
 
-当前状态：**Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement 已按 TDD 收口**。Windows 上新增 machine-local reviewed trust binding、actor-writable PATH filtering、non-shareable executable handle、suspended actual-image recheck、repository/config/submodule containment、Job Object bounded runner、finite porcelain parser、pre/post guard 与 execution audit release gate；已在临时 direct `.git/` 仓库完成一次显式授权真实 smoke。唯一真实 operation 为 `git status --short --branch`，必须显式 `--commit`。下一阶段为 **Stage 50 — Fixed Execution Operational Recovery Design Gate（条件启动）**。
+当前状态：**Stage 50 — Fixed Execution Operational Recovery Design Gate 已收口**。已冻结 machine-local single-flight execution lease、trust binding missing/current/drifted/invalid 状态、open-attempt bounded discovery 与 outcome-unknown fixed closure、Windows Job accounting active-zero/no-orphan evidence，以及 `execution-audit/v1` 历史兼容与 future v2；本阶段没有新增 production CLI、schema、writer 或 subprocess。唯一真实 operation 仍为 Stage 49 Windows `git status --short --branch`，必须显式 `--commit`。下一阶段为 **Stage 51 — Fixed Execution Operational Recovery Implementation（条件启动）**。
 
 - 冻结基线：`v0.17.0-filtered-snapshot-display-host-integration`（已推送至 `origin`）；上一基线为 `v0.16.0-filtered-snapshot-display-consumer`（已推送至 `origin`）。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation、CLI automation contract/profile/workflow，以及 `orchestration control-panel snapshot/render/handoff` 的确定性 representation、版本化 stdio descriptor 与独立 reference consumer validation。
@@ -76,9 +78,10 @@ python -m agent_runtime.cli doctor
 - Stage 39–41 事实源：`docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`；validation-before-release display host 与本地 v0.17.0 已冻结。
 - Stage 42 历史事实源：`docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`；design-only gate 已冻结，未授权 presentation implementation。
 - Stage 43–45 历史事实源：`docs/archive/95-single-user-real-execution-readiness-gate-and-milestone.md`；Stage 44 readiness v1 永久保持历史 blocked snapshot。
-- Stage 46 事实源：`docs/96-fixed-git-status-executor-design-gate.md`；fixed executor contract 已冻结。
+- Stage 46 历史事实源：`docs/archive/96-fixed-git-status-executor-design-gate.md`；fixed executor contract 已冻结。
 - Stage 47–48 事实源：`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`；专用 writer 与 recovery validator 已实现。
 - Stage 49 事实源：`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`；Windows fixed Git status limited execution 已实现，POSIX、通用 shell、network adapter 和第二个 operation 仍 unavailable。
+- Stage 50 事实源：`docs/99-fixed-execution-operational-recovery-design-gate.md`；只冻结 operational recovery contract，production 行为保持 Stage 49。
 
 项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
 

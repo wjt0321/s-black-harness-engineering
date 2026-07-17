@@ -1,5 +1,5 @@
 <!-- parents: ../../../docs/97-execution-lifecycle-audit-writer-design-and-implementation.md -->
-<!-- relates: ../../../docs/96-fixed-git-status-executor-design-gate.md -->
+<!-- relates: ../../../docs/archive/96-fixed-git-status-executor-design-gate.md -->
 
 # Release Notes 107 — Stage 47–48 Execution Lifecycle Audit Writer
 
