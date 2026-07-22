@@ -27,6 +27,10 @@ _EXECUTION_AUDIT_EVENT_TYPES = {
     "execution_failed",
     "execution_cancelled",
 }
+_EXECUTION_AUDIT_SCHEMA_MAP = {
+    "execution-audit/v1": "tasks/execution-audit-event.schema.json",
+    "execution-audit/v2": "tasks/execution-audit-event-v2.schema.json",
+}
 _RFC3339_RE = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T"
     r"[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?"
@@ -144,6 +148,7 @@ def validate_records(
             next_action="Check the record file path.",
         )
 
+    records: list[dict[str, Any]] = []
     findings: list[Finding] = []
     try:
         with open(path, "r", encoding="utf-8") as fh:
@@ -164,51 +169,20 @@ def validate_records(
                         )
                     )
                     continue
-
-                try:
-                    validate(
-                        instance=record,
-                        schema=schema,
-                        format_checker=DATE_TIME_FORMAT_CHECKER,
-                    )
-                except JsonSchemaValidationError as exc:
+                if isinstance(record, dict):
+                    item = dict(record)
+                    item["_line_no"] = line_no
+                    records.append(item)
+                else:
                     findings.append(
                         Finding(
                             rule_id="schema-validation-failed",
                             severity="error",
                             action="error",
-                            message=_safe_error_message(line_no, schema_type, exc),
+                            message=f"Line {line_no} ({schema_type}): type mismatch at (root)",
                             line=line_no,
                         )
                     )
-                    continue
-
-                if (
-                    schema_type == "event"
-                    and isinstance(record, dict)
-                    and record.get("event_type") in _EXECUTION_AUDIT_EVENT_TYPES
-                ):
-                    execution_schema = load_schema(
-                        root, "tasks/execution-audit-event.schema.json"
-                    )
-                    try:
-                        validate(
-                            instance=record,
-                            schema=execution_schema,
-                            format_checker=DATE_TIME_FORMAT_CHECKER,
-                        )
-                    except JsonSchemaValidationError as exc:
-                        findings.append(
-                            Finding(
-                                rule_id="execution-audit-schema-validation-failed",
-                                severity="error",
-                                action="error",
-                                message=_safe_error_message(
-                                    line_no, "execution-audit-event", exc
-                                ),
-                                line=line_no,
-                            )
-                        )
     except OSError as exc:
         return CheckResult(
             status="error",
@@ -223,6 +197,89 @@ def validate_records(
             next_action="Check file permissions.",
         )
 
+    if findings:
+        return CheckResult(
+            status="validation_failed",
+            findings=findings,
+            next_action="Fix the reported records before writing to the ledger.",
+        )
+    return validate_record_objects(root, records, schema_type)
+
+
+def validate_record_objects(
+    root: Path,
+    records: list[dict[str, Any]] | tuple[dict[str, Any], ...],
+    schema_type: str,
+) -> CheckResult:
+    """Validate already parsed records without reopening their source ledger."""
+    schema_type = schema_type.lower()
+    schema_rel = SCHEMA_MAP.get(schema_type)
+    if schema_rel is None:
+        return CheckResult(
+            status="error",
+            findings=[
+                Finding(
+                    rule_id="unsupported-schema",
+                    severity="error",
+                    action="error",
+                    message=f"Unsupported schema type: {schema_type}. Use 'task' or 'event'.",
+                )
+            ],
+            next_action="Specify --schema task or --schema event.",
+        )
+    schema = load_schema(root, schema_rel)
+    findings: list[Finding] = []
+    for fallback_line, record in enumerate(records, start=1):
+        line_no = record.get("_line_no", fallback_line)
+        candidate = {key: value for key, value in record.items() if key != "_line_no"}
+        try:
+            validate(
+                instance=candidate,
+                schema=schema,
+                format_checker=DATE_TIME_FORMAT_CHECKER,
+            )
+        except JsonSchemaValidationError as exc:
+            findings.append(
+                Finding(
+                    rule_id="schema-validation-failed",
+                    severity="error",
+                    action="error",
+                    message=_safe_error_message(line_no, schema_type, exc),
+                    line=line_no,
+                )
+            )
+            continue
+        if (
+            schema_type == "event"
+            and candidate.get("event_type") in _EXECUTION_AUDIT_EVENT_TYPES
+        ):
+            metadata = candidate.get("metadata")
+            version = (
+                metadata.get("writer_schema_version")
+                if isinstance(metadata, dict)
+                else None
+            )
+            execution_schema_rel = _EXECUTION_AUDIT_SCHEMA_MAP.get(
+                version, "tasks/execution-audit-event.schema.json"
+            )
+            try:
+                validate(
+                    instance=candidate,
+                    schema=load_schema(root, execution_schema_rel),
+                    format_checker=DATE_TIME_FORMAT_CHECKER,
+                )
+            except JsonSchemaValidationError as exc:
+                findings.append(
+                    Finding(
+                        rule_id="execution-audit-schema-validation-failed",
+                        severity="error",
+                        action="error",
+                        message=_safe_error_message(
+                            line_no, "execution-audit-event", exc
+                        ),
+                        line=line_no,
+                    )
+                )
     if findings:
         return CheckResult(
             status="validation_failed",

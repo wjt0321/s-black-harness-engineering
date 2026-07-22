@@ -80,7 +80,7 @@ lease contract：
 - open-attempt recovery close；
 - future invalid-binding recovery（本 gate 暂不开放）。
 
-preview 和 read-only inspect 不取得写 lease，但必须报告 `lease_state=available|active|unavailable`。read-only result 不得因为观察 lease 而创建或修改文件。
+preview 和 read-only inspect 不取得写 lease，也不得调用 exclusive lock primitive；backend 只能通过不会修改 lock state 的 observational open/share probe 报告 `lease_state=available|active|unavailable`。read-only result 不得因为观察 lease 而创建或修改文件。
 
 ## 5. Trust recovery state model
 
@@ -138,7 +138,7 @@ implementation 必须增加：
 4. current candidate 必须同时匹配本次 expected digest/thumbprint、`--expected-executable-identity` 与 `--expected-path-identity`；完整 candidate digest 覆盖 approved root、file identity、owner policy、publisher 与 SHA-256，PATH digest 覆盖 canonical sanitized PATH；
 5. new candidate 允许与 existing binding 的 executable/PATH identity 不同，因为这正是 reviewed rotation 的目标；但它必须与 operator 刚审阅的 preview 完全一致；
 6. preview 后 current candidate、review values 或 existing binding id 再次漂移即 blocked；
-7. atomic replace、post-write strict reload 与 rollback 保持 Stage 49 语义；
+7. atomic replace 后执行 strict reload；若 post-write validation 或 identity capture 失败，而 backend 没有绑定已持有 native identity 的 unlink/replace primitive，则必须保留 installed candidate，返回 `committed=true`、`mutation_incomplete=true` 并要求 manual inspection，禁止先检查 pathname 再 unlink/replace；只有存在 identity-bound platform primitive 时才允许恢复旧 bytes；
 8. rotation 期间 fixed execution 和 recovery close 均不能启动。
 
 损坏的 binding 不允许使用 `--force`、自动删除或静默覆盖。v1 recovery 只返回 `manual_binding_repair`，要求先在 machine-local trust root 外部完成独立取证/修复，再重新运行 reviewed initial bind。future 若要自动化 invalid-binding recovery，必须另行设计 exact old-file digest、quarantine、retention 和 rollback，不得塞入 Stage 51。

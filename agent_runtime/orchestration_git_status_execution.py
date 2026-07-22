@@ -16,6 +16,13 @@ from .execution_audit_writer import (
     record_execution_attempt_started,
     record_execution_terminal,
 )
+from .execution_lease import (
+    ExecutionLeaseResult,
+    _LeaseCapability,
+    _held_lease_capability,
+    _validate_lease_capability,
+    acquire_execution_lease,
+)
 from .execution_trust import VerifiedTrustResult, verify_execution_trust
 from .fixed_process_runner import FixedProcessResult, run_fixed_git_status_process
 from .git_repository_guard import (
@@ -364,6 +371,340 @@ def execute_fixed_git_status(
             ],
             next_action="Use valid task and request identities.",
         )
+    lease: ExecutionLeaseResult = acquire_execution_lease(root)
+    if lease.status != "pass":
+        return _result(
+            lease.status,
+            task_id=task_id,
+            request_id=request_id,
+            findings=list(lease.findings),
+            next_action=lease.next_action or "Retry after the execution lease is available.",
+        )
+    result: GitStatusExecutionResult | None = None
+    core_failure: Finding | None = None
+    validation_failure: Finding | None = None
+    release_failure: Finding | None = None
+    lease_valid = False
+    released = CheckResult(status="error")
+    try:
+        result = _execute_fixed_git_status_core(
+            root,
+            task_id=task_id,
+            request_id=request_id,
+            expected_plan_hash=expected_plan_hash,
+            timeout_seconds=timeout_seconds,
+            services=services,
+            registry_check=registry_check,
+            lease_capability=_held_lease_capability(lease),
+        )
+    except Exception:
+        core_failure = _safe_finding(
+            "execution-core-failed",
+            "Fixed execution failed unexpectedly before completion.",
+            "error",
+        )
+    finally:
+        try:
+            try:
+                lease_valid = lease.validate()
+            except BaseException:
+                validation_failure = _safe_finding(
+                    "execution-lease-validation-failed",
+                    "Final execution lease validation failed unexpectedly.",
+                    "error",
+                )
+        finally:
+            try:
+                released = lease.release()
+            except BaseException:
+                release_failure = _safe_finding(
+                    "execution-lease-release-failed",
+                    "The execution lease cleanup failed.",
+                    "error",
+                )
+    if core_failure is not None:
+        findings = [core_failure]
+        if validation_failure is not None:
+            findings.append(validation_failure)
+        if release_failure is not None or released.status != "pass":
+            findings.append(
+                _safe_finding(
+                    "execution-lease-release-failed",
+                    "The execution lease cleanup failed.",
+                    "error",
+                )
+            )
+        return _result(
+            "error",
+            task_id=task_id,
+            request_id=request_id,
+            findings=findings,
+            lifecycle="withheld",
+            next_action="Inspect execution audit and lease state before retrying.",
+        )
+    assert result is not None
+    if (
+        validation_failure is not None
+        or not lease_valid
+        or release_failure is not None
+        or released.status != "pass"
+    ):
+        findings: list[Finding] = []
+        if validation_failure is not None:
+            findings.append(validation_failure)
+        elif not lease_valid:
+            findings.append(
+                _safe_finding(
+                    "execution-lease-identity-drift",
+                    "The execution lease failed final identity validation.",
+                    "error",
+                )
+            )
+        if release_failure is not None:
+            findings.append(release_failure)
+        elif released.status != "pass":
+            findings.append(
+                _safe_finding(
+                    "execution-lease-release-failed",
+                    "The execution lease cleanup failed.",
+                    "error",
+                )
+            )
+        return _result(
+            "error",
+            task_id=task_id,
+            request_id=request_id,
+            plan_hash=result.plan_hash,
+            findings=findings,
+            lifecycle="withheld",
+            audit=dict(result.audit),
+            process=dict(result.process),
+            trust=dict(result.trust),
+            summary=None,
+            next_action="Repair machine-local execution lease cleanup before retrying.",
+        )
+    return result
+
+
+def _execute_fixed_git_status_core(
+    root: Path,
+    *,
+    task_id: str,
+    request_id: str,
+    expected_plan_hash: str | None,
+    timeout_seconds: float,
+    services: dict[str, object] | None,
+    registry_check: Callable[[Path], bool] | None,
+    lease_capability: _LeaseCapability | None,
+) -> GitStatusExecutionResult:
+    if not _validate_lease_capability(lease_capability, root):
+        return _result(
+            "error",
+            task_id=task_id,
+            request_id=request_id,
+            findings=[
+                _safe_finding(
+                    "execution-lease-capability-invalid",
+                    "Fixed execution requires the active execution lease.",
+                    "error",
+                )
+            ],
+            next_action="Acquire the fixed machine-local execution lease.",
+        )
+    active = _services(services)
+    owned_trust: list[VerifiedTrustResult] = []
+    owned_guards: list[RepositoryGuardResult] = []
+    started: ExecutionAuditWriteResult | None = None
+    plan_hash: str | None = None
+    trust_projection: dict[str, Any] = {}
+
+    def track_trust(*args: object, **kwargs: object) -> VerifiedTrustResult:
+        value = active["verify_trust"](*args, **kwargs)
+        if value.identity is not None:
+            original = value.identity.close
+            closed = False
+
+            def close() -> None:
+                nonlocal closed
+                if not closed:
+                    original()
+                    closed = True
+
+            value.identity.close = close
+            owned_trust.append(value)
+        return value
+
+    def track_guard(*args: object, **kwargs: object) -> RepositoryGuardResult:
+        value = active["build_guard"](*args, **kwargs)
+        if value.guard is not None:
+            guard = value.guard
+
+            class TrackedGuard:
+                identity = guard.identity
+                manifest = guard.manifest
+
+                def __init__(self) -> None:
+                    self.closed = False
+
+                def close(self) -> None:
+                    if not self.closed:
+                        guard.close()
+                        self.closed = True
+
+                def to_public_dict(self) -> dict[str, Any]:
+                    return guard.to_public_dict()
+
+            value.guard = TrackedGuard()  # type: ignore[assignment]
+            owned_guards.append(value)
+        return value
+
+    def track_started(*args: object, **kwargs: object) -> ExecutionAuditWriteResult:
+        nonlocal started, plan_hash, trust_projection
+        plan_hash = kwargs.get("plan_hash") if isinstance(kwargs.get("plan_hash"), str) else None
+        kwargs["_schema_version"] = "execution-audit/v2"
+        value = active["record_started"](*args, **kwargs)
+        started = value
+        if owned_trust:
+            current = owned_trust[0]
+            trust_projection = {
+                "binding_id": current.binding_id,
+                "executable_identity": current.executable_identity,
+                "path_identity": current.path_identity,
+            }
+        return value
+
+    tracked = dict(active)
+    tracked["verify_trust"] = track_trust
+    tracked["build_guard"] = track_guard
+    tracked["record_started"] = track_started
+    outcome: GitStatusExecutionResult | None = None
+    try:
+        outcome = _execute_fixed_git_status_lifecycle(
+            root,
+            task_id=task_id,
+            request_id=request_id,
+            expected_plan_hash=expected_plan_hash,
+            timeout_seconds=timeout_seconds,
+            services=tracked,
+            registry_check=registry_check,
+            lease_capability=lease_capability,
+        )
+    except Exception:
+        finding = _safe_finding(
+            "execution.internal-failure",
+            "Fixed execution failed unexpectedly and released no result.",
+            "error",
+        )
+        if started is None or not started.committed or started.attempt_id is None:
+            outcome = _result(
+                "error",
+                task_id=task_id,
+                request_id=request_id,
+                plan_hash=plan_hash,
+                findings=[finding],
+                audit={"state": "not_started", "audit_incomplete": True},
+                trust=trust_projection,
+                next_action="Repair the internal failure before retrying.",
+            )
+        else:
+            terminal_committed = False
+            try:
+                terminal = active["record_terminal"](
+                    root,
+                    attempt_id=started.attempt_id,
+                    event_type="execution_failed",
+                    phase="audit",
+                    exit_code=None,
+                    duration_bucket=None,
+                    stdout_byte_count=0,
+                    stderr_byte_count=0,
+                    stdout_truncated=False,
+                    stderr_truncated=False,
+                    guard_status="not_run",
+                    failure_code="execution.internal-failure",
+                )
+                terminal_committed = bool(
+                    terminal.status == "pass" and terminal.committed
+                )
+            except Exception:
+                terminal_committed = False
+            outcome = _result(
+                "error",
+                task_id=task_id,
+                request_id=request_id,
+                plan_hash=plan_hash,
+                findings=[finding],
+                lifecycle="closed" if terminal_committed else "withheld",
+                audit={
+                    "attempt_id": started.attempt_id,
+                    "state": "closed_failed" if terminal_committed else "awaiting_terminal",
+                    "audit_incomplete": not terminal_committed,
+                },
+                trust=trust_projection,
+                next_action=(
+                    "Inspect the closed internal failure before retrying."
+                    if terminal_committed
+                    else "Recover the incomplete terminal execution audit."
+                ),
+            )
+    finally:
+        cleanup_findings: list[Finding] = []
+        for value in reversed(owned_trust):
+            try:
+                _close_trust(value)
+            except BaseException:
+                cleanup_findings.append(
+                    _safe_finding(
+                        "execution-trust-identity-close-failed",
+                        "A trusted executable identity handle could not be closed.",
+                        "error",
+                    )
+                )
+        for value in reversed(owned_guards):
+            try:
+                _close_guard(value)
+            except BaseException:
+                cleanup_findings.append(
+                    _safe_finding(
+                        "execution-repository-guard-close-failed",
+                        "A repository guard handle could not be closed.",
+                        "error",
+                    )
+                )
+        if cleanup_findings and outcome is not None:
+            outcome.status = "error"
+            outcome.findings.extend(cleanup_findings)
+            outcome.summary = None
+            outcome.next_action = "Inspect the preserved audit state and repair resource cleanup before retrying."
+    assert outcome is not None
+    return outcome
+
+
+def _execute_fixed_git_status_lifecycle(
+    root: Path,
+    *,
+    task_id: str,
+    request_id: str,
+    expected_plan_hash: str | None,
+    timeout_seconds: float,
+    services: dict[str, object] | None,
+    registry_check: Callable[[Path], bool] | None,
+    lease_capability: _LeaseCapability | None,
+) -> GitStatusExecutionResult:
+    if not _validate_lease_capability(lease_capability, root):
+        return _result(
+            "error",
+            task_id=task_id,
+            request_id=request_id,
+            findings=[
+                _safe_finding(
+                    "execution-lease-capability-invalid",
+                    "Fixed execution requires the active execution lease.",
+                    "error",
+                )
+            ],
+            next_action="Acquire the fixed machine-local execution lease.",
+        )
     active = _services(services)
     first_guard: RepositoryGuardResult = active["build_guard"](root)
     if first_guard.status != "pass" or first_guard.guard is None:
@@ -638,6 +979,12 @@ def execute_fixed_git_status(
         stdout_truncated=False,
         stderr_truncated=False,
         guard_status="pass",
+        job_accounting_passed=process.accounting.job_accounting_passed,
+        job_total_processes=process.accounting.job_total_processes,
+        job_active_processes=process.accounting.job_active_processes,
+        job_terminated_processes=process.accounting.job_terminated_processes,
+        direct_child_reaped=process.accounting.direct_child_reaped,
+        containment_closed=process.accounting.containment_closed,
     )
     audit = {
         "attempt_id": attempt_id,

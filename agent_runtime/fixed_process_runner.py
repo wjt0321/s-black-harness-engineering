@@ -62,6 +62,25 @@ class ProcessBackend(Protocol):
 
     def close_job(self, job: object) -> None: ...
 
+    def query_job_accounting(self, job: object) -> "JobCounters": ...
+
+
+@dataclass
+class JobCounters:
+    job_total_processes: int
+    job_active_processes: int
+    job_terminated_processes: int
+
+
+@dataclass
+class JobAccounting:
+    job_accounting_passed: bool
+    job_total_processes: int
+    job_active_processes: int
+    job_terminated_processes: int
+    direct_child_reaped: bool
+    containment_closed: bool
+
 
 @dataclass
 class FixedProcessResult(CheckResult):
@@ -71,6 +90,7 @@ class FixedProcessResult(CheckResult):
     duration_bucket: str | None = None
     stdout_truncated: bool = False
     stderr_truncated: bool = False
+    accounting: JobAccounting | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = super().to_dict()
@@ -82,6 +102,17 @@ class FixedProcessResult(CheckResult):
         payload["stderr_byte_count"] = len(self.stderr)
         payload["stdout_truncated"] = self.stdout_truncated
         payload["stderr_truncated"] = self.stderr_truncated
+        if self.accounting is not None:
+            payload.update(
+                {
+                    "job_accounting_passed": self.accounting.job_accounting_passed,
+                    "job_total_processes": self.accounting.job_total_processes,
+                    "job_active_processes": self.accounting.job_active_processes,
+                    "job_terminated_processes": self.accounting.job_terminated_processes,
+                    "direct_child_reaped": self.accounting.direct_child_reaped,
+                    "containment_closed": self.accounting.containment_closed,
+                }
+            )
         return payload
 
 
@@ -137,30 +168,49 @@ def _stop_tree(
     backend: ProcessBackend,
     job: object,
     process: ProcessLike,
-) -> None:
+) -> bool:
     try:
         backend.terminate_tree(job, process)
     except OSError:
         pass
-    if not _wait_quietly(process, _TERMINATE_GRACE_SECONDS):
+    reaped = _wait_quietly(process, _TERMINATE_GRACE_SECONDS)
+    if not reaped:
         try:
             backend.kill_tree(job, process)
         except OSError:
             pass
-        _wait_quietly(process, _TERMINATE_GRACE_SECONDS)
+        reaped = _wait_quietly(process, _TERMINATE_GRACE_SECONDS)
+    return reaped
 
 
-def _stop_process(backend: ProcessBackend, process: ProcessLike) -> None:
+def _stop_process(backend: ProcessBackend, process: ProcessLike) -> bool:
     try:
         backend.terminate_process(process)
     except OSError:
         pass
-    if not _wait_quietly(process, _TERMINATE_GRACE_SECONDS):
+    reaped = _wait_quietly(process, _TERMINATE_GRACE_SECONDS)
+    if not reaped:
         try:
             backend.kill_process(process)
         except OSError:
             pass
-        _wait_quietly(process, _TERMINATE_GRACE_SECONDS)
+        reaped = _wait_quietly(process, _TERMINATE_GRACE_SECONDS)
+    return reaped
+
+
+def _valid_accounting(value: JobCounters) -> bool:
+    counts = (
+        value.job_total_processes,
+        value.job_active_processes,
+        value.job_terminated_processes,
+    )
+    return (
+        all(type(count) is int and count >= 0 for count in counts)
+        and value.job_terminated_processes <= value.job_total_processes
+        and value.job_active_processes <= value.job_total_processes
+        and value.job_active_processes + value.job_terminated_processes
+        <= value.job_total_processes
+    )
 
 
 def run_fixed_git_status_process(
@@ -212,11 +262,75 @@ def run_fixed_git_status_process(
     overflow = threading.Event()
     readers: list[threading.Thread] = []
     assigned = False
+    direct_child_reaped = False
 
     def finish(result: FixedProcessResult) -> FixedProcessResult:
-        nonlocal job
+        nonlocal job, direct_child_reaped
         if job is None:
             return result
+        if assigned and process is not None:
+            if not direct_child_reaped:
+                direct_child_reaped = _stop_tree(active_backend, job, process)
+            for reader in readers:
+                reader.join(_TERMINATE_GRACE_SECONDS)
+            readers_alive = any(reader.is_alive() for reader in readers)
+        else:
+            if process is not None and not direct_child_reaped:
+                direct_child_reaped = _stop_process(active_backend, process)
+            for reader in readers:
+                reader.join(_TERMINATE_GRACE_SECONDS)
+            readers_alive = any(reader.is_alive() for reader in readers)
+        if assigned and process is not None:
+            accounting: JobCounters | None = None
+            try:
+                accounting = active_backend.query_job_accounting(job)
+                if not _valid_accounting(accounting):
+                    raise ValueError("invalid job accounting")
+                if accounting.job_active_processes:
+                    direct_child_reaped = _stop_tree(active_backend, job, process)
+                    for reader in readers:
+                        reader.join(_TERMINATE_GRACE_SECONDS)
+                    readers_alive = any(reader.is_alive() for reader in readers)
+                    accounting = active_backend.query_job_accounting(job)
+                    if not _valid_accounting(accounting):
+                        raise ValueError("invalid job accounting")
+                if (
+                    accounting.job_active_processes != 0
+                    or not direct_child_reaped
+                    or readers_alive
+                ):
+                    raise RuntimeError("job containment remained active")
+                result.accounting = JobAccounting(
+                    job_accounting_passed=True,
+                    job_total_processes=accounting.job_total_processes,
+                    job_active_processes=accounting.job_active_processes,
+                    job_terminated_processes=accounting.job_terminated_processes,
+                    direct_child_reaped=direct_child_reaped,
+                    containment_closed=False,
+                )
+            except (OSError, RuntimeError, ValueError):
+                if result.status == "pass":
+                    result.status = "error"
+                    result.findings = [
+                        _finding(
+                            "execution.process-accounting-failed",
+                            "The fixed process containment accounting could not be validated.",
+                        )
+                    ]
+                result.stdout = b""
+                result.stderr = b""
+                result.next_action = "Inspect process containment before retrying."
+        elif assigned:
+            if result.status == "pass":
+                result.status = "error"
+                result.findings = [
+                    _finding(
+                        "execution.process-accounting-failed",
+                        "The fixed process containment accounting could not be validated.",
+                    )
+                ]
+            result.stdout = b""
+            result.stderr = b""
         try:
             active_backend.close_job(job)
         except OSError:
@@ -230,6 +344,9 @@ def run_fixed_git_status_process(
             result.stdout = b""
             result.stderr = b""
             result.next_action = "Inspect process containment before retrying."
+        else:
+            if result.accounting is not None:
+                result.accounting.containment_closed = True
         finally:
             job = None
         return result
@@ -244,7 +361,6 @@ def run_fixed_git_status_process(
         active_backend.assign(job, process)
         assigned = True
         if not active_backend.verify_image(process, identity):
-            _stop_tree(active_backend, job, process)
             return finish(FixedProcessResult(
                 status="error",
                 findings=[
@@ -274,9 +390,6 @@ def run_fixed_git_status_process(
         deadline = started + timeout_seconds
         while process.poll() is None and not overflow.is_set():
             if time.monotonic() >= deadline:
-                _stop_tree(active_backend, job, process)
-                for reader in readers:
-                    reader.join(_TERMINATE_GRACE_SECONDS)
                 stdout.clear()
                 stderr.clear()
                 return finish(FixedProcessResult(
@@ -292,9 +405,6 @@ def run_fixed_git_status_process(
                 ))
             time.sleep(0.01)
         if overflow.is_set():
-            _stop_tree(active_backend, job, process)
-            for reader in readers:
-                reader.join(_TERMINATE_GRACE_SECONDS)
             stdout.clear()
             stderr.clear()
             return finish(FixedProcessResult(
@@ -312,10 +422,8 @@ def run_fixed_git_status_process(
                 next_action="Reduce repository status output before retrying.",
             ))
         exit_code = process.wait(timeout=_TERMINATE_GRACE_SECONDS)
-        for reader in readers:
-            reader.join(_TERMINATE_GRACE_SECONDS)
+        direct_child_reaped = True
         if overflow.is_set():
-            _stop_tree(active_backend, job, process)
             stdout.clear()
             stderr.clear()
             return finish(FixedProcessResult(
@@ -333,7 +441,6 @@ def run_fixed_git_status_process(
                 next_action="Reduce repository status output before retrying.",
             ))
         if any(reader.is_alive() for reader in readers):
-            _stop_tree(active_backend, job, process)
             stdout.clear()
             stderr.clear()
             return finish(FixedProcessResult(
@@ -355,12 +462,6 @@ def run_fixed_git_status_process(
             next_action="Validate the bounded output protocol before release.",
         ))
     except KeyboardInterrupt:
-        if job is not None and process is not None:
-            (
-                _stop_tree(active_backend, job, process)
-                if assigned
-                else _stop_process(active_backend, process)
-            )
         return finish(FixedProcessResult(
             status="blocked",
             findings=[
@@ -372,13 +473,7 @@ def run_fixed_git_status_process(
             ],
             duration_bucket=_duration_bucket(time.monotonic() - started),
         ))
-    except (OSError, RuntimeError, ValueError):
-        if job is not None and process is not None:
-            (
-                _stop_tree(active_backend, job, process)
-                if assigned
-                else _stop_process(active_backend, process)
-            )
+    except Exception:
         return finish(FixedProcessResult(
             status="error",
             findings=[
@@ -390,13 +485,16 @@ def run_fixed_git_status_process(
             duration_bucket=_duration_bucket(time.monotonic() - started),
         ))
     finally:
-        for reader in readers:
-            reader.join(0.1)
         if job is not None:
-            try:
-                active_backend.close_job(job)
-            except OSError:
-                pass
+            finish(FixedProcessResult(
+                status="error",
+                findings=[
+                    _finding(
+                        "execution.process-cleanup-failed",
+                        "The fixed process containment handle could not be safely closed.",
+                    )
+                ],
+            ))
 
 
 class UnsupportedProcessBackend:
@@ -561,3 +659,31 @@ class WindowsProcessBackend:
     def close_job(self, job: object) -> None:
         if not self.kernel32.CloseHandle(wintypes.HANDLE(int(job))):
             raise OSError("job close failed")
+
+    def query_job_accounting(self, job: object) -> JobCounters:
+        class BasicAccounting(ctypes.Structure):
+            _fields_ = [
+                ("TotalUserTime", ctypes.c_longlong),
+                ("TotalKernelTime", ctypes.c_longlong),
+                ("ThisPeriodTotalUserTime", ctypes.c_longlong),
+                ("ThisPeriodTotalKernelTime", ctypes.c_longlong),
+                ("TotalPageFaultCount", wintypes.DWORD),
+                ("TotalProcesses", wintypes.DWORD),
+                ("ActiveProcesses", wintypes.DWORD),
+                ("TotalTerminatedProcesses", wintypes.DWORD),
+            ]
+
+        info = BasicAccounting()
+        if not self.kernel32.QueryInformationJobObject(
+            wintypes.HANDLE(int(job)),
+            1,
+            ctypes.byref(info),
+            ctypes.sizeof(info),
+            None,
+        ):
+            raise OSError("job accounting query failed")
+        return JobCounters(
+            job_total_processes=int(info.TotalProcesses),
+            job_active_processes=int(info.ActiveProcesses),
+            job_terminated_processes=int(info.TotalTerminatedProcesses),
+        )

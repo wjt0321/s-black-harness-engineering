@@ -198,6 +198,25 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Validates a fixed single-user execution design profile and does not execute processes or adapters.",
         ),
         _entry(
+            "execution_recovery_close",
+            "stable_limited",
+            "controlled_write",
+            commands=(("orchestration", "execution", "recovery", "close-open"),),
+            key_flags=("--attempt-id", "--expected-started-event-id", "--expected-plan-hash", "--commit"),
+            boundary="Closes one open audit with fixed outcome unknown semantics; historical results remain withheld.",
+        ),
+        _entry(
+            "execution_recovery_read",
+            "preview",
+            "read_only",
+            commands=(
+                ("orchestration", "execution", "recovery", "inspect"),
+                ("orchestration", "execution", "recovery", "list-open"),
+            ),
+            key_flags=("--attempt-id",),
+            boundary="Bounded safe audit projections only; no timestamp, path, raw metadata, or result release.",
+        ),
+        _entry(
             "execution_trust_binding",
             "stable_limited",
             "controlled_write",

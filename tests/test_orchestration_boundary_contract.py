@@ -95,11 +95,64 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
     assert _subparser_names(_nested_parser(orchestration, "execution")) == {
         "git-status",
         "readiness",
+        "recovery",
         "trust",
     }
     assert _subparser_names(
         _nested_parser(_nested_parser(orchestration, "execution"), "trust")
-    ) == {"bind"}
+    ) == {"bind", "inspect"}
+    assert _subparser_names(
+        _nested_parser(_nested_parser(orchestration, "execution"), "recovery")
+    ) == {"close-open", "inspect", "list-open"}
+    recovery = _nested_parser(_nested_parser(orchestration, "execution"), "recovery")
+    close_options = {
+        option
+        for action in _nested_parser(recovery, "close-open")._actions
+        for option in action.option_strings
+    }
+    assert {
+        "--attempt-id",
+        "--expected-started-event-id",
+        "--expected-plan-hash",
+        "--commit",
+    } <= close_options
+    assert {
+        "--file",
+        "--path",
+        "--events-file",
+        "--tasks-file",
+        "--event-type",
+        "--phase",
+        "--failure-code",
+        "--guard-status",
+        "--evidence",
+        "--actor",
+        "--stdin",
+    }.isdisjoint(close_options)
+
+    trust = _nested_parser(_nested_parser(orchestration, "execution"), "trust")
+    bind_options = {
+        option
+        for action in _nested_parser(trust, "bind")._actions
+        for option in action.option_strings
+    }
+    assert {
+        "--expected-binding-id",
+        "--expected-executable-identity",
+        "--expected-path-identity",
+    } <= bind_options
+    inspect_options = {
+        option
+        for action in _nested_parser(trust, "inspect")._actions
+        for option in action.option_strings
+    }
+    assert {
+        "--path",
+        "--binding-path",
+        "--executable",
+        "--path-value",
+        "--actor",
+    }.isdisjoint(inspect_options)
 
 
 def test_stage13_run_flags_keep_explicit_preview_and_lineage_boundaries() -> None:

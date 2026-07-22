@@ -36,6 +36,7 @@ SCHEMA_FILES = [
     "tasks/task.schema.json",
     "tasks/event.schema.json",
     "tasks/execution-audit-event.schema.json",
+    "tasks/execution-audit-event-v2.schema.json",
 ]
 
 SAMPLE_TO_SCHEMA: list[tuple[str, str]] = [

@@ -1161,9 +1161,17 @@ v0.14.0-filtered-snapshot-host-integration
 
 本阶段没有新增 production CLI、schema、writer 或 subprocess。事实源为 `docs/99-fixed-execution-operational-recovery-design-gate.md` 与 release notes 109。
 
-## Stage 51 — Fixed Execution Operational Recovery Implementation（条件启动）
+## Stage 51 — Fixed Execution Operational Recovery Implementation（已完成，提交级）
 
-只允许按 Stage 50 冻结 contract 实现 machine-local lease、trust/audit recovery inspection、fixed open-attempt closure、Windows Job accounting 与 audit v2。任何第二个真实 operation、approval-required adapter、POSIX enablement 或 OS-enforced filesystem proof 都需要独立设计与用户明确授权。
+已按 Stage 50 contract 实现并收口：shared machine-local lease、trust inspect/identity-bound rotation、bounded locked ledger/open-attempt list/inspect、fixed outcome-unknown close、Windows Job accounting active-zero/reaped/containment-closed release gate，以及 historical v1/new execution v2 audit。Stage 51 没有运行 real smoke，只使用 fake backend、临时 ledger 与自动化测试；不创建 tag、不 push。
+
+事实源：`docs/100-fixed-execution-operational-recovery-implementation.md` 与 `docs/archive/release-notes/110-release-notes-stage51-fixed-execution-operational-recovery.md`。
+
+明确不做：automatic retry、invalid force、POSIX、第二个 operation、任意 shell/argv、network/service/UI 或 filesystem write proof。
+
+## Stage 52 — Fixed Execution Next-decision Design Gate（条件启动）
+
+仅作为下一候选 design gate：审计 Stage 51 remaining risks、operator/consumer need 与下一项是否值得设计。不授予 implementation authority；不得由本阶段名称自动开放 POSIX、第二个 operation、shell/network/service/UI 或 filesystem proof。
 
 ---
 

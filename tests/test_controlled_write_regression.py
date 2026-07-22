@@ -25,7 +25,7 @@ from agent_runtime.execution_audit_writer import (
     record_execution_terminal,
 )
 from agent_runtime.execution_trust import ExecutableIdentity, VerifiedTrustResult
-from agent_runtime.fixed_process_runner import FixedProcessResult
+from agent_runtime.fixed_process_runner import FixedProcessResult, JobAccounting
 from agent_runtime.git_repository_guard import RepositoryGuard, RepositoryGuardResult
 from agent_runtime.orchestration_git_status_execution import execute_fixed_git_status
 
@@ -41,6 +41,7 @@ def _setup_fake_root(tmp_path: Path) -> Path:
         "tasks/task.schema.json",
         "tasks/event.schema.json",
         "tasks/execution-audit-event.schema.json",
+        "tasks/execution-audit-event-v2.schema.json",
         "adapters/execution-envelope.schema.json",
     ):
         src = ROOT / src_rel
@@ -657,6 +658,7 @@ def test_execution_audit_writer_controlled_write_chain_is_isolated(
 
 def test_fixed_git_status_orchestration_uses_real_audit_writer_in_temp_root(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     real_events = ROOT / "tasks" / "events.jsonl"
     real_events_before = real_events.read_bytes() if real_events.is_file() else b""
@@ -734,7 +736,33 @@ def test_fixed_git_status_orchestration_uses_real_audit_writer_in_temp_root(
             stdout=b"## main\n",
             stderr=b"",
             duration_bucket="lt-1s",
+            accounting=JobAccounting(True, 1, 0, 0, True, True),
         )
+
+    class Lease:
+        status = "pass"
+        findings: list[Finding] = []
+        next_action = None
+
+        def release(self) -> None:
+            pass
+
+    def acquire_lease(project: Path) -> Lease:
+        from agent_runtime.execution_lease import (
+            _PortableLeaseBackend,
+            _acquire_execution_lease_for_test,
+        )
+
+        return _acquire_execution_lease_for_test(
+            project,
+            lease_path=project.parent / "lease-local" / "execution-lease-v1.lock",
+            backend=_PortableLeaseBackend(),
+        )
+
+    monkeypatch.setattr(
+        "agent_runtime.orchestration_git_status_execution.acquire_execution_lease",
+        acquire_lease,
+    )
 
     result = execute_fixed_git_status(
         root,
@@ -749,7 +777,7 @@ def test_fixed_git_status_orchestration_uses_real_audit_writer_in_temp_root(
         registry_check=lambda project: True,
     )
 
-    assert result.status == "ready"
+    assert result.status == "ready", ([f.to_dict() for f in result.findings], result.to_dict())
     assert result.audit["state"] == "closed_succeeded"
     assert events_file.read_text(encoding="utf-8").count("\n") == 3
     inspected = inspect_execution_attempt(root, result.audit["attempt_id"])
