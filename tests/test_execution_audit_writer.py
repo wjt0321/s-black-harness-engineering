@@ -218,6 +218,7 @@ def _setup_writer_root(tmp_path: Path) -> Path:
         "tasks/task.schema.json",
         "tasks/event.schema.json",
         "tasks/execution-audit-event.schema.json",
+        "tasks/execution-audit-event-v2.schema.json",
     ):
         destination = root / rel
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -273,6 +274,232 @@ def _read_events(root: Path) -> list[dict[str, object]]:
         .splitlines()
         if line
     ]
+
+
+@pytest.mark.parametrize(
+    "fault",
+    (
+        "invalid-started-event",
+        "terminal-preflight-rejection",
+        "append-construction-failure",
+    ),
+)
+def test_paired_sessions_close_independently_for_all_writer_rejections(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str
+) -> None:
+    root = _setup_writer_root(tmp_path)
+    started = None
+    if fault == "terminal-preflight-rejection":
+        started = _record_started(root)
+        assert started.status == "pass"
+
+    captured: list[object] = []
+    original_preflight = audit_writer._preflight_ledgers
+    original_close = audit_writer.BoundedLedgerSession.close
+
+    def tracking_preflight(*args, **kwargs):
+        result = original_preflight(*args, **kwargs)
+        if not isinstance(result, CheckResult):
+            captured.extend(
+                (result[-1].event_session, result[-1].task_session)
+            )
+        return result
+
+    def failing_first_close(session):
+        original_close(session)
+        if session.path.name == "events.jsonl":
+            raise RuntimeError("private first cleanup failure")
+
+    monkeypatch.setattr(audit_writer, "_preflight_ledgers", tracking_preflight)
+    monkeypatch.setattr(
+        audit_writer.BoundedLedgerSession, "close", failing_first_close
+    )
+
+    if fault == "invalid-started-event":
+        monkeypatch.setattr(
+            audit_writer,
+            "_validate_event_object",
+            lambda *_args, **_kwargs: CheckResult(
+                status="validation_failed",
+                findings=[Finding("injected-invalid", "error", "error", "invalid")],
+            ),
+        )
+        result = _record_started(root)
+    elif fault == "terminal-preflight-rejection":
+        result = audit_writer.record_execution_recovery_terminal(
+            root,
+            attempt_id=started.attempt_id,
+            expected_started_event_id=started.event_id,
+            expected_plan_hash="sha256:" + "b" * 64,
+        )
+    else:
+        original_dumps = audit_writer.json.dumps
+
+        def fail_event_serialization(value, *args, **kwargs):
+            if isinstance(value, dict) and value.get("event_type") == "execution_attempt_started":
+                raise RuntimeError("private append construction failure")
+            return original_dumps(value, *args, **kwargs)
+
+        monkeypatch.setattr(
+            audit_writer.json,
+            "dumps",
+            fail_event_serialization,
+        )
+        result = _record_started(root)
+
+    assert result.status == "error"
+    assert result.findings[0].rule_id == "execution-audit-session-cleanup-failed"
+    assert len(captured) == 2
+    assert all(session._closed for session in captured)
+    assert "private" not in json.dumps(result.to_dict())
+
+    monkeypatch.setattr(audit_writer.BoundedLedgerSession, "close", original_close)
+    for name in ("events.jsonl", "tasks.jsonl"):
+        opened = audit_writer.open_bounded_ledger_session(
+            root / "tasks" / name, exclusive=True
+        )
+        assert not isinstance(opened, CheckResult)
+        opened.close()
+
+
+@pytest.mark.parametrize(
+    ("failure", "propagates"),
+    ((RuntimeError("private event open failure"), False), (KeyboardInterrupt(), True)),
+)
+def test_event_session_acquisition_failure_closes_task_session(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure: BaseException,
+    propagates: bool,
+) -> None:
+    root = _setup_writer_root(tmp_path)
+    captured_tasks: list[object] = []
+    original_open = audit_writer.open_bounded_ledger_session
+
+    def failing_event_open(path: Path, *args, **kwargs):
+        if path.name == "events.jsonl":
+            raise failure
+        opened = original_open(path, *args, **kwargs)
+        if path.name == "tasks.jsonl" and not isinstance(opened, CheckResult):
+            captured_tasks.append(opened)
+        return opened
+
+    monkeypatch.setattr(
+        audit_writer, "open_bounded_ledger_session", failing_event_open
+    )
+
+    if propagates:
+        with pytest.raises(KeyboardInterrupt):
+            _record_started(root)
+    else:
+        result = _record_started(root)
+        assert result.status == "error"
+        assert result.findings[0].rule_id == "execution-audit-session-open-failed"
+        assert "private event open failure" not in json.dumps(result.to_dict())
+
+    assert len(captured_tasks) == 1
+    assert captured_tasks[0]._closed is True
+
+    monkeypatch.setattr(
+        audit_writer, "open_bounded_ledger_session", original_open
+    )
+    opened = original_open(root / "tasks" / "tasks.jsonl", exclusive=True)
+    assert not isinstance(opened, CheckResult)
+    opened.close()
+
+
+def test_append_runtime_error_is_structured_rolled_back_and_reacquirable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _setup_writer_root(tmp_path)
+    before = (root / "tasks" / "events.jsonl").read_bytes()
+    captured: list[object] = []
+    original_preflight = audit_writer._preflight_ledgers
+
+    def tracking_preflight(*args, **kwargs):
+        result = original_preflight(*args, **kwargs)
+        if not isinstance(result, CheckResult):
+            captured.extend(
+                (result[-1].event_session, result[-1].task_session)
+            )
+        return result
+
+    monkeypatch.setattr(audit_writer, "_preflight_ledgers", tracking_preflight)
+    monkeypatch.setattr(
+        audit_writer,
+        "_append_event_line",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            RuntimeError("private append failure")
+        ),
+    )
+
+    result = _record_started(root)
+
+    assert result.status == "error"
+    assert result.findings[0].rule_id == "execution-audit-write-failed"
+    assert result.rolled_back is True
+    assert (root / "tasks" / "events.jsonl").read_bytes() == before
+    assert "private append failure" not in json.dumps(result.to_dict())
+    assert len(captured) == 2
+    assert all(session._closed for session in captured)
+
+    for name in ("events.jsonl", "tasks.jsonl"):
+        opened = audit_writer.open_bounded_ledger_session(
+            root / "tasks" / name, exclusive=True
+        )
+        assert not isinstance(opened, CheckResult)
+        opened.close()
+
+
+def test_started_and_recovery_use_bounded_task_snapshot_without_find_task(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _setup_writer_root(tmp_path)
+    monkeypatch.setattr(
+        audit_writer,
+        "find_task",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("unbounded task lookup")
+        ),
+    )
+
+    started = _record_started(root)
+    assert started.status == "pass"
+    terminal = audit_writer.record_execution_recovery_terminal(
+        root,
+        attempt_id=started.attempt_id,
+        expected_started_event_id=started.event_id,
+        expected_plan_hash="sha256:" + "a" * 64,
+    )
+
+    assert terminal.status == "pass"
+    assert terminal.committed is True
+
+
+def test_started_rejects_unknown_task_from_bounded_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _setup_writer_root(tmp_path)
+    monkeypatch.setattr(
+        audit_writer,
+        "find_task",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("unbounded task lookup")
+        ),
+    )
+
+    result = record_execution_attempt_started(
+        root,
+        task_id="task-20260717-999",
+        request_id="req-20260717-999",
+        plan_hash="sha256:" + "a" * 64,
+        adapter_id="shell-local",
+        capability="git_status",
+        operation="git_status",
+    )
+
+    assert result.status == "error"
+    assert result.findings[0].rule_id == "unknown-task-id"
 
 
 def test_started_writer_appends_fixed_safe_event(tmp_path: Path) -> None:
@@ -432,6 +659,24 @@ def test_started_writer_post_check_failure_rolls_back(
     assert path.read_bytes() == before
 
 
+def test_writer_preflight_uses_bounded_event_snapshot_for_validation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _setup_writer_root(tmp_path)
+    original_validate_records = audit_writer.validate_records
+    monkeypatch.setattr(
+        "agent_runtime.execution_audit_writer.validate_records",
+        lambda root, record_file, schema_type: pytest.fail(
+            "event validation must use bounded snapshot records"
+        )
+        if schema_type == "event"
+        else original_validate_records(root, record_file, schema_type),
+    )
+    result = _record_started(root)
+
+    assert result.status == "pass"
+
+
 def test_started_writer_write_failure_rolls_back_partial_boundary(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -462,7 +707,7 @@ def test_started_writer_write_failure_rolls_back_partial_boundary(
     assert path.read_bytes() == before
 
 
-def test_rollback_refuses_to_remove_a_concurrent_append(
+def test_exclusive_session_blocks_concurrent_append_during_post_check(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     root = _setup_writer_root(tmp_path)
@@ -479,36 +724,29 @@ def test_rollback_refuses_to_remove_a_concurrent_append(
         "metadata": {},
     }
 
-    def _concurrent_then_fail(*args, **kwargs):
-        with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(concurrent) + "\n")
-        return CheckResult(
-            status="validation_failed",
-            findings=[
-                Finding(
-                    rule_id="simulated-post-check",
-                    severity="error",
-                    action="error",
-                    message="simulated",
-                )
-            ],
+    blocked: list[bool] = []
+    original_post_check = audit_writer._post_check
+
+    def _concurrent_then_check(*args, **kwargs):
+        contended = audit_writer.open_bounded_ledger_session(
+            path, exclusive=True, blocking=False
         )
+        if not isinstance(contended, audit_writer.BoundedLedgerSession):
+            blocked.append(True)
+        else:
+            contended.close()
+        return original_post_check(*args, **kwargs)
 
     monkeypatch.setattr(
         "agent_runtime.execution_audit_writer._post_check",
-        _concurrent_then_fail,
+        _concurrent_then_check,
     )
 
     result = _record_started(root)
 
-    assert result.status == "error"
-    assert result.rolled_back is False
-    assert result.rollback_error == "concurrent-ledger-change"
-    events = _read_events(root)
-    assert any(event["event_id"] == concurrent["event_id"] for event in events)
-    assert any(
-        event["event_type"] == "execution_attempt_started" for event in events
-    )
+    assert result.status == "pass"
+    assert blocked == [True]
+    assert not any(event["event_id"] == concurrent["event_id"] for event in _read_events(root))
 
 
 def test_append_token_prevents_equal_payload_from_claiming_rollback_ownership(
@@ -527,21 +765,22 @@ def test_append_token_prevents_equal_payload_from_claiming_rollback_ownership(
         json.dumps(concurrent, ensure_ascii=False, separators=(",", ":")) + "\n"
     ).encode("utf-8")
 
-    with path.open("r+b") as handle:
-        audit_writer._lock_ledger(handle)
-        try:
-            original_size, identity = audit_writer._ledger_boundary(path, handle)
-            audit_writer._append_event_line(handle, concurrent_line)
-            rolled_back, error = audit_writer._rollback_events_file(
-                handle,
+    opened = audit_writer.open_bounded_ledger_session(path, exclusive=True)
+    assert isinstance(opened, audit_writer.BoundedLedgerSession)
+    with opened as session:
+        snapshot = session.snapshot
+        assert isinstance(snapshot, audit_writer.BoundedLedgerSnapshot)
+        original_size, identity = audit_writer._ledger_boundary(path, session.handle)
+        audit_writer._append_event_line(session.handle, concurrent_line)
+        rolled_back, error = audit_writer._rollback_events_file(
+                session.handle,
                 path,
                 original_size,
                 identity,
                 expected_line,
                 0,
+                snapshot,
             )
-        finally:
-            audit_writer._unlock_ledger(handle)
 
     assert rolled_back is False
     assert error == "concurrent-ledger-change"
@@ -558,21 +797,22 @@ def test_rollback_does_not_claim_byte_identical_append_without_owned_count(
         json.dumps(event, ensure_ascii=False, separators=(",", ":")) + "\n"
     ).encode("utf-8")
 
-    with path.open("r+b") as handle:
-        audit_writer._lock_ledger(handle)
-        try:
-            original_size, identity = audit_writer._ledger_boundary(path, handle)
-            audit_writer._append_event_line(handle, line)
-            rolled_back, error = audit_writer._rollback_events_file(
-                handle,
+    opened = audit_writer.open_bounded_ledger_session(path, exclusive=True)
+    assert isinstance(opened, audit_writer.BoundedLedgerSession)
+    with opened as session:
+        snapshot = session.snapshot
+        assert isinstance(snapshot, audit_writer.BoundedLedgerSnapshot)
+        original_size, identity = audit_writer._ledger_boundary(path, session.handle)
+        audit_writer._append_event_line(session.handle, line)
+        rolled_back, error = audit_writer._rollback_events_file(
+                session.handle,
                 path,
                 original_size,
                 identity,
                 line,
                 0,
+                snapshot,
             )
-        finally:
-            audit_writer._unlock_ledger(handle)
 
     assert rolled_back is False
     assert error == "concurrent-ledger-change"
@@ -610,7 +850,7 @@ def test_success_path_rejects_file_identity_replacement_before_append(
     )
 
 
-def test_preflight_identity_is_bound_before_event_validation_returns(
+def test_exclusive_session_blocks_identity_replacement_during_event_validation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     root = _setup_writer_root(tmp_path)
@@ -618,11 +858,17 @@ def test_preflight_identity_is_bound_before_event_validation_returns(
     before = path.read_bytes()
     original_validate = audit_writer._validate_event_object
 
+    blocked: list[bool] = []
+
     def _validate_then_replace(project_root: Path, event: dict[str, object]):
         result = original_validate(project_root, event)
-        replacement = path.with_name("replacement.jsonl")
-        replacement.write_bytes(before)
-        os.replace(replacement, path)
+        contended = audit_writer.open_bounded_ledger_session(
+            path, exclusive=True, blocking=False
+        )
+        if not isinstance(contended, audit_writer.BoundedLedgerSession):
+            blocked.append(True)
+        else:
+            contended.close()
         return result
 
     monkeypatch.setattr(
@@ -632,12 +878,101 @@ def test_preflight_identity_is_bound_before_event_validation_returns(
 
     result = _record_started(root)
 
-    assert result.status == "error"
-    assert result.committed is False
-    assert [finding.rule_id for finding in result.findings] == [
-        "execution-audit-preflight-drift"
-    ]
-    assert path.read_bytes() == before
+    assert result.status == "pass"
+    assert blocked == [True]
+
+
+def test_exclusive_session_blocks_same_size_rewrite_before_append(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _setup_writer_root(tmp_path)
+    path = root / "tasks" / "events.jsonl"
+    before = path.read_bytes()
+    original_validate = audit_writer._validate_event_object
+
+    blocked: list[bool] = []
+
+    def _validate_then_rewrite(project_root: Path, event: dict[str, object]):
+        result = original_validate(project_root, event)
+        contended = audit_writer.open_bounded_ledger_session(
+            path, exclusive=True, blocking=False
+        )
+        if not isinstance(contended, audit_writer.BoundedLedgerSession):
+            blocked.append(True)
+        else:
+            contended.close()
+        return result
+
+    monkeypatch.setattr(
+        "agent_runtime.execution_audit_writer._validate_event_object",
+        _validate_then_rewrite,
+    )
+
+    result = _record_started(root)
+
+    assert result.status == "pass"
+    assert blocked == [True]
+
+
+def test_writer_holds_exclusive_session_before_event_construction(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _setup_writer_root(tmp_path)
+    path = root / "tasks" / "events.jsonl"
+    original_validate = audit_writer._validate_event_object
+    contention_status: list[str] = []
+
+    def _validate_under_lock(project_root: Path, event: dict[str, object]):
+        contended = audit_writer.open_bounded_ledger_session(
+            path, exclusive=True, blocking=False
+        )
+        contention_status.append(
+            "acquired"
+            if isinstance(contended, audit_writer.BoundedLedgerSession)
+            else contended.status
+        )
+        if isinstance(contended, audit_writer.BoundedLedgerSession):
+            contended.close()
+        return original_validate(project_root, event)
+
+    monkeypatch.setattr(
+        "agent_runtime.execution_audit_writer._validate_event_object",
+        _validate_under_lock,
+    )
+
+    result = _record_started(root)
+
+    assert result.status == "pass"
+    assert contention_status == ["blocked"]
+
+
+def test_writer_closes_exclusive_session_when_event_construction_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _setup_writer_root(tmp_path)
+    path = root / "tasks" / "events.jsonl"
+    original_close = audit_writer.BoundedLedgerSession.close
+    closed: list[bool] = []
+
+    def _record_close(session):
+        closed.append(True)
+        original_close(session)
+
+    monkeypatch.setattr(audit_writer.BoundedLedgerSession, "close", _record_close)
+    monkeypatch.setattr(
+        "agent_runtime.execution_audit_writer._validate_event_object",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("withheld")),
+    )
+
+    with pytest.raises(RuntimeError):
+        _record_started(root)
+
+    assert closed == [True, True]
+    acquired = audit_writer.open_bounded_ledger_session(
+        path, exclusive=True, blocking=False
+    )
+    assert isinstance(acquired, audit_writer.BoundedLedgerSession)
+    acquired.close()
 
 
 def test_started_writer_rollback_failure_is_explicit(
@@ -922,17 +1257,24 @@ def test_post_check_exception_is_structured_and_rolls_back(
     assert "withheld" not in result.render_json()
 
 
-def test_commit_rejects_bytes_appended_after_passing_post_check(
+def test_exclusive_session_blocks_append_after_passing_post_check(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     root = _setup_writer_root(tmp_path)
     path = root / "tasks" / "events.jsonl"
     original_post_check = audit_writer._post_check
 
+    blocked: list[bool] = []
+
     def _pass_then_drift(*args, **kwargs):
         result = original_post_check(*args, **kwargs)
-        with path.open("ab") as handle:
-            handle.write(b"not-json\n")
+        contended = audit_writer.open_bounded_ledger_session(
+            path, exclusive=True, blocking=False
+        )
+        if not isinstance(contended, audit_writer.BoundedLedgerSession):
+            blocked.append(True)
+        else:
+            contended.close()
         return result
 
     monkeypatch.setattr(
@@ -942,11 +1284,41 @@ def test_commit_rejects_bytes_appended_after_passing_post_check(
 
     result = _record_started(root)
 
-    assert result.status == "error"
-    assert result.committed is False
-    assert result.rolled_back is False
-    assert result.rollback_error == "concurrent-ledger-change"
-    assert path.read_bytes().endswith(b"not-json\n")
+    assert result.status == "pass"
+    assert blocked == [True]
+
+
+def test_exclusive_session_blocks_same_size_prefix_rewrite_during_acceptance(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _setup_writer_root(tmp_path)
+    path = root / "tasks" / "events.jsonl"
+    original_verify = audit_writer._verify_owned_append
+    calls = 0
+    blocked: list[bool] = []
+
+    def _rewrite_prefix_then_verify(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            contended = audit_writer.open_bounded_ledger_session(
+                path, exclusive=True, blocking=False
+            )
+            if not isinstance(contended, audit_writer.BoundedLedgerSession):
+                blocked.append(True)
+            else:
+                contended.close()
+        return original_verify(*args, **kwargs)
+
+    monkeypatch.setattr(
+        "agent_runtime.execution_audit_writer._verify_owned_append",
+        _rewrite_prefix_then_verify,
+    )
+
+    result = _record_started(root)
+
+    assert result.status == "pass"
+    assert blocked == [True]
 
 
 def test_terminal_partial_write_failure_preserves_started(

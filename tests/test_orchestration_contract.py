@@ -21,6 +21,8 @@ EXPECTED_CONTRACT_IDS = [
     "contract_requirement_gate",
     "control_panel_read",
     "execution_readiness",
+    "execution_recovery_close",
+    "execution_recovery_read",
     "execution_trust_binding",
     "external_execution_service_stack",
     "fixed_git_status_execution",
@@ -46,10 +48,10 @@ def test_contract_manifest_freezes_v1_shape_and_availability_counts() -> None:
     assert manifest["schema_version"] == "control-plane/orchestration-contract/v1"
     assert manifest["consumer"] == "cli-automation"
     assert manifest["summary"] == {
-        "total_entries": 27,
+        "total_entries": 29,
         "stable": 10,
-        "stable_limited": 7,
-        "preview": 7,
+        "stable_limited": 8,
+        "preview": 8,
         "unavailable": 3,
     }
     assert [entry["contract_id"] for entry in manifest["entries"]] == EXPECTED_CONTRACT_IDS
@@ -87,6 +89,29 @@ def test_execution_trust_contract_requires_explicit_rotation_flag() -> None:
     assert "--replace" in entries["execution_trust_binding"]["key_flags"]
     assert "--timeout-seconds" in entries["fixed_git_status_execution"]["key_flags"]
     assert "Generic adapter execution" in entries["external_execution_service_stack"]["boundary"]
+
+
+def test_execution_recovery_contract_is_fixed_and_bounded() -> None:
+    entries = {
+        entry["contract_id"]: entry
+        for entry in build_contract_manifest().to_dict()["entries"]
+    }
+
+    assert entries["execution_recovery_read"]["commands"] == [
+        ["orchestration", "execution", "recovery", "inspect"],
+        ["orchestration", "execution", "recovery", "list-open"],
+    ]
+    assert entries["execution_recovery_read"]["key_flags"] == ["--attempt-id"]
+    assert entries["execution_recovery_close"]["commands"] == [
+        ["orchestration", "execution", "recovery", "close-open"]
+    ]
+    assert entries["execution_recovery_close"]["key_flags"] == [
+        "--attempt-id",
+        "--commit",
+        "--expected-plan-hash",
+        "--expected-started-event-id",
+    ]
+    assert "outcome unknown" in entries["execution_recovery_close"]["boundary"]
 
 
 def test_contract_manifest_entries_have_safe_deterministic_boundaries() -> None:
@@ -155,6 +180,6 @@ def test_contract_inspect_human_output_is_compact(capsys) -> None:
     assert code == 0
     assert "ORCHESTRATION CONTRACT" in captured.out
     assert "schema_version=control-plane/orchestration-contract/v1" in captured.out
-    assert "total_entries=27" in captured.out
+    assert "total_entries=29" in captured.out
     assert "run_plan preview read_only orchestration run" in captured.out
     assert "external_execution_service_stack unavailable unavailable -" in captured.out

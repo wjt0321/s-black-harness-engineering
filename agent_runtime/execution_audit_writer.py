@@ -19,18 +19,31 @@ from uuid import uuid4
 from jsonschema import ValidationError as JsonSchemaValidationError
 from jsonschema import validate
 
-from .ledger_consistency import check_ledger_consistency
+from .bounded_ledger import (
+    BoundedLedgerSnapshot,
+    BoundedLedgerSession,
+    open_bounded_ledger_session,
+    snapshot_jsonl,
+    snapshot_matches_handle,
+    snapshot_prefix_matches_handle,
+)
+from .ledger_consistency import check_ledger_record_consistency
 from .loader import is_safe_to_read, load_schema, normalize_path
 from .result import CheckResult, Finding
 from .runtime_event_append import (
     RESERVED_EXECUTION_EVENT_TYPES,
     _scan_candidate_content,
 )
-from .task_validation import DATE_TIME_FORMAT_CHECKER, validate_records
-from .tasks import find_task
+from .task_validation import (
+    DATE_TIME_FORMAT_CHECKER,
+    validate_record_objects,
+    validate_records,
+)
+from .tasks import find_task  # Compatibility sentinel; bounded writers do not call it.
 
 _WRITER_ORIGIN = "agent_runtime.execution_audit_writer"
 _WRITER_SCHEMA_VERSION = "execution-audit/v1"
+_V2_SCHEMA_VERSION = "execution-audit/v2"
 _ACTOR = "local-operator"
 _STARTED_TYPE = "execution_attempt_started"
 _TERMINAL_TYPES = RESERVED_EXECUTION_EVENT_TYPES - {_STARTED_TYPE}
@@ -134,6 +147,51 @@ class ExecutionAttemptInspectionResult(CheckResult):
         return result
 
 
+@dataclass
+class _ExecutionAuditPostCheckResult(CheckResult):
+    snapshot: BoundedLedgerSnapshot | None = None
+
+
+@dataclass
+class _LedgerSessionOwnership:
+    task_session: BoundedLedgerSession
+    event_session: BoundedLedgerSession | None = None
+    def close(self) -> CheckResult:
+        cleanup_failed = False
+        for session in (self.event_session, self.task_session):
+            if session is None:
+                continue
+            try:
+                session.close()
+            except BaseException:
+                cleanup_failed = True
+        if cleanup_failed:
+            return CheckResult(
+                status="error",
+                findings=[
+                    _finding(
+                        "execution-audit-session-cleanup-failed",
+                        "Execution audit session cleanup failed.",
+                    )
+                ],
+                next_action="Inspect the audit ledgers before further execution.",
+            )
+        return CheckResult(status="pass")
+
+
+def _close_terminal_rejection(
+    ownership: _LedgerSessionOwnership,
+    result: ExecutionAuditWriteResult,
+) -> ExecutionAuditWriteResult:
+    cleanup = ownership.close()
+    if cleanup.status == "pass":
+        return result
+    result.status = "error"
+    result.findings = list(cleanup.findings)
+    result.next_action = cleanup.next_action
+    return result
+
+
 def _finding(
     rule_id: str,
     message: str,
@@ -154,7 +212,8 @@ def _finding(
 def _resolve_ledger_path(
     root: Path, relative: str, *, label: str
 ) -> CheckResult | Path:
-    path = (root / relative).resolve()
+    candidate = root / relative
+    path = candidate.parent.resolve() / candidate.name
     if path != root and root not in path.parents:
         return CheckResult(
             status="error",
@@ -260,16 +319,23 @@ def _rollback_events_file(
     original_identity: tuple[int, int],
     expected_line: bytes,
     owned_bytes: int,
+    original_snapshot: BoundedLedgerSnapshot,
 ) -> tuple[bool, str | None]:
     try:
+        handle.flush()
         stat = os.fstat(handle.fileno())
         if (
             _stat_identity(stat) != original_identity
             or _path_identity(path) != original_identity
-            or stat.st_size < original_size
+            or original_snapshot.identity != original_identity
+            or original_snapshot.byte_count != original_size
         ):
             return False, "concurrent-ledger-change"
         if owned_bytes < 0 or owned_bytes > len(expected_line):
+            return False, "concurrent-ledger-change"
+        if stat.st_size != original_size + owned_bytes:
+            return False, "concurrent-ledger-change"
+        if not snapshot_prefix_matches_handle(original_snapshot, handle):
             return False, "concurrent-ledger-change"
         handle.seek(original_size)
         suffix = handle.read()
@@ -278,7 +344,18 @@ def _rollback_events_file(
             or suffix != expected_line[:owned_bytes]
         ):
             return False, "concurrent-ledger-change"
-        if os.fstat(handle.fileno()).st_size != original_size + owned_bytes:
+        if not snapshot_prefix_matches_handle(original_snapshot, handle):
+            return False, "concurrent-ledger-change"
+        handle.seek(original_size)
+        final_suffix = handle.read()
+        final_stat = os.fstat(handle.fileno())
+        if (
+            _stat_identity(final_stat) != original_identity
+            or _path_identity(path) != original_identity
+            or final_stat.st_size != original_size + owned_bytes
+            or len(final_suffix) != owned_bytes
+            or final_suffix != expected_line[:owned_bytes]
+        ):
             return False, "concurrent-ledger-change"
         handle.truncate(original_size)
         handle.flush()
@@ -325,46 +402,6 @@ def _verify_owned_append(
         return False
 
 
-def _load_event_records(path: Path) -> CheckResult | list[dict[str, Any]]:
-    records: list[dict[str, Any]] = []
-    try:
-        with path.open("r", encoding="utf-8") as handle:
-            for line_no, raw_line in enumerate(handle, start=1):
-                stripped = raw_line.strip()
-                if not stripped:
-                    continue
-                try:
-                    record = json.loads(stripped)
-                except json.JSONDecodeError:
-                    return CheckResult(
-                        status="validation_failed",
-                        findings=[
-                            _finding(
-                                "invalid-json",
-                                "Execution audit ledger contains invalid JSON.",
-                                line=line_no,
-                            )
-                        ],
-                        next_action="Repair the ledger before recording execution audit.",
-                    )
-                if isinstance(record, dict):
-                    item = dict(record)
-                    item["_line_no"] = line_no
-                    records.append(item)
-    except OSError:
-        return CheckResult(
-            status="error",
-            findings=[
-                _finding(
-                    "events-file-read-failed",
-                    "Could not read the execution audit ledger.",
-                )
-            ],
-            next_action="Check ledger permissions before retrying.",
-        )
-    return records
-
-
 def _validate_token_fields(values: dict[str, str]) -> CheckResult | None:
     for value in values.values():
         if not isinstance(value, str) or _TOKEN_RE.fullmatch(value) is None:
@@ -382,12 +419,15 @@ def _validate_token_fields(values: dict[str, str]) -> CheckResult | None:
 
 
 def _validate_event_object(root: Path, event: dict[str, Any]) -> CheckResult | None:
+    version = event.get("metadata", {}).get("writer_schema_version")
+    audit_schema = (
+        "tasks/execution-audit-event-v2.schema.json"
+        if version == _V2_SCHEMA_VERSION
+        else "tasks/execution-audit-event.schema.json"
+    )
     for schema_rel, rule_id in (
         ("tasks/event.schema.json", "event-schema-validation-failed"),
-        (
-            "tasks/execution-audit-event.schema.json",
-            "execution-audit-schema-validation-failed",
-        ),
+        (audit_schema, "execution-audit-schema-validation-failed"),
     ):
         try:
             validate(
@@ -494,7 +534,11 @@ def _audit_chain_findings(
     root: Path, records: list[dict[str, Any]]
 ) -> list[Finding]:
     findings: list[Finding] = []
-    schema = load_schema(root, "tasks/execution-audit-event.schema.json")
+    schema_paths = {
+        "execution-audit/v1": "tasks/execution-audit-event.schema.json",
+        "execution-audit/v2": "tasks/execution-audit-event-v2.schema.json",
+    }
+    schemas: dict[str, dict[str, Any]] = {}
     reserved = _reserved_records(records)
     event_ids: set[str] = set()
     append_tokens: set[str] = set()
@@ -503,6 +547,19 @@ def _audit_chain_findings(
     for record in reserved:
         line_no = record.get("_line_no")
         candidate = {key: value for key, value in record.items() if key != "_line_no"}
+        metadata = candidate.get("metadata")
+        version = (
+            metadata.get("writer_schema_version")
+            if isinstance(metadata, dict)
+            else None
+        )
+        schema_version = (
+            version if version in schema_paths else "execution-audit/v1"
+        )
+        schema = schemas.get(schema_version)
+        if schema is None:
+            schema = load_schema(root, schema_paths[schema_version])
+            schemas[schema_version] = schema
         try:
             validate(
                 instance=candidate,
@@ -583,6 +640,16 @@ def _audit_chain_findings(
         start_metadata = start["metadata"]
         for terminal in terminals:
             metadata = terminal["metadata"]
+            if metadata.get("writer_schema_version") != start_metadata.get(
+                "writer_schema_version"
+            ):
+                findings.append(
+                    _finding(
+                        "execution-audit-version-mismatch",
+                        "Execution audit started and terminal versions must match.",
+                        line=terminal.get("_line_no"),
+                    )
+                )
             if terminal.get("_line_no", 0) <= start.get("_line_no", 0):
                 findings.append(
                     _finding(
@@ -614,7 +681,10 @@ def _audit_chain_findings(
 
 
 def validate_execution_audit_ledger(
-    root: Path, *, events_file: str | None = None
+    root: Path,
+    *,
+    events_file: str | None = None,
+    tasks_file: str | None = None,
 ) -> CheckResult:
     """Validate reserved execution audit chains without writing."""
     root = root.resolve()
@@ -622,10 +692,175 @@ def validate_execution_audit_ledger(
     resolved = _resolve_ledger_path(root, relative, label="events")
     if isinstance(resolved, CheckResult):
         return resolved
-    loaded = _load_event_records(resolved)
-    if isinstance(loaded, CheckResult):
-        return loaded
-    return _validate_execution_audit_records(root, loaded)
+    opened = open_bounded_ledger_session(resolved)
+    if isinstance(opened, CheckResult):
+        return opened
+    with opened as session:
+        validated = _validate_execution_audit_snapshot(
+            root,
+            session.snapshot,
+            tasks_file=tasks_file or "tasks/tasks.jsonl",
+        )
+        if isinstance(validated, CheckResult):
+            return validated
+        final_verification = session.verify_current()
+        if final_verification.status != "pass":
+            return final_verification
+        return CheckResult(
+            status="pass",
+            next_action="Execution audit ledger is consistent.",
+        )
+
+
+def _snapshot_and_validate_execution_audit(
+    root: Path,
+    path: Path,
+    *,
+    tasks_file: str = "tasks/tasks.jsonl",
+) -> BoundedLedgerSnapshot | CheckResult:
+    opened = open_bounded_ledger_session(path)
+    if isinstance(opened, CheckResult):
+        return opened
+    with opened as session:
+        return _validate_execution_audit_snapshot(
+            root, session.snapshot, tasks_file=tasks_file
+        )
+
+
+def _validate_execution_audit_snapshot(
+    root: Path,
+    snapshot: BoundedLedgerSnapshot | CheckResult,
+    *,
+    tasks_file: str,
+    task_snapshot: BoundedLedgerSnapshot | None = None,
+) -> BoundedLedgerSnapshot | CheckResult:
+    if isinstance(snapshot, CheckResult):
+        return snapshot
+    validation = _validate_execution_audit_records(root, list(snapshot.records))
+    if validation.status != "pass":
+        return validation
+    event_validation = validate_record_objects(root, snapshot.records, "event")
+    if event_validation.status != "pass":
+        return event_validation
+    if task_snapshot is None:
+        tasks = _load_validated_task_records(root, tasks_file)
+        if isinstance(tasks, CheckResult):
+            return tasks
+    else:
+        task_validation = validate_record_objects(root, task_snapshot.records, "task")
+        if task_validation.status != "pass":
+            return CheckResult(
+                status="validation_failed",
+                findings=[
+                    _finding(
+                        "execution-audit-tasks-invalid",
+                        "Execution audit task ledger is invalid.",
+                    )
+                ],
+                next_action="Repair the task ledger before audit validation.",
+            )
+        tasks = list(task_snapshot.records)
+    consistency = check_ledger_record_consistency(
+        tasks, snapshot.records
+    )
+    if consistency.status != "pass":
+        return CheckResult(
+            status=consistency.status,
+            findings=_sanitized_findings(consistency),
+            next_action=consistency.next_action,
+        )
+    return snapshot
+
+
+def _load_validated_task_records(
+    root: Path, tasks_file: str
+) -> list[dict[str, Any]] | CheckResult:
+    resolved = _resolve_ledger_path(root, tasks_file, label="tasks")
+    if isinstance(resolved, CheckResult):
+        return CheckResult(
+            status="error",
+            findings=[
+                _finding(
+                    "execution-audit-tasks-read-failed",
+                    "Execution audit task ledger could not be read.",
+                )
+            ],
+            next_action="Repair the task ledger before audit validation.",
+        )
+    path = resolved
+    try:
+        opened = open_bounded_ledger_session(path)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return CheckResult(
+            status="error",
+            findings=[
+                _finding(
+                    "execution-audit-tasks-read-failed",
+                    "Execution audit task ledger could not be read.",
+                )
+            ],
+            next_action="Repair the task ledger before audit validation.",
+        )
+    if isinstance(opened, CheckResult):
+        rule_id = (
+            "execution-audit-tasks-invalid"
+            if opened.status == "validation_failed"
+            else "execution-audit-tasks-read-failed"
+        )
+        return CheckResult(
+            status=(
+                "validation_failed"
+                if rule_id == "execution-audit-tasks-invalid"
+                else "error"
+            ),
+            findings=[
+                _finding(
+                    rule_id,
+                    "Execution audit task ledger is invalid."
+                    if rule_id == "execution-audit-tasks-invalid"
+                    else "Execution audit task ledger could not be read.",
+                )
+            ],
+            next_action="Repair the task ledger before audit validation.",
+        )
+    with opened as session:
+        snapshot = session.snapshot
+        if not isinstance(snapshot, BoundedLedgerSnapshot):
+            return CheckResult(
+                status="validation_failed",
+                findings=[
+                    _finding(
+                        "execution-audit-tasks-invalid",
+                        "Execution audit task ledger is invalid.",
+                    )
+                ],
+                next_action="Repair the task ledger before audit validation.",
+            )
+        validation = validate_record_objects(root, snapshot.records, "task")
+        if validation.status != "pass":
+            return CheckResult(
+                status="validation_failed",
+                findings=[
+                    _finding(
+                        "execution-audit-tasks-invalid",
+                        "Execution audit task ledger is invalid.",
+                    )
+                ],
+                next_action="Repair the task ledger before audit validation.",
+            )
+        final_verification = session.verify_current()
+        if final_verification.status != "pass":
+            return CheckResult(
+                status="error",
+                findings=[
+                    _finding(
+                        "execution-audit-tasks-read-failed",
+                        "Execution audit task ledger could not be read.",
+                    )
+                ],
+                next_action="Repair the task ledger before audit validation.",
+            )
+        return list(snapshot.records)
 
 
 def _validate_execution_audit_records(
@@ -652,6 +887,8 @@ def _preflight_ledgers(
     list[dict[str, Any]],
     tuple[int, int],
     int,
+    BoundedLedgerSnapshot,
+    _LedgerSessionOwnership,
 ]:
     tasks_path = _resolve_ledger_path(root, tasks_file, label="tasks")
     if isinstance(tasks_path, CheckResult):
@@ -700,84 +937,133 @@ def _preflight_ledgers(
             ],
             next_action="Fix the ledger newline explicitly before retrying.",
         )
-    task_validation = validate_records(root, tasks_file, "task")
+    task_opened = open_bounded_ledger_session(tasks_path)
+    if isinstance(task_opened, CheckResult):
+        return task_opened
+    ownership = _LedgerSessionOwnership(task_session=task_opened)
+    task_snapshot = task_opened.snapshot
+    if not isinstance(task_snapshot, BoundedLedgerSnapshot):
+        cleanup = ownership.close()
+        if cleanup.status != "pass":
+            return cleanup
+        return task_snapshot
+    task_validation = validate_record_objects(root, task_snapshot.records, "task")
     if task_validation.status != "pass":
+        cleanup = ownership.close()
+        if cleanup.status != "pass":
+            return cleanup
         return CheckResult(
-            status=task_validation.status,
+            status="validation_failed",
             findings=_sanitized_findings(task_validation),
             next_action=task_validation.next_action,
         )
-    event_validation = validate_records(root, events_file, "event")
-    if event_validation.status != "pass":
-        return CheckResult(
-            status=event_validation.status,
-            findings=_sanitized_findings(event_validation),
-            next_action=event_validation.next_action,
-        )
-    ledger_validation = check_ledger_consistency(
-        root, tasks_file=tasks_file, events_file=events_file
-    )
-    if ledger_validation.status != "pass":
-        return CheckResult(
-            status=ledger_validation.status,
-            findings=_sanitized_findings(ledger_validation),
-            next_action=ledger_validation.next_action,
-        )
-    audit_validation = validate_execution_audit_ledger(
-        root, events_file=events_file
-    )
-    if audit_validation.status != "pass":
-        return audit_validation
-    loaded = _load_event_records(events_path)
-    if isinstance(loaded, CheckResult):
-        return loaded
     try:
-        final_stat = events_path.stat()
+        opened = open_bounded_ledger_session(events_path, exclusive=True)
+    except Exception:
+        cleanup = ownership.close()
+        if cleanup.status != "pass":
+            return cleanup
+        return CheckResult(
+            status="error",
+            findings=[
+                _finding(
+                    "execution-audit-session-open-failed",
+                    "Execution audit session acquisition failed.",
+                )
+            ],
+            next_action="Inspect the audit ledgers before retrying.",
+        )
+    except BaseException:
+        ownership.close()
+        raise
+    if isinstance(opened, CheckResult):
+        cleanup = ownership.close()
+        if cleanup.status != "pass":
+            return cleanup
+        return opened
+    ownership.event_session = opened
+    audit_snapshot = _validate_execution_audit_snapshot(
+        root,
+        opened.snapshot,
+        tasks_file=tasks_file,
+        task_snapshot=task_snapshot,
+    )
+    if isinstance(audit_snapshot, CheckResult):
+        cleanup = ownership.close()
+        if cleanup.status != "pass":
+            return cleanup
+        return audit_snapshot
+    preflight_identity = audit_snapshot.identity
+    preflight_size = audit_snapshot.byte_count
+    handle = opened.handle
+    try:
+        handle.seek(0, os.SEEK_END)
+        authoritative_size = handle.tell()
+        if authoritative_size:
+            handle.seek(-1, os.SEEK_END)
+        if authoritative_size and handle.read(1) != b"\n":
+            cleanup = ownership.close()
+            if cleanup.status != "pass":
+                return cleanup
+            return CheckResult(
+                status="blocked",
+                findings=[
+                    _finding(
+                        "events-file-missing-trailing-newline",
+                        "Events file must end with a newline before append.",
+                        severity="block",
+                        action="deny",
+                    )
+                ],
+                next_action="Fix the ledger newline explicitly before retrying.",
+            )
     except OSError:
+        cleanup = ownership.close()
+        if cleanup.status != "pass":
+            return cleanup
         return CheckResult(
             status="error",
             findings=[
                 _finding(
                     "events-file-read-failed",
-                    "Could not confirm the execution audit ledger snapshot.",
+                    "Could not inspect the execution audit ledger.",
                 )
             ],
-            next_action="Revalidate the ledger before retrying.",
+            next_action="Check ledger permissions before retrying.",
         )
-    if (
-        _stat_identity(final_stat) != preflight_identity
-        or final_stat.st_size != preflight_size
-    ):
-        return CheckResult(
-            status="error",
-            findings=[
-                _finding(
-                    "execution-audit-preflight-drift",
-                    "Execution audit ledger changed during preflight.",
-                )
-            ],
-            next_action="Retry against a stable ledger snapshot.",
-        )
+    loaded = list(audit_snapshot.records)
     return (
         tasks_path,
         events_path,
         loaded,
         preflight_identity,
         preflight_size,
+        audit_snapshot,
+        ownership,
     )
 
 
-def _post_check(root: Path, tasks_file: str, events_file: str) -> CheckResult:
+def _post_check(
+    root: Path,
+    tasks_file: str,
+    events_file: str,
+    *,
+    session: BoundedLedgerSession,
+    task_session: BoundedLedgerSession,
+) -> CheckResult:
+    task_snapshot = task_session.snapshot
+    if not isinstance(task_snapshot, BoundedLedgerSnapshot):
+        return task_snapshot
+    audit_snapshot = _validate_execution_audit_snapshot(
+        root,
+        session.refresh(),
+        tasks_file=tasks_file,
+        task_snapshot=task_snapshot,
+    )
+    task_current = task_session.verify_current()
     checks = (
-        (validate_records(root, tasks_file, "task"), True),
-        (validate_records(root, events_file, "event"), True),
-        (
-            check_ledger_consistency(
-                root, tasks_file=tasks_file, events_file=events_file
-            ),
-            True,
-        ),
-        (validate_execution_audit_ledger(root, events_file=events_file), False),
+        (task_current, True),
+        (audit_snapshot if isinstance(audit_snapshot, CheckResult) else CheckResult(status="pass"), False),
     )
     findings: list[Finding] = []
     for check, sanitize in checks:
@@ -791,7 +1077,20 @@ def _post_check(root: Path, tasks_file: str, events_file: str) -> CheckResult:
             findings=findings,
             next_action="Rollback the current execution audit append.",
         )
-    return CheckResult(status="pass")
+    if not isinstance(audit_snapshot, BoundedLedgerSnapshot):
+        return CheckResult(
+            status="error",
+            findings=[
+                _finding(
+                    "execution-audit-post-check-drift",
+                    "Execution audit ledger changed after bounded post-check.",
+                )
+            ],
+            next_action="Rollback the current execution audit append.",
+        )
+    return _ExecutionAuditPostCheckResult(
+        status="pass", snapshot=audit_snapshot
+    )
 
 
 def _append_and_validate(
@@ -804,8 +1103,12 @@ def _append_and_validate(
     events_path: Path,
     preflight_identity: tuple[int, int],
     preflight_size: int,
+    preflight_snapshot: BoundedLedgerSnapshot,
+    ownership: _LedgerSessionOwnership,
     audit_incomplete_on_failure: bool,
 ) -> ExecutionAuditWriteResult:
+    session = ownership.event_session
+    task_session = ownership.task_session
     metadata = event["metadata"]
     result = ExecutionAuditWriteResult(
         status="pass",
@@ -817,40 +1120,23 @@ def _append_and_validate(
         phase=metadata["phase"],
         child_created=False,
     )
-    line = (
-        json.dumps(event, ensure_ascii=False, separators=(",", ":")) + "\n"
-    ).encode("utf-8")
+    handle = session.handle
     try:
-        handle = events_path.open("r+b")
-    except OSError:
-        result.status = "error"
-        result.findings = [
-            _finding(
-                "execution-audit-ledger-open-failed",
-                "Could not open the execution audit ledger for append.",
-            )
-        ]
-        result.audit_incomplete = audit_incomplete_on_failure
-        result.next_action = "Check ledger permissions before retrying."
-        return result
-
-    with handle:
-        locked = False
         try:
-            _lock_ledger(handle)
-            locked = True
-        except OSError:
+            line = (
+                json.dumps(event, ensure_ascii=False, separators=(",", ":")) + "\n"
+            ).encode("utf-8")
+        except BaseException:
             result.status = "error"
             result.findings = [
                 _finding(
-                    "execution-audit-ledger-lock-failed",
-                    "Could not lock the execution audit ledger for append.",
+                    "execution-audit-append-construction-failed",
+                    "Execution audit append construction failed.",
                 )
             ]
             result.audit_incomplete = audit_incomplete_on_failure
-            result.next_action = "Retry after the current ledger writer finishes."
+            result.next_action = "Inspect the audit ledgers before retrying."
             return result
-
         try:
             try:
                 original_size, original_identity = _ledger_boundary(
@@ -870,6 +1156,7 @@ def _append_and_validate(
             if (
                 original_identity != preflight_identity
                 or original_size != preflight_size
+                or not snapshot_matches_handle(preflight_snapshot, handle)
             ):
                 result.status = "error"
                 result.findings = [
@@ -885,7 +1172,7 @@ def _append_and_validate(
             owned_bytes = 0
             try:
                 owned_bytes = _append_event_line(handle, line)
-            except OSError as exc:
+            except Exception as exc:
                 owned_bytes = (
                     exc.bytes_written
                     if isinstance(exc, _AppendWriteError)
@@ -898,6 +1185,7 @@ def _append_and_validate(
                     original_identity,
                     line,
                     owned_bytes,
+                    preflight_snapshot,
                 )
                 result.status = "error"
                 result.rolled_back = rollback_ok
@@ -939,6 +1227,7 @@ def _append_and_validate(
                     original_identity,
                     line,
                     owned_bytes,
+                    preflight_snapshot,
                 )
                 result.status = "error"
                 result.rolled_back = rollback_ok
@@ -967,7 +1256,13 @@ def _append_and_validate(
                 return result
 
             try:
-                post_check = _post_check(root, tasks_file, events_file)
+                post_check = _post_check(
+                    root,
+                    tasks_file,
+                    events_file,
+                    session=session,
+                    task_session=task_session,
+                )
             except Exception:  # noqa: BLE001
                 post_check = CheckResult(
                     status="error",
@@ -979,12 +1274,18 @@ def _append_and_validate(
                     ],
                     next_action="Rollback the current execution audit append.",
                 )
-            if post_check.status == "pass" and _verify_owned_append(
+            post_snapshot = getattr(post_check, "snapshot", None)
+            if (
+                post_check.status == "pass"
+                and isinstance(post_snapshot, BoundedLedgerSnapshot)
+                and _verify_owned_append(
                 handle,
                 events_path,
                 original_size,
                 original_identity,
                 line,
+                )
+                and snapshot_matches_handle(post_snapshot, handle)
             ):
                 result.committed = True
                 result.next_action = (
@@ -1001,6 +1302,7 @@ def _append_and_validate(
                 original_identity,
                 line,
                 owned_bytes,
+                preflight_snapshot,
             )
             if post_check.status == "pass":
                 result.status = "error"
@@ -1039,11 +1341,13 @@ def _append_and_validate(
             )
             return result
         finally:
-            if locked:
-                try:
-                    _unlock_ledger(handle)
-                except OSError:
-                    pass
+            pass
+    finally:
+        cleanup = ownership.close()
+        if cleanup.status != "pass":
+            result.status = "error"
+            result.findings = list(cleanup.findings)
+            result.next_action = cleanup.next_action
 
 
 def record_execution_attempt_started(
@@ -1057,6 +1361,7 @@ def record_execution_attempt_started(
     operation: str,
     tasks_file: str | None = None,
     events_file: str | None = None,
+    _schema_version: str = _WRITER_SCHEMA_VERSION,
 ) -> ExecutionAuditWriteResult:
     """Append one internally constructed execution-attempt started event."""
     root = root.resolve()
@@ -1115,46 +1420,72 @@ def record_execution_attempt_started(
         records,
         preflight_identity,
         preflight_size,
+        preflight_snapshot,
+        ownership,
     ) = preflight
-    if find_task(root, task_id, explicit_file=tasks_rel) is None:
-        return ExecutionAuditWriteResult(
-            status="error",
-            findings=[
-                _finding(
-                    "unknown-task-id",
-                    "Execution audit task was not found in the task ledger.",
-                )
-            ],
-            next_action="Use an existing task before recording execution audit.",
+    try:
+        task_snapshot = ownership.task_session.snapshot
+        task_exists = bool(
+            isinstance(task_snapshot, BoundedLedgerSnapshot)
+            and any(record.get("id") == task_id for record in task_snapshot.records)
         )
-    event_id, attempt_id = _generate_ids(records)
-    event = {
-        "event_id": event_id,
-        "task_id": task_id,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "actor": _ACTOR,
-        "event_type": _STARTED_TYPE,
-        "message": _MESSAGES[_STARTED_TYPE],
-        "metadata": {
-            "writer_origin": _WRITER_ORIGIN,
-            "writer_schema_version": _WRITER_SCHEMA_VERSION,
-            "append_token": f"append-{uuid4().hex}",
-            "attempt_id": attempt_id,
-            "request_id": request_id,
-            "plan_hash": plan_hash,
-            "adapter_id": adapter_id,
-            "capability": capability,
-            "operation": operation,
-            "phase": "pre_spawn_committed",
-        },
-    }
-    invalid = _validate_event_object(root, event)
+        if not task_exists:
+            return _close_terminal_rejection(ownership, ExecutionAuditWriteResult(
+                status="error",
+                findings=[
+                    _finding(
+                        "unknown-task-id",
+                        "Execution audit task was not found in the task ledger.",
+                    )
+                ],
+                next_action="Use an existing task before recording execution audit.",
+            ))
+        if _schema_version not in {_WRITER_SCHEMA_VERSION, _V2_SCHEMA_VERSION}:
+            return _close_terminal_rejection(ownership, ExecutionAuditWriteResult(
+                status="validation_failed",
+                findings=[_finding(
+                    "invalid-execution-audit-version",
+                    "Execution audit schema version is not supported.",
+                )],
+                next_action="Use a supported execution audit schema version.",
+            ))
+        event_id, attempt_id = _generate_ids(records)
+        event = {
+            "event_id": event_id,
+            "task_id": task_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "actor": _ACTOR,
+            "event_type": _STARTED_TYPE,
+            "message": _MESSAGES[_STARTED_TYPE],
+            "metadata": {
+                "writer_origin": _WRITER_ORIGIN,
+                "writer_schema_version": _schema_version,
+                "append_token": f"append-{uuid4().hex}",
+                "attempt_id": attempt_id,
+                "request_id": request_id,
+                "plan_hash": plan_hash,
+                "adapter_id": adapter_id,
+                "capability": capability,
+                "operation": operation,
+                "phase": "pre_spawn_committed",
+            },
+        }
+        invalid = _validate_event_object(root, event)
+    except BaseException:
+        cleanup = ownership.close()
+        if cleanup.status != "pass":
+            return ExecutionAuditWriteResult(
+                status="error",
+                findings=list(cleanup.findings),
+                next_action=cleanup.next_action,
+            )
+        raise
     if invalid is not None:
-        return ExecutionAuditWriteResult(
+        return _close_terminal_rejection(ownership, ExecutionAuditWriteResult(
             status=invalid.status,
             findings=invalid.findings,
             next_action=invalid.next_action,
-        )
+        ))
     return _append_and_validate(
         root,
         event=event,
@@ -1164,6 +1495,8 @@ def record_execution_attempt_started(
         events_path=events_path,
         preflight_identity=preflight_identity,
         preflight_size=preflight_size,
+        preflight_snapshot=preflight_snapshot,
+        ownership=ownership,
         audit_incomplete_on_failure=False,
     )
 
@@ -1184,6 +1517,7 @@ def inspect_execution_attempt(
     attempt_id: str,
     *,
     events_file: str | None = None,
+    tasks_file: str | None = None,
 ) -> ExecutionAttemptInspectionResult:
     """Return a safe recovery state for one execution attempt."""
     root = root.resolve()
@@ -1219,27 +1553,36 @@ def inspect_execution_attempt(
             attempt_id=attempt_id,
             recovery_action="manual_audit_review",
         )
-    loaded = _load_event_records(resolved)
-    if isinstance(loaded, CheckResult):
-        return ExecutionAttemptInspectionResult(
-            status=loaded.status,
-            state="invalid",
-            findings=loaded.findings,
-            next_action=loaded.next_action,
-            attempt_id=attempt_id,
-            recovery_action="manual_audit_review",
-        )
-    audit = _validate_execution_audit_records(root, loaded)
-    if audit.status != "pass":
-        return ExecutionAttemptInspectionResult(
-            status="validation_failed",
-            state="invalid",
-            findings=audit.findings,
-            attempt_id=attempt_id,
-            recovery_action="manual_audit_review",
-            next_action="Repair the audit chain before further execution.",
-        )
-    events = _attempt_events(loaded, attempt_id)
+    opened = open_bounded_ledger_session(resolved)
+    if isinstance(opened, CheckResult):
+        snapshot: BoundedLedgerSnapshot | CheckResult = opened
+    else:
+        with opened as session:
+            snapshot = _validate_execution_audit_snapshot(
+                root,
+                session.snapshot,
+                tasks_file=tasks_file or "tasks/tasks.jsonl",
+            )
+            if not isinstance(snapshot, CheckResult):
+                projected = _project_execution_attempt(snapshot, attempt_id)
+                final_verification = session.verify_current()
+                if final_verification.status == "pass":
+                    return projected
+                snapshot = final_verification
+    return ExecutionAttemptInspectionResult(
+        status=snapshot.status,
+        state="invalid",
+        findings=snapshot.findings,
+        next_action=snapshot.next_action,
+        attempt_id=attempt_id,
+        recovery_action="manual_audit_review",
+    )
+
+
+def _project_execution_attempt(
+    snapshot: BoundedLedgerSnapshot, attempt_id: str
+) -> ExecutionAttemptInspectionResult:
+    events = _attempt_events(list(snapshot.records), attempt_id)
     if not events:
         return ExecutionAttemptInspectionResult(
             status="needs_input",
@@ -1248,17 +1591,12 @@ def inspect_execution_attempt(
             recovery_action="verify_attempt_id",
             next_action="Confirm the attempt id before recording terminal audit.",
         )
-    started = [
-        event for event in events if event.get("event_type") == _STARTED_TYPE
-    ]
-    terminals = [
-        event for event in events if event.get("event_type") in _TERMINAL_TYPES
-    ]
+    started = [event for event in events if event.get("event_type") == _STARTED_TYPE]
+    terminals = [event for event in events if event.get("event_type") in _TERMINAL_TYPES]
     if len(started) != 1 or len(terminals) > 1:
         return ExecutionAttemptInspectionResult(
             status="validation_failed",
             state="invalid",
-            findings=audit.findings,
             attempt_id=attempt_id,
             recovery_action="manual_audit_review",
             next_action="Repair the audit chain before further execution.",
@@ -1300,7 +1638,7 @@ def inspect_execution_attempt(
     )
 
 
-def record_execution_terminal(
+def _record_execution_terminal(
     root: Path,
     *,
     attempt_id: str,
@@ -1317,6 +1655,15 @@ def record_execution_terminal(
     failure_code: str | None = None,
     tasks_file: str | None = None,
     events_file: str | None = None,
+    _expected_started_event_id: str | None = None,
+    _expected_plan_hash: str | None = None,
+    _recovery_fixed: bool = False,
+    job_accounting_passed: bool | None = None,
+    job_total_processes: int | None = None,
+    job_active_processes: int | None = None,
+    job_terminated_processes: int | None = None,
+    direct_child_reaped: bool | None = None,
+    containment_closed: bool | None = None,
 ) -> ExecutionAuditWriteResult:
     """Append one terminal event derived from an existing open started event."""
     root = root.resolve()
@@ -1400,16 +1747,31 @@ def record_execution_terminal(
         records,
         preflight_identity,
         preflight_size,
+        preflight_snapshot,
+        ownership,
     ) = preflight
-    attempt_events = _attempt_events(records, attempt_id)
-    started = [
-        event for event in attempt_events if event.get("event_type") == _STARTED_TYPE
-    ]
-    terminals = [
-        event for event in attempt_events if event.get("event_type") in _TERMINAL_TYPES
-    ]
+    try:
+        attempt_events = _attempt_events(records, attempt_id)
+        started = [
+            event for event in attempt_events if event.get("event_type") == _STARTED_TYPE
+        ]
+        terminals = [
+            event for event in attempt_events if event.get("event_type") in _TERMINAL_TYPES
+        ]
+    except BaseException:
+        cleanup = ownership.close()
+        if cleanup.status != "pass":
+            return ExecutionAuditWriteResult(
+                status="error",
+                findings=list(cleanup.findings),
+                next_action=cleanup.next_action,
+                attempt_id=attempt_id,
+                event_type=event_type,
+                audit_incomplete=True,
+            )
+        raise
     if not started:
-        return ExecutionAuditWriteResult(
+        return _close_terminal_rejection(ownership, ExecutionAuditWriteResult(
             status="needs_input",
             findings=[
                 _finding(
@@ -1421,9 +1783,9 @@ def record_execution_terminal(
             event_type=event_type,
             audit_incomplete=True,
             next_action="Confirm the attempt id before recording terminal audit.",
-        )
+        ))
     if terminals:
-        return ExecutionAuditWriteResult(
+        return _close_terminal_rejection(ownership, ExecutionAuditWriteResult(
             status="blocked",
             findings=[
                 _finding(
@@ -1437,60 +1799,137 @@ def record_execution_terminal(
             event_type=event_type,
             audit_incomplete=False,
             next_action="Do not append a second terminal audit event.",
-        )
+        ))
+    if len(started) != 1:
+        return _close_terminal_rejection(ownership, ExecutionAuditWriteResult(
+            status="validation_failed",
+            findings=[
+                _finding(
+                    "execution-attempt-chain-invalid",
+                    "Execution attempt does not have exactly one started audit.",
+                )
+            ],
+            attempt_id=attempt_id,
+            event_type=event_type,
+            audit_incomplete=True,
+        ))
     start = started[0]
     start_metadata = start["metadata"]
-    terminal_phase = fixed_phase or phase
-    metadata: dict[str, Any] = {
-        **{
-            key: start_metadata[key]
-            for key in (
-                "writer_origin",
-                "writer_schema_version",
-                "attempt_id",
-                "request_id",
-                "plan_hash",
-                "adapter_id",
-                "capability",
-                "operation",
+    if _expected_started_event_id is not None and start["event_id"] != _expected_started_event_id:
+        return _close_terminal_rejection(ownership, ExecutionAuditWriteResult(
+            status="blocked",
+            findings=[
+                _finding(
+                    "execution-recovery-started-event-mismatch",
+                    "The reviewed started event identity no longer matches.",
+                    severity="block",
+                    action="deny",
+                )
+            ],
+            attempt_id=attempt_id,
+            event_type=event_type,
+            audit_incomplete=True,
+        ))
+    if _expected_plan_hash is not None and start_metadata["plan_hash"] != _expected_plan_hash:
+        return _close_terminal_rejection(ownership, ExecutionAuditWriteResult(
+            status="blocked",
+            findings=[
+                _finding(
+                    "execution-recovery-plan-hash-mismatch",
+                    "The reviewed execution plan hash no longer matches.",
+                    severity="block",
+                    action="deny",
+                )
+            ],
+            attempt_id=attempt_id,
+            event_type=event_type,
+            audit_incomplete=True,
+        ))
+    try:
+        terminal_phase = fixed_phase or phase
+        metadata: dict[str, Any] = {
+            **{
+                key: start_metadata[key]
+                for key in (
+                    "writer_origin",
+                    "writer_schema_version",
+                    "attempt_id",
+                    "request_id",
+                    "plan_hash",
+                    "adapter_id",
+                    "capability",
+                    "operation",
+                )
+            },
+            "append_token": f"append-{uuid4().hex}",
+            "phase": terminal_phase,
+            "started_event_id": start["event_id"],
+        }
+        optional_evidence = {
+            "exit_code": exit_code,
+            "duration_bucket": duration_bucket,
+            "output_digest": output_digest,
+            "stdout_byte_count": stdout_byte_count,
+            "stderr_byte_count": stderr_byte_count,
+            "stdout_truncated": stdout_truncated,
+            "stderr_truncated": stderr_truncated,
+            "guard_status": guard_status,
+            "failure_code": failure_code,
+            "job_accounting_passed": job_accounting_passed,
+            "job_total_processes": job_total_processes,
+            "job_active_processes": job_active_processes,
+            "job_terminated_processes": job_terminated_processes,
+            "direct_child_reaped": direct_child_reaped,
+            "containment_closed": containment_closed,
+        }
+        metadata.update(
+            {key: value for key, value in optional_evidence.items() if value is not None}
+        )
+        if _recovery_fixed:
+            metadata = {
+                key: value
+                for key, value in metadata.items()
+                if key
+                not in {
+                    "exit_code",
+                    "duration_bucket",
+                    "output_digest",
+                    "stdout_byte_count",
+                    "stderr_byte_count",
+                    "stdout_truncated",
+                    "stderr_truncated",
+                }
+            }
+        event_id = _generate_event_id(records)
+        event = {
+            "event_id": event_id,
+            "task_id": start["task_id"],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "actor": _ACTOR,
+            "event_type": event_type,
+            "message": _MESSAGES[event_type],
+            "metadata": metadata,
+        }
+        invalid = _validate_event_object(root, event)
+    except BaseException:
+        cleanup = ownership.close()
+        if cleanup.status != "pass":
+            return ExecutionAuditWriteResult(
+                status="error",
+                findings=list(cleanup.findings),
+                next_action=cleanup.next_action,
+                attempt_id=attempt_id,
+                event_type=event_type,
+                audit_incomplete=True,
             )
-        },
-        "append_token": f"append-{uuid4().hex}",
-        "phase": terminal_phase,
-        "started_event_id": start["event_id"],
-    }
-    optional_evidence = {
-        "exit_code": exit_code,
-        "duration_bucket": duration_bucket,
-        "output_digest": output_digest,
-        "stdout_byte_count": stdout_byte_count,
-        "stderr_byte_count": stderr_byte_count,
-        "stdout_truncated": stdout_truncated,
-        "stderr_truncated": stderr_truncated,
-        "guard_status": guard_status,
-        "failure_code": failure_code,
-    }
-    metadata.update(
-        {key: value for key, value in optional_evidence.items() if value is not None}
-    )
-    event_id = _generate_event_id(records)
-    event = {
-        "event_id": event_id,
-        "task_id": start["task_id"],
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "actor": _ACTOR,
-        "event_type": event_type,
-        "message": _MESSAGES[event_type],
-        "metadata": metadata,
-    }
-    invalid = _validate_event_object(root, event)
+        raise
     if invalid is not None:
-        return ExecutionAuditWriteResult(
+        return _close_terminal_rejection(ownership, ExecutionAuditWriteResult(
             status=invalid.status,
             findings=invalid.findings,
             next_action=invalid.next_action,
             audit_incomplete=True,
-        )
+        ))
     return _append_and_validate(
         root,
         event=event,
@@ -1500,5 +1939,79 @@ def record_execution_terminal(
         events_path=events_path,
         preflight_identity=preflight_identity,
         preflight_size=preflight_size,
+        preflight_snapshot=preflight_snapshot,
+        ownership=ownership,
         audit_incomplete_on_failure=True,
+    )
+
+
+def record_execution_terminal(
+    root: Path,
+    *,
+    attempt_id: str,
+    event_type: str,
+    phase: str | None = None,
+    exit_code: int | None = None,
+    duration_bucket: str | None = None,
+    output_digest: str | None = None,
+    stdout_byte_count: int | None = None,
+    stderr_byte_count: int | None = None,
+    stdout_truncated: bool | None = None,
+    stderr_truncated: bool | None = None,
+    guard_status: str | None = None,
+    failure_code: str | None = None,
+    tasks_file: str | None = None,
+    events_file: str | None = None,
+    _schema_version: str | None = None,
+    job_accounting_passed: bool | None = None,
+    job_total_processes: int | None = None,
+    job_active_processes: int | None = None,
+    job_terminated_processes: int | None = None,
+    direct_child_reaped: bool | None = None,
+    containment_closed: bool | None = None,
+) -> ExecutionAuditWriteResult:
+    """Append one terminal event derived from an existing open started event."""
+    return _record_execution_terminal(
+        root,
+        attempt_id=attempt_id,
+        event_type=event_type,
+        phase=phase,
+        exit_code=exit_code,
+        duration_bucket=duration_bucket,
+        output_digest=output_digest,
+        stdout_byte_count=stdout_byte_count,
+        stderr_byte_count=stderr_byte_count,
+        stdout_truncated=stdout_truncated,
+        stderr_truncated=stderr_truncated,
+        guard_status=guard_status,
+        failure_code=failure_code,
+        tasks_file=tasks_file,
+        events_file=events_file,
+        job_accounting_passed=job_accounting_passed,
+        job_total_processes=job_total_processes,
+        job_active_processes=job_active_processes,
+        job_terminated_processes=job_terminated_processes,
+        direct_child_reaped=direct_child_reaped,
+        containment_closed=containment_closed,
+    )
+
+
+def record_execution_recovery_terminal(
+    root: Path,
+    *,
+    attempt_id: str,
+    expected_started_event_id: str,
+    expected_plan_hash: str,
+) -> ExecutionAuditWriteResult:
+    """Append the one fixed outcome-unknown recovery terminal."""
+    return _record_execution_terminal(
+        root,
+        attempt_id=attempt_id,
+        event_type="execution_failed",
+        phase="audit",
+        guard_status="not_run",
+        failure_code="execution.recovery_outcome_unknown",
+        _expected_started_event_id=expected_started_event_id,
+        _expected_plan_hash=expected_plan_hash,
+        _recovery_fixed=True,
     )

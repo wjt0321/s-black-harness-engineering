@@ -57,7 +57,7 @@
 当前仓库已经形成可内部试用的**离线、可审计 CLI / Runtime 安全内核**，并完成 Stage 12 control-plane read model 验收：
 
 - 已可用于规则校验、任务/事件账本、能力路由、dry-run、受控写入和 recovery lineage 审计；
-- Stage 13–49 的 backend/read-model/controlled-write/host/display/readiness/audit/fixed-execution 主线均已收口；[Stage 50 operational recovery design](docs/99-fixed-execution-operational-recovery-design-gate.md) 已冻结 machine-local execution lease、identity-bound trust rotation、bounded open-attempt recovery、Windows Job accounting 与 audit v2 contract，但没有扩大 production execution 权限；
+- Stage 13–49 的 backend/read-model/controlled-write/host/display/readiness/audit/fixed-execution 主线均已收口；[Stage 51 operational recovery implementation](docs/100-fixed-execution-operational-recovery-implementation.md) 已实现 shared machine-local lease、identity-bound trust rotation、bounded open-attempt recovery、Windows Job accounting 与 audit v2，但没有扩大 production execution 权限；
 - 当前可生成本地、自包含、确定性的静态只读 Control Panel，也可在显式 `--commit` 下执行唯一固定的 `git status --short --branch` 并只释放 path-free 安全摘要。通用 adapter execution、网络、持久化 service/DB、鉴权和 UI 写操作仍未开放，因此当前不是自动执行型生产中枢台。
 
 ## 当前进度条
@@ -153,7 +153,8 @@
 - ✅ Stage 48 — Execution Lifecycle Audit Writer Implementation（无 CLI、无 subprocess）
 - ✅ Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（Windows-only）
 - ✅ Stage 50 — Fixed Execution Operational Recovery Design Gate（design-only）
-- ⏳ Stage 51 — Fixed Execution Operational Recovery Implementation（条件启动）
+- ✅ Stage 51 — Fixed Execution Operational Recovery Implementation（提交级里程碑）
+- ⏳ Stage 52 — Fixed Execution Next-decision Design Gate（条件启动）
 
 ### 现在最明确的位置
 
@@ -162,7 +163,7 @@
 - **门禁 / ledger / controlled write 这一层，已经不是草稿，而是一个成型的安全内核**
 - **中枢台后端主线已经具备 source-backed registry、约束路由、read-loop snapshot、recovery lineage aggregation，以及 CLI automation contract/profile/workflow plan/drift validation projection**
 - **唯一 Windows fixed `git_status` 已开放；通用 adapter execution、POSIX、第二个 operation 和 OS filesystem write proof 仍 blocked**
-- **Stage 51 尚未实现；当前没有 recovery CLI、automatic retry、invalid-binding force repair 或新增真实 operation**
+- **Stage 51 已实现 recovery CLI，但不 automatic retry、不允许 invalid-binding force repair，也没有新增真实 operation**
 
 ### 接下来的方向
 
@@ -185,7 +186,7 @@ Stage 23–35 scoped/filtered reader、consumer、host 与 Markdown display，�
 15. Stage 46 已完成 fixed Git status executor design-only gate：拒绝通用 shell，明确 PATH 只做候选发现，冻结 operator-reviewed trust/image binding、sanitized child PATH、POSIX process group / Windows Job Object、有限 porcelain grammar、安全摘要、no-write 证据分层与 reserved audit event 来源隔离。
 16. Stage 47–48 已实现 `execution_attempt_started/succeeded/failed/cancelled` 独立 schema 与内部专用 writer：通用 append/import 不能伪造，started/terminal 使用同一 file descriptor、dedicated lock、writer-only append token 与 path/file identity rollback，检测到并发 ledger 漂移或 file replacement 时拒绝 committed/truncate；reader 可区分 awaiting/closed/missing/invalid。
 17. Stage 49 已实现 Windows fixed Git status limited execution：machine-local trust binding、actor-writable PATH filtering、non-shareable executable handle、suspended actual-image recheck、repository containment、Job Object、finite parser、post-run guard 与 terminal audit 全部通过后才释放安全摘要；POSIX 和任何第二个 operation 仍不可用。
-18. Stage 50 已冻结 operational recovery：防 replacement 的 single-flight lease、绑定 old binding/full new candidate identity 的 trust rotation、有输入预算的 open-attempt outcome-unknown closure、Job accounting active-zero 与 audit v2；production CLI 和唯一 operation 均未改变。下一实现边界见 `docs/99-fixed-execution-operational-recovery-design-gate.md`。
+18. Stage 50 冻结 contract，Stage 51 已完成对应 implementation：防 replacement 的 shared lease、trust inspect/identity-bound rotation、有输入预算的 open-attempt outcome-unknown closure、Job accounting active-zero 与 audit v2；唯一真实 operation 仍未扩大。事实源见 `docs/100-fixed-execution-operational-recovery-implementation.md`。
 
 已落地的主线能力包括：
 
@@ -242,10 +243,10 @@ python -m agent_runtime.cli orchestration run inspect --task-id <task-id> --requ
 首次进入仓库时，按当前阶段恢复，不需要顺序阅读全部历史文档：
 
 1. [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前阶段、稳定基线和下一步。
-2. [`docs/99-fixed-execution-operational-recovery-design-gate.md`](docs/99-fixed-execution-operational-recovery-design-gate.md)：Stage 50 权威设计契约。
+2. [`docs/100-fixed-execution-operational-recovery-implementation.md`](docs/100-fixed-execution-operational-recovery-implementation.md)：Stage 51 权威实现事实源。
 3. [`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`](docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md)：当前唯一真实执行能力及停止线。
 4. [`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`](docs/97-execution-lifecycle-audit-writer-design-and-implementation.md)：execution audit writer 事实源。
-5. [`tasks/handoff-2026-07-17.md`](tasks/handoff-2026-07-17.md)：最新交接与 Stage 51 条件边界。
+5. [`tasks/handoff-2026-07-23.md`](tasks/handoff-2026-07-23.md)：最新 Stage 51 交接与 Stage 52 条件边界。
 6. [`docs/02-roadmap.md`](docs/02-roadmap.md)：完整阶段路线图。
 7. [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md)：CLI 参数与示例。
 

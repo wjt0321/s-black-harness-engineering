@@ -2350,7 +2350,7 @@ python -m agent_runtime.cli orchestration approval resolve \
 - 不访问网络。
 - 不发送消息。
 - 不删除文件。
-- 受控写入还包括 execution audit writer 与 machine-local execution trust binding；fixed Git status 在 started/terminal audit 成功闭合前不释放结果。
+- 受控写入还包括 execution audit writer、machine-local execution trust binding 与 fixed recovery close；fixed Git status 在 started/terminal audit 成功闭合前不释放结果，recovery close 也不恢复历史结果。
 - 不读取 `.env`、`.env.local` 或密钥文件。
 - 不回显完整 secret match。
 
@@ -2431,6 +2431,9 @@ python -m agent_runtime.cli orchestration execution trust bind \
   --expected-sha256 <new-reviewed-lowercase-sha256> \
   --expected-publisher-thumbprint <new-reviewed-uppercase-thumbprint> \
   --replace \
+  --expected-binding-id sha256:<reviewed-old-binding-id> \
+  --expected-executable-identity sha256:<reviewed-new-executable-identity> \
+  --expected-path-identity sha256:<reviewed-new-path-identity> \
   --commit \
   --json
 ```
@@ -2441,7 +2444,8 @@ python -m agent_runtime.cli orchestration execution trust bind \
 - CLI 不接受 binding path、Git path、PATH 或 reviewer override；
 - preview/commit 公共输出只包含 binding、executable 与 sanitized PATH identity digest，不输出绝对路径；
 - existing binding 必须先通过 strict validation，才能 rotation；
-- POSIX backend 当前固定 unavailable。
+- rotation commit 必须绑定 preview 中审阅的 old binding id、new executable identity 和 new sanitized PATH identity；
+- `orchestration execution trust inspect` 提供 missing/current/drifted/invalid/candidate/platform 的 value-safe inspection；POSIX backend 当前固定 unavailable。
 
 ### 2. 执行唯一 fixed Git status
 
@@ -2485,3 +2489,33 @@ python -m agent_runtime.cli orchestration execution git-status \
 $env:AGENT_RUNTIME_RUN_REAL_GIT_STATUS_SMOKE = "1"
 python -m pytest tests/test_stage49_real_git_status_smoke.py -q
 ```
+
+### 3. Operational recovery（Stage 51）
+
+只读 trust inspection：
+
+```bash
+python -m agent_runtime.cli orchestration execution trust inspect --json
+```
+
+bounded open-attempt discovery/inspection：
+
+```bash
+python -m agent_runtime.cli orchestration execution recovery list-open --json
+python -m agent_runtime.cli orchestration execution recovery inspect \
+  --attempt-id <attempt-id> --json
+```
+
+固定 outcome-unknown closure 默认只 preview；只有 reviewed expected ids 完全匹配且显式 `--commit` 才写入 terminal audit：
+
+```bash
+python -m agent_runtime.cli orchestration execution recovery close-open \
+  --attempt-id <attempt-id> \
+  --expected-started-event-id <event-id> \
+  --expected-plan-hash sha256:<64-lowercase-hex> \
+  --commit --json
+```
+
+`awaiting_terminal` 永远表示 historical process outcome unknown，不能 automatic retry，也不能释放历史 result。close 只写固定 `execution_failed` / `phase=audit` / `execution.recovery_outcome_unknown` / `guard_status=not_run`，不接受 caller event/evidence/path override。
+
+Stage 51 没有运行 real Git status smoke；fake backend、bounded temporary ledger 与 full automated tests 是本阶段的执行验证边界。

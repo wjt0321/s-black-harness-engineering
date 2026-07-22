@@ -58,7 +58,7 @@ The repository now provides an **offline, auditable CLI/runtime security core su
 
 - it can already support policy validation, task/event ledgers, capability routing, dry-runs, controlled writes, and recovery-lineage auditing;
 - Stage 13 resource/operation reconciliation and the Stage 14 replayable minimal orchestration loop are both complete;
-- Stage 13–49 backend/read-model/controlled-write/host/display/readiness/audit/fixed-execution work is closed. The [Stage 50 operational recovery design](docs/99-fixed-execution-operational-recovery-design-gate.md) freezes a machine-local execution lease, identity-bound trust rotation, bounded open-attempt recovery, Windows Job accounting, and audit-v2 contract without expanding production execution permission. Generic adapter execution remains unavailable.
+- Stage 13–49 backend/read-model/controlled-write/host/display/readiness/audit/fixed-execution work is closed. The [Stage 51 operational recovery implementation](docs/100-fixed-execution-operational-recovery-implementation.md) implements a shared machine-local lease, identity-bound trust rotation, bounded open-attempt recovery, Windows Job accounting, and audit-v2 without expanding production execution permission. Generic adapter execution remains unavailable.
 - Stage 16 closure commit: `b46c013`; this closure has been pushed to `origin/main` with user authorization.
 
 ## Progress Bar
@@ -151,7 +151,8 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 48 — Execution Lifecycle Audit Writer Implementation (no CLI and no subprocess)
 - ✅ Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement (Windows only)
 - ✅ Stage 50 — Fixed Execution Operational Recovery Design Gate (design only)
-- ⏳ Stage 51 — Fixed Execution Operational Recovery Implementation (conditional)
+- ✅ Stage 51 — Fixed Execution Operational Recovery Implementation (commit-level milestone)
+- ⏳ Stage 52 — Fixed Execution Next-decision Design Gate (conditional)
 
 ### The Most Accurate Current Read
 
@@ -160,11 +161,11 @@ The current state is best understood as:
 - **guardrails / ledgers / controlled writes are no longer a sketch; they are already a formed security core**
 - **the orchestration backend now has source-backed registry, constraint routing, read-loop snapshots, and recovery lineage aggregation v1**
 - **one Windows fixed `git_status` operation is enabled; generic adapters, POSIX execution, a second operation, and OS-enforced filesystem write protection remain blocked**
-- **Stage 51 is not implemented; there is currently no recovery CLI, automatic retry, invalid-binding force repair, or additional real operation**
+- **Stage 51 is implemented with recovery CLI surfaces; automatic retry, invalid-binding force repair, and additional real operations remain unavailable**
 
 ### What Comes Next
 
-Stage 49 is complete on Windows for one fixed operation only. The operator first provisions a machine-local reviewed Git binding; execution then requires explicit `--commit`, exact `git status --short --branch`, pre/post repository guards, a suspended actual-image check, Job Object containment, bounded output, finite porcelain validation, and closed execution audit before a path-free summary is released. Stage 50 adds only a recovery design contract for a replacement-resistant single-flight lease, old-binding/full-candidate-bound rotation, input-bounded open-attempt handling, active-zero Job accounting, and future audit v2. POSIX, arbitrary commands, network adapters, and additional operations remain unavailable.
+Stage 49 remains complete on Windows for one fixed operation only. Stage 51 adds the implemented replacement-resistant shared lease, old-binding/full-candidate-bound rotation, input-bounded open-attempt handling, fixed outcome-unknown closure, active-zero Job accounting, and audit v2. Stage 51 did not run real Git smoke. POSIX, arbitrary commands, network adapters, and additional operations remain unavailable.
 
 
 Implemented capability highlights:
@@ -220,10 +221,10 @@ For more CLI usage, see `docs/10-cli-poc-usage.md`.
 For a new session, recover the current stage first; there is no need to read the full history in sequence:
 
 1. [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current stage, stable baseline, and next step.
-2. [`docs/99-fixed-execution-operational-recovery-design-gate.md`](docs/99-fixed-execution-operational-recovery-design-gate.md): authoritative Stage 50 design contract.
+2. [`docs/100-fixed-execution-operational-recovery-implementation.md`](docs/100-fixed-execution-operational-recovery-implementation.md): authoritative Stage 51 implementation source.
 3. [`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`](docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md): the only real execution capability and its stop lines.
 4. [`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`](docs/97-execution-lifecycle-audit-writer-design-and-implementation.md): execution audit writer source of truth.
-5. [`tasks/handoff-2026-07-17.md`](tasks/handoff-2026-07-17.md): latest handoff and Stage 51 conditional boundary.
+5. [`tasks/handoff-2026-07-23.md`](tasks/handoff-2026-07-23.md): latest Stage 51 handoff and Stage 52 conditional boundary.
 6. [`docs/02-roadmap.md`](docs/02-roadmap.md): complete stage roadmap.
 7. [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md): CLI flags and examples.
 

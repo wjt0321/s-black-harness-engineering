@@ -34,7 +34,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 50 operational recovery design gate 已收口）
+### 5. 想看中枢台主线（Stage 51 operational recovery implementation 已收口）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -71,13 +71,14 @@
 - `97-execution-lifecycle-audit-writer-design-and-implementation.md` — Stage 47–48 reserved schema、internal writer、通用入口隔离、rollback 与 recovery inspection 事实源（已收口）
 - `98-fixed-git-status-executor-implementation-and-limited-enablement.md` — Stage 49 Windows trust binding、repository guard、Job Object runner、finite parser、audit release 与真实 smoke 事实源（已收口）
 - `99-fixed-execution-operational-recovery-design-gate.md` — Stage 50 machine-local lease、trust/open-attempt recovery、fixed closure、Windows Job accounting 与 audit v2 design gate（已收口）
+- `100-fixed-execution-operational-recovery-implementation.md` — Stage 51 lease、trust inspection/rotation、bounded recovery、Job accounting 与 audit v1/v2 implementation 事实源（已收口）
 - `archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` — Stage 36–38 display v1 consumer 与 `v0.16.0` 历史事实源
 - `archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` — Stage 33–35 Markdown display 与 `v0.15.0` 历史事实源
 - `archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` — Stage 30–32 host design、实现、验收与 `v0.14.0` 历史冻结事实源
 
 ### 6. 想看里程碑与冻结记录
 
-- 当前设计 gate：`99-fixed-execution-operational-recovery-design-gate.md` 与 release notes 109
+- 当前实现事实源：`100-fixed-execution-operational-recovery-implementation.md` 与 release notes 110
 - 上一提交级里程碑：`98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108
 - 上一提交级里程碑：`97-execution-lifecycle-audit-writer-design-and-implementation.md` 与 release notes 107
 - 历史设计 gate：`archive/96-fixed-git-status-executor-design-gate.md` 与 release notes 106
@@ -97,15 +98,15 @@
 | 目录 | 内容 |
 |:---|:---|
 | `archive/` | 历史设计门 / freeze checklist / execution plan（含 v0.13 freeze `77`、Stage 19–21 `80`–`82`、v0.14 freeze `90`） |
-| `archive/release-notes/` | 各阶段 release notes（最新为 `109-release-notes-stage50-fixed-execution-operational-recovery-design-gate.md`） |
+| `archive/release-notes/` | 各阶段 release notes（最新为 `110-release-notes-stage51-fixed-execution-operational-recovery.md`） |
 | `archive/dry-runs/` | dry-run / commit 操作记录（8 个） |
 | `archive/smoke-regression/` | smoke test / regression 报告（4 个） |
 
 ## 当前最重要 5 份文档
 
 1. `000-stage-digest.md`
-2. `99-fixed-execution-operational-recovery-design-gate.md`
-3. 最新 handoff：`tasks/handoff-2026-07-17.md`
+2. `100-fixed-execution-operational-recovery-implementation.md`
+3. 最新 handoff：`tasks/handoff-2026-07-23.md`
 4. `98-fixed-git-status-executor-implementation-and-limited-enablement.md`
 5. `97-execution-lifecycle-audit-writer-design-and-implementation.md`
 

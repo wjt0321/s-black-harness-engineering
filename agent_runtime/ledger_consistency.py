@@ -125,6 +125,15 @@ def check_ledger_consistency(
             next_action="Check file contents and permissions.",
         )
 
+    return check_ledger_record_consistency(tasks, events)
+
+
+def check_ledger_record_consistency(
+    tasks: list[dict[str, Any]],
+    events: list[dict[str, Any]] | tuple[dict[str, Any], ...],
+) -> CheckResult:
+    """Check task/event consistency using already parsed event records."""
+    findings: list[Finding] = []
     tasks_by_id: dict[str, dict[str, Any]] = {}
     for task in tasks:
         task_id = task.get("id")

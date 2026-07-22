@@ -38,7 +38,12 @@ from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_a
 from .orchestration_contract import build_contract_manifest
 from .orchestration_contract_check import check_contract_requirements
 from .orchestration_execution_readiness import check_execution_readiness
-from .execution_trust import create_execution_trust_binding
+from .orchestration_execution_recovery import (
+    close_open_execution_attempt,
+    inspect_open_execution_attempt,
+    list_open_execution_attempts,
+)
+from .execution_trust import create_execution_trust_binding, inspect_execution_trust
 from .orchestration_git_status_execution import execute_fixed_git_status
 from .orchestration_control_panel import (
     build_control_panel_handoff,
@@ -1604,7 +1609,20 @@ def _cmd_orchestration_execution_trust_bind(args: argparse.Namespace) -> int:
         expected_publisher_thumbprint=args.expected_publisher_thumbprint,
         commit=args.commit,
         replace=args.replace,
+        expected_binding_id=args.expected_binding_id,
+        expected_executable_identity=args.expected_executable_identity,
+        expected_path_identity=args.expected_path_identity,
     )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_execution_trust_inspect(args: argparse.Namespace) -> int:
+    """Inspect the fixed machine-local executable trust state."""
+    result = inspect_execution_trust(_root_path(args))
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
@@ -1627,6 +1645,37 @@ def _cmd_orchestration_execution_git_status(args: argparse.Namespace) -> int:
     else:
         print(result.render_human())
     return result.exit_code()
+
+
+def _render_execution_recovery(args: argparse.Namespace, result: Any) -> int:
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_execution_recovery_list_open(args: argparse.Namespace) -> int:
+    return _render_execution_recovery(args, list_open_execution_attempts(_root_path(args)))
+
+
+def _cmd_orchestration_execution_recovery_inspect(args: argparse.Namespace) -> int:
+    return _render_execution_recovery(
+        args, inspect_open_execution_attempt(_root_path(args), args.attempt_id)
+    )
+
+
+def _cmd_orchestration_execution_recovery_close_open(args: argparse.Namespace) -> int:
+    return _render_execution_recovery(
+        args,
+        close_open_execution_attempt(
+            _root_path(args),
+            attempt_id=args.attempt_id,
+            expected_started_event_id=args.expected_started_event_id,
+            expected_plan_hash=args.expected_plan_hash,
+            commit=args.commit,
+        ),
+    )
 
 
 def _cmd_orchestration_contract_inspect(args: argparse.Namespace) -> int:
@@ -3281,10 +3330,60 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Explicitly rotate an existing valid machine-local binding",
     )
+    orchestration_execution_trust_bind_parser.add_argument(
+        "--expected-binding-id",
+        default=None,
+        help="Reviewed identity of the existing binding being rotated",
+    )
+    orchestration_execution_trust_bind_parser.add_argument(
+        "--expected-executable-identity",
+        default=None,
+        help="Reviewed full identity digest of the replacement executable",
+    )
+    orchestration_execution_trust_bind_parser.add_argument(
+        "--expected-path-identity",
+        default=None,
+        help="Reviewed sanitized PATH identity of the replacement candidate",
+    )
     _add_global_args(orchestration_execution_trust_bind_parser)
     orchestration_execution_trust_bind_parser.set_defaults(
         func=_cmd_orchestration_execution_trust_bind
     )
+    orchestration_execution_trust_inspect_parser = (
+        orchestration_execution_trust_subparsers.add_parser(
+            "inspect", help="Inspect the fixed machine-local trust state"
+        )
+    )
+    _add_global_args(orchestration_execution_trust_inspect_parser)
+    orchestration_execution_trust_inspect_parser.set_defaults(
+        func=_cmd_orchestration_execution_trust_inspect
+    )
+    orchestration_execution_recovery_parser = orchestration_execution_subparsers.add_parser(
+        "recovery", help="Inspect and close fixed open execution audit attempts"
+    )
+    orchestration_execution_recovery_subparsers = orchestration_execution_recovery_parser.add_subparsers(
+        dest="execution_recovery_command", required=True
+    )
+    recovery_list_parser = orchestration_execution_recovery_subparsers.add_parser(
+        "list-open", help="List bounded open execution audit attempts"
+    )
+    _add_global_args(recovery_list_parser)
+    recovery_list_parser.set_defaults(func=_cmd_orchestration_execution_recovery_list_open)
+    recovery_inspect_parser = orchestration_execution_recovery_subparsers.add_parser(
+        "inspect", help="Inspect one execution audit attempt"
+    )
+    recovery_inspect_parser.add_argument("--attempt-id", required=True)
+    _add_global_args(recovery_inspect_parser)
+    recovery_inspect_parser.set_defaults(func=_cmd_orchestration_execution_recovery_inspect)
+    recovery_close_parser = orchestration_execution_recovery_subparsers.add_parser(
+        "close-open", help="Preview or commit fixed outcome-unknown closure"
+    )
+    recovery_close_parser.add_argument("--attempt-id", required=True)
+    recovery_close_parser.add_argument("--expected-started-event-id", required=True)
+    recovery_close_parser.add_argument("--expected-plan-hash", required=True)
+    recovery_close_parser.add_argument("--commit", action="store_true")
+    _add_global_args(recovery_close_parser)
+    recovery_close_parser.set_defaults(func=_cmd_orchestration_execution_recovery_close_open)
     orchestration_execution_git_status_parser = (
         orchestration_execution_subparsers.add_parser(
             "git-status", help="Run the single fixed Git status executor"
@@ -3963,18 +4062,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     _ensure_global_defaults(args)
     try:
         return args.func(args)
-    except FileNotFoundError as exc:
+    except FileNotFoundError:
         result = CheckResult(
             status="error",
             findings=[],
-            next_action=f"File not found: {exc.filename}",
+            next_action="Required file was not found.",
         )
         return emit(result, json_output=args.json, no_color=args.no_color)
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         result = CheckResult(
             status="error",
             findings=[],
-            next_action=f"Unexpected error: {exc}",
+            next_action="Unexpected internal error.",
         )
         return emit(result, json_output=args.json, no_color=args.no_color)
 

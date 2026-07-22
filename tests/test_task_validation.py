@@ -139,6 +139,17 @@ def test_validate_json_syntax_error_reports_line_number(tmp_path):
     assert any("invalid JSON" in f.message for f in result.findings)
 
 
+def test_validate_event_non_object_record_still_fails_shared_schema(tmp_path):
+    root = _prepare_schema_root(tmp_path)
+    _write_record(root, "tasks/events.jsonl", "[]\n")
+
+    result = validate_records(root, "tasks/events.jsonl", "event")
+
+    assert result.status == "validation_failed"
+    assert result.findings[0].rule_id == "schema-validation-failed"
+    assert result.findings[0].line == 1
+
+
 def test_validate_rejects_path_outside_root(tmp_path):
     root = _prepare_schema_root(tmp_path / "root")
     outside_file = tmp_path / "outside.jsonl"

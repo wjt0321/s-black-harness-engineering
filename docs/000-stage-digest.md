@@ -4,9 +4,9 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：50 个
-- 归档文档：87 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：178 个
+- docs/ 活跃文档：51 个
+- 归档文档：88 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：182 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,17 +25,17 @@
 
 ## 当前阶段
 
-- **Stage 50 — Fixed Execution Operational Recovery Design Gate（design-only 已完成并收口）**
+- **Stage 51 — Fixed Execution Operational Recovery Implementation（已完成并收口）**
 - Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（Windows limited enablement 已完成并收口）
 - Stage 47–48 — Execution Lifecycle Audit Writer（design + TDD implementation 已完成并收口）
 - Stage 46 — Fixed Git Status Executor Design Gate（已收口；design-only）
 - Stage 45 — Single-user Real Execution Readiness Milestone Closure（已收口；提交 `49a517b`）
 - Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
 - Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
-- 下一阶段：Stage 51 — Fixed Execution Operational Recovery Implementation（条件启动）
-- Stage 50 只冻结 machine-local execution lease、trust recovery、open-attempt recovery、Windows Job accounting 与 audit v2 contract；没有新增 production CLI、schema、writer 或 subprocess。
+- 下一阶段候选：Stage 52 — Fixed Execution Next-decision Design Gate（条件启动；仅 design authority）
+- Stage 51 已实现 shared machine-local lease、trust inspect/identity-bound rotation、bounded locked open-attempt recovery、fixed outcome-unknown close、Windows Job accounting 与 audit v2；没有扩大真实执行权限。
 - Stage 49 只在 Windows 开放唯一 fixed operation `git status --short --branch`；必须显式 `--commit`，并依赖 machine-local reviewed trust binding。
-- POSIX、通用 shell、任意 argv/cwd/env/path override、network adapter、linked worktree、submodule、alternate object store、第二个 operation 和 OS-enforced filesystem write proof 仍 unavailable。
+- Stage 51 没有运行 real smoke，只使用 fake backend、临时 ledger 与自动化测试。POSIX、通用 shell、任意 argv/cwd/env/path override、network adapter、linked worktree、submodule、alternate object store、第二个 operation 和 OS-enforced filesystem write proof 仍 unavailable。
 - Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
 - Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
 - 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
@@ -210,16 +210,16 @@
 - 2026-07-17 已在 pytest 临时 direct `.git/` 仓库完成一次显式授权真实 smoke；真实项目 ledger 未修改。
 - 本阶段不创建 tag、不 push，稳定 semver 仍为已推送的 v0.17.0。
 
-### 新进落地：Stage 50 — Fixed Execution Operational Recovery Design Gate
+### 新进落地：Stage 50–51 — Fixed Execution Operational Recovery
 
-- 选择 replacement-resistant single-flight machine-local lease + safe inspection + outcome-unknown closure + Windows Job accounting 方案。
+- Stage 50 选择 replacement-resistant single-flight machine-local lease + safe inspection + outcome-unknown closure + Windows Job accounting 方案；Stage 51 已按此 contract 实现。
 - future execution、trust rotation 与 recovery close 必须共用固定 exclusive lease；read-only inspect 不创建或修改 lease 文件。
 - trust inspection 冻结 missing/current/drifted/invalid/candidate/platform 状态；rotation 绑定 expected old binding id 与完整 new executable/PATH identity；损坏 binding 不允许 force overwrite 或自动删除。
 - open attempt 必须在固定 ledger 输入预算内解释为 historical process outcome unknown，禁止自动 retry 或释放历史 summary。
 - future fixed recovery close 只允许 `execution_failed` / `phase=audit` / `execution.recovery_outcome_unknown`，并绑定 expected started event id 与 plan hash。
-- Windows ready release gate 将要求 Job accounting active zero、direct child reaped 与 containment close；该证据不等于 filesystem write proof。
+- Windows ready release gate 已要求 Job accounting active zero、direct child reaped 与 containment close；该证据不等于 filesystem write proof。
 - 历史 `execution-audit/v1` 保持可读；future Job evidence 使用 v2，不静默扩展 v1。
-- 本阶段没有新增 production CLI、schema、writer、subprocess、tag 或 push。
+- Stage 51 新增 trust inspect、recovery list/inspect/close CLI、bounded ledger 与 audit v2 接入；没有运行 real smoke，不创建 tag、不 push。
 
 ## 现在已经能做什么
 
@@ -239,18 +239,19 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/99-fixed-execution-operational-recovery-design-gate.md`
-3. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
-4. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
-5. `tasks/handoff-2026-07-17.md`
-6. Stage 50/49/47–48 验收读 release notes 109/108/107。
+2. `docs/100-fixed-execution-operational-recovery-implementation.md`
+3. `docs/99-fixed-execution-operational-recovery-design-gate.md`
+4. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+5. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+6. `tasks/handoff-2026-07-23.md`
+7. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
 7. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
 8. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 51 — Fixed Execution Operational Recovery Implementation（条件启动）**。
-- 只允许按 `docs/99-fixed-execution-operational-recovery-design-gate.md` 实现 lease、trust/audit inspection、fixed recovery close、Windows Job accounting 与 audit v2。
+- **Stage 52 — Fixed Execution Next-decision Design Gate（条件启动）**。
+- 只允许审计 Stage 51 remaining risks、operator/consumer need 与下一决策；Stage 52 不是 implementation authority。
 - POSIX enablement 必须另行闭合 executable image identity、process-group containment 与同等输出/审计停止线。
 - 任何第二个 command、approval-required adapter、network operation 或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。
 

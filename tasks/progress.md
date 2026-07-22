@@ -2865,3 +2865,13 @@
 - 检查首次推送 `bf0b990` 的 GitHub Actions run `29554296000`：Ubuntu Python 3.11 有两个 Windows PATH sanitization 测试失败，1120 passed / 2 failed / 2 skipped。
 - 根因是测试通过宿主 `os.pathsep` 构造 `platform="windows"` 输入，Linux 产生 `:`，而 production contract 固定使用 Windows `;`；修复测试 fixture 为显式 `;`，不修改 production code。
 - 中英文 README 的首次阅读顺序从 30 份历史文档收敛为 7 个当前阶段入口；历史导航保留在 `docs/00-index.md`。
+
+## 2026-07-23 Stage 51 — Fixed Execution Operational Recovery Implementation
+
+- 用户要求仅完成 Task 6 documentation closure，工作限定在 `feature/stage51-operational-recovery` worktree；不修改 production code/tests，不 commit、push、tag、merge。
+- Stage 51 实现已按 Stage 50 contract 收口：shared machine-local lease、trust inspect/identity-bound rotation、bounded locked ledger/open-attempt list/inspect、fixed outcome-unknown close、Windows Job accounting active-zero/reaped/containment-closed，以及 historical v1/new execution v2 audit。
+- exact CLI surfaces 为 `orchestration execution trust inspect`、recovery `list-open` / `inspect` / `close-open`；rotation commit 要求 expected old binding id、new executable identity 与 new sanitized PATH identity。
+- Stage 51 没有 real Git status smoke；fake backend、临时 ledger 与自动化测试是实现验证边界。本轮 full test suite、docs context、doctor、public scan、docs hook 与 diff check 均通过，不固化测试数量。
+- 新增权威事实源 `docs/100-fixed-execution-operational-recovery-implementation.md`、release notes 110、最终 handoff `tasks/handoff-2026-07-23.md`；删除 in-progress handoff 以避免 latest handoff 歧义。
+- 稳定 tag 继续为已推送 `v0.17.0-filtered-snapshot-display-host-integration`；Stage 51 仅为 commit-level milestone，不创建 tag、不 push。
+- 下一候选为 Stage 52 conditional design gate，仅审计 remaining risks、operator/consumer need 与下一决策，不授予 implementation authority。

@@ -423,3 +423,18 @@ Stage 50 冻结 Stage 49 之后的 operational recovery contract：
 - Stage 50 以 `docs/99-fixed-execution-operational-recovery-design-gate.md` 与 release notes 109 收口；
 - 不创建 `v0.18.0`，不 push；
 - Stage 51 只能按 Stage 50 contract 实现 recovery，不得增加第二个 command、POSIX、network adapter 或 stronger filesystem claim。
+
+## Stage 51 Fixed Execution Operational Recovery 提交级里程碑（2026-07-23）
+
+Stage 51 已按 Stage 50 contract 实现 shared machine-local lease、trust inspect/identity-bound rotation、bounded open-attempt recovery、fixed outcome-unknown closure、Windows Job accounting release gate 与 audit v1/v2 compatibility。
+
+本阶段仍不形成新的 semver capability pack：
+
+- 唯一真实 operation 仍仅为 Windows fixed Git status；
+- POSIX、第二个 operation、任意 shell/argv、network/service/UI 与 filesystem write proof 继续 unavailable；
+- Stage 51 没有运行 real smoke，只使用 fake backend、临时 ledger 与自动化测试；
+- 稳定 tag 继续为已推送的 `v0.17.0-filtered-snapshot-display-host-integration`；
+- Stage 51 以 `docs/100-fixed-execution-operational-recovery-implementation.md` 与 release notes 110 收口；
+- 本轮不创建 tag、不 push、不 merge。
+
+下一候选为 Stage 52 conditional design gate，只允许审计 remaining risks、operator/consumer need 与下一决策，不授予 implementation authority。

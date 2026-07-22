@@ -19,6 +19,14 @@ from jsonschema import Draft202012Validator
 from jsonschema import ValidationError as JsonSchemaValidationError
 from jsonschema import validate
 
+from .execution_lease import (
+    ExecutionLeaseResult,
+    _LeaseCapability,
+    _held_lease_capability,
+    _validate_lease_capability,
+    acquire_execution_lease,
+    inspect_execution_lease,
+)
 from .result import CheckResult, Finding
 from .task_validation import DATE_TIME_FORMAT_CHECKER
 
@@ -26,6 +34,7 @@ _SCHEMA_VERSION = "execution-trust-binding/v1"
 _MAX_BINDING_BYTES = 64 * 1024
 _SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 _THUMBPRINT_RE = re.compile(r"^[0-9A-F]{40}$")
+_IDENTITY_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _REPARSE_POINT = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
 
 
@@ -75,6 +84,8 @@ class TrustBindingResult(CheckResult):
     executable_identity: str | None = None
     path_identity: str | None = None
     committed: bool = False
+    rolled_back: bool = False
+    mutation_incomplete: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         payload = super().to_dict()
@@ -83,6 +94,8 @@ class TrustBindingResult(CheckResult):
             if value is not None:
                 payload[key] = value
         payload["committed"] = self.committed
+        payload["rolled_back"] = self.rolled_back
+        payload["mutation_incomplete"] = self.mutation_incomplete
         return payload
 
 
@@ -100,6 +113,43 @@ class VerifiedTrustResult(CheckResult):
             if value is not None:
                 payload[key] = value
         return payload
+
+
+@dataclass
+class TrustInspectionResult(CheckResult):
+    schema_version: str = "control-plane/execution-trust-inspection/v1"
+    state: str = "invalid"
+    checks: dict[str, bool] | None = None
+    binding_id: str | None = None
+    executable_identity: str | None = None
+    path_identity: str | None = None
+    lease_state: str = "unavailable"
+
+    def to_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "schema_version": self.schema_version,
+            "status": self.status,
+            "state": self.state,
+            "checks": self.checks or {},
+            "lease_state": self.lease_state,
+        }
+        if self.findings:
+            payload["findings"] = [finding.to_dict() for finding in self.findings]
+        if self.next_action is not None:
+            payload["next_action"] = self.next_action
+        for key in ("binding_id", "executable_identity", "path_identity"):
+            value = getattr(self, key)
+            if value is not None:
+                payload[key] = value
+        return payload
+
+
+@dataclass(frozen=True)
+class _BindingSnapshot:
+    file_identity: tuple[int, int, int, int, int, int, int]
+    raw: bytes
+    content_digest: str
+    binding_id: str
 
 
 def _finding(rule_id: str, message: str, *, blocked: bool = False) -> Finding:
@@ -316,6 +366,49 @@ def _read_binding_bytes(path: Path) -> bytes:
         os.close(descriptor)
 
 
+def _capture_binding_snapshot(path: Path, *, root: Path) -> _BindingSnapshot:
+    before = path.lstat()
+    raw = _read_binding_bytes(path)
+    after = path.lstat()
+    before_identity = (
+        int(before.st_dev),
+        int(before.st_ino),
+        int(before.st_size),
+        int(before.st_mtime_ns),
+        int(before.st_ctime_ns),
+        int(before.st_mode),
+        int(before.st_nlink),
+    )
+    after_identity = (
+        int(after.st_dev),
+        int(after.st_ino),
+        int(after.st_size),
+        int(after.st_mtime_ns),
+        int(after.st_ctime_ns),
+        int(after.st_mode),
+        int(after.st_nlink),
+    )
+    if before_identity != after_identity:
+        raise ValueError("binding identity drift")
+    binding = _strict_json(raw.decode("utf-8", errors="strict"))
+    validate(
+        instance=binding,
+        schema=_schema(),
+        format_checker=DATE_TIME_FORMAT_CHECKER,
+    )
+    canonical = dict(binding)
+    binding_id = canonical.pop("binding_id")
+    expected = "sha256:" + hashlib.sha256(_canonical_json(canonical)).hexdigest()
+    if binding_id != expected:
+        raise ValueError("binding digest")
+    return _BindingSnapshot(
+        file_identity=after_identity,
+        raw=raw,
+        content_digest="sha256:" + hashlib.sha256(raw).hexdigest(),
+        binding_id=binding_id,
+    )
+
+
 def load_execution_trust_binding(
     path: Path | None = None,
     *,
@@ -382,6 +475,194 @@ def load_execution_trust_binding(
     )
 
 
+def inspect_execution_trust(root: Path) -> TrustInspectionResult:
+    """Inspect the fixed machine-local trust state without mutation."""
+    try:
+        binding_path = _default_binding_path()
+    except (OSError, RuntimeError, ValueError):
+        return TrustInspectionResult(
+            status="blocked",
+            state="platform_unavailable",
+            findings=[
+                _finding(
+                    "execution-trust-platform-unavailable",
+                    "Trusted executable inspection is unavailable on this platform.",
+                    blocked=True,
+                )
+            ],
+            next_action="Keep fixed execution unavailable on this platform.",
+        )
+    return _inspect_execution_trust_core(
+        root,
+        binding_path=binding_path,
+        backend=None,
+        inspect_lease=inspect_execution_lease,
+    )
+
+
+def _inspect_execution_trust_for_test(
+    root: Path,
+    *,
+    binding_path: Path,
+    backend: TrustBackend | None,
+    inspect_lease: Callable[[Path], ExecutionLeaseResult],
+) -> TrustInspectionResult:
+    return _inspect_execution_trust_core(
+        root,
+        binding_path=binding_path,
+        backend=backend,
+        inspect_lease=inspect_lease,
+    )
+
+
+def _inspect_execution_trust_core(
+    root: Path,
+    *,
+    binding_path: Path,
+    backend: TrustBackend | None,
+    inspect_lease: Callable[[Path], ExecutionLeaseResult],
+) -> TrustInspectionResult:
+    lease = inspect_lease(root)
+    lease_state = lease.lease_state
+    try:
+        target = _validate_binding_location(
+            binding_path,
+            root=root,
+            allow_missing_parent=True,
+        )
+        try:
+            target.lstat()
+        except FileNotFoundError:
+            binding_exists = False
+        else:
+            binding_exists = True
+    except (OSError, RuntimeError, ValueError):
+        return TrustInspectionResult(
+            status="validation_failed",
+            state="invalid",
+            lease_state=lease_state,
+            findings=[
+                _finding(
+                    "execution-trust-binding-invalid",
+                    "The machine-local execution trust binding is invalid.",
+                )
+            ],
+            next_action="Repair the machine-local trust binding manually.",
+        )
+
+    loaded: TrustBindingResult | None = None
+    if binding_exists:
+        loaded = load_execution_trust_binding(target, root=root)
+        if loaded.status != "pass" or loaded.binding is None:
+            return TrustInspectionResult(
+                status="validation_failed",
+                state="invalid",
+                lease_state=lease_state,
+                checks={"binding_valid": False},
+                findings=list(loaded.findings),
+                next_action="Repair the machine-local trust binding manually.",
+            )
+
+    try:
+        active_backend = backend or _default_backend()
+    except (OSError, RuntimeError, ValueError):
+        return TrustInspectionResult(
+            status="blocked",
+            state="platform_unavailable",
+            lease_state=lease_state,
+            checks={"binding_valid": loaded is not None},
+            findings=[
+                _finding(
+                    "execution-trust-platform-unavailable",
+                    "Trusted executable inspection is unavailable on this platform.",
+                    blocked=True,
+                )
+            ],
+            next_action="Keep fixed execution unavailable on this platform.",
+        )
+    try:
+        identity = active_backend.discover(root.resolve(strict=True))
+    except (OSError, RuntimeError, ValueError):
+        return TrustInspectionResult(
+            status="blocked",
+            state="candidate_unavailable",
+            lease_state=lease_state,
+            checks={"binding_valid": loaded is not None, "candidate_available": False},
+            binding_id=loaded.binding_id if loaded is not None else None,
+            findings=[
+                _finding(
+                    "execution-trust-candidate-unavailable",
+                    "A trusted Git executable candidate is unavailable.",
+                    blocked=True,
+                )
+            ],
+            next_action="Repair the Git installation or sanitized PATH policy.",
+        )
+
+    candidate_executable_identity = _identity_digest(identity)
+    if loaded is None:
+        projection = TrustInspectionResult(
+            status="pass",
+            state="missing",
+            lease_state=lease_state,
+            checks={"binding_present": False, "candidate_available": True},
+            executable_identity=candidate_executable_identity,
+            path_identity=identity.path_identity,
+            next_action="Create a reviewed initial trust binding.",
+        )
+    else:
+        executable_matches = candidate_executable_identity == loaded.executable_identity
+        path_matches = identity.path_identity == loaded.path_identity
+        current = executable_matches and path_matches
+        projection = TrustInspectionResult(
+            status="pass" if current else "blocked",
+            state="current" if current else "drifted",
+            lease_state=lease_state,
+            checks={
+                "binding_valid": True,
+                "candidate_available": True,
+                "executable_identity_matches": executable_matches,
+                "path_identity_matches": path_matches,
+            },
+            binding_id=loaded.binding_id,
+            executable_identity=candidate_executable_identity,
+            path_identity=identity.path_identity,
+            findings=(
+                []
+                if current
+                else [
+                    _finding(
+                        "execution-trust-identity-drift",
+                        "The trusted executable or sanitized PATH identity changed.",
+                        blocked=True,
+                    )
+                ]
+            ),
+            next_action=(
+                "No trust recovery action is required."
+                if current
+                else "Review and rotate the machine-local trust binding."
+            ),
+        )
+    try:
+        identity.close()
+    except Exception:
+        return TrustInspectionResult(
+            status="error",
+            state="candidate_unavailable",
+            lease_state=lease_state,
+            checks={"candidate_cleanup_passed": False},
+            findings=[
+                _finding(
+                    "execution-trust-identity-close-failed",
+                    "The trusted executable candidate could not be released safely.",
+                )
+            ],
+            next_action="Keep fixed execution unavailable and inspect candidate cleanup.",
+        )
+    return projection
+
+
 def _default_backend() -> TrustBackend:
     if os.name != "nt":
         raise OSError("platform unavailable")
@@ -395,8 +676,63 @@ def create_execution_trust_binding(
     expected_publisher_thumbprint: str,
     commit: bool,
     replace: bool = False,
+    expected_binding_id: str | None = None,
+    expected_executable_identity: str | None = None,
+    expected_path_identity: str | None = None,
+) -> TrustBindingResult:
+    return _create_execution_trust_binding(
+        root,
+        expected_sha256=expected_sha256,
+        expected_publisher_thumbprint=expected_publisher_thumbprint,
+        commit=commit,
+        replace=replace,
+        expected_binding_id=expected_binding_id,
+        expected_executable_identity=expected_executable_identity,
+        expected_path_identity=expected_path_identity,
+        binding_path=None,
+        backend=None,
+    )
+
+
+def _create_execution_trust_binding_for_test(
+    root: Path,
+    *,
+    expected_sha256: str,
+    expected_publisher_thumbprint: str,
+    commit: bool,
+    replace: bool = False,
+    expected_binding_id: str | None = None,
+    expected_executable_identity: str | None = None,
+    expected_path_identity: str | None = None,
     binding_path: Path | None = None,
     backend: TrustBackend | None = None,
+) -> TrustBindingResult:
+    return _create_execution_trust_binding(
+        root,
+        expected_sha256=expected_sha256,
+        expected_publisher_thumbprint=expected_publisher_thumbprint,
+        commit=commit,
+        replace=replace,
+        expected_binding_id=expected_binding_id,
+        expected_executable_identity=expected_executable_identity,
+        expected_path_identity=expected_path_identity,
+        binding_path=binding_path,
+        backend=backend,
+    )
+
+
+def _create_execution_trust_binding(
+    root: Path,
+    *,
+    expected_sha256: str,
+    expected_publisher_thumbprint: str,
+    commit: bool,
+    replace: bool,
+    expected_binding_id: str | None,
+    expected_executable_identity: str | None,
+    expected_path_identity: str | None,
+    binding_path: Path | None,
+    backend: TrustBackend | None,
 ) -> TrustBindingResult:
     if (
         _SHA_RE.fullmatch(expected_sha256) is None
@@ -411,9 +747,170 @@ def create_execution_trust_binding(
                 )
             ],
         )
+    if commit and replace and not all(
+        value is not None and _IDENTITY_RE.fullmatch(value) is not None
+        for value in (
+            expected_binding_id,
+            expected_executable_identity,
+            expected_path_identity,
+        )
+    ):
+        return TrustBindingResult(
+            status="validation_failed",
+            findings=[
+                _finding(
+                    "execution-trust-rotation-review-required",
+                    "Reviewed binding and candidate identities are required for rotation.",
+                )
+            ],
+            next_action="Inspect trust state and review all rotation identities.",
+        )
+    if commit:
+        lease = acquire_execution_lease(root)
+        if lease.status != "pass":
+            return TrustBindingResult(
+                status=lease.status,
+                findings=list(lease.findings),
+                next_action=lease.next_action,
+            )
+        result: TrustBindingResult | None = None
+        core_failure: Finding | None = None
+        validation_failure: Finding | None = None
+        release_failure: Finding | None = None
+        lease_valid = False
+        released = CheckResult(status="error")
+        try:
+            result = _create_execution_trust_binding_core(
+                root,
+                expected_sha256=expected_sha256,
+                expected_publisher_thumbprint=expected_publisher_thumbprint,
+                commit=commit,
+                replace=replace,
+                expected_binding_id=expected_binding_id,
+                expected_executable_identity=expected_executable_identity,
+                expected_path_identity=expected_path_identity,
+                binding_path=binding_path,
+                backend=backend,
+                lease_capability=_held_lease_capability(lease),
+            )
+        except Exception:
+            core_failure = _finding(
+                "execution-trust-core-failed",
+                "Trust binding failed unexpectedly before completion.",
+            )
+        finally:
+            try:
+                try:
+                    lease_valid = lease.validate()
+                except Exception:
+                    validation_failure = _finding(
+                        "execution-lease-validation-failed",
+                        "Final execution lease validation failed unexpectedly.",
+                    )
+            finally:
+                try:
+                    released = lease.release()
+                except Exception:
+                    release_failure = _finding(
+                        "execution-lease-release-failed",
+                        "The execution lease cleanup failed after trust binding.",
+                    )
+        if core_failure is not None:
+            findings = [core_failure]
+            if validation_failure is not None:
+                findings.append(validation_failure)
+            if release_failure is not None or released.status != "pass":
+                findings.append(
+                    _finding(
+                        "execution-lease-release-failed",
+                        "The execution lease cleanup failed after trust binding.",
+                    )
+                )
+            return TrustBindingResult(
+                status="error",
+                findings=findings,
+                next_action="Inspect trust and lease state before retrying.",
+            )
+        assert result is not None
+        if (
+            validation_failure is not None
+            or not lease_valid
+            or release_failure is not None
+            or released.status != "pass"
+        ):
+            findings: list[Finding] = []
+            if validation_failure is not None:
+                findings.append(validation_failure)
+            elif not lease_valid:
+                findings.append(
+                    _finding(
+                    "execution-lease-identity-drift",
+                    "The execution lease identity changed during trust binding.",
+                    )
+                )
+            if release_failure is not None:
+                findings.append(release_failure)
+            elif released.status != "pass":
+                findings.append(
+                    _finding(
+                        "execution-lease-release-failed",
+                        "The execution lease cleanup failed after trust binding.",
+                    )
+                )
+            return TrustBindingResult(
+                status="error",
+                findings=findings,
+                next_action=(
+                    "The trust binding may be committed; inspect it and repair lease cleanup before retrying."
+                ),
+                binding_id=result.binding_id,
+                executable_identity=result.executable_identity,
+                path_identity=result.path_identity,
+                committed=result.committed,
+                rolled_back=result.rolled_back,
+                mutation_incomplete=result.mutation_incomplete,
+            )
+        return result
+    return _create_execution_trust_binding_core(
+        root,
+        expected_sha256=expected_sha256,
+        expected_publisher_thumbprint=expected_publisher_thumbprint,
+        commit=False,
+        replace=replace,
+        expected_binding_id=expected_binding_id,
+        expected_executable_identity=expected_executable_identity,
+        expected_path_identity=expected_path_identity,
+        binding_path=binding_path,
+        backend=backend,
+        lease_capability=None,
+    )
+
+
+def _create_execution_trust_binding_core(
+    root: Path,
+    *,
+    expected_sha256: str,
+    expected_publisher_thumbprint: str,
+    commit: bool,
+    replace: bool,
+    expected_binding_id: str | None = None,
+    expected_executable_identity: str | None = None,
+    expected_path_identity: str | None = None,
+    binding_path: Path | None = None,
+    backend: TrustBackend | None = None,
+    lease_capability: _LeaseCapability | None = None,
+) -> TrustBindingResult:
+    if commit and not _validate_lease_capability(lease_capability, root):
+        return TrustBindingResult(
+            status="error",
+            findings=[
+                _finding(
+                    "execution-lease-capability-invalid",
+                    "Trust mutation requires the active execution lease.",
+                )
+            ],
+        )
     try:
-        active_backend = backend or _default_backend()
-        identity = active_backend.discover(root.resolve())
         target = _validate_binding_location(
             binding_path or _default_binding_path(),
             root=root,
@@ -431,10 +928,103 @@ def create_execution_trust_binding(
                 )
             ],
         )
+    target_exists = False
     try:
+        target.lstat()
+        target_exists = True
+    except FileNotFoundError:
+        pass
+    previous: TrustBindingResult | None = None
+    previous_snapshot: _BindingSnapshot | None = None
+    if commit and replace:
+        if not target_exists:
+            return TrustBindingResult(
+                status="blocked",
+                findings=[
+                    _finding(
+                        "execution-trust-binding-review-mismatch",
+                        "The reviewed existing trust binding no longer matches.",
+                        blocked=True,
+                    )
+                ],
+                next_action="Inspect trust state again before rotation.",
+            )
+        try:
+            previous_snapshot = _capture_binding_snapshot(target, root=root)
+        except (
+            OSError,
+            UnicodeDecodeError,
+            ValueError,
+            json.JSONDecodeError,
+            JsonSchemaValidationError,
+        ):
+            return TrustBindingResult(
+                status="blocked",
+                findings=[
+                    _finding(
+                        "execution-trust-binding-rotation-blocked",
+                        "The existing trust binding must validate before rotation.",
+                        blocked=True,
+                    )
+                ],
+                next_action="Repair the invalid binding manually.",
+            )
+        previous = load_execution_trust_binding(target, root=root)
+        if previous.status != "pass" or previous.binding is None:
+            return TrustBindingResult(
+                status="blocked",
+                findings=[
+                    _finding(
+                        "execution-trust-binding-rotation-blocked",
+                        "The existing trust binding must validate before rotation.",
+                        blocked=True,
+                    )
+                ],
+                next_action="Repair the invalid binding manually.",
+            )
+        if (
+            previous.binding_id != expected_binding_id
+            or previous_snapshot.binding_id != expected_binding_id
+        ):
+            return TrustBindingResult(
+                status="blocked",
+                findings=[
+                    _finding(
+                        "execution-trust-binding-review-mismatch",
+                        "The reviewed existing trust binding no longer matches.",
+                        blocked=True,
+                    )
+                ],
+                next_action="Inspect trust state again before rotation.",
+            )
+    try:
+        active_backend = backend or _default_backend()
+        identity = active_backend.discover(root.resolve())
+    except (OSError, RuntimeError, ValueError):
+        return TrustBindingResult(
+            status="error",
+            findings=[
+                Finding(
+                    "execution-trust-platform-unavailable",
+                    "error",
+                    "error",
+                    "Trusted executable inspection is unavailable on this platform.",
+                )
+            ],
+        )
+    try:
+        candidate_executable_identity = _identity_digest(identity)
         if (
             identity.sha256 != expected_sha256
             or identity.publisher_thumbprint != expected_publisher_thumbprint
+            or (
+                commit
+                and replace
+                and (
+                    candidate_executable_identity != expected_executable_identity
+                    or identity.path_identity != expected_path_identity
+                )
+            )
         ):
             return TrustBindingResult(
                 status="blocked",
@@ -475,7 +1065,7 @@ def create_execution_trust_binding(
         result = TrustBindingResult(
             status="pass",
             binding_id=binding["binding_id"],
-            executable_identity=_identity_digest(identity),
+            executable_identity=candidate_executable_identity,
             path_identity=identity.path_identity,
             committed=False,
             next_action=(
@@ -486,12 +1076,6 @@ def create_execution_trust_binding(
         )
         if not commit:
             return result
-        target_exists = False
-        try:
-            target.lstat()
-            target_exists = True
-        except FileNotFoundError:
-            pass
         if target_exists and not replace:
             return TrustBindingResult(
                 status="blocked",
@@ -504,9 +1088,9 @@ def create_execution_trust_binding(
                 ],
                 next_action="Remove or rotate the binding through explicit operator review.",
             )
-        previous_bytes: bytes | None = None
         if target_exists:
-            previous = load_execution_trust_binding(target, root=root)
+            if previous is None:
+                previous = load_execution_trust_binding(target, root=root)
             if previous.status != "pass":
                 return TrustBindingResult(
                     status="blocked",
@@ -518,7 +1102,7 @@ def create_execution_trust_binding(
                         )
                     ],
                 )
-            previous_bytes = _read_binding_bytes(target)
+            _read_binding_bytes(target)
         target.parent.mkdir(parents=True, exist_ok=True)
         target = _validate_binding_location(target, root=root)
         data = _canonical_json(binding) + b"\n"
@@ -542,37 +1126,67 @@ def create_execution_trust_binding(
                 handle.flush()
                 os.fsync(handle.fileno())
             if temp_path is not None:
-                os.replace(temp_path, target)
-            loaded = load_execution_trust_binding(target, root=root)
-            if loaded.status != "pass" or loaded.binding_id != binding["binding_id"]:
-                if previous_bytes is None:
-                    target.unlink(missing_ok=True)
-                else:
-                    rollback_descriptor, rollback_name = tempfile.mkstemp(
-                        prefix=".execution-trust-rollback-",
-                        suffix=".tmp",
-                        dir=target.parent,
+                try:
+                    current_snapshot = _capture_binding_snapshot(target, root=root)
+                except (
+                    OSError,
+                    UnicodeDecodeError,
+                    ValueError,
+                    json.JSONDecodeError,
+                    JsonSchemaValidationError,
+                ):
+                    current_snapshot = None
+                if previous_snapshot is None or current_snapshot != previous_snapshot:
+                    return TrustBindingResult(
+                        status="blocked",
+                        findings=[
+                            _finding(
+                                "execution-trust-binding-review-mismatch",
+                                "The reviewed existing trust binding no longer matches.",
+                                blocked=True,
+                            )
+                        ],
+                        next_action="Inspect trust state again before rotation.",
                     )
-                    rollback_path = Path(rollback_name)
-                    try:
-                        with os.fdopen(rollback_descriptor, "wb") as handle:
-                            handle.write(previous_bytes)
-                            handle.flush()
-                            os.fsync(handle.fileno())
-                        os.replace(rollback_path, target)
-                    finally:
-                        rollback_path.unlink(missing_ok=True)
-                return TrustBindingResult(
-                    status="error",
-                    findings=[
-                        Finding(
-                            "execution-trust-binding-postcheck-failed",
-                            "error",
-                            "error",
-                            "The machine-local trust binding failed post-write validation.",
-                        )
-                    ],
+                os.replace(temp_path, target)
+            try:
+                target.lstat()
+            except OSError:
+                result.status = "error"
+                result.findings = [
+                    Finding(
+                        "execution-trust-binding-postcheck-failed",
+                        "error",
+                        "error",
+                        "The machine-local trust binding identity could not be established after writing.",
+                    )
+                ]
+                result.next_action = "Inspect the retained machine-local trust binding and lease state before any retry."
+                result.committed = True
+                result.mutation_incomplete = True
+                return result
+            try:
+                loaded = load_execution_trust_binding(target, root=root)
+                postcheck_passed = bool(
+                    loaded.status == "pass"
+                    and loaded.binding_id == binding["binding_id"]
                 )
+            except Exception:
+                postcheck_passed = False
+            if not postcheck_passed:
+                result.status = "error"
+                result.findings = [
+                    Finding(
+                        "execution-trust-binding-postcheck-failed",
+                        "error",
+                        "error",
+                        "The machine-local trust binding failed post-write validation.",
+                    )
+                ]
+                result.next_action = "Inspect the retained machine-local trust binding and lease state before any retry."
+                result.committed = True
+                result.mutation_incomplete = True
+                return result
         except FileExistsError:
             return TrustBindingResult(
                 status="blocked",
@@ -590,7 +1204,18 @@ def create_execution_trust_binding(
         result.committed = True
         return result
     finally:
-        identity.close()
+        try:
+            identity.close()
+        except Exception:
+            if "result" in locals():
+                result.status = "error"
+                result.findings.append(
+                    _finding(
+                        "execution-trust-identity-close-failed",
+                        "The trusted executable identity handle could not be closed.",
+                    )
+                )
+                result.next_action = "Inspect the trust binding and repair identity-handle cleanup before retrying."
 
 
 def verify_execution_trust(
