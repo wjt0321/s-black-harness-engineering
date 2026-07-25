@@ -78,6 +78,7 @@ from .orchestration_read_loop_snapshot import (
 from .orchestration_run import RunInspectResult, RunListResult, inspect_run, list_runs
 from .orchestration_run_dry_run import RunDryRunResult, dry_run_run
 from .orchestration_run_commit import RunCommitResult, commit_run
+from .pi_preflight_bridge import run_preflight_bridge_io
 from .task_validation import validate_records
 from .tasks import find_task, find_task_events, render_task_events, render_task_status
 
@@ -3023,6 +3024,20 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(action_parser)
     action_parser.set_defaults(func=_cmd_check_action)
 
+    # pi-bridge (Stage 52 host preflight bridge; stdin/stdout JSON, always JSON output)
+    pi_bridge_parser = subparsers.add_parser(
+        "pi-bridge",
+        help="Pi host preflight bridge (one-shot stdin/stdout JSON)",
+    )
+    pi_bridge_subparsers = pi_bridge_parser.add_subparsers(dest="pi_bridge_command", required=True)
+
+    pi_bridge_preflight_parser = pi_bridge_subparsers.add_parser(
+        "preflight",
+        help="Validate one Pi tool_call request from stdin and emit one JSON decision",
+    )
+    _add_global_args(pi_bridge_preflight_parser)
+    pi_bridge_preflight_parser.set_defaults(func=_cmd_pi_bridge_preflight)
+
     # adapter plan
     adapter_parser = subparsers.add_parser("adapter", help="Plan adapter execution envelopes")
     adapter_subparsers = adapter_parser.add_subparsers(dest="adapter_command", required=True)
@@ -4054,6 +4069,12 @@ def build_parser() -> argparse.ArgumentParser:
     policies_list_parser.set_defaults(func=_cmd_policies_list)
 
     return parser
+
+
+def _cmd_pi_bridge_preflight(args: argparse.Namespace) -> int:
+    """Run the Stage 52 Pi host preflight bridge (stdin -> stdout JSON)."""
+    root = _root_path(args)
+    return run_preflight_bridge_io(root, sys.stdin.buffer, sys.stdout)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

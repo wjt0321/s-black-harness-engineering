@@ -1,0 +1,14 @@
+{
+  "name": "s-black-pi-preflight-bridge-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Stage 52 minimal Pi extension example gating Pi default tool calls through the Harness preflight bridge. No npm dependencies.",
+  "scripts": {
+    "test": "node --test test/preflight-bridge.test.ts",
+    "check": "node --check preflight-bridge.ts && node --check extension.ts"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

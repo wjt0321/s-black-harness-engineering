@@ -1163,15 +1163,21 @@ v0.14.0-filtered-snapshot-host-integration
 
 ## Stage 51 — Fixed Execution Operational Recovery Implementation（已完成，提交级）
 
-已按 Stage 50 contract 实现并收口：shared machine-local lease、trust inspect/identity-bound rotation、bounded locked ledger/open-attempt list/inspect、fixed outcome-unknown close、Windows Job accounting active-zero/reaped/containment-closed release gate，以及 historical v1/new execution v2 audit。Stage 51 没有运行 real smoke，只使用 fake backend、临时 ledger 与自动化测试；不创建 tag、不 push。
+已按 Stage 50 contract 实现并收口：shared machine-local lease、trust inspect/identity-bound rotation、bounded locked ledger/open-attempt list/inspect、fixed outcome-unknown close、Windows Job accounting active-zero/reaped/containment-closed release gate，以及 historical v1/new execution v2 audit。Stage 51 没有运行 real smoke，只使用 fake backend、临时 ledger 与自动化测试；2026-07-25 已按用户授权推送到 `origin/main`，不创建 tag。
 
 事实源：`docs/100-fixed-execution-operational-recovery-implementation.md` 与 `docs/archive/release-notes/110-release-notes-stage51-fixed-execution-operational-recovery.md`。
 
 明确不做：automatic retry、invalid force、POSIX、第二个 operation、任意 shell/argv、network/service/UI 或 filesystem write proof。
 
-## Stage 52 — Fixed Execution Next-decision Design Gate（条件启动）
+## Stage 52 — Pi Coding Agent Preflight Bridge（已完成，提交级）
 
-仅作为下一候选 design gate：审计 Stage 51 remaining risks、operator/consumer need 与下一项是否值得设计。不授予 implementation authority；不得由本阶段名称自动开放 POSIX、第二个 operation、shell/network/service/UI 或 filesystem proof。
+按用户明确授权，原候选「Fixed Execution Next-decision Design Gate」被替换为本阶段：新增供 Pi TypeScript Extension 调用的一次性 stdin/stdout JSON 预检桥 `pi-bridge preflight`，只做规范化与门禁判断（`pass` / `needs_approval` / `blocked` / `invalid`），复用现有 policy/preflight 能力与独立 `pi-host` adapter registry 条目；`integrations/pi/` 提供零依赖最小 Extension 示例。本阶段是 host-side preflight enforcement，不是 Harness real adapter execution authority：不执行任何工具、不写 ledger、不访问网络、Stage 49 权限不变。按用户授权推送到 `origin/main`，不创建 tag。
+
+事实源：`docs/101-pi-coding-agent-preflight-bridge.md`。
+
+## Stage 53 — Fixed Execution Next-decision Design Gate（条件启动）
+
+仅作为下一候选 design gate：审计 Stage 51/52 后 remaining risks、operator/consumer need 与下一项是否值得设计。不授予 implementation authority；不得由本阶段名称自动开放 POSIX、第二个 operation、shell/network/service/UI、filesystem proof 或 bridge execution authority。
 
 ---
 

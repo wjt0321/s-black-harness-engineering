@@ -2519,3 +2519,17 @@ python -m agent_runtime.cli orchestration execution recovery close-open \
 `awaiting_terminal` 永远表示 historical process outcome unknown，不能 automatic retry，也不能释放历史 result。close 只写固定 `execution_failed` / `phase=audit` / `execution.recovery_outcome_unknown` / `guard_status=not_run`，不接受 caller event/evidence/path override。
 
 Stage 51 没有运行 real Git status smoke；fake backend、bounded temporary ledger 与 full automated tests 是本阶段的执行验证边界。
+
+## Pi host preflight bridge（Stage 52，host-side only）
+
+`pi-bridge preflight` 是供 Pi TypeScript Extension 调用的一次性 stdin/stdout JSON 预检桥：从 stdin 读取单个 bounded `pi-bridge/preflight-request/v1` 文档，向 stdout 输出单个 deterministic `pi-bridge/preflight-response/v1` 文档。只做规范化与门禁判断，不执行任何工具，不写 ledger，不访问网络。
+
+```bash
+printf '%s' '{"schema_version":"pi-bridge/preflight-request/v1","tool":"bash","input":{"command":"git push origin main"}}' \
+  | python -m agent_runtime.cli pi-bridge preflight
+```
+
+- `tool` ∈ `read` / `write` / `edit` / `bash`；最小字段：read `{path}`、write `{path, content}`、edit `{path, edits: [{old_string, new_string}]}`、bash `{command}`；可选 `request_id`。
+- decision：`pass`（exit 0）/ `needs_approval`（exit 3）/ `blocked`（exit 2）/ `invalid`（exit 5）。
+- 响应只含安全 findings、`next_action` 与 `request_hash` / `target_hash`，不回显 target、命令或文件内容。
+- 请求/响应 JSON schema 与最小 TypeScript Extension 示例见 `integrations/pi/`；事实源为 `docs/101-pi-coding-agent-preflight-bridge.md`。

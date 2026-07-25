@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://s-black-harness-engineering.local/schemas/pi-preflight-bridge-response.schema.json",
+  "title": "Pi Host Preflight Bridge Response",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "bridge",
+    "decision",
+    "request_id",
+    "request_hash",
+    "tool",
+    "target_hash",
+    "checks",
+    "findings",
+    "next_action",
+    "guarantees"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "pi-bridge/preflight-response/v1"
+    },
+    "bridge": {
+      "type": "string"
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["pass", "needs_approval", "blocked", "invalid"]
+    },
+    "request_id": {
+      "type": ["string", "null"]
+    },
+    "request_hash": {
+      "type": ["string", "null"],
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "tool": {
+      "type": ["string", "null"],
+      "enum": ["read", "write", "edit", "bash", null]
+    },
+    "target_hash": {
+      "type": ["string", "null"],
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "severity", "action", "message"],
+        "additionalProperties": false,
+        "properties": {
+          "rule_id": { "type": "string" },
+          "severity": { "type": "string" },
+          "action": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    },
+    "next_action": {
+      "type": "object",
+      "required": ["code", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": ["proceed", "request_user_approval", "do_not_execute", "fix_request"]
+        },
+        "message": { "type": "string" }
+      }
+    },
+    "guarantees": {
+      "type": "object"
+    }
+  }
+}

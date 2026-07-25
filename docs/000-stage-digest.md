@@ -4,9 +4,9 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：51 个
+- docs/ 活跃文档：52 个
 - 归档文档：88 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：182 个
+- 全仓 .md 文件：185 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,14 +25,16 @@
 
 ## 当前阶段
 
-- **Stage 51 — Fixed Execution Operational Recovery Implementation（已完成并收口）**
+- **Stage 52 — Pi Coding Agent Preflight Bridge v1（已完成并收口；host-side preflight only）**
+- Stage 51 — Fixed Execution Operational Recovery Implementation（已完成并收口）
 - Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（Windows limited enablement 已完成并收口）
 - Stage 47–48 — Execution Lifecycle Audit Writer（design + TDD implementation 已完成并收口）
 - Stage 46 — Fixed Git Status Executor Design Gate（已收口；design-only）
 - Stage 45 — Single-user Real Execution Readiness Milestone Closure（已收口；提交 `49a517b`）
 - Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
 - Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
-- 下一阶段候选：Stage 52 — Fixed Execution Next-decision Design Gate（条件启动；仅 design authority）
+- 下一阶段候选：Stage 53 — Fixed Execution Next-decision Design Gate（条件启动；仅 design authority）
+- Stage 52 已实现 Pi host preflight bridge v1：一次性 stdin/stdout JSON 预检（`pass`/`needs_approval`/`blocked`/`invalid`）、独立 `pi-host` registry 条目与 `integrations/pi/` 零依赖 Extension 示例；bridge 不执行任何工具、不写 ledger、不访问网络，不是 execution authority。
 - Stage 51 已实现 shared machine-local lease、trust inspect/identity-bound rotation、bounded locked open-attempt recovery、fixed outcome-unknown close、Windows Job accounting 与 audit v2；没有扩大真实执行权限。
 - Stage 49 只在 Windows 开放唯一 fixed operation `git status --short --branch`；必须显式 `--commit`，并依赖 machine-local reviewed trust binding。
 - Stage 51 没有运行 real smoke，只使用 fake backend、临时 ledger 与自动化测试。POSIX、通用 shell、任意 argv/cwd/env/path override、network adapter、linked worktree、submodule、alternate object store、第二个 operation 和 OS-enforced filesystem write proof 仍 unavailable。
@@ -84,6 +86,15 @@
 - 早期 `docs/14-task-runtime-bridge.md` 已完整移入 `docs/archive/14-task-runtime-bridge.md`；活跃文档保持 50 个。
 - Stage 20 实现文档已完整归档至 `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`；活跃文档保持 50 个。
 - Stage 21 历史 validation-only 设计门已被 Stage 22 及后续事实源取代，完整归档至 `docs/archive/82-read-only-representation-read-design-gate.md`；活跃文档仍为 50 个。
+
+### 新进落地：Stage 52 — Pi Coding Agent Preflight Bridge v1
+
+- 新增 `agent_runtime/pi_preflight_bridge.py` 与顶层 CLI `pi-bridge preflight`：stdin 单 bounded JSON request（64 KiB、UTF-8、duplicate key、严格最小字段），stdout 单 deterministic JSON response。
+- 只接受 Pi 默认工具 read/write/edit/bash 的安全最小字段；`.env`/`.pem` 等 credential 类目标直接 blocked；复用 `check_path`/`check_text`/`check_action` 与独立 `pi-host` adapter registry 条目（不复用 omp-acp）。
+- 输出稳定 decision `pass`/`needs_approval`/`blocked`/`invalid`、安全 findings、`next_action`、`request_hash`/`target_hash`；不回显 target、命令或文件内容；fail closed。
+- `integrations/pi/` 提供零 npm 依赖最小 Extension 示例：固定 argv、`shell=false`、bounded timeout/stdout/stderr、无重试、不读取 secret；pass 放行，其余 block。
+- 本阶段是 host-side preflight enforcement，不是 Harness real adapter execution authority；Stage 49 权限不变；按用户授权推送到 `origin/main`，不创建 tag。
+- Stage 52 事实源：`docs/101-pi-coding-agent-preflight-bridge.md` 与 `tasks/handoff-2026-07-25.md`。
 
 ### Stage 10 基线（保留）
 
@@ -219,7 +230,7 @@
 - future fixed recovery close 只允许 `execution_failed` / `phase=audit` / `execution.recovery_outcome_unknown`，并绑定 expected started event id 与 plan hash。
 - Windows ready release gate 已要求 Job accounting active zero、direct child reaped 与 containment close；该证据不等于 filesystem write proof。
 - 历史 `execution-audit/v1` 保持可读；future Job evidence 使用 v2，不静默扩展 v1。
-- Stage 51 新增 trust inspect、recovery list/inspect/close CLI、bounded ledger 与 audit v2 接入；没有运行 real smoke，不创建 tag、不 push。
+- Stage 51 新增 trust inspect、recovery list/inspect/close CLI、bounded ledger 与 audit v2 接入；没有运行 real smoke；2026-07-25 已按用户授权推送到 `origin/main`，不创建 tag。
 
 ## 现在已经能做什么
 
@@ -239,21 +250,22 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/100-fixed-execution-operational-recovery-implementation.md`
-3. `docs/99-fixed-execution-operational-recovery-design-gate.md`
-4. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
-5. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
-6. `tasks/handoff-2026-07-23.md`
-7. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
-7. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
-8. 再跑：`python -m agent_runtime.cli docs context --json`
+2. `docs/101-pi-coding-agent-preflight-bridge.md`
+3. `docs/100-fixed-execution-operational-recovery-implementation.md`
+4. `docs/99-fixed-execution-operational-recovery-design-gate.md`
+5. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+6. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+7. `tasks/handoff-2026-07-25.md`
+8. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
+9. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
+10. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 52 — Fixed Execution Next-decision Design Gate（条件启动）**。
-- 只允许审计 Stage 51 remaining risks、operator/consumer need 与下一决策；Stage 52 不是 implementation authority。
+- **Stage 53 — Fixed Execution Next-decision Design Gate（条件启动）**。
+- 只允许审计 Stage 51/52 后 remaining risks、operator/consumer need 与下一决策；Stage 53 不是 implementation authority。
 - POSIX enablement 必须另行闭合 executable image identity、process-group containment 与同等输出/审计停止线。
-- 任何第二个 command、approval-required adapter、network operation 或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。
+- 任何第二个 command、approval-required adapter、network operation、bridge execution authority 或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。
 
 ## 重要约束
 

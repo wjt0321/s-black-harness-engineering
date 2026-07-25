@@ -2873,5 +2873,15 @@
 - exact CLI surfaces 为 `orchestration execution trust inspect`、recovery `list-open` / `inspect` / `close-open`；rotation commit 要求 expected old binding id、new executable identity 与 new sanitized PATH identity。
 - Stage 51 没有 real Git status smoke；fake backend、临时 ledger 与自动化测试是实现验证边界。本轮 full test suite、docs context、doctor、public scan、docs hook 与 diff check 均通过，不固化测试数量。
 - 新增权威事实源 `docs/100-fixed-execution-operational-recovery-implementation.md`、release notes 110、最终 handoff `tasks/handoff-2026-07-23.md`；删除 in-progress handoff 以避免 latest handoff 歧义。
-- 稳定 tag 继续为已推送 `v0.17.0-filtered-snapshot-display-host-integration`；Stage 51 仅为 commit-level milestone，不创建 tag、不 push。
+- 稳定 tag 继续为已推送 `v0.17.0-filtered-snapshot-display-host-integration`；Stage 51 为 commit-level milestone，2026-07-25 已按用户授权推送到 `origin/main`，不创建 tag。
 - 下一候选为 Stage 52 conditional design gate，仅审计 remaining risks、operator/consumer need 与下一决策，不授予 implementation authority。
+
+## 2026-07-25 Stage 52 — Pi Coding Agent Preflight Bridge
+
+- 用户明确授权将原 Stage 52 候选（next-decision design gate）替换为 Pi Coding Agent Preflight Bridge v1；只做规范化与门禁判断，不执行工具、不写 ledger、不访问网络、不修改 Pi 上游；按本轮授权提交并推送到 `origin/main`，不创建 tag。
+- 新增 `agent_runtime/pi_preflight_bridge.py` 与顶层 CLI `pi-bridge preflight`：stdin 单 bounded JSON（64 KiB、UTF-8、duplicate key、严格最小字段），stdout 单 deterministic JSON；decision 固定为 pass/needs_approval/blocked/invalid，fail closed。
+- 复用 `check_path`/`check_text`/`check_action` 与独立 `pi-host` adapter registry 条目（不复用 omp-acp）；credential 类目标直接 blocked；输出 request/target SHA-256 identity，不回显 target、命令或文件内容。
+- `integrations/pi/` 提供真实可安装 Pi extension（default export + `pi.on("tool_call")`，`ExtensionAPI` 仅 type import、运行时零依赖）：固定 argv、shell=false、bounded timeout/stdout/stderr、环境白名单、无重试；pass 放行、其余 block；官方字段按 Pi 当前源码核对（edit 为 `{path, edits:[{oldText,newText}]}`），`request_id` 来自 `toolCallId`。
+- 测试：`tests/test_pi_preflight_bridge.py` 44 项、`integrations/pi/test/preflight-bridge.test.ts` 12 项（真实 spawn Python bridge）；全量 pytest、doctor、public scan、受控写回归、docs hook 与 diff check 通过。
+- 事实源 `docs/101-pi-coding-agent-preflight-bridge.md` 与 handoff `tasks/handoff-2026-07-25.md`；稳定 tag 仍为已推送 v0.17.0，Stage 52 为已推送的 commit-level milestone。
+- 下一候选为 Stage 53 conditional design gate，不授予 implementation authority。

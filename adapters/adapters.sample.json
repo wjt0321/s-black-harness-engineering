@@ -271,6 +271,45 @@
       ]
     },
     {
+      "id": "pi-host",
+      "name": "Pi Coding Agent Host Preflight Bridge",
+      "kind": "cli_tool",
+      "description": "Host-side preflight gate for Pi Coding Agent default tools (read/write/edit/bash). Produces pass/needs_approval/blocked/invalid decisions through the pi-bridge CLI without executing any tool.",
+      "enabled": true,
+      "capabilities": ["tool_call_preflight", "host_gate"],
+      "risk_level": "local",
+      "requires_approval": false,
+      "input_schema": {
+        "type": "object",
+        "required": ["schema_version", "tool", "input"],
+        "properties": {
+          "schema_version": { "type": "string" },
+          "request_id": { "type": "string" },
+          "tool": { "type": "string", "enum": ["read", "write", "edit", "bash"] },
+          "input": { "type": "object" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["decision", "request_hash"],
+        "properties": {
+          "decision": { "type": "string", "enum": ["pass", "needs_approval", "blocked", "invalid"] },
+          "request_hash": { "type": ["string", "null"] },
+          "next_action": { "type": "object" }
+        }
+      },
+      "preflight_checks": ["policy_check", "secret_scan", "sensitive_target_guard"],
+      "postflight_checks": [],
+      "failure_mapping": {
+        "bridge_invalid": "blocked",
+        "policy_blocked": "blocked"
+      },
+      "notes": [
+        "v1 is a host-side preflight gate only: it never executes read/write/edit/bash and grants no execution authority.",
+        "Distinct from omp-acp: pi-host is the Pi host-side enforcement boundary, not an ACP delegation adapter."
+      ]
+    },
+    {
       "id": "webbridge",
       "name": "WebBridge",
       "kind": "webbridge",

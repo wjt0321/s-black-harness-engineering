@@ -152,7 +152,8 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement (Windows only)
 - ✅ Stage 50 — Fixed Execution Operational Recovery Design Gate (design only)
 - ✅ Stage 51 — Fixed Execution Operational Recovery Implementation (commit-level milestone)
-- ⏳ Stage 52 — Fixed Execution Next-decision Design Gate (conditional)
+- ✅ Stage 52 — Pi Coding Agent Preflight Bridge (host-side preflight v1; commit-level milestone)
+- ⏳ Stage 53 — Fixed Execution Next-decision Design Gate (conditional)
 
 ### The Most Accurate Current Read
 
@@ -221,12 +222,13 @@ For more CLI usage, see `docs/10-cli-poc-usage.md`.
 For a new session, recover the current stage first; there is no need to read the full history in sequence:
 
 1. [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current stage, stable baseline, and next step.
-2. [`docs/100-fixed-execution-operational-recovery-implementation.md`](docs/100-fixed-execution-operational-recovery-implementation.md): authoritative Stage 51 implementation source.
-3. [`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`](docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md): the only real execution capability and its stop lines.
-4. [`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`](docs/97-execution-lifecycle-audit-writer-design-and-implementation.md): execution audit writer source of truth.
-5. [`tasks/handoff-2026-07-23.md`](tasks/handoff-2026-07-23.md): latest Stage 51 handoff and Stage 52 conditional boundary.
-6. [`docs/02-roadmap.md`](docs/02-roadmap.md): complete stage roadmap.
-7. [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md): CLI flags and examples.
+2. [`docs/101-pi-coding-agent-preflight-bridge.md`](docs/101-pi-coding-agent-preflight-bridge.md): Stage 52 Pi host preflight bridge source of truth (host-side preflight only).
+3. [`docs/100-fixed-execution-operational-recovery-implementation.md`](docs/100-fixed-execution-operational-recovery-implementation.md): authoritative Stage 51 implementation source.
+4. [`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`](docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md): the only real execution capability and its stop lines.
+5. [`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`](docs/97-execution-lifecycle-audit-writer-design-and-implementation.md): execution audit writer source of truth.
+6. [`tasks/handoff-2026-07-25.md`](tasks/handoff-2026-07-25.md): latest Stage 52 handoff and Stage 53 conditional boundary.
+7. [`docs/02-roadmap.md`](docs/02-roadmap.md): complete stage roadmap.
+8. [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md): CLI flags and examples.
 
 See [`docs/00-index.md`](docs/00-index.md) for the complete topic/archive map and [`tasks/progress.md`](tasks/progress.md) for the full progress ledger.
 

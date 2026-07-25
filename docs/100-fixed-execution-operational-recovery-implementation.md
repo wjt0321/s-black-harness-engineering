@@ -6,7 +6,7 @@
 > 状态：**Stage 51 implementation 已完成并收口**
 > 日期：2026-07-23
 > 稳定版本：`v0.17.0-filtered-snapshot-display-host-integration`（已推送至 `origin`）
-> 里程碑策略：Stage 51 仅形成 commit-level milestone，不创建 tag、不 push
+> 里程碑策略：Stage 51 形成 commit-level milestone；2026-07-25 按用户授权推送到 `origin/main`，不创建 tag
 
 ## 1. 阶段结论
 
@@ -186,7 +186,7 @@ git diff --check
 - 不新增第二个 operation、任意 argv、shell 或 network adapter；
 - 不引入 service、DB、queue、daemon、background worker 或 UI；
 - 不把 Job accounting 声称为 filesystem write proof；
-- 不创建 tag，不 push、不 merge。
+- 不创建 tag、不 merge；2026-07-25 按用户授权推送到 `origin/main`。
 
 ## 11. Stage 51 milestone conclusion
 
