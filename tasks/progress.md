@@ -2921,3 +2921,11 @@
 - Pi 官方 `DefaultResourceLoader` 从真实全局目录自动发现 extension，加载无错误且注册一个 `tool_call` handler；handler smoke 验证普通 read 放行、`.env` 阻断、`git push origin main` needs_approval 阻断。
 - 初次尝试发现 RPC `bash` 属于用户侧直接命令，绕过 LLM default-tool `tool_call` chain，不可作为扩展门禁证明；隔离仓库无 origin，因此未连接远端、未推送内容。有效验收已改为真实自动发现后的已加载 handler。
 - 事实源为 `docs/105-pi-native-install-smoke.md`；下一候选 Stage 57 Pi First Real Session Gate。
+
+## 2026-07-25 Stage 57 - Pi First Real Session Gate（暂停，待网络稳定）
+
+- 用户授权一次受控真实 Pi 模型会话：隔离目录、`deepseek-v4-flash`、只启用内置 `read`，不开放 bash/write/edit，不启用 approval/postflight，不接触真实仓库或远端。
+- Pi 可识别 `deepseek-v4-flash` 与 `deepseek-v4-pro`，临时从本地 `.env.local` 注入 `DEEPSEEK_API_KEY`；密钥未写入 Pi auth.json、命令参数、项目文件或日志。
+- 真实只读会话 180 秒无 stdout/stderr 后被执行器终止；无工具最小 JSON 模型诊断 120 秒同样为 0 stdout / 0 stderr。没有残留 Pi/Node 进程，未生成 Pi session，未执行工具。
+- 已确认 RPC `bash` 是用户侧直接命令并绕过 `tool_call` extension，不能作为 Stage 57 验收；隔离仓库无 origin，曾尝试的 `git push origin main` 未连接远端、未推送内容。
+- 网络稳定后从无工具最小模型响应诊断恢复；收到成功固定响应后，再执行一次受控的 `read stage57-proof.txt` 真实 session。
