@@ -2958,3 +2958,12 @@
 - docs/ 活跃文档 59 → 47（≤50 达标），`docs/archive/` 88 → 100。
 - 活跃区全部引用已改为 `archive/` 路径并 grep 复核无残留；`.worktrees/` 历史副本与 `MAINTENANCE.md` 通用格式示例按指示保留。
 - 执行记录见 `tasks/handoff-2026-07-25.md` 第 9 节；未 commit/push。
+
+## 2026-07-25 Stage 60 - Pi Adapter Discovery & Capability Projection
+
+- 用户授权启动 Orchestration Hub 主线最小下一阶段：把 Pi CLI Layer 1 本地运行时只读投影进 control-plane。
+- `adapters/adapters.sample.json` 末尾追加 `pi-cli`（新 kind `pi_cli → agent`，schema enum 同步）；capabilities `cli_agent_print`/`cli_agent_json_events`/`cli_agent_tui`/`preflight_gated_read` 全新唯一，既有条目 source_index 与既有路由输出不变；`risk_level=external` 保持 needs_approval。
+- 新增 `agent_runtime/pi_runtime_discovery.py`：7 项确定性检查（env var、`.runtime` containment、agent dir、settings 钉住默认、models provider/model、apiKey 仅 `$ENV_VAR` 引用、extension 存在），fail closed；64 KiB 有界读取；绝不读取 auth/session/.env/凭据文件，值永不回显；不执行进程、不访问网络。
+- 接入：`orchestration adapter inspect pi-cli` 附加 `local_runtime` 块（其他 adapter 不变）；`orchestration preflight` 对 pi-cli 未就绪 `blocked`、就绪仍 `needs_approval`；control-panel snapshot 经既有 list 自动包含（adapter 9→10）。
+- 新增 `tests/test_pi_runtime_discovery.py` 19 项（含明文 apiKey 不回显、auth/session canary 不读取、既有路由不受影响）；全量 pytest 1390 passed / 0 failed；doctor PASS、public scan OK、diff check 干净。
+- 事实源 `docs/109-pi-adapter-discovery-capability-projection.md`；未 commit/push。

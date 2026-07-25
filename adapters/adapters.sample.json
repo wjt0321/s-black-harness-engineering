@@ -346,6 +346,46 @@
       "notes": [
         "Read-only browsing is lower risk; form submission or account actions require explicit approval."
       ]
+    },
+    {
+      "id": "pi-cli",
+      "name": "Pi Coding Agent CLI (local runtime)",
+      "kind": "pi_cli",
+      "description": "Local Pi Coding Agent CLI runtime (print/json/TUI) behind the host-side preflight bridge. Stage 60 projects discovery, capability, and readiness only; it grants no execution authority.",
+      "enabled": true,
+      "capabilities": ["cli_agent_print", "cli_agent_json_events", "cli_agent_tui", "preflight_gated_read"],
+      "risk_level": "external",
+      "requires_approval": false,
+      "input_schema": {
+        "type": "object",
+        "required": ["prompt"],
+        "properties": {
+          "prompt": { "type": "string" },
+          "mode": { "type": "string", "enum": ["print", "json", "tui"] },
+          "timeout_seconds": { "type": "integer" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["status", "summary"],
+        "properties": {
+          "status": { "type": "string" },
+          "summary": { "type": "string" },
+          "artifacts": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "preflight_checks": ["policy_check", "local_runtime_ready"],
+      "postflight_checks": [],
+      "failure_mapping": {
+        "runtime_unavailable": "blocked",
+        "runtime_misconfigured": "blocked",
+        "model_api_error": "failed"
+      },
+      "notes": [
+        "Stage 60 is a read-only projection: no live Pi invocation, no model calls, no ledger writes, no execution authority.",
+        "Local readiness is probed read-only from PI_CODING_AGENT_DIR (project-local ignored .runtime); auth/session/credential files are never read.",
+        "Distinct from pi-host (host-side preflight gate for Pi default tools) and omp-acp (ACP delegation adapter)."
+      ]
     }
   ]
 }

@@ -1217,6 +1217,12 @@ Pi agent dir 已迁入 `<project-root>\.runtime\pi-agent`，并通过用户级 `
 
 事实源：`docs/108-pi-cli-mode-stabilization.md`。
 
+## Stage 60 — Pi Adapter Discovery & Capability Projection（已完成，read-only）
+
+已把 Pi CLI Layer 1 本地运行时表示进 control-plane：`adapters/adapters.sample.json` 末尾追加 source-backed `pi-cli` 条目（新 kind `pi_cli → agent`，capabilities 全新且唯一，既有路由输出不变；`risk_level=external` 使 guardrail 保持 needs_approval，不授予执行权限）。新增只读 discovery 模块 `agent_runtime/pi_runtime_discovery.py`：7 项确定性检查（env var、`.runtime` containment、agent dir、settings 钉住默认、models provider/model、apiKey 必须 `$ENV_VAR` 引用、extension 存在），fail closed（invalid > unavailable > needs_input > ready），64 KiB 有界读取，绝不读取 auth/session/.env/凭据文件，值永不回显。接入面：`orchestration adapter inspect pi-cli` 附加 `local_runtime` 块；`orchestration preflight` 对 pi-cli 在未就绪时 blocked（fail closed）；control-panel snapshot 经既有 list 自动包含。新增 19 项聚焦测试；全量 1390 passed / 0 failed。不调用 Pi、不做模型调用、不执行进程、不访问网络、不写 ledger、不改 extension。
+
+事实源：`docs/109-pi-adapter-discovery-capability-projection.md`。
+
 ---
 
 ## Guardrail 主线策略

@@ -4,9 +4,9 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：47 个（2026-07-25 已按批准归档 12 份已冻结设计文档：41/45/54/56/58/60/62/63/66/70/73/74，全部引用已修复）
+- docs/ 活跃文档：48 个（2026-07-25 已按批准归档 12 份已冻结设计文档：41/45/54/56/58/60/62/63/66/70/73/74，全部引用已修复；新增 `109-pi-adapter-discovery-capability-projection.md`）
 - 归档文档：100 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：194 个
+- 全仓 .md 文件：195 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,7 +25,8 @@
 
 ## 当前阶段
 
-- **Stage 59 — Pi CLI/TUI Mode Stabilization Gate（已完成并收口；pinned default + entry contract + repeatable smoke）**
+- **Stage 60 — Pi Adapter Discovery & Capability Projection（已完成并收口；read-only，无执行权限）**
+- Stage 59 — Pi CLI/TUI Mode Stabilization Gate（已完成并收口；pinned default + entry contract + repeatable smoke）
 - Stage 58 — Pi Project-local Runtime Integration（已完成并收口；project-local ignored runtime）
 - Stage 57 — Pi First Real Session Gate（已完成并收口；SDK-host real session proof）
 - Stage 56 — Pi Native Install Smoke（已完成并收口；Layer 1 preflight only）
@@ -125,6 +126,15 @@
 - 摘要不包含 path、command、file content、tool output text、details payload 或 credential-like values；不写 ledger、不访问网络、不改 `isError`、不 patch details。
 - 这是 host-side projection，不是 durable audit writer，也不证明 Harness 执行了工具。
 - Stage 54 事实源：`docs/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 60 - Pi Adapter Discovery & Capability Projection
+
+- `adapters/adapters.sample.json` 末尾追加 `pi-cli` 条目（kind `pi_cli → agent`；schema enum 与 `KIND_TO_ADAPTER_TYPE` 同步），capabilities `cli_agent_print` / `cli_agent_json_events` / `cli_agent_tui` / `preflight_gated_read` 全新唯一，既有条目 source_index 与既有路由输出不变。
+- `risk_level=external`：guardrail 保持 `needs_approval`，本阶段不授予执行权限。
+- 新增 `agent_runtime/pi_runtime_discovery.py`：7 项确定性 fail-closed 检查（env var、`.runtime` containment、agent dir、settings 钉住默认、models provider/model、apiKey 仅接受 `$ENV_VAR` 引用且值不回显、extension 存在）；64 KiB 有界读取；绝不读取 auth/session/.env/凭据文件；不执行进程、不访问网络。
+- 接入：`orchestration adapter inspect pi-cli` 附加 `local_runtime` 块；`orchestration preflight` 对 pi-cli 未就绪时 `blocked`（fail closed），就绪时仍 `needs_approval`；control-panel snapshot 自动包含（adapter 9→10）。
+- 新增 `tests/test_pi_runtime_discovery.py` 19 项；全量 pytest 1390 passed / 0 failed；doctor、public scan、diff check 通过。
+- 事实源：`docs/109-pi-adapter-discovery-capability-projection.md`。
 
 ### 新进落地：Stage 59 - Pi CLI/TUI Mode Stabilization Gate
 
@@ -322,7 +332,8 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/108-pi-cli-mode-stabilization.md`
+2. `docs/109-pi-adapter-discovery-capability-projection.md`
+3. `docs/108-pi-cli-mode-stabilization.md`
 3. `docs/107-pi-project-local-runtime-integration.md`
 4. `docs/106-pi-first-real-session-gate.md`
 5. `docs/105-pi-native-install-smoke.md`
@@ -342,7 +353,7 @@
 ## 下一步做什么
 
 - **真实终端人工 TUI 会话验收（operator 执行）**：按 `docs/108` 第 3 节契约在真实终端运行 `pi`；间歇失败再观察，复现 0 输出时按 60s 有界 kill 收集证据。
-- Stage 59 已钉住 `deepseek-compat/deepseek-v4-flash` 默认模型并提交可重复 smoke；print/json 入口已稳定。
+- Stage 60 已把 Pi 本地运行时以只读方式投影进 adapter registry / routing / snapshot；任何 pi-cli 的 dry-run/commit 执行语义都必须独立设计 stage 并由用户明确授权。
 - Pi-first 是主线；OMP 仅作为兼容验证/备选。
 - POSIX enablement 必须另行闭合 executable image identity、process-group containment 与同等输出/审计停止线。
 - 任何第二个 command、通用 approval-required adapter、network operation、bridge execution authority、持久 audit writer、自动安装或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。

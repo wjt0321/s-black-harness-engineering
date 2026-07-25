@@ -38,6 +38,7 @@ SOURCE_REGISTRY_PATH = "adapters/adapters.sample.json"
 KIND_TO_ADAPTER_TYPE: dict[str, str] = {
     "qwenpaw_agent_api": "agent",
     "acp_runner": "agent",
+    "pi_cli": "agent",
     "cli_tool": "tool",
     "shell": "tool",
     "github": "tool",

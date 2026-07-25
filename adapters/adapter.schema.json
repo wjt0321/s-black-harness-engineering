@@ -49,6 +49,7 @@
             "qwenpaw_agent_api",
             "acp_runner",
             "cli_tool",
+            "pi_cli",
             "shell",
             "lark",
             "github",

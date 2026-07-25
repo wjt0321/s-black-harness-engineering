@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from .adapter_registry import AdapterMetadata, load_adapter_registry
+from .pi_runtime_discovery import discover_pi_runtime
 from .result import Finding
 
 
@@ -132,8 +133,13 @@ def get_adapter(
             ],
             next_action=f"Adapter not found: {adapter_id}. Use orchestration adapter list to see available adapters.",
         )
+    adapter_dict = metadata.to_dict()
+    if metadata.kind == "pi_cli":
+        # Stage 60: attach the deterministic local-runtime readiness projection.
+        # Read-only; never reads auth/session/credential files.
+        adapter_dict["local_runtime"] = discover_pi_runtime(root).to_dict()
     return AdapterDetailResult(
         status="pass",
-        adapter=metadata.to_dict(),
+        adapter=adapter_dict,
         next_action="Use orchestration route preview to check capability routing.",
     )

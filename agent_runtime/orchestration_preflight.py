@@ -14,6 +14,7 @@ from typing import Any
 
 from .adapter_registry import load_adapter_registry
 from .orchestration_route import RouteConstraints, preview_route
+from .pi_runtime_discovery import discover_pi_runtime
 from .policy import check_action
 from .result import Finding, coalesce_status
 
@@ -102,6 +103,17 @@ def _needs_target(adapter_id: str, root: Path) -> bool:
     if metadata is None:
         return False
     return "target" in metadata.input_schema.get("required", [])
+
+
+def _selected_kind(adapter_id: str, root: Path) -> str:
+    """Return the source registry ``kind`` for the selected adapter ('' if unknown)."""
+    registry, _findings, _next_action = load_adapter_registry(root)
+    if registry is None:
+        return ""
+    metadata = registry.get_adapter(adapter_id)
+    if metadata is None:
+        return ""
+    return metadata.kind
 
 
 def check_preflight(
@@ -214,6 +226,42 @@ def check_preflight(
             findings=findings,
             next_action="Provide --target for the selected operation.",
         )
+
+    # Stage 60: local-runtime readiness gate (fail closed). Adapters whose
+    # source kind is bound to a local runtime (currently: pi_cli) must pass
+    # the read-only discovery probe before any guardrail evaluation.
+    if _selected_kind(selected_adapter_id, root) == "pi_cli":
+        runtime_status = discover_pi_runtime(root)
+        if runtime_status.status != "ready":
+            findings.extend(runtime_status.findings)
+            return PreflightResult(
+                status="blocked",
+                requested_capability=capability,
+                task_id=task_id,
+                requested_mode=requested_mode,
+                selected_mode=route.selected_mode,
+                effective_mode="dry-run",
+                route=route_summary,
+                guardrail={
+                    "status": "blocked",
+                    "finding_count": len(runtime_status.findings),
+                    "blocking_findings": [
+                        {
+                            "rule_id": f.rule_id,
+                            "severity": f.severity,
+                            "action": f.action,
+                            "message": f.message,
+                        }
+                        for f in runtime_status.findings
+                    ],
+                    "local_runtime": runtime_status.to_dict(),
+                },
+                requires_approval=False,
+                requires_dry_run=True,
+                constraints=route.constraints,
+                findings=findings,
+                next_action=runtime_status.next_action,
+            )
 
     guardrail = check_action(
         root,

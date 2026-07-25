@@ -2829,6 +2829,13 @@ def _cmd_orchestration_adapter_inspect(args: argparse.Namespace) -> int:
             )
             print(f"input_schema_ref={adapter['input_schema_ref']}")
             print(f"output_schema_ref={adapter['output_schema_ref']}")
+            local_runtime = adapter.get("local_runtime")
+            if local_runtime is not None:
+                print(
+                    f"local_runtime: status={local_runtime['status']} "
+                    f"provider={local_runtime.get('default_provider') or '-'} "
+                    f"model={local_runtime.get('default_model') or '-'}"
+                )
             derived = adapter.get("derived", {})
             if derived:
                 print("derived:")
