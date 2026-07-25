@@ -1175,9 +1175,15 @@ v0.14.0-filtered-snapshot-host-integration
 
 事实源：`docs/101-pi-coding-agent-preflight-bridge.md`。
 
-## Stage 53 — Fixed Execution Next-decision Design Gate（条件启动）
+## Stage 53 — Pi Interactive Approval Roundtrip v1（已完成，有限 host approval）
 
-仅作为下一候选 design gate：审计 Stage 51/52 后 remaining risks、operator/consumer need 与下一项是否值得设计。不授予 implementation authority；不得由本阶段名称自动开放 POSIX、第二个 operation、shell/network/service/UI、filesystem proof 或 bridge execution authority。
+在 Stage 52 preflight 之上实现默认关闭的交互批准路径：只有设置 `AGENT_RUNTIME_APPROVAL_MODE=interactive`、host cwd 等于 Harness root、交互 UI 可用、命令精确等于 `git push origin main`，且 policy findings 只要求用户/secret-scan approval 时，才允许单次 `ctx.ui.confirm()`。确认后必须从当前 event input 重新归一化、重跑 bridge，并严格匹配 request/target identity；任何拒绝、超时、无 UI、输入/身份漂移与 `blocked`/`invalid` 均阻断。批准不持久化、不复用、不写 ledger，Harness 不执行工具。
+
+事实源：`docs/102-pi-interactive-approval-roundtrip.md`。
+
+## Stage 54 — Pi Postflight Audit Design Gate（条件启动）
+
+仅作为下一候选 design gate：定义 Pi/OMP tool result 的脱敏投影、final-arguments identity、失败/取消映射、是否及如何写 ledger，以及如何避免将 host result 误表述为 Harness execution authority。不授予第二个 command、通用 approval、shell/network/service/UI、filesystem proof 或 bridge execution authority。
 
 ---
 

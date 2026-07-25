@@ -16,23 +16,24 @@ python -m agent_runtime.cli doctor
 然后按顺序阅读：
 
 1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
-2. `docs/101-pi-coding-agent-preflight-bridge.md`：Stage 52 Pi host preflight bridge v1 事实源（host-side preflight only，非 execution authority）。
-3. `docs/100-fixed-execution-operational-recovery-implementation.md`：Stage 51 lease、trust/open-attempt recovery、Job accounting 与 audit v1/v2 implementation fact source。
-3. `docs/99-fixed-execution-operational-recovery-design-gate.md`：Stage 50 operational recovery design contract。
-4. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`：Stage 49 Windows fixed Git status executor 实现、真实 smoke 与停止线事实源。
-5. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`：Stage 47–48 专用 execution audit writer 设计、实现与验收事实源。
-6. `docs/archive/96-fixed-git-status-executor-design-gate.md`：Stage 46 fixed executor 历史 design contract。
-7. `docs/archive/95-single-user-real-execution-readiness-gate-and-milestone.md`：Stage 43–45 readiness 历史事实源。
-8. `docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`：Stage 42 design-only 历史事实源。
-9. `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`：Stage 39–41 与 v0.17.0 事实源。
-10. `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`：Stage 36–38 与 v0.16.0 历史事实源。
-11. `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`：Stage 33–35 与 v0.15.0 历史事实源。
-12. `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`：Stage 30–32 与 v0.14.0 历史事实源。
-13. `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`：Stage 29 stdin consumer。
-14. `tasks/handoff-2026-07-25.md`：Stage 52 收口事实与 Stage 53 条件边界。
-15. `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`：Stage 28 consumer gate。
-16. `docs/86-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 filter contract。
-17. `docs/84-envelope-scoped-snapshot-read-design-gate.md`：Stage 23/24 reader 边界。
+2. `docs/102-pi-interactive-approval-roundtrip.md`：Stage 53 默认关闭的一次性交互批准、二次 preflight identity binding 与有限 host approval 事实源。
+3. `docs/101-pi-coding-agent-preflight-bridge.md`：Stage 52 Pi host preflight bridge v1 事实源（host-side preflight only，非 execution authority）。
+4. `docs/100-fixed-execution-operational-recovery-implementation.md`：Stage 51 lease、trust/open-attempt recovery、Job accounting 与 audit v1/v2 implementation fact source。
+5. `docs/99-fixed-execution-operational-recovery-design-gate.md`：Stage 50 operational recovery design contract。
+6. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`：Stage 49 Windows fixed Git status executor 实现、真实 smoke 与停止线事实源。
+7. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`：Stage 47–48 专用 execution audit writer 设计、实现与验收事实源。
+8. `docs/archive/96-fixed-git-status-executor-design-gate.md`：Stage 46 fixed executor 历史 design contract。
+9. `docs/archive/95-single-user-real-execution-readiness-gate-and-milestone.md`：Stage 43–45 readiness 历史事实源。
+10. `docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`：Stage 42 design-only 历史事实源。
+11. `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`：Stage 39–41 与 v0.17.0 事实源。
+12. `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`：Stage 36–38 与 v0.16.0 历史事实源。
+13. `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`：Stage 33–35 与 v0.15.0 历史事实源。
+14. `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`：Stage 30–32 与 v0.14.0 历史事实源。
+15. `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`：Stage 29 stdin consumer。
+16. `tasks/handoff-2026-07-25.md`：Stage 53 收口事实与 Stage 54 条件边界。
+17. `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`：Stage 28 consumer gate。
+18. `docs/86-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 filter contract。
+19. `docs/84-envelope-scoped-snapshot-read-design-gate.md`：Stage 23/24 reader 边界。
 18. `docs/83-codex-desktop-snapshot-json-reader-implementation.md`：Stage 22 reader。
 19. `docs/79-read-only-host-consumer-validation-boundary.md`：Stage 18 consumer。
 20. `docs/78-control-panel-host-integration-boundary.md`：Stage 17 handoff。
@@ -57,7 +58,7 @@ python -m agent_runtime.cli doctor
 
 `s-black harness engineering`（Python 包名 `agent_runtime`）是一个轻量、可审计、可迁移的 Agent Runtime / Harness Orchestrator，逐步抽象规则门禁、任务账本、adapter envelope、能力路由和控制面 read model。
 
-当前状态：**Stage 52 — Pi Coding Agent Preflight Bridge v1 已收口**。已实现一次性 stdin/stdout JSON 预检桥（`pi-bridge preflight`）、独立 `pi-host` adapter registry 条目与 `integrations/pi/` 零依赖 TypeScript Extension 示例；bridge 只做规范化与门禁判断（`pass`/`needs_approval`/`blocked`/`invalid`），不执行任何工具、不写 ledger、不访问网络，是 host-side preflight enforcement 而非 execution authority。Stage 51 已实现 shared machine-local lease、trust/open-attempt recovery、bounded locked ledger、outcome-unknown fixed closure、Windows Job accounting 与 audit v1/v2。唯一真实 operation 仍为 Stage 49 Windows `git status --short --branch`，必须显式 `--commit`；Stage 52 没有运行任何真实工具执行。下一候选为 **Stage 53 — Fixed Execution Next-decision Design Gate（条件启动，仅 design authority）**。
+当前状态：**Stage 53 — Pi Interactive Approval Roundtrip v1 已收口**。Stage 52 已实现一次性 stdin/stdout JSON 预检桥（`pi-bridge preflight`）、独立 `pi-host` adapter registry 条目与 `integrations/pi/` TypeScript Extension；Stage 53 增加默认关闭的、仅支持同 cwd `git push origin main` 的一次性交互批准，确认后必须二次 preflight 且 identity 一致。桥和 Harness 都不执行工具、不写 ledger、不访问网络；Stage 53 是有限 host approval 而非通用 execution authority。本机通过 OMP 同源 ExtensionAPI 完成真实 preflight smoke，未安装独立 Pi CLI。唯一 Harness 真实 operation 仍是 Stage 49 Windows `git status --short --branch`，必须显式 `--commit`。下一候选为 **Stage 54 — Pi Postflight Audit Design Gate（条件启动，仅 design authority）**。
 
 - 冻结基线：`v0.17.0-filtered-snapshot-display-host-integration`（已推送至 `origin`）；上一基线为 `v0.16.0-filtered-snapshot-display-consumer`（已推送至 `origin`）。
 - 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation、CLI automation contract/profile/workflow，以及 `orchestration control-panel snapshot/render/handoff` 的确定性 representation、版本化 stdio descriptor 与独立 reference consumer validation。
@@ -86,6 +87,7 @@ python -m agent_runtime.cli doctor
 - Stage 49 事实源：`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`；Windows fixed Git status limited execution 已实现，POSIX、通用 shell、network adapter 和第二个 operation 仍 unavailable。
 - Stage 50/51 事实源：`docs/99-fixed-execution-operational-recovery-design-gate.md` 与 `docs/100-fixed-execution-operational-recovery-implementation.md`；Stage 51 已按 contract 实现，production authority 仍只覆盖 Windows fixed Git status。
 - Stage 52 事实源：`docs/101-pi-coding-agent-preflight-bridge.md`；Pi host preflight bridge v1 已收口，仅 host-side preflight enforcement，不执行工具、不写 ledger、不访问网络。
+- Stage 53 事实源：`docs/102-pi-interactive-approval-roundtrip.md`；默认关闭的有限 host interactive approval 已收口，只支持精确 `git push origin main` 的二次-preflight 一次确认；不持久化批准、不接管执行。
 
 项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
 
@@ -181,7 +183,7 @@ Windows 可使用 Git for Windows 的 `bash.exe`。提交前还应运行 `git di
 | `automation/` | Automation Profile schema 与 source-backed 样例 registry |
 | `tasks/` | task/event schema、JSONL ledger、progress 与 handoff |
 | `drafts/` | 受控生成的 runtime draft |
-| `integrations/` | 宿主集成示例；`integrations/pi/` 为 Stage 52 Pi preflight bridge 零依赖 Extension 示例 |
+| `integrations/` | 宿主集成示例；`integrations/pi/` 为 Stage 52 preflight bridge 与 Stage 53 有限交互审批 Extension 示例 |
 | `tools/` | 独立只读工具，如 `public_scan.py`、Stage 18 reference consumer 与 Stage 20 host adapter |
 | `decisions/` | 架构决策记录 |
 

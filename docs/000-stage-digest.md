@@ -4,9 +4,9 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：52 个
+- docs/ 活跃文档：53 个
 - 归档文档：88 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：185 个
+- 全仓 .md 文件：186 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,7 +25,8 @@
 
 ## 当前阶段
 
-- **Stage 52 — Pi Coding Agent Preflight Bridge v1（已完成并收口；host-side preflight only）**
+- **Stage 53 — Pi Interactive Approval Roundtrip v1（已完成并收口；limited host approval only）**
+- Stage 52 — Pi Coding Agent Preflight Bridge v1（已完成并收口；host-side preflight only）
 - Stage 51 — Fixed Execution Operational Recovery Implementation（已完成并收口）
 - Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（Windows limited enablement 已完成并收口）
 - Stage 47–48 — Execution Lifecycle Audit Writer（design + TDD implementation 已完成并收口）
@@ -33,7 +34,9 @@
 - Stage 45 — Single-user Real Execution Readiness Milestone Closure（已收口；提交 `49a517b`）
 - Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
 - Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
-- 下一阶段候选：Stage 53 — Fixed Execution Next-decision Design Gate（条件启动；仅 design authority）
+- 下一阶段候选：Stage 54 — Pi Postflight Audit Design Gate（条件启动；仅 design authority）
+- Stage 53 已实现默认关闭的一次性交互批准：仅固定 `git push origin main`、同 cwd、交互 UI、显式 `AGENT_RUNTIME_APPROVAL_MODE=interactive` 才可确认；确认后重跑 preflight 并严格匹配 request/target identity，批准不持久化、不复用、不写 ledger，Harness 不执行工具。
+- 本机未安装独立 Pi CLI；使用 OMP 17.0.8 内含的同源 `@earendil-works/pi-coding-agent` API 真实加载 Stage 52 extension，验证普通 read 放行、`.env` read 阻断、`git push` needs_approval 阻断。未执行真实 push，未修改 Pi/OMP 持久配置。
 - Stage 52 已实现 Pi host preflight bridge v1：一次性 stdin/stdout JSON 预检（`pass`/`needs_approval`/`blocked`/`invalid`）、独立 `pi-host` registry 条目与 `integrations/pi/` 零依赖 Extension 示例；bridge 不执行任何工具、不写 ledger、不访问网络，不是 execution authority。
 - Stage 51 已实现 shared machine-local lease、trust inspect/identity-bound rotation、bounded locked open-attempt recovery、fixed outcome-unknown close、Windows Job accounting 与 audit v2；没有扩大真实执行权限。
 - Stage 49 只在 Windows 开放唯一 fixed operation `git status --short --branch`；必须显式 `--commit`，并依赖 machine-local reviewed trust binding。
@@ -95,6 +98,14 @@
 - `integrations/pi/` 提供零 npm 依赖最小 Extension 示例：固定 argv、`shell=false`、bounded timeout/stdout/stderr、无重试、不读取 secret；pass 放行，其余 block。
 - 本阶段是 host-side preflight enforcement，不是 Harness real adapter execution authority；Stage 49 权限不变；按用户授权推送到 `origin/main`，不创建 tag。
 - Stage 52 事实源：`docs/101-pi-coding-agent-preflight-bridge.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 53 - Pi Interactive Approval Roundtrip v1
+
+- `integrations/pi/extension.ts` 新增默认关闭的 `AGENT_RUNTIME_APPROVAL_MODE=interactive`，只允许同 cwd 的精确 `git push origin main` 进入一次 UI 确认。
+- 确认后从当前 event input 重新归一化并二次 preflight，request id/hash、tool、target hash 必须一致；拒绝、超时、无 UI、输入漂移、bridge 漂移及 blocked/invalid 一律阻断。
+- 批准不写磁盘、不缓存、不跨调用复用；Harness 仍不执行工具。批准后深冻结 input，但 Pi/OMP 后续 extension 可替换整个 input，故这是有限 host approval 而非通用 approval authority。
+- 本机通过 OMP 17.0.8 同源 API 完成 Stage 52 真实 smoke；独立 Pi CLI 未安装，未做 Pi 本体安装验证。
+- Stage 53 事实源：`docs/102-pi-interactive-approval-roundtrip.md` 与 `tasks/handoff-2026-07-25.md`。
 
 ### Stage 10 基线（保留）
 
@@ -250,22 +261,23 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/101-pi-coding-agent-preflight-bridge.md`
-3. `docs/100-fixed-execution-operational-recovery-implementation.md`
-4. `docs/99-fixed-execution-operational-recovery-design-gate.md`
-5. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
-6. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
-7. `tasks/handoff-2026-07-25.md`
-8. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
-9. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
-10. 再跑：`python -m agent_runtime.cli docs context --json`
+2. `docs/102-pi-interactive-approval-roundtrip.md`
+3. `docs/101-pi-coding-agent-preflight-bridge.md`
+4. `docs/100-fixed-execution-operational-recovery-implementation.md`
+5. `docs/99-fixed-execution-operational-recovery-design-gate.md`
+6. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+7. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+8. `tasks/handoff-2026-07-25.md`
+9. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
+10. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
+11. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 53 — Fixed Execution Next-decision Design Gate（条件启动）**。
-- 只允许审计 Stage 51/52 后 remaining risks、operator/consumer need 与下一决策；Stage 53 不是 implementation authority。
+- **Stage 54 — Pi Postflight Audit Design Gate（条件启动）**。
+- 只允许设计 Pi/OMP tool result 的 final-arguments identity、脱敏投影、失败/取消映射、ledger 边界与 authority wording；Stage 54 不是 implementation authority。
 - POSIX enablement 必须另行闭合 executable image identity、process-group containment 与同等输出/审计停止线。
-- 任何第二个 command、approval-required adapter、network operation、bridge execution authority 或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。
+- 任何第二个 command、通用 approval-required adapter、network operation、bridge execution authority、持久 postflight writer 或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。
 
 ## 重要约束
 

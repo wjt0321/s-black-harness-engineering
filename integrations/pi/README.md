@@ -34,6 +34,14 @@ execution authority。bridge 只做规范化与门禁判断，绝不执行 read/
      `adapters/`；bridge 子进程以此为 cwd / `--root`。**未设置时 extension 对所有
      默认工具调用 fail-closed block。**
    - `AGENT_RUNTIME_PYTHON`（可选）：python launcher 覆盖；其后的 argv 固定不变。
+   - `AGENT_RUNTIME_APPROVAL_MODE=interactive`（可选，默认关闭）：启用 Stage 53 一次性交互批准。v1 只支持 host cwd 等于 Harness root 时的精确命令 `git push origin main`；其他 `needs_approval` 仍阻断。
+
+## Stage 53 一次性交互批准
+
+- 仅在 `ctx.hasUI=true` 且 mode 为 `tui` / `rpc` 时弹出确认；print/json、超时、拒绝均阻断。
+- 确认后从当前 `event.input` 重新归一化并重跑 bridge；request id/hash、tool、target hash 必须与确认前完全一致。
+- 批准不写磁盘、不缓存、不跨调用复用；`blocked` / `invalid` 永不弹确认。
+- v1 只允许 `git push origin main`，并深冻结已批准 input。Pi/OMP API 仍允许排序更后的扩展替换整个 input，因此该模式是有限本地 host approval，不是通用强隔离 approval authority。
 
 ## 工作方式
 

@@ -2533,3 +2533,13 @@ printf '%s' '{"schema_version":"pi-bridge/preflight-request/v1","tool":"bash","i
 - decision：`pass`（exit 0）/ `needs_approval`（exit 3）/ `blocked`（exit 2）/ `invalid`（exit 5）。
 - 响应只含安全 findings、`next_action` 与 `request_hash` / `target_hash`，不回显 target、命令或文件内容。
 - 请求/响应 JSON schema 与最小 TypeScript Extension 示例见 `integrations/pi/`；事实源为 `docs/101-pi-coding-agent-preflight-bridge.md`。
+
+## Pi interactive approval（Stage 53，extension-only）
+
+Stage 53 没有新增 Harness execution CLI。它是 `integrations/pi/extension.ts` 的默认关闭 host-side 行为：
+
+```text
+AGENT_RUNTIME_APPROVAL_MODE=interactive
+```
+
+只有 host cwd 等于 `AGENT_RUNTIME_ROOT`、交互 UI 可用且命令精确为 `git push origin main` 时，`needs_approval` 才会弹一次确认；确认后 extension 重跑 bridge 并核对 request/target identity。批准不持久化、不复用，不让 Harness 执行工具；其他 `needs_approval`、`blocked`、`invalid`、无 UI、拒绝或超时仍阻断。事实源为 `docs/102-pi-interactive-approval-roundtrip.md`。

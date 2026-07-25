@@ -8,9 +8,12 @@ import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { runPreflightBridge } from "../preflight-bridge.ts";
 import {
+  createApprovalToolCallHandler,
   createToolCallHandler,
   decisionToGateResult,
   extractEditEntries,
+  INTERACTIVE_APPROVAL_MODE,
+  isInteractiveApprovalCandidate,
   resolveBridgeOptions,
   sanitizeRequestId,
   toBridgeRequest,
@@ -178,6 +181,92 @@ test("tool_call handler allows pass and blocks needs_approval via the real bridg
   assert.equal(outside?.block, true);
   const malformed = await handler({ toolName: "read", toolCallId: "c11", input: {} });
   assert.equal(malformed?.block, true);
+});
+
+test("interactive approval candidate is exact and cwd-bound", async () => {
+  const request = toBridgeRequest({
+    toolName: "bash",
+    toolCallId: "approval-1",
+    input: { command: "git push origin main" },
+  });
+  assert.ok(request !== null);
+  const response = await runPreflightBridge(request, options);
+  assert.equal(response.decision, "needs_approval");
+  assert.equal(isInteractiveApprovalCandidate(request, response, repoRoot, options), true);
+  assert.equal(isInteractiveApprovalCandidate(request, response, `${repoRoot}-other`, options), false);
+});
+
+test("approval mode stays fail-closed unless explicitly interactive with UI", async () => {
+  const event = { toolName: "bash", toolCallId: "approval-2", input: { command: "git push origin main" } };
+  let confirms = 0;
+  const confirm = async () => { confirms += 1; return true; };
+
+  const disabled = createApprovalToolCallHandler(options, undefined, {
+    hasUI: true, mode: "tui", cwd: repoRoot, confirm,
+  });
+  assert.equal((await disabled(event))?.block, true);
+
+  const noUi = createApprovalToolCallHandler(options, INTERACTIVE_APPROVAL_MODE, {
+    hasUI: false, mode: "print", cwd: repoRoot, confirm,
+  });
+  assert.equal((await noUi(event))?.block, true);
+  assert.equal(confirms, 0);
+});
+
+test("interactive approval denial blocks and approval allows once with frozen input", async () => {
+  const deniedEvent = { toolName: "bash", toolCallId: "approval-3", input: { command: "git push origin main" } };
+  const denied = createApprovalToolCallHandler(options, INTERACTIVE_APPROVAL_MODE, {
+    hasUI: true, mode: "tui", cwd: repoRoot, confirm: async () => false,
+  });
+  assert.equal((await denied(deniedEvent))?.block, true);
+
+  const approvedEvent = { toolName: "bash", toolCallId: "approval-4", input: { command: "git push origin main" } };
+  const approved = createApprovalToolCallHandler(options, INTERACTIVE_APPROVAL_MODE, {
+    hasUI: true, mode: "tui", cwd: repoRoot, confirm: async () => true,
+  });
+  assert.equal(await approved(approvedEvent), undefined);
+  assert.equal(Object.isFrozen(approvedEvent.input), true);
+});
+
+test("approval interaction failure blocks", async () => {
+  const handler = createApprovalToolCallHandler(options, INTERACTIVE_APPROVAL_MODE, {
+    hasUI: true,
+    mode: "tui",
+    cwd: repoRoot,
+    confirm: async () => { throw new Error("dialog unavailable"); },
+  });
+  const result = await handler({ toolName: "bash", toolCallId: "approval-error", input: { command: "git push origin main" } });
+  assert.equal(result?.block, true);
+  assert.match(result?.reason ?? "", /interaction failed/);
+});
+
+test("approval input mutation during confirmation fails closed", async () => {
+  const event = { toolName: "bash", toolCallId: "approval-5", input: { command: "git push origin main" } };
+  const handler = createApprovalToolCallHandler(options, INTERACTIVE_APPROVAL_MODE, {
+    hasUI: true,
+    mode: "tui",
+    cwd: repoRoot,
+    confirm: async () => {
+      event.input.command = "git push origin other";
+      return true;
+    },
+  });
+  const result = await handler(event);
+  assert.equal(result?.block, true);
+  assert.match(result?.reason ?? "", /identity changed/);
+});
+
+test("blocked decisions never prompt for approval", async () => {
+  let confirms = 0;
+  const handler = createApprovalToolCallHandler(options, INTERACTIVE_APPROVAL_MODE, {
+    hasUI: true,
+    mode: "tui",
+    cwd: repoRoot,
+    confirm: async () => { confirms += 1; return true; },
+  });
+  const result = await handler({ toolName: "read", toolCallId: "approval-6", input: { path: ".env" } });
+  assert.equal(result?.block, true);
+  assert.equal(confirms, 0);
 });
 
 test("resolveBridgeOptions requires AGENT_RUNTIME_ROOT", () => {

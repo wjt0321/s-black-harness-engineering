@@ -2885,3 +2885,12 @@
 - 测试：`tests/test_pi_preflight_bridge.py` 44 项、`integrations/pi/test/preflight-bridge.test.ts` 12 项（真实 spawn Python bridge）；全量 pytest、doctor、public scan、受控写回归、docs hook 与 diff check 通过。
 - 事实源 `docs/101-pi-coding-agent-preflight-bridge.md` 与 handoff `tasks/handoff-2026-07-25.md`；稳定 tag 仍为已推送 v0.17.0，Stage 52 为已推送的 commit-level milestone。
 - 下一候选为 Stage 53 conditional design gate，不授予 implementation authority。
+
+## 2026-07-25 Stage 53 - Pi Interactive Approval Roundtrip
+
+- 本机没有独立 Pi CLI；使用 OMP 17.0.8 内含的同源 `@earendil-works/pi-coding-agent` API，以显式 extension 完成真实 preflight smoke：普通 read 放行、`.env` read 阻断、`git push origin main` needs_approval 阻断；未执行真实 push，未修改 Pi/OMP 持久配置。
+- `integrations/pi/extension.ts` 增加默认关闭的 `AGENT_RUNTIME_APPROVAL_MODE=interactive`；v1 只允许同 cwd 的固定 `git push origin main` 进入一次 UI 确认。
+- 确认后从当前 event input 重新归一化、二次 preflight，并严格匹配 request_id/request_hash/tool/target_hash；拒绝、超时、无 UI、print/json、输入或 bridge 漂移、blocked/invalid 一律阻断。
+- 批准不写盘、不缓存、不复用；Harness 不执行工具。批准后 deep freeze input，但后续 extension 可替换整个 input，因此明确为有限 host approval，不宣称通用强隔离 authority。
+- Node 行为测试从 12 项扩展至 18 项并通过；事实源为 `docs/102-pi-interactive-approval-roundtrip.md` 与 `tasks/handoff-2026-07-25.md`。
+- 下一候选为 Stage 54 Pi Postflight Audit Design Gate，仅设计 final-arguments identity、脱敏结果投影、失败/取消映射与 ledger 边界，不授予实现 authority。

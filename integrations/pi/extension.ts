@@ -22,6 +22,7 @@
 // npm dependencies. Pure functions are exported for tests.
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { resolve } from "node:path";
 import { runPreflightBridge, REQUEST_SCHEMA_VERSION } from "./preflight-bridge.ts";
 import type { BridgeClientOptions, BridgeRequest, BridgeResponse } from "./preflight-bridge.ts";
 
@@ -39,6 +40,17 @@ export interface PiEditEntry {
 }
 
 export type ToolCallGateResult = { block: true; reason: string } | undefined;
+
+export interface ApprovalContextLike {
+  hasUI: boolean;
+  mode: string;
+  cwd: string;
+  confirm(title: string, message: string, options?: { timeout?: number }): Promise<boolean>;
+}
+
+// Only this explicit environment value enables the one-shot approval path.
+export const INTERACTIVE_APPROVAL_MODE = "interactive";
+const APPROVAL_ACTIONS = new Set(["require_user_approval", "require_secret_scan"]);
 
 // Pi default tools gated by the Stage 52 bridge. Anything else is blocked
 // fail-closed in this extension; relax only with an explicit design decision.
@@ -141,6 +153,91 @@ export function decisionToGateResult(response: BridgeResponse): ToolCallGateResu
   };
 }
 
+function sameResolvedPath(left: string, right: string): boolean {
+  const a = resolve(left);
+  const b = resolve(right);
+  return process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
+function deepFreeze(value: unknown): void {
+  if (typeof value !== "object" || value === null || Object.isFrozen(value)) return;
+  for (const child of Object.values(value)) deepFreeze(child);
+  Object.freeze(value);
+}
+
+// Stage 53 v1 deliberately supports one approval candidate only. This keeps
+// user approval bound to an exact, reviewable command while the wider approval
+// ledger/roundtrip contract remains unimplemented.
+export function isInteractiveApprovalCandidate(
+  request: BridgeRequest,
+  response: BridgeResponse,
+  hostCwd: string,
+  options: BridgeClientOptions,
+): boolean {
+  if (request.tool !== "bash" || request.input.command !== "git push origin main") return false;
+  if (!sameResolvedPath(hostCwd, options.cwd)) return false;
+  if (response.decision !== "needs_approval") return false;
+  if (response.request_hash === null || response.target_hash === null) return false;
+  if (response.findings.length === 0) return false;
+  return response.findings.every((finding) => APPROVAL_ACTIONS.has(finding.action));
+}
+
+function sameApprovalIdentity(first: BridgeResponse, second: BridgeResponse): boolean {
+  return (
+    second.decision === "needs_approval" &&
+    second.request_id === first.request_id &&
+    second.request_hash === first.request_hash &&
+    second.tool === first.tool &&
+    second.target_hash === first.target_hash
+  );
+}
+
+export function createApprovalToolCallHandler(
+  options: BridgeClientOptions,
+  approvalMode: string | undefined,
+  context: ApprovalContextLike,
+): (event: ToolCallEventLike) => Promise<ToolCallGateResult> {
+  const baseHandler = createToolCallHandler(options);
+  return async (event: ToolCallEventLike): Promise<ToolCallGateResult> => {
+    try {
+      const request = toBridgeRequest(event);
+      if (request === null) return baseHandler(event);
+
+      const first = await runPreflightBridge(request, options);
+      if (first.decision === "pass") return undefined;
+      if (
+        approvalMode !== INTERACTIVE_APPROVAL_MODE ||
+        !context.hasUI ||
+        (context.mode !== "tui" && context.mode !== "rpc") ||
+        !isInteractiveApprovalCandidate(request, first, context.cwd, options)
+      ) {
+        return decisionToGateResult(first);
+      }
+
+      const approved = await context.confirm(
+        "Harness approval required",
+        "Allow one execution of git push origin main in the current project? This approval cannot be reused.",
+      );
+      if (!approved) {
+        return { block: true, reason: "Harness approval was denied or dismissed." };
+      }
+
+      const currentRequest = toBridgeRequest(event);
+      if (currentRequest === null) {
+        return { block: true, reason: "Harness approval input became invalid during confirmation; failing closed." };
+      }
+      const second = await runPreflightBridge(currentRequest, options);
+      if (!sameApprovalIdentity(first, second)) {
+        return { block: true, reason: "Harness approval identity changed during confirmation; failing closed." };
+      }
+      deepFreeze(event.input);
+      return undefined;
+    } catch {
+      return { block: true, reason: "Harness approval interaction failed; failing closed." };
+    }
+  };
+}
+
 // Create the tool_call handler bound to fixed bridge options. Never throws;
 // every failure blocks.
 export function createToolCallHandler(
@@ -182,7 +279,8 @@ export function resolveBridgeOptions(
 
 export default function (pi: ExtensionAPI) {
   const options = resolveBridgeOptions(process.env);
-  pi.on("tool_call", async (event) => {
+  const approvalMode = process.env.AGENT_RUNTIME_APPROVAL_MODE;
+  pi.on("tool_call", async (event, ctx) => {
     if (options === null) {
       return {
         block: true,
@@ -190,6 +288,12 @@ export default function (pi: ExtensionAPI) {
           "Harness preflight bridge is not configured (AGENT_RUNTIME_ROOT missing); failing closed",
       };
     }
-    return createToolCallHandler(options)(event as ToolCallEventLike);
+    return createApprovalToolCallHandler(options, approvalMode, {
+      hasUI: ctx.hasUI,
+      mode: ctx.mode,
+      cwd: ctx.cwd,
+      confirm: (title, message, dialogOptions) =>
+        ctx.ui.confirm(title, message, { ...dialogOptions, timeout: 60_000 }),
+    })(event as ToolCallEventLike);
   });
 }
