@@ -99,7 +99,7 @@ Stage 57 不开放：
 
 ## 6. 下一候选
 
-Stage 58 建议为 **Pi CLI Mode Stabilization Gate**：专门排查并稳定 `pi --print` / `--mode json` 在当前 DeepSeek compat provider 与全局 extension 下的启动与输出行为。只有 CLI mode 稳定后，才把日常操作入口从 SDK proof 推进到可人工使用的 Pi CLI/TUI 流程。
+Stage 57 收口时原建议下一步为 **Pi CLI Mode Stabilization Gate**。用户随后优先要求把 Pi agent dir 纳入项目本地运行目录，因此实际 Stage 58 为 project-local runtime integration；CLI mode stabilization 顺延为 Stage 59。该阶段将专门排查并稳定 `pi --print` / `--mode json` 在当前 DeepSeek compat provider 与项目本地 extension 下的启动与输出行为。
 
 <!-- stage57-status: sdk-real-session-proof-complete -->
 <!-- route: pi-first-layered -->

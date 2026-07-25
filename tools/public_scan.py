@@ -62,6 +62,7 @@ SKIPPED_DIRS = {
     ".pytest_cache",
     ".mypy_cache",
     ".ruff_cache",
+    ".runtime",
     "node_modules",
     ".venv",
     ".tox",

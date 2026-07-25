@@ -15,7 +15,7 @@ Stage 56 已把 Pi-first 路线推进到真实本机安装层：
 - `pi --version` 返回 `0.82.0`。
 - 全局 extension 已安装到 `%USERPROFILE%\.pi\agent\extensions\pi-preflight-bridge\`。
 - 只部署两份运行文件：`index.ts` 与 `preflight-bridge.ts`。
-- 用户级 `AGENT_RUNTIME_ROOT` 已设置为 `D:\Mydev\agent-runtime`。
+- 用户级 `AGENT_RUNTIME_ROOT` 已设置为 `<project-root>`。
 - 用户级 `AGENT_RUNTIME_APPROVAL_MODE` 与 `AGENT_RUNTIME_POSTFLIGHT_MODE` 未设置；approval 与 postflight 仍默认关闭。
 
 ## 2. 备份与回滚
@@ -49,7 +49,7 @@ orca-titlebar-spinner.ts
 ```json
 {
   "auto_discovered": true,
-  "extension_path": "C:\\Users\\wxb\\.pi\\agent\\extensions\\pi-preflight-bridge\\index.ts",
+  "extension_path": "%USERPROFILE%\\.pi\\agent\\extensions\\pi-preflight-bridge\\index.ts",
   "handler_count": 1,
   "results": [
     {"tool":"read","id":"stage56-pass","allowed":true,"blocked":false,"reason":null},

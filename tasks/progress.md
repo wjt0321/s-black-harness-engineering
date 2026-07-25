@@ -2917,7 +2917,7 @@
 - 用户明确授权直接完成 Stage 56。
 - 已安装独立 `@earendil-works/pi-coding-agent@0.82.0`；`pi --version` 为 `0.82.0`。
 - 已备份原全局 extension 到 `%USERPROFILE%\.pi\agent\backups\stage56-before-pi-preflight-20260725-164539`，包含 `SHA256SUMS.txt`；三份 Orca extension 原样保留。
-- 已部署 `%USERPROFILE%\.pi\agent\extensions\pi-preflight-bridge\index.ts` 与 `preflight-bridge.ts`，用户级只设置 `AGENT_RUNTIME_ROOT=D:\Mydev\agent-runtime`；approval/postflight 未设置。
+- 已部署 `%USERPROFILE%\.pi\agent\extensions\pi-preflight-bridge\index.ts` 与 `preflight-bridge.ts`，用户级只设置 `AGENT_RUNTIME_ROOT=<project-root>`；approval/postflight 未设置。
 - Pi 官方 `DefaultResourceLoader` 从真实全局目录自动发现 extension，加载无错误且注册一个 `tool_call` handler；handler smoke 验证普通 read 放行、`.env` 阻断、`git push origin main` needs_approval 阻断。
 - 初次尝试发现 RPC `bash` 属于用户侧直接命令，绕过 LLM default-tool `tool_call` chain，不可作为扩展门禁证明；隔离仓库无 origin，因此未连接远端、未推送内容。有效验收已改为真实自动发现后的已加载 handler。
 - 事实源为 `docs/105-pi-native-install-smoke.md`；下一候选 Stage 57 Pi First Real Session Gate。
@@ -2930,4 +2930,13 @@
 - 兼容配置关键点：`api=openai-completions`、`baseUrl=https://api.deepseek.com/v1`、`model=deepseek-v4-flash`、`maxTokensField=max_tokens`、模型 `maxTokens=512`；32 token 会只产出 reasoning，无 text。
 - SDK 直连 `createAgentSession` 成功加载全局 extensions（含 `pi-preflight-bridge`），`extensionErrors=0`；模型发起一次 `read {path: stage57-proof.txt}`，出现 `tool_execution_start/end`，第二轮最终文本为 `STAGE57_OK:PI_LAYER1_REAL_SESSION_OK`。
 - 证据目录：`%USERPROFILE%\.pi\agent\backups\stage57-sdk-real-read\sdk-real-read-events.json`；事实源为 `docs/106-pi-first-real-session-gate.md`。
-- 限制：Pi CLI `--print` / `--mode json` 仍未稳定；下一候选 Stage 58 Pi CLI Mode Stabilization Gate。
+- 限制：Pi CLI `--print` / `--mode json` 仍未稳定；下一候选为 Pi CLI Mode Stabilization Gate。
+
+## 2026-07-25 Stage 58 - Pi Project-local Runtime Integration
+
+- 用户要求把 Pi 直接整合进 `<project-root>` 统一管理。
+- 已将 `%USERPROFILE%\.pi\agent` 复制到 `<project-root>\.runtime\pi-agent`，原目录未删除并保留作回滚副本。
+- 已设置用户级 `PI_CODING_AGENT_DIR=<project-root>\.runtime\pi-agent`，并在 `.gitignore` 忽略 `.runtime/`，避免 auth、session、backup 与模型运行配置进入 Git。
+- `pi --list-models deepseek-compat` 从新目录识别 `deepseek-v4-flash`；`DefaultResourceLoader` 自动发现新目录下 `pi-preflight-bridge`，extension 无加载错误。
+- handler smoke 再次验证普通 read 放行、`.env` 阻断、`git push origin main` needs_approval；未执行真实 push，approval/postflight 仍关闭。
+- 事实源为 `docs/107-pi-project-local-runtime-integration.md`；下一候选为 Pi CLI Mode Stabilization Gate。

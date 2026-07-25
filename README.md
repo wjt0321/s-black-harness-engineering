@@ -160,7 +160,8 @@
 - ✅ Stage 55 — Pi-first Operator Handoff Gate（design gate；Pi-first 分层主线已收口）
 - ✅ Stage 56 — Pi Native Install Smoke（独立 Pi 0.82.0 与 Layer 1 preflight 已部署）
 - ✅ Stage 57 — Pi First Real Session Gate（SDK-host 真实隔离 read 会话已收口）
-- ⏳ Stage 58 — Pi CLI Mode Stabilization Gate（条件启动；稳定 print/json/TUI 入口）
+- ✅ Stage 58 — Pi Project-local Runtime Integration（Pi agent dir 已纳入项目 `.runtime`）
+- ⏳ Stage 59 — Pi CLI Mode Stabilization Gate（条件启动；稳定 print/json/TUI 入口）
 
 ### 现在最明确的位置
 
@@ -259,7 +260,7 @@ python -m agent_runtime.cli orchestration run inspect --task-id <task-id> --requ
 8. [`docs/100-fixed-execution-operational-recovery-implementation.md`](docs/100-fixed-execution-operational-recovery-implementation.md)：Stage 51 权威实现事实源。
 9. [`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`](docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md)：当前唯一真实执行能力及停止线。
 10. [`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`](docs/97-execution-lifecycle-audit-writer-design-and-implementation.md)：execution audit writer 事实源。
-11. [`tasks/handoff-2026-07-25.md`](tasks/handoff-2026-07-25.md)：最新 Stage 57 交接与 Stage 58 条件边界。
+11. [`tasks/handoff-2026-07-25.md`](tasks/handoff-2026-07-25.md)：最新 Stage 58 项目本地 Pi 运行时交接与 Stage 59 条件边界。
 12. [`docs/02-roadmap.md`](docs/02-roadmap.md)：完整阶段路线图。
 13. [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md)：CLI 参数与示例。
 

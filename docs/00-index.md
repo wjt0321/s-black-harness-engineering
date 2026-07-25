@@ -78,6 +78,7 @@
 - `104-pi-first-operator-handoff.md` — Stage 55 Pi-first 分层路线、安装交接边界与 Stage 56 原生安装 smoke 停止线（已收口；design gate）
 - `105-pi-native-install-smoke.md` — Stage 56 独立 Pi 安装、全局 extension 自动发现、Layer 1 preflight smoke 与回滚边界（已收口）
 - `106-pi-first-real-session-gate.md` — Stage 57 SDK-host 真实 Pi 会话、隔离 read 工具链路、DeepSeek compat provider 与 CLI mode 限制（已收口）
+- `107-pi-project-local-runtime-integration.md` — Stage 58 将 Pi agent dir 迁入项目 `.runtime`、Git 隔离、模型与 extension 自动发现验证（已收口）
 - `archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` — Stage 36–38 display v1 consumer 与 `v0.16.0` 历史事实源
 - `archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` — Stage 33–35 Markdown display 与 `v0.15.0` 历史事实源
 - `archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` — Stage 30–32 host design、实现、验收与 `v0.14.0` 历史冻结事实源

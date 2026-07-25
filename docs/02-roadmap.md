@@ -1205,9 +1205,15 @@ v0.14.0-filtered-snapshot-host-integration
 
 事实源：`docs/106-pi-first-real-session-gate.md`。
 
-## Stage 58 — Pi CLI Mode Stabilization Gate（条件启动）
+## Stage 58 — Pi Project-local Runtime Integration（已完成）
 
-仅作为下一候选：稳定 Pi CLI `--print` / `--mode json` / TUI 入口在当前 `deepseek-compat` provider 与全局 preflight extension 下的输出行为。不授权真实 push、写操作、approval/postflight 默认开启、第二个 command 或 OMP 主线回退。
+Pi agent dir 已迁入 `<project-root>\.runtime\pi-agent`，并通过用户级 `PI_CODING_AGENT_DIR` 成为当前有效运行目录。`.runtime/` 被 Git 忽略，原默认目录保留作回滚；模型发现、extension 自动发现与三条门禁 smoke 均通过。
+
+事实源：`docs/107-pi-project-local-runtime-integration.md`。
+
+## Stage 59 — Pi CLI Mode Stabilization Gate（条件启动）
+
+仅作为下一候选：稳定 Pi CLI `--print` / `--mode json` / TUI 入口在当前 `deepseek-compat` provider 与项目本地 preflight extension 下的输出行为。不授权真实 push、写操作、approval/postflight 默认开启、第二个 command 或 OMP 主线回退。
 
 ---
 

@@ -72,6 +72,15 @@ def test_scan_skips_binary_dirs(tmp_path):
     assert not findings
 
 
+def test_scan_skips_local_runtime_dir(tmp_path):
+    runtime = tmp_path / ".runtime"
+    runtime.mkdir()
+    sample = runtime / "session.txt"
+    sample.write_text("ghp_" + "E" * 36 + "\n", encoding="utf-8")
+    findings, _ = scan(tmp_path)
+    assert not findings
+
+
 def test_scan_reports_line_number(tmp_path):
     sample = tmp_path / "secret.md"
     sample.write_text(

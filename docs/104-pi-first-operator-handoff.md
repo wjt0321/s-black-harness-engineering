@@ -27,7 +27,7 @@
 默认只启用 Layer 1：
 
 ```text
-AGENT_RUNTIME_ROOT=D:\Mydev\agent-runtime
+AGENT_RUNTIME_ROOT=<project-root>
 ```
 
 审批和 postflight 投影默认不启用：
@@ -50,7 +50,7 @@ AGENT_RUNTIME_POSTFLIGHT_MODE=summary
 
 安装动作应是显式的、可回滚的文件复制：
 
-- 源：`D:\Mydev\agent-runtime\integrations\pi\extension.ts`
+- 源：`<project-root>\integrations\pi\extension.ts`
 - 目标：`%USERPROFILE%\.pi\agent\extensions\pi-preflight-bridge\index.ts`
 - 回滚：删除目标目录或移回备份；不得改动现有 Orca extension 文件。
 
