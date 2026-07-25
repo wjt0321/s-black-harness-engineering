@@ -1199,9 +1199,15 @@ v0.14.0-filtered-snapshot-host-integration
 
 事实源：`docs/105-pi-native-install-smoke.md`。
 
-## Stage 57 — Pi First Real Session Gate（条件启动）
+## Stage 57 — Pi First Real Session Gate（已完成）
 
-仅作为下一候选：决定是否允许一次受控模型调用，在真实 Pi agent session 中触发默认工具，并验证其行为与 Stage 56 已加载 handler smoke 一致。不授权真实 push、写操作、approval/postflight 默认开启、第二个 command 或 OMP 主线回退。
+已通过 SDK 直连 Pi agent 完成真实隔离 read 会话：全局 extensions 自动加载且包含 `pi-preflight-bridge`，模型发起 `read stage57-proof.txt`，工具执行完成，第二轮返回 `STAGE57_OK:PI_LAYER1_REAL_SESSION_OK`。为避开 Pi 内置 DeepSeek provider / CLI mode 问题，新增可回滚的 `deepseek-compat` models.json provider；密钥仍只从 `$DEEPSEEK_API_KEY` 解析。Pi CLI `--print` / `--mode json` 仍未稳定。
+
+事实源：`docs/106-pi-first-real-session-gate.md`。
+
+## Stage 58 — Pi CLI Mode Stabilization Gate（条件启动）
+
+仅作为下一候选：稳定 Pi CLI `--print` / `--mode json` / TUI 入口在当前 `deepseek-compat` provider 与全局 preflight extension 下的输出行为。不授权真实 push、写操作、approval/postflight 默认开启、第二个 command 或 OMP 主线回退。
 
 ---
 

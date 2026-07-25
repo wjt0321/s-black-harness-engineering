@@ -4,9 +4,9 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：56 个
+- docs/ 活跃文档：57 个
 - 归档文档：88 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：189 个
+- 全仓 .md 文件：190 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,7 +25,8 @@
 
 ## 当前阶段
 
-- **Stage 56 — Pi Native Install Smoke（已完成并收口；Layer 1 preflight only）**
+- **Stage 57 — Pi First Real Session Gate（已完成并收口；SDK-host real session proof）**
+- Stage 56 — Pi Native Install Smoke（已完成并收口；Layer 1 preflight only）
 - Stage 55 — Pi-first Operator Handoff Gate（已完成并收口；design gate）
 - Stage 54 — Pi Postflight Audit Projection v1（已完成并收口；host-side projection only）
 - Stage 53 — Pi Interactive Approval Roundtrip v1（已完成并收口；limited host approval only）
@@ -37,7 +38,8 @@
 - Stage 45 — Single-user Real Execution Readiness Milestone Closure（已收口；提交 `49a517b`）
 - Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
 - Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
-- 下一阶段候选：Stage 57 — Pi First Real Session Gate（条件启动；需模型调用边界）
+- 下一阶段候选：Stage 58 — Pi CLI Mode Stabilization Gate（条件启动；稳定 print/json/TUI 入口）
+- Stage 57 已通过 SDK 直连 Pi agent 完成真实隔离 read 会话：模型调用 `read stage57-proof.txt`，preflight extension 已加载，工具执行完成，最终文本为 `STAGE57_OK:PI_LAYER1_REAL_SESSION_OK`；Pi CLI print/json mode 仍需另行稳定。
 - Stage 56 已安装独立 Pi `0.82.0`，持久部署全局 `pi-preflight-bridge`，只设置 `AGENT_RUNTIME_ROOT`；approval/postflight 仍关闭。
 - Stage 55 已将路线切为 Pi-first layered：独立 Pi CLI 与最小 extension 优先，OMP 只保留为兼容验证/备选。
 - Stage 54 已实现默认关闭的 postflight projection：`AGENT_RUNTIME_POSTFLIGHT_MODE=summary` 时，`tool_result` 会重跑 preflight 并追加 value-free 摘要块；不写 ledger、不改 `isError`、不回显 path/command/output/details，不声明 Harness 执行了工具。
@@ -120,6 +122,15 @@
 - 摘要不包含 path、command、file content、tool output text、details payload 或 credential-like values；不写 ledger、不访问网络、不改 `isError`、不 patch details。
 - 这是 host-side projection，不是 durable audit writer，也不证明 Harness 执行了工具。
 - Stage 54 事实源：`docs/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 57 - Pi First Real Session Gate
+
+- 网络恢复后继续 Stage 57；Node fetch 与 Pi `ModelRuntime` 验证 DeepSeek API 可用。
+- 已写入可回滚的 `%USERPROFILE%\.pi\agent\models.json` 自定义 provider `deepseek-compat`，密钥仅通过 `$DEEPSEEK_API_KEY` 解析，不写明文。
+- SDK 直连 `createAgentSession` 加载真实全局 extensions，包含 `pi-preflight-bridge\index.ts`，`extensionErrors=0`。
+- 隔离目录 `%USERPROFILE%\.pi\agent\backups\stage57-sdk-real-read` 中，模型发起一次 `read stage57-proof.txt`，工具执行完成，最终返回 `STAGE57_OK:PI_LAYER1_REAL_SESSION_OK`。
+- 限制：Pi CLI `--print` / `--mode json` 在当前组合下仍有 0 stdout / 0 stderr 超时，需要 Stage 58 专门稳定；Stage 57 只证明 SDK-host real session chain。
+- Stage 57 事实源：`docs/106-pi-first-real-session-gate.md`。
 
 ### 新进落地：Stage 56 - Pi Native Install Smoke
 
@@ -291,24 +302,25 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/105-pi-native-install-smoke.md`
-3. `docs/104-pi-first-operator-handoff.md`
-4. `docs/103-pi-postflight-audit-projection.md`
-5. `docs/102-pi-interactive-approval-roundtrip.md`
-6. `docs/101-pi-coding-agent-preflight-bridge.md`
-7. `docs/100-fixed-execution-operational-recovery-implementation.md`
-8. `docs/99-fixed-execution-operational-recovery-design-gate.md`
-9. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
-10. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
-11. `tasks/handoff-2026-07-25.md`
-12. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
-13. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
-14. 再跑：`python -m agent_runtime.cli docs context --json`
+2. `docs/106-pi-first-real-session-gate.md`
+3. `docs/105-pi-native-install-smoke.md`
+4. `docs/104-pi-first-operator-handoff.md`
+5. `docs/103-pi-postflight-audit-projection.md`
+6. `docs/102-pi-interactive-approval-roundtrip.md`
+7. `docs/101-pi-coding-agent-preflight-bridge.md`
+8. `docs/100-fixed-execution-operational-recovery-implementation.md`
+9. `docs/99-fixed-execution-operational-recovery-design-gate.md`
+10. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+11. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+12. `tasks/handoff-2026-07-25.md`
+13. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
+14. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
+15. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 57 — Pi First Real Session Gate（条件启动；需模型调用边界）**。
-- Stage 56 已完成独立 Pi、持久 extension 自动发现与 Layer 1 handler smoke；下一阶段才考虑在真实 Pi 会话中触发默认工具。
+- **Stage 58 — Pi CLI Mode Stabilization Gate（条件启动；稳定 print/json/TUI 入口）**。
+- Stage 57 已证明 SDK-host real session chain；下一阶段才排查 Pi CLI `--print` / `--mode json` 的 0 stdout / 0 stderr 超时。
 - Pi-first 是主线；OMP 仅作为兼容验证/备选。
 - POSIX enablement 必须另行闭合 executable image identity、process-group containment 与同等输出/审计停止线。
 - 任何第二个 command、通用 approval-required adapter、network operation、bridge execution authority、持久 audit writer、自动安装或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。

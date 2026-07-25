@@ -2922,10 +2922,12 @@
 - 初次尝试发现 RPC `bash` 属于用户侧直接命令，绕过 LLM default-tool `tool_call` chain，不可作为扩展门禁证明；隔离仓库无 origin，因此未连接远端、未推送内容。有效验收已改为真实自动发现后的已加载 handler。
 - 事实源为 `docs/105-pi-native-install-smoke.md`；下一候选 Stage 57 Pi First Real Session Gate。
 
-## 2026-07-25 Stage 57 - Pi First Real Session Gate（暂停，待网络稳定）
+## 2026-07-25 Stage 57 - Pi First Real Session Gate
 
-- 用户授权一次受控真实 Pi 模型会话：隔离目录、`deepseek-v4-flash`、只启用内置 `read`，不开放 bash/write/edit，不启用 approval/postflight，不接触真实仓库或远端。
-- Pi 可识别 `deepseek-v4-flash` 与 `deepseek-v4-pro`，临时从本地 `.env.local` 注入 `DEEPSEEK_API_KEY`；密钥未写入 Pi auth.json、命令参数、项目文件或日志。
-- 真实只读会话 180 秒无 stdout/stderr 后被执行器终止；无工具最小 JSON 模型诊断 120 秒同样为 0 stdout / 0 stderr。没有残留 Pi/Node 进程，未生成 Pi session，未执行工具。
-- 已确认 RPC `bash` 是用户侧直接命令并绕过 `tool_call` extension，不能作为 Stage 57 验收；隔离仓库无 origin，曾尝试的 `git push origin main` 未连接远端、未推送内容。
-- 网络稳定后从无工具最小模型响应诊断恢复；收到成功固定响应后，再执行一次受控的 `read stage57-proof.txt` 真实 session。
+- 用户授权一次受控真实 Pi 模型会话：隔离目录、仅内置 `read`，不开放 bash/write/edit，不启用 approval/postflight，不接触真实仓库或远端。
+- 初始阻塞：Pi 内置 DeepSeek provider / CLI print-json mode 曾出现 120-180 秒 0 stdout / 0 stderr 超时；Node fetch 直连 DeepSeek API 正常，说明网络与 API key 可用。
+- 已新增可回滚 `%USERPROFILE%\.pi\agent\models.json` 自定义 provider `deepseek-compat`，通过 `$DEEPSEEK_API_KEY` 解析密钥，不写明文；写入前备份为 `%USERPROFILE%\.pi\agent\backups\stage57-before-models-json-20260725-175734`。
+- 兼容配置关键点：`api=openai-completions`、`baseUrl=https://api.deepseek.com/v1`、`model=deepseek-v4-flash`、`maxTokensField=max_tokens`、模型 `maxTokens=512`；32 token 会只产出 reasoning，无 text。
+- SDK 直连 `createAgentSession` 成功加载全局 extensions（含 `pi-preflight-bridge`），`extensionErrors=0`；模型发起一次 `read {path: stage57-proof.txt}`，出现 `tool_execution_start/end`，第二轮最终文本为 `STAGE57_OK:PI_LAYER1_REAL_SESSION_OK`。
+- 证据目录：`%USERPROFILE%\.pi\agent\backups\stage57-sdk-real-read\sdk-real-read-events.json`；事实源为 `docs/106-pi-first-real-session-gate.md`。
+- 限制：Pi CLI `--print` / `--mode json` 仍未稳定；下一候选 Stage 58 Pi CLI Mode Stabilization Gate。
