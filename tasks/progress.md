@@ -2901,4 +2901,13 @@
 - 摘要包含 tool、decision、request/target hash、hashed toolCallId、content block/text char counts 与原始 `isError`；不包含 path、command、tool output、details payload 或 credential-like values。
 - Stage 54 不写 Harness ledger、不访问网络、不改 `isError`、不 patch details，也不声明 Harness 执行了工具；它是 host-side projection，不是 durable audit writer。
 - Node 行为测试扩展至 22 项并通过；事实源为 `docs/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
-- 下一候选为 Stage 55 Pi Extension Install / Operator Handoff Gate，仅设计持久安装、extension 共存、env 开关与 persistent discovery smoke，不授予自动安装或扩大 execution authority。
+- 下一候选为 Stage 56 Pi Native Install Smoke；需要独立安装/写入授权。
+
+## 2026-07-25 Stage 55 - Pi-first Operator Handoff Gate
+
+- 用户方向定为 Pi-first：OMP 太重，后续先从独立 Pi 及最小 extension 开始，再像搭积木一样分层递进。
+- 路线固定为 Layer 0 Pi native baseline → Layer 1 preflight only → Layer 2 optional approval → Layer 3 optional postflight projection → Layer 4 durable audit future → Layer 5 OMP compatibility future。
+- OMP 不再作为主推进基础，只保留为同源 ExtensionAPI 的兼容验证/备选。
+- Stage 55 只完成 operator handoff design：未安装独立 Pi CLI、未写 `%USERPROFILE%\.pi`、未修改现有 Orca extensions、未启动真实 Pi 工作流。
+- 事实源为 `docs/104-pi-first-operator-handoff.md`；`docs context` 通过，Pi bridge Node 行为测试 22/22 通过。
+- 下一候选为 Stage 56 Pi Native Install Smoke：需用户对 package 安装、`~/.pi` extension 写入和可回滚备份给出明确授权；仅启用 Layer 1 preflight，approval/postflight 保持关闭。

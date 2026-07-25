@@ -1187,9 +1187,15 @@ v0.14.0-filtered-snapshot-host-integration
 
 事实源：`docs/103-pi-postflight-audit-projection.md`。
 
-## Stage 55 — Pi Extension Install / Operator Handoff Gate（条件启动）
+## Stage 55 — Pi-first Operator Handoff Gate（已完成，design gate）
 
-仅作为下一候选 design gate：决定是否把 extension 持久安装进本地 Pi/OMP extension 目录、如何与现有 Orca extensions 共存、启用哪些 env 开关，以及需要哪些真实 smoke 证明持久发现而不意外改变用户工作流。不授予自动安装、推送、扩大命令范围、持久 audit writer 或 bridge execution authority。
+后续路线切为 Pi-first：先跑独立 Pi CLI 与最小 extension，再分层启用 Stage 52 preflight、Stage 53 approval、Stage 54 postflight projection；OMP 仅作为同源 ExtensionAPI 兼容验证/备选，不作为主推进基础。Stage 55 不安装 package、不写 `~/.pi`、不修改现有 Orca extensions、不启动真实工作流。
+
+事实源：`docs/104-pi-first-operator-handoff.md`。
+
+## Stage 56 — Pi Native Install Smoke（条件启动）
+
+仅作为下一候选 implementation gate：在用户明确授权后，验证独立 Pi CLI、可回滚安装 `pi-preflight-bridge/index.ts`、只启用 Layer 1 preflight，并完成普通 read 放行、`.env` 阻断、`git push origin main` needs_approval 阻断 smoke。不授予 approval/postflight 默认启用、持久 audit writer、现有 extension 改写、真实 push 或 OMP 主线回退。
 
 ---
 
