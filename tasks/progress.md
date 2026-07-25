@@ -2528,7 +2528,7 @@
 - HTML 采用 industrial audit console 视觉，支持本地过滤、CSP、escaping、语义结构、reduced-motion 和响应式布局。
 - manifest 新增 `control_panel_read` preview/read-only；CLI surface/flag 契约同步冻结。
 - headless Chromium 验证 8 个 section、过滤交互、无 console/page error，并生成 screenshot。
-- 新增 `docs/76-read-only-control-panel-mvp.md` 与 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`，同步 digest、roadmap、CLI usage、boundary、README、AGENTS、index 与 handoff。
+- 新增 `docs/archive/76-read-only-control-panel-mvp.md` 与 `docs/archive/release-notes/79-release-notes-stage16-read-only-control-panel.md`，同步 digest、roadmap、CLI usage、boundary、README、AGENTS、index 与 handoff。
 - Stage 16 第一拍收口；live service/API/auth/DB、实时刷新、UI controlled write 与真实 adapter execution 继续延期。
 - 本阶段收口提交为 `b46c013`；已按用户授权推送到 `origin/main`，不创建 tag。
 
@@ -2547,7 +2547,7 @@
 ## 2026-07-14 — Stage 17 下一窗口上下文准备
 
 - 在 `v0.13.0-read-only-control-plane` 冻结后，选择下一阶段为 **Stage 17 — Control Panel Host Integration Boundary**。
-- 新增 `docs/78-control-panel-host-integration-boundary.md`，推荐 stdio-first、只读 handoff descriptor，不启动 live service，不新增文件写入，不执行 adapter。
+- 新增 `docs/archive/78-control-panel-host-integration-boundary.md`，推荐 stdio-first、只读 handoff descriptor，不启动 live service，不新增文件写入，不执行 adapter。
 - 建议下一窗口按 TDD 落地 `orchestration control-panel handoff [--envelope ...] --json`，复用现有 snapshot builder，并将新命令加入既有 `control_panel_read` contract entry。
 - 明确 `snapshot_id` 复用规则、`renderer_version` / `render_id` identity、media type、encoding、source passthrough、determinism 与 no-write 验收标准。
 - 同步 stage digest、roadmap、index、README、AGENTS 与 `tasks/handoff-2026-07-14.md`，确保新窗口可直接恢复。
@@ -2585,7 +2585,7 @@
 
 ## 2026-07-15 — Stage 22 Codex Desktop Snapshot JSON Reader 收口
 
-- 新增 `docs/83-codex-desktop-snapshot-json-reader-implementation.md`，冻结 Codex Desktop 显式 snapshot JSON reader 契约。
+- 新增 `docs/archive/83-codex-desktop-snapshot-json-reader-implementation.md`，冻结 Codex Desktop 显式 snapshot JSON reader 契约。
 - 按 TDD 新增 `tests/test_codex_desktop_snapshot_json_reader.py`，先确认 9 个测试因模块不存在而失败，再实现最小 reader。
 - 新增 `tools/codex_desktop_snapshot_json_reader.py`：要求 `--representation snapshot-json`，固定 handoff → consumer → snapshot 三段 argv。
 - `ready` 前校验 strict JSON、UTF-8、duplicate key、输出上限、schema、source、guarantees、handoff identity 与 canonical snapshot hash。
@@ -2607,7 +2607,7 @@
 ## 2026-07-15 — Stage 23 Envelope-scoped Snapshot Read Design Gate 启动
 
 - 用户明确要求继续推进 Stage 23；本轮启动设计门，但不把设计门启动解释为 reader implementation 已授权。
-- 新增 `docs/84-envelope-scoped-snapshot-read-design-gate.md`，冻结显式 `--representation snapshot-json` + future `--envelope`、project-relative allowlist、越界/`..`/symlink 拒绝、1 MiB/UTF-8/duplicate-key/secret-scan 门禁，以及 handoff → consumer → snapshot 的 scope identity 关联。
+- 新增 `docs/archive/84-envelope-scoped-snapshot-read-design-gate.md`，冻结显式 `--representation snapshot-json` + future `--envelope`、project-relative allowlist、越界/`..`/symlink 拒绝、1 MiB/UTF-8/duplicate-key/secret-scan 门禁，以及 handoff → consumer → snapshot 的 scope identity 关联。
 - 保持 Stage 22 reader 现状：不接受 `--envelope`，不执行 descriptor argv；无 envelope 时 runs/approvals/artifacts 继续 `unavailable/envelope_required`，reports 继续 request-scoped。
 - 下一拍只有在具体消费者、envelope 来源、版本化 schema/reader id 与逐项回归测试齐备后，才进入实现。
 
@@ -2619,7 +2619,7 @@
 - 读取前校验 1 MiB、strict UTF-8、duplicate key、JSON object、schema/consistency 与 secret scan；输出 normalized path、envelope content id 与 scope id，不回显 raw envelope/input/payload refs/raw refs。
 - handoff source、consumer source handoff id、snapshot source/id/canonical hash 全链关联；snapshot 返回后复查 envelope content id，拒绝 one-shot 生命周期内的 scope drift。
 - scoped lifecycle 为 `created → scoping → producing → validating → reading → ready → closed`；仍不执行 descriptor argv、HTML、网络、service、写入、candidate command 或真实 adapter。
-- Stage 23/24 事实源更新为 `docs/84-envelope-scoped-snapshot-read-design-gate.md`，验收记录为 `docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`。
+- Stage 23/24 事实源更新为 `docs/archive/84-envelope-scoped-snapshot-read-design-gate.md`，验收记录为 `docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`。
 
 
 ## 2026-07-15 — Stage 25 Envelope-scoped Consumer / Filter Design Gate 收口
@@ -2637,7 +2637,7 @@
 
 - 用户明确要求直接进入下一阶段，Stage 26 design gate 启动并完成。
 - 审计 Stage 24 scoped safe summaries，确认 runs/approvals/artifacts 具备 request/task join keys；response artifact 可能需要 request→task 关系闭包。
-- 新增 `docs/86-filtered-envelope-snapshot-read-design-gate.md`，冻结 task/request exact filter、双参数 AND、合法空视图与 deterministic order。
+- 新增 `docs/archive/86-filtered-envelope-snapshot-read-design-gate.md`，冻结 task/request exact filter、双参数 AND、合法空视图与 deterministic order。
 - 冻结未来 v3 result / filtered payload / filter schema，以及 canonical `filter_id`、base snapshot id、`view_id` 三层 identity。
 - filter 仅在 base snapshot 全链验证和 envelope content-drift recheck 后作用于内存安全 summaries；child argv 不携带 filter。
 - 新增 prerequisite contract test；本阶段不修改生产 reader，现有 v1/v2 保持不变。
@@ -2652,7 +2652,7 @@
 - 支持 task-only、request-only、task+request AND 与合法空视图；task view 使用 request→task 关系闭包包含缺少直接 task_id 的 response artifact。
 - 新增 v3 result、filtered payload、filter schema、canonical `filter_id` 与 `view_id`；输出前独立重算并拒绝 tamper mismatch。
 - filter 只作用于 Stage 24 完整验证后的安全 summaries，不传给 handoff/consumer/snapshot argv；无 filter v2 与无 envelope v1 保持兼容。
-- 新增 `docs/87-filtered-envelope-snapshot-json-reader-implementation.md` 与 release notes 89；同步 digest/index/roadmap/README/AGENTS/CLI usage/Stage 26 gate/handoff。
+- 新增 `docs/archive/87-filtered-envelope-snapshot-json-reader-implementation.md` 与 release notes 89；同步 digest/index/roadmap/README/AGENTS/CLI usage/Stage 26 gate/handoff。
 - 将已被 Stage 22–27 事实源取代的 Stage 20 实现文档完整归档至 `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`；活跃文档保持 50 个。
 - 下一阶段为 Stage 28 Filtered Snapshot Host Consumer Validation Gate（条件启动）；query、lineage expansion、persistence/export、HTML/browser、service/network/write 与真实 adapter execution 继续延期。
 
@@ -2690,7 +2690,7 @@
 - 严格验证 safe sections、row 字段/标量类型、counts、section statuses、matched 与 request/task relation semantics。
 - 输出只包含 base/scope/filter/view ids、checks、value-safe finding、guarantees 与 next action，不回显 filter/path/rows/raw input。
 - 真实 Stage 27 reader stdout → Stage 29 consumer stdin smoke 返回 pass；Stage 18 consumer 与 Stage 27 reader 兼容回归通过。
-- 新增 `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md` 与 release notes 91；早期 Runtime bridge 文档完整归档至 `docs/archive/14-task-runtime-bridge.md`，活跃文档保持 50 个。
+- 新增 `docs/archive/89-codex-desktop-filtered-snapshot-consumer-implementation.md` 与 release notes 91；早期 Runtime bridge 文档完整归档至 `docs/archive/14-task-runtime-bridge.md`，活跃文档保持 50 个。
 - 下一阶段为 Stage 30 Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）；第一拍只允许 design gate，不默认引入 UI、service、persistence 或真实 adapter execution。
 
 ## 2026-07-16 — Stage 30–32 Filtered Snapshot Host Integration 里程碑收口
@@ -2752,7 +2752,7 @@
 
 - 用户授权继续推进下一本地里程碑，不 push。
 - 审计 Stage 34 display 与 Stage 37 consumer，选择 fixed display stdout → consumer stdin 的 validation-before-release one-shot host。
-- 新增 `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 release notes 100；原 Stage 36–38 事实源归档为 `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`。
+- 新增 `docs/archive/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 release notes 100；原 Stage 36–38 事实源归档为 `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`。
 - 冻结 fixed argv、bounded stdio、timeout/no-retry、strict protocol、五项 identity cross-check、content withheld、minimal output 与 no-side-effect。
 - 下一阶段 Stage 40 必须先 RED tests；候选 Stage 41 tag 为 `v0.17.0-filtered-snapshot-display-host-integration`。
 
@@ -2817,7 +2817,7 @@
 ## 2026-07-17 Stage 47–48 — Execution Lifecycle Audit Writer
 
 - 用户要求继续推进到下一里程碑并在完成后只提交到本地；未授权 push、tag 或真实外部执行。
-- Stage 47 新增 `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md` 与实施计划，冻结 dedicated schema、internal-only writer、generic-entry rejection、started/terminal 分离事务和 recovery state。
+- Stage 47 新增 `docs/archive/97-execution-lifecycle-audit-writer-design-and-implementation.md` 与实施计划，冻结 dedicated schema、internal-only writer、generic-entry rejection、started/terminal 分离事务和 recovery state。
 - shared event schema 增加四类 reserved event；独立 schema 固定 actor/origin/version、phase、identity 与 safe evidence allowlist。
 - generic `runtime event append/import` 在 dry-run/commit 均以 `reserved-execution-event-type` 拒绝 reserved event，ledger bytes 不变。
 - Stage 48 按 TDD 新增 `agent_runtime/execution_audit_writer.py`：started/terminal writer、同一 locked file descriptor 单行 append、writer-only append token、path/file identity byte-size rollback、persisted scan、audit validator 与 read-only inspection；并发 ledger 漂移或 file replacement 时拒绝 committed/truncate。
@@ -2843,7 +2843,7 @@
 - 新增六组专用测试和默认 skip 的 `test_stage49_real_git_status_smoke.py`；显式环境开关下在临时 direct `.git/` 仓库执行真实 CLI，返回 ready、closed audit、post-run guard pass，且不泄露 root/file/ref/PATH/raw output。
 - 提交前独立安全复审发现六项 Important；补齐 repository locked/no-follow handles 与 pre-read bounds、Job assignment 前 direct cleanup、Job close failure withheld、Windows independent fail-closed rights、terminal `awaiting_terminal`、binding parent/project gate，以及默认 real-audit-writer orchestration regression。二次复审确认无剩余 Critical/Important。
 - Stage 44 readiness v1 保持永久 blocked 历史 snapshot；generic execution service、POSIX、linked worktree、submodule、network、第二个 operation 与 OS filesystem write proof 继续 unavailable。
-- 新增 `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108；Stage 43–45 事实源移入 archive，活跃 docs 保持 50 个。
+- 新增 `docs/archive/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108；Stage 43–45 事实源移入 archive，活跃 docs 保持 50 个。
 - 稳定 semver 仍为已推送 v0.17.0；本阶段不创建 tag、不 push。
 - 下一阶段为 Stage 50 Fixed Execution Operational Recovery Design Gate（条件启动），不自动开放更多 command。
 
@@ -2859,7 +2859,7 @@
 - 冻结唯一 recovery close：`execution_failed` / `phase=audit` / `execution.recovery_outcome_unknown` / `guard_status=not_run`，并绑定 expected started event id 与 plan hash。
 - 冻结 Windows Job accounting active-zero、direct-child reap、containment close release gate；该 evidence 不构成 filesystem write proof。
 - 冻结历史 `execution-audit/v1` 兼容与 future `execution-audit/v2` Job evidence，不静默修改 v1。
-- 新增 `docs/99-fixed-execution-operational-recovery-design-gate.md` 与 release notes 109；Stage 46 文档移入 archive，活跃 docs 保持 50 个。
+- 新增 `docs/archive/99-fixed-execution-operational-recovery-design-gate.md` 与 release notes 109；Stage 46 文档移入 archive，活跃 docs 保持 50 个。
 - Stage 50 没有新增 production CLI、schema、writer 或 subprocess；唯一 Windows fixed Git status 行为保持不变。
 - 下一阶段为 Stage 51 Fixed Execution Operational Recovery Implementation（条件启动），只允许实现 Stage 50 contract。
 - 检查首次推送 `bf0b990` 的 GitHub Actions run `29554296000`：Ubuntu Python 3.11 有两个 Windows PATH sanitization 测试失败，1120 passed / 2 failed / 2 skipped。
@@ -2872,7 +2872,7 @@
 - Stage 51 实现已按 Stage 50 contract 收口：shared machine-local lease、trust inspect/identity-bound rotation、bounded locked ledger/open-attempt list/inspect、fixed outcome-unknown close、Windows Job accounting active-zero/reaped/containment-closed，以及 historical v1/new execution v2 audit。
 - exact CLI surfaces 为 `orchestration execution trust inspect`、recovery `list-open` / `inspect` / `close-open`；rotation commit 要求 expected old binding id、new executable identity 与 new sanitized PATH identity。
 - Stage 51 没有 real Git status smoke；fake backend、临时 ledger 与自动化测试是实现验证边界。本轮 full test suite、docs context、doctor、public scan、docs hook 与 diff check 均通过，不固化测试数量。
-- 新增权威事实源 `docs/100-fixed-execution-operational-recovery-implementation.md`、release notes 110、最终 handoff `tasks/handoff-2026-07-23.md`；删除 in-progress handoff 以避免 latest handoff 歧义。
+- 新增权威事实源 `docs/archive/100-fixed-execution-operational-recovery-implementation.md`、release notes 110、最终 handoff `tasks/handoff-2026-07-23.md`；删除 in-progress handoff 以避免 latest handoff 歧义。
 - 稳定 tag 继续为已推送 `v0.17.0-filtered-snapshot-display-host-integration`；Stage 51 为 commit-level milestone，2026-07-25 已按用户授权推送到 `origin/main`，不创建 tag。
 - 下一候选为 Stage 52 conditional design gate，仅审计 remaining risks、operator/consumer need 与下一决策，不授予 implementation authority。
 
@@ -2883,7 +2883,7 @@
 - 复用 `check_path`/`check_text`/`check_action` 与独立 `pi-host` adapter registry 条目（不复用 omp-acp）；credential 类目标直接 blocked；输出 request/target SHA-256 identity，不回显 target、命令或文件内容。
 - `integrations/pi/` 提供真实可安装 Pi extension（default export + `pi.on("tool_call")`，`ExtensionAPI` 仅 type import、运行时零依赖）：固定 argv、shell=false、bounded timeout/stdout/stderr、环境白名单、无重试；pass 放行、其余 block；官方字段按 Pi 当前源码核对（edit 为 `{path, edits:[{oldText,newText}]}`），`request_id` 来自 `toolCallId`。
 - 测试：`tests/test_pi_preflight_bridge.py` 44 项、`integrations/pi/test/preflight-bridge.test.ts` 12 项（真实 spawn Python bridge）；全量 pytest、doctor、public scan、受控写回归、docs hook 与 diff check 通过。
-- 事实源 `docs/101-pi-coding-agent-preflight-bridge.md` 与 handoff `tasks/handoff-2026-07-25.md`；稳定 tag 仍为已推送 v0.17.0，Stage 52 为已推送的 commit-level milestone。
+- 事实源 `docs/archive/101-pi-coding-agent-preflight-bridge.md` 与 handoff `tasks/handoff-2026-07-25.md`；稳定 tag 仍为已推送 v0.17.0，Stage 52 为已推送的 commit-level milestone。
 - 下一候选为 Stage 53 conditional design gate，不授予 implementation authority。
 
 ## 2026-07-25 Stage 53 - Pi Interactive Approval Roundtrip
@@ -2892,7 +2892,7 @@
 - `integrations/pi/extension.ts` 增加默认关闭的 `AGENT_RUNTIME_APPROVAL_MODE=interactive`；v1 只允许同 cwd 的固定 `git push origin main` 进入一次 UI 确认。
 - 确认后从当前 event input 重新归一化、二次 preflight，并严格匹配 request_id/request_hash/tool/target_hash；拒绝、超时、无 UI、print/json、输入或 bridge 漂移、blocked/invalid 一律阻断。
 - 批准不写盘、不缓存、不复用；Harness 不执行工具。批准后 deep freeze input，但后续 extension 可替换整个 input，因此明确为有限 host approval，不宣称通用强隔离 authority。
-- Node 行为测试从 12 项扩展至 18 项并通过；事实源为 `docs/102-pi-interactive-approval-roundtrip.md` 与 `tasks/handoff-2026-07-25.md`。
+- Node 行为测试从 12 项扩展至 18 项并通过；事实源为 `docs/archive/102-pi-interactive-approval-roundtrip.md` 与 `tasks/handoff-2026-07-25.md`。
 - 下一候选为 Stage 54 Pi Postflight Audit Design Gate，仅设计 final-arguments identity、脱敏结果投影、失败/取消映射与 ledger 边界，不授予实现 authority。
 
 ## 2026-07-25 Stage 54 - Pi Postflight Audit Projection
@@ -2900,7 +2900,7 @@
 - `integrations/pi/extension.ts` 新增默认关闭的 `AGENT_RUNTIME_POSTFLIGHT_MODE=summary`；启用后监听 Pi/OMP `tool_result`，用当前 `event.input` 重跑 Stage 52 preflight，并向 tool result content 追加 value-free 摘要块。
 - 摘要包含 tool、decision、request/target hash、hashed toolCallId、content block/text char counts 与原始 `isError`；不包含 path、command、tool output、details payload 或 credential-like values。
 - Stage 54 不写 Harness ledger、不访问网络、不改 `isError`、不 patch details，也不声明 Harness 执行了工具；它是 host-side projection，不是 durable audit writer。
-- Node 行为测试扩展至 22 项并通过；事实源为 `docs/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
+- Node 行为测试扩展至 22 项并通过；事实源为 `docs/archive/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
 - 下一候选为 Stage 56 Pi Native Install Smoke；需要独立安装/写入授权。
 
 ## 2026-07-25 Stage 55 - Pi-first Operator Handoff Gate
@@ -2909,7 +2909,7 @@
 - 路线固定为 Layer 0 Pi native baseline → Layer 1 preflight only → Layer 2 optional approval → Layer 3 optional postflight projection → Layer 4 durable audit future → Layer 5 OMP compatibility future。
 - OMP 不再作为主推进基础，只保留为同源 ExtensionAPI 的兼容验证/备选。
 - Stage 55 只完成 operator handoff design：未安装独立 Pi CLI、未写 `%USERPROFILE%\.pi`、未修改现有 Orca extensions、未启动真实 Pi 工作流。
-- 事实源为 `docs/104-pi-first-operator-handoff.md`；`docs context` 通过，Pi bridge Node 行为测试 22/22 通过。
+- 事实源为 `docs/archive/104-pi-first-operator-handoff.md`；`docs context` 通过，Pi bridge Node 行为测试 22/22 通过。
 - 下一候选为 Stage 56 Pi Native Install Smoke：需用户对 package 安装、`~/.pi` extension 写入和可回滚备份给出明确授权；仅启用 Layer 1 preflight，approval/postflight 保持关闭。
 
 ## 2026-07-25 Stage 56 - Pi Native Install Smoke
@@ -2920,7 +2920,7 @@
 - 已部署 `%USERPROFILE%\.pi\agent\extensions\pi-preflight-bridge\index.ts` 与 `preflight-bridge.ts`，用户级只设置 `AGENT_RUNTIME_ROOT=<project-root>`；approval/postflight 未设置。
 - Pi 官方 `DefaultResourceLoader` 从真实全局目录自动发现 extension，加载无错误且注册一个 `tool_call` handler；handler smoke 验证普通 read 放行、`.env` 阻断、`git push origin main` needs_approval 阻断。
 - 初次尝试发现 RPC `bash` 属于用户侧直接命令，绕过 LLM default-tool `tool_call` chain，不可作为扩展门禁证明；隔离仓库无 origin，因此未连接远端、未推送内容。有效验收已改为真实自动发现后的已加载 handler。
-- 事实源为 `docs/105-pi-native-install-smoke.md`；下一候选 Stage 57 Pi First Real Session Gate。
+- 事实源为 `docs/archive/105-pi-native-install-smoke.md`；下一候选 Stage 57 Pi First Real Session Gate。
 
 ## 2026-07-25 Stage 57 - Pi First Real Session Gate
 
@@ -2929,7 +2929,7 @@
 - 已新增可回滚 `%USERPROFILE%\.pi\agent\models.json` 自定义 provider `deepseek-compat`，通过 `$DEEPSEEK_API_KEY` 解析密钥，不写明文；写入前备份为 `%USERPROFILE%\.pi\agent\backups\stage57-before-models-json-20260725-175734`。
 - 兼容配置关键点：`api=openai-completions`、`baseUrl=https://api.deepseek.com/v1`、`model=deepseek-v4-flash`、`maxTokensField=max_tokens`、模型 `maxTokens=512`；32 token 会只产出 reasoning，无 text。
 - SDK 直连 `createAgentSession` 成功加载全局 extensions（含 `pi-preflight-bridge`），`extensionErrors=0`；模型发起一次 `read {path: stage57-proof.txt}`，出现 `tool_execution_start/end`，第二轮最终文本为 `STAGE57_OK:PI_LAYER1_REAL_SESSION_OK`。
-- 证据目录：`%USERPROFILE%\.pi\agent\backups\stage57-sdk-real-read\sdk-real-read-events.json`；事实源为 `docs/106-pi-first-real-session-gate.md`。
+- 证据目录：`%USERPROFILE%\.pi\agent\backups\stage57-sdk-real-read\sdk-real-read-events.json`；事实源为 `docs/archive/106-pi-first-real-session-gate.md`。
 - 限制：Pi CLI `--print` / `--mode json` 仍未稳定；下一候选为 Pi CLI Mode Stabilization Gate。
 
 ## 2026-07-25 Stage 58 - Pi Project-local Runtime Integration
@@ -2939,7 +2939,7 @@
 - 已设置用户级 `PI_CODING_AGENT_DIR=<project-root>\.runtime\pi-agent`，并在 `.gitignore` 忽略 `.runtime/`，避免 auth、session、backup 与模型运行配置进入 Git。
 - `pi --list-models deepseek-compat` 从新目录识别 `deepseek-v4-flash`；`DefaultResourceLoader` 自动发现新目录下 `pi-preflight-bridge`，extension 无加载错误。
 - handler smoke 再次验证普通 read 放行、`.env` 阻断、`git push origin main` needs_approval；未执行真实 push，approval/postflight 仍关闭。
-- 事实源为 `docs/107-pi-project-local-runtime-integration.md`；下一候选为 Pi CLI Mode Stabilization Gate。
+- 事实源为 `docs/archive/107-pi-project-local-runtime-integration.md`；下一候选为 Pi CLI Mode Stabilization Gate。
 
 ## 2026-07-25 Stage 59 - Pi CLI/TUI Mode Stabilization Gate
 
@@ -2948,7 +2948,7 @@
 - 最小修复：gitignored `.runtime/pi-agent/settings.json` 钉住 `defaultProvider=deepseek-compat` / `defaultModel=deepseek-v4-flash`；写入前备份为 `.runtime/pi-agent/backups/stage59-before-settings-20260725-192154/settings.json`。
 - 提交 `integrations/pi/smoke/cli-mode-smoke.sh`：固定 argv、`--no-session`、60s 有界 timeout、证据写入 gitignored `.runtime`、不回显凭据；首跑 5/5 PASS（print 文本、json provider/model 钉住验证、read pass roundtrip、`.env` block canary 不泄漏）。
 - 门禁对照证据：未设 `AGENT_RUNTIME_ROOT` 时 CLI 路径 read roundtrip 被 extension fail-closed 阻断；设置后 read pass，`.env` read 被阻断且 canary 值未出现在输出。
-- TUI 非 TTY fail-fast（rc=1 `stdin is not a tty`）；真实终端人工 TUI 验收留作 operator 步骤，入口契约见 `docs/108-pi-cli-mode-stabilization.md`。
+- TUI 非 TTY fail-fast（rc=1 `stdin is not a tty`）；真实终端人工 TUI 验收留作 operator 步骤，入口契约见 `docs/archive/108-pi-cli-mode-stabilization.md`。
 - docs/ 活跃文档 59 个（>50）；归档候选 12 份与引用影响已记录在 `tasks/handoff-2026-07-25.md`，按用户指示未执行移动。
 - 全量 pytest（无失败，1 个既有 skip）、doctor PASS、public scan OK 已通过；`.githooks/pre-commit` 与 `git diff --check` 尚未运行（用户中断，留待收口前补跑）；未 commit/push。
 
@@ -2966,7 +2966,7 @@
 - 新增 `agent_runtime/pi_runtime_discovery.py`：7 项确定性检查（env var、`.runtime` containment、agent dir、settings 钉住默认、models provider/model、apiKey 仅 `$ENV_VAR` 引用、extension 存在），fail closed；64 KiB 有界读取；绝不读取 auth/session/.env/凭据文件，值永不回显；不执行进程、不访问网络。
 - 接入：`orchestration adapter inspect pi-cli` 附加 `local_runtime` 块（其他 adapter 不变）；`orchestration preflight` 对 pi-cli 未就绪 `blocked`、就绪仍 `needs_approval`；control-panel snapshot 经既有 list 自动包含（adapter 9→10）。
 - 新增 `tests/test_pi_runtime_discovery.py` 19 项（含明文 apiKey 不回显、auth/session canary 不读取、既有路由不受影响）；全量 pytest 1390 passed / 0 failed；doctor PASS、public scan OK、diff check 干净。
-- 事实源 `docs/109-pi-adapter-discovery-capability-projection.md`；未 commit/push。
+- 事实源 `docs/archive/109-pi-adapter-discovery-capability-projection.md`；未 commit/push。
 
 
 ## 2026-07-25 Stage 61 - Pi Controlled Dry-run Adapter Contract（design-only）

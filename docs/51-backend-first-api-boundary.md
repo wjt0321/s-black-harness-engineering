@@ -370,9 +370,9 @@ Stage 12 完成后，本文曾作为 Stage 13 事实源。该阶段的 **Boundar
 - 不读取任意旧 plan 文件、不持久化 plan、不宣称 hash 能提供字段级差异；
 - manifest 自描述 plan/check 两个 preview/read-only capability，argparse 契约测试冻结 command 与关键 flag。
 
-CLI 自动化消费者五拍至此收口。详细设计见 `docs/75-cli-automation-contract-discovery.md`，验收事实见 `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`。
+CLI 自动化消费者五拍至此收口。详细设计见 `docs/archive/75-cli-automation-contract-discovery.md`，验收事实见 `docs/archive/release-notes/78-release-notes-cli-automation-consumer.md`。
 
 
 ## Stage 16 Read-only Control Panel 衔接（2026-07-14）
 
-Stage 16 第一拍只消费本文件已冻结的 read-model 边界：`control-panel snapshot/render` 是本地静态 preview，不新增通用 API、持久资源或写操作。Run、Approval、Artifact 仍保持 envelope-scoped，Report 仍保持 request-scoped；live service、auth、DB、实时订阅和 UI controlled write 继续 unavailable。设计事实源见 `docs/76-read-only-control-panel-mvp.md`。
+Stage 16 第一拍只消费本文件已冻结的 read-model 边界：`control-panel snapshot/render` 是本地静态 preview，不新增通用 API、持久资源或写操作。Run、Approval、Artifact 仍保持 envelope-scoped，Report 仍保持 request-scoped；live service、auth、DB、实时订阅和 UI controlled write 继续 unavailable。设计事实源见 `docs/archive/76-read-only-control-panel-mvp.md`。

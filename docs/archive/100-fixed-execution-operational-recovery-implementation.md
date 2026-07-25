@@ -10,7 +10,7 @@
 
 ## 1. 阶段结论
 
-Stage 51 按 `docs/99-fixed-execution-operational-recovery-design-gate.md` 实现 fixed execution operational recovery，没有扩大 Stage 49 的真实执行权限。唯一真实 operation 仍是 Windows 上显式 `--commit` 的 fixed `git status --short --branch`。
+Stage 51 按 `docs/archive/99-fixed-execution-operational-recovery-design-gate.md` 实现 fixed execution operational recovery，没有扩大 Stage 49 的真实执行权限。唯一真实 operation 仍是 Windows 上显式 `--commit` 的 fixed `git status --short --branch`。
 
 本阶段完成：
 

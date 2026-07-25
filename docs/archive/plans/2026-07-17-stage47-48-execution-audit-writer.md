@@ -13,8 +13,8 @@
 ### Task 1: Freeze Stage 47 contract
 
 **Files:**
-- Create: `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
-- Create: `docs/plans/2026-07-17-stage47-48-execution-audit-writer.md`
+- Create: `docs/archive/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+- Create: `docs/archive/plans/2026-07-17-stage47-48-execution-audit-writer.md`
 
 **Step 1: Record design alternatives**
 
@@ -128,7 +128,7 @@ Run the same command. Expected: PASS.
 - Modify: `docs/00-index.md`
 - Modify: `docs/02-roadmap.md`
 - Modify: `docs/64-versioning-governance.md`
-- Modify: `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+- Modify: `docs/archive/97-execution-lifecycle-audit-writer-design-and-implementation.md`
 - Create: `docs/archive/release-notes/107-release-notes-stage47-stage48-execution-audit-writer.md`
 - Create: `tasks/handoff-2026-07-17.md`
 - Modify: `tasks/progress.md`

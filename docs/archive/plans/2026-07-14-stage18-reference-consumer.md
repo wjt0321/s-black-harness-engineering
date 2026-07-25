@@ -141,7 +141,7 @@ git commit -m "Add bounded stdin handoff consumer CLI"
 - Modify: `docs/000-stage-digest.md`
 - Modify: `docs/02-roadmap.md`
 - Modify: `docs/10-cli-poc-usage.md`
-- Modify: `docs/79-read-only-host-consumer-validation-boundary.md`
+- Modify: `docs/archive/79-read-only-host-consumer-validation-boundary.md`
 - Modify: `tasks/handoff-2026-07-14.md`
 - Create: `docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`
 

@@ -69,4 +69,4 @@ post-Stage 14「CLI 自动化消费者」完成收口。本轮把 Stage 13/14 �
 - 增量提交包括：`a9be252`、`b11d1b2`、`330492a`、`0c4d2ba`，以及本次 drift validation / 阶段收口提交。
 - CLI 自动化消费者阶段至此收口；当前无进行中的产品阶段。
 - 不自动启动 Stage 16 UI / Control Panel，也不自动进入 workflow execution、service 或持久化。
-- 后续只有在出现明确的新消费者、集成入口和授权边界后，才从本 release notes、`docs/75-cli-automation-contract-discovery.md` 与最新 handoff 恢复。
+- 后续只有在出现明确的新消费者、集成入口和授权边界后，才从本 release notes、`docs/archive/75-cli-automation-contract-discovery.md` 与最新 handoff 恢复。

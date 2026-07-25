@@ -1,0 +1,261 @@
+# AGENTS.md
+
+本文件是 AI 编码 Agent 的**最小工作说明**。不要把它当完整项目文档；需要细节时按文末的权威入口下钻。
+
+项目文档以中文为主，新增文档优先使用中文。
+
+## 1. 新会话快速恢复
+
+进入仓库后依次执行：
+
+```bash
+python -m agent_runtime.cli docs context --json
+python -m agent_runtime.cli doctor
+```
+
+然后按顺序阅读：
+
+1. `docs/000-stage-digest.md`：当前阶段、基线、下一步。
+2. `docs/103-pi-postflight-audit-projection.md`：Stage 54 默认关闭的 `tool_result` 脱敏摘要投影、final input re-preflight 与非持久 audit 边界。
+3. `docs/102-pi-interactive-approval-roundtrip.md`：Stage 53 默认关闭的一次性交互批准、二次 preflight identity binding 与有限 host approval 事实源。
+4. `docs/101-pi-coding-agent-preflight-bridge.md`：Stage 52 Pi host preflight bridge v1 事实源（host-side preflight only，非 execution authority）。
+5. `docs/100-fixed-execution-operational-recovery-implementation.md`：Stage 51 lease、trust/open-attempt recovery、Job accounting 与 audit v1/v2 implementation fact source。
+6. `docs/99-fixed-execution-operational-recovery-design-gate.md`：Stage 50 operational recovery design contract。
+7. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`：Stage 49 Windows fixed Git status executor 实现、真实 smoke 与停止线事实源。
+8. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`：Stage 47–48 专用 execution audit writer 设计、实现与验收事实源。
+9. `docs/archive/96-fixed-git-status-executor-design-gate.md`：Stage 46 fixed executor 历史 design contract。
+10. `docs/archive/95-single-user-real-execution-readiness-gate-and-milestone.md`：Stage 43–45 readiness 历史事实源。
+11. `docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`：Stage 42 design-only 历史事实源。
+12. `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`：Stage 39–41 与 v0.17.0 事实源。
+13. `docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`：Stage 36–38 与 v0.16.0 历史事实源。
+14. `docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`：Stage 33–35 与 v0.15.0 历史事实源。
+15. `docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`：Stage 30–32 与 v0.14.0 历史事实源。
+16. `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`：Stage 29 stdin consumer。
+17. `tasks/handoff-2026-07-25.md`：Stage 54 收口事实与 Stage 55 条件边界。
+18. `docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`：Stage 28 consumer gate。
+19. `docs/86-filtered-envelope-snapshot-read-design-gate.md`：Stage 26 filter contract。
+20. `docs/84-envelope-scoped-snapshot-read-design-gate.md`：Stage 23/24 reader 边界。
+21. `docs/83-codex-desktop-snapshot-json-reader-implementation.md`：Stage 22 reader。
+22. `docs/79-read-only-host-consumer-validation-boundary.md`：Stage 18 consumer。
+23. `docs/78-control-panel-host-integration-boundary.md`：Stage 17 handoff。
+24. `docs/76-read-only-control-panel-mvp.md`：Stage 16 Control Panel。
+25. `docs/75-cli-automation-contract-discovery.md`：CLI 自动化。
+26. `docs/52-minimal-orchestration-loop.md`：Stage 14。
+27. `docs/51-backend-first-api-boundary.md`：Stage 13。
+28. `docs/02-roadmap.md`：完整路线图。
+29. `docs/archive/release-notes/110-release-notes-stage51-fixed-execution-operational-recovery.md`：Stage 51 验收。
+30. `docs/archive/release-notes/109-release-notes-stage50-fixed-execution-operational-recovery-design-gate.md`：Stage 50 验收。
+31. `docs/archive/release-notes/108-release-notes-stage49-fixed-git-status-executor.md`：Stage 49 验收。
+32. `docs/archive/release-notes/107-release-notes-stage47-stage48-execution-audit-writer.md`：Stage 47–48 验收。
+33. `docs/archive/release-notes/106-release-notes-stage46-fixed-git-status-executor-design-gate.md`：Stage 46 验收。
+34. `docs/archive/release-notes/105-release-notes-stage45-single-user-execution-readiness-milestone-closure.md`：Stage 45 收口。
+35. `docs/archive/release-notes/104-release-notes-stage44-single-user-execution-readiness-gate.md`：Stage 44 验收。
+36. `docs/archive/release-notes/102-release-notes-v0.17.0-filtered-snapshot-display-host-integration.md`：v0.17.0 验收。
+37. `docs/10-cli-poc-usage.md`：具体 CLI 参数。
+
+不要先遍历整个 `docs/` 或 `tasks/progress.md`。
+
+## 2. 项目定位与当前阶段
+
+`s-black harness engineering`（Python 包名 `agent_runtime`）是一个轻量、可审计、可迁移的 Agent Runtime / Harness Orchestrator，逐步抽象规则门禁、任务账本、adapter envelope、能力路由和控制面 read model。
+
+当前状态：**Stage 54 — Pi Postflight Audit Projection v1 已收口**。Stage 52 已实现一次性 stdin/stdout JSON 预检桥（`pi-bridge preflight`）、独立 `pi-host` adapter registry 条目与 `integrations/pi/` TypeScript Extension；Stage 53 增加默认关闭的、仅支持同 cwd `git push origin main` 的一次性交互批准；Stage 54 增加默认关闭的 `tool_result` 脱敏摘要投影，重跑 preflight 绑定当前 input 的 request/target hash，并追加 value-free summary block。桥和 Harness 都不执行工具、不写持久 ledger、不访问网络；Stage 54 是 host-side projection 而非 durable audit writer 或 execution authority。唯一 Harness 真实 operation 仍是 Stage 49 Windows `git status --short --branch`，必须显式 `--commit`。下一候选为 **Stage 55 — Pi Extension Install / Operator Handoff Gate（条件启动，仅 design authority）**。
+
+- 冻结基线：`v0.17.0-filtered-snapshot-display-host-integration`（已推送至 `origin`）；上一基线为 `v0.16.0-filtered-snapshot-display-consumer`（已推送至 `origin`）。
+- 当前已具备：source-backed adapter registry、约束路由与 decision trace、routing/read-loop snapshot、受控 run planning、retry/fallback lineage 写入与读取、recovery lineage aggregation、CLI automation contract/profile/workflow，以及 `orchestration control-panel snapshot/render/handoff` 的确定性 representation、版本化 stdio descriptor 与独立 reference consumer validation。
+- Stage 12 已完成：routing/read-loop snapshot 与 recovery lineage read model 已冻结并通过验收。
+- Stage 13 已完成：真实 CLI/read models 的 stable/preview/unavailable 边界已对账，并由契约测试冻结命令 surface 与关键 flag。
+- 收口事实源：`docs/52-minimal-orchestration-loop.md`。Stage 14 已完成最小、可回放、可审计的本地编排闭环。
+- Stage 18 事实源：`docs/79-read-only-host-consumer-validation-boundary.md` 与 `docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`。
+- Stage 19 事实源：`docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`；design gate 已冻结。
+- Stage 20 历史事实源：`docs/archive/81-codex-desktop-read-only-adapter-implementation.md`；adapter 已收口。
+- Stage 21 事实源：`docs/archive/82-read-only-representation-read-design-gate.md`；validation-only 已冻结，不得把 `ready` 解释为 representation read 或 execution 权限。
+- Stage 22 事实源：`docs/83-codex-desktop-snapshot-json-reader-implementation.md`；无 envelope v1 保持兼容。
+- Stage 23/24 事实源：`docs/84-envelope-scoped-snapshot-read-design-gate.md`；只接受 allowlist 内 project-relative envelope，不执行 descriptor argv，不接受 HTML/URL/任意路径。
+- Stage 25 事实源：`docs/archive/85-envelope-scoped-consumer-filter-design-gate.md`；冻结无 filter 单-envelope v2 与一次性内存展示边界，不开放 query/persistence/export。
+- Stage 26 事实源：`docs/86-filtered-envelope-snapshot-read-design-gate.md`；v3 仅允许 task/request exact filter，filter 在 base snapshot 完整验证后作用于安全 summaries。
+- Stage 27 事实源：`docs/87-filtered-envelope-snapshot-json-reader-implementation.md`；filtered v3 已按 TDD 实现并收口，无 filter v2 与无 envelope v1 保持兼容。
+- Stage 28 事实源：`docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md`；只冻结 future consumer contract 与前置 reader 契约测试，不实现 consumer。
+- Stage 29 事实源：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`；专用 consumer 已按 TDD 实现并收口，不修改 Stage 18 consumer 或 Stage 27 reader。
+- Stage 30–32 事实源：`docs/archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md`；one-shot host 与已推送 v0.14.0 里程碑已冻结。
+- Stage 33–35 事实源：`docs/archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md`；Markdown display 与已推送 v0.15.0 已冻结。
+- Stage 36–38 事实源：`docs/archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md`；独立 display consumer 与本地 v0.16.0 已冻结。
+- Stage 39–41 事实源：`docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`；validation-before-release display host 与本地 v0.17.0 已冻结。
+- Stage 42 历史事实源：`docs/archive/94-filtered-snapshot-validated-markdown-presentation-handoff-gate.md`；design-only gate 已冻结，未授权 presentation implementation。
+- Stage 43–45 历史事实源：`docs/archive/95-single-user-real-execution-readiness-gate-and-milestone.md`；Stage 44 readiness v1 永久保持历史 blocked snapshot。
+- Stage 46 历史事实源：`docs/archive/96-fixed-git-status-executor-design-gate.md`；fixed executor contract 已冻结。
+- Stage 47–48 事实源：`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`；专用 writer 与 recovery validator 已实现。
+- Stage 49 事实源：`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`；Windows fixed Git status limited execution 已实现，POSIX、通用 shell、network adapter 和第二个 operation 仍 unavailable。
+- Stage 50/51 事实源：`docs/99-fixed-execution-operational-recovery-design-gate.md` 与 `docs/100-fixed-execution-operational-recovery-implementation.md`；Stage 51 已按 contract 实现，production authority 仍只覆盖 Windows fixed Git status。
+- Stage 52 事实源：`docs/101-pi-coding-agent-preflight-bridge.md`；Pi host preflight bridge v1 已收口，仅 host-side preflight enforcement，不执行工具、不写 ledger、不访问网络。
+- Stage 53 事实源：`docs/102-pi-interactive-approval-roundtrip.md`；默认关闭的有限 host interactive approval 已收口，只支持精确 `git push origin main` 的二次-preflight 一次确认；不持久化批准、不接管执行。
+- Stage 54 事实源：`docs/103-pi-postflight-audit-projection.md`；默认关闭的 `tool_result` 脱敏摘要投影已收口，只追加 value-free summary，不写持久 audit、不改结果语义、不声明 Harness 执行。
+
+项目**不替代 QwenPaw**；QwenPaw 只是未来可能接入的宿主/adapter 之一。
+
+## 3. 不可突破的边界
+
+除非用户明确授权且已有设计文档，否则项目代码不得：
+
+- 执行真实外部 adapter 或外部命令；唯一现有例外是 Stage 49 fixed Windows Git status executor。
+- 访问网络、发送消息或启动长期后台服务。
+- 读取 `.env`、credential、token、keyring、`.key`、`.pem`、`.p12`、`.pfx` 等敏感文件。
+- 静默扩大写入范围，覆盖用户已有文件，或重写真实 ledger。
+- 引入 UI、service、DB、模型代理或计费系统。
+
+Secret 扫描命中后只输出规则 id、位置和提示，不能回显完整匹配值。
+
+Snapshot 是 ephemeral read model：不持久化、不伪造持久 Run/Event/Report；`--snapshot` 和 `--routing-snapshot-id` 只用于 dry-run preview。
+
+### 受控写入
+
+现有写操作必须显式使用 `--commit`，并保持“写前校验、写后校验、失败回滚”：
+
+- envelope draft：只创建新文件，禁止覆盖。
+- event/task ledger：只允许尾部追加，失败按原始 byte size 回滚。
+- task submit：task + `created` event 为 A+B 原子写入。
+- approval resolve：只记录 decision，不执行原请求。
+- run commit：envelope draft + lifecycle events 为 A+B；仍不执行真实 adapter。
+- execution audit writer：仅内部 API 可写 reserved lifecycle event；started 与 terminal 使用同一 file descriptor、dedicated lock 与 writer-only append token 各自单行追加；失败仅在 path/file identity 与 append provenance 证明本次写入时回滚，并发漂移或 file replacement 不得 committed/truncate，terminal 失败必须保留 started 并标记 audit incomplete。
+- execution trust binding：只写 machine-local 固定位置，默认 preview；首次 `--commit` 使用 atomic create，已有 binding 默认拒绝覆盖，只有显式 `--replace --commit` 才可 rotation。
+- fixed Git status：必须显式 `--commit`，先写 started audit，后写 terminal audit；不接受 command/argv/cwd/env/path override。
+
+实现集中在 `runtime_*`、`orchestration_task_submit.py`、`orchestration_approval_resolve.py`、`orchestration_run_commit.py`、`execution_audit_writer.py`、`execution_trust.py`、`orchestration_git_status_execution.py`。修改这些模块时必须运行受控写回归测试。
+
+## 4. 技术栈与常用命令
+
+- Python 3.11+，纯 Python，无编译步骤。
+- 运行依赖：`jsonschema>=4.0`。
+- 开发依赖：`pytest>=8.0`。
+- 构建配置：`pyproject.toml`（setuptools）。
+
+安装：
+
+```bash
+pip install -e .[dev]
+```
+
+CLI 三种入口等价：
+
+```bash
+python -m agent_runtime.cli <command>
+python -m agent_runtime <command>
+agent-runtime <command>
+```
+
+完整参数和示例只维护在 `docs/10-cli-poc-usage.md`，不要复制到本文件。
+
+## 5. 提交前验证
+
+任何代码或 schema 变更至少运行：
+
+```bash
+python -m pytest tests -q
+python -m agent_runtime.cli doctor
+python tools/public_scan.py
+```
+
+涉及受控写入时额外运行：
+
+```bash
+python -m pytest tests/test_controlled_write_regression.py -q
+```
+
+涉及文档时运行：
+
+```bash
+bash .githooks/pre-commit
+```
+
+Windows 可使用 Git for Windows 的 `bash.exe`。提交前还应运行 `git diff --check`。
+
+不要在测试未通过时声称完成，也不要用局部测试替代全量回归。
+
+## 6. 仓库地图
+
+| 路径 | 用途 |
+|:---|:---|
+| `agent_runtime/` | Python 包、CLI 和核心逻辑 |
+| `tests/` | pytest 测试 |
+| `docs/` | 活跃架构、设计和使用文档 |
+| `docs/archive/` | release notes、dry-run、smoke/regression 历史记录 |
+| `policies/` | policy schema 与样例 |
+| `agents/` | agent registry schema 与样例 |
+| `adapters/` | adapter registry、execution envelope schema 与样例 |
+| `automation/` | Automation Profile schema 与 source-backed 样例 registry |
+| `tasks/` | task/event schema、JSONL ledger、progress 与 handoff |
+| `drafts/` | 受控生成的 runtime draft |
+| `integrations/` | 宿主集成示例；`integrations/pi/` 为 Stage 52 preflight bridge、Stage 53 有限交互审批与 Stage 54 postflight projection Extension 示例 |
+| `tools/` | 独立只读工具，如 `public_scan.py`、Stage 18 reference consumer 与 Stage 20 host adapter |
+| `decisions/` | 架构决策记录 |
+
+关键入口：
+
+- `agent_runtime/cli.py`：argparse 与命令调度。
+- `agent_runtime/loader.py`：安全读取、路径归一化、数据加载。
+- `agent_runtime/result.py`：`Finding` / `CheckResult` 与退出码。
+- `agent_runtime/orchestration_run.py`：run list/inspect read model。
+- `agent_runtime/orchestration_control_panel.py`：Stage 16/17 确定性 snapshot、自包含静态 HTML renderer 与 stdio host handoff descriptor。
+- `agent_runtime/orchestration_recovery.py`：recovery lineage aggregation。
+- `agent_runtime/orchestration_workflow.py`：Automation Profile 到未执行 CLI 候选步骤的确定性投影。
+- `agent_runtime/orchestration_workflow_check.py`：reviewed plan id 与当前 projection 的只读 drift validation。
+- `agent_runtime/orchestration_run_dry_run.py` / `orchestration_run_commit.py`：run preview 与受控写入。
+- `agent_runtime/execution_audit_writer.py`：Stage 48 reserved execution lifecycle 专用 writer、rollback、audit consistency 与 recovery inspection。
+- `agent_runtime/execution_trust.py`：Stage 49 machine-local Git executable trust binding、PATH sanitization 与 Windows Authenticode/file identity。
+- `agent_runtime/git_repository_guard.py`：Stage 49 lstat-first repository/config/submodule containment 与 no-write guard evidence。
+- `agent_runtime/fixed_process_runner.py`：Stage 49 Windows suspended process + Job Object bounded runner。
+- `agent_runtime/git_status_porcelain.py`：Stage 49 finite porcelain-v1 parser 与 path-free summary。
+- `agent_runtime/orchestration_git_status_execution.py`：Stage 49 plan/audit/runner/post-guard release gate。
+- `agent_runtime/pi_preflight_bridge.py`：Stage 52 Pi host preflight bridge（stdin/stdout JSON、门禁判断 only、不执行工具）。
+- `tasks/task.schema.json` / `tasks/event.schema.json`：ledger schema。
+- `tasks/execution-audit-event.schema.json`：reserved execution lifecycle 的严格 provenance/evidence schema。
+- `adapters/adapters.sample.json`：adapter/capability/risk 的 source of truth。
+
+其余模块按功能命名，先搜索现有实现，不要创建重复管线。
+
+## 7. 代码约定
+
+- 使用 `from __future__ import annotations`。
+- 导入顺序：future → 标准库 → 第三方 → 本项目相对导入。
+- 函数签名使用类型提示，优先 `Path` 和 `|` 联合类型。
+- 路径使用 `pathlib.Path`；跨平台比较使用 `loader.normalize_path()`。
+- 核心结果通过 `CheckResult` / `Finding` 或明确 dataclass 表达，CLI 顶层统一输出。
+- 校验失败优先返回结构化状态，不用异常表达正常门禁结果。
+- 写操作失败必须先回滚本次写入，再返回错误。
+- read model 必须确定性、脱敏、无副作用；不要依赖随机数或当前时间生成内容寻址结果。
+- 默认输出兼容是硬约束；新字段或新视图优先使用显式 flag。
+
+## 8. 测试约定
+
+- 使用 pytest；项目根目录常量通常为：
+
+  ```python
+  ROOT = Path(__file__).resolve().parents[1]
+  ```
+
+- 测试 token/key 在运行时动态拼接，源码中不要出现看似真实的完整 secret。
+- 断言不仅检查状态码，还要检查 rule id、结构化字段和敏感值**未出现**。
+- 受控写测试使用临时目录或 ledger 副本，不直接修改仓库样例 ledger。
+- 新行为遵循 TDD：先写失败测试并确认失败原因正确，再写最小实现。
+- recovery lineage 相关改动至少覆盖 normal、retry、fallback、branch、missing/cross-task parent、cycle、duplicate conflict、determinism、no-write，以及 inspect/report 跨入口契约一致性。
+
+CI 在 Python 3.11/3.12 上运行全量测试、doctor、ledger smoke checks、受控写回归和 public scan。
+
+## 9. 文档维护
+
+文档规则见 `docs/MAINTENANCE.md`。核心要求：
+
+- `docs/000-stage-digest.md` 是新会话第一入口，阶段切换或重大进展时更新。
+- 新活跃文档使用当前最大编号 +1，并加入 `docs/00-index.md`。
+- release notes、dry-run、smoke/regression 完成后进入 `docs/archive/`。
+- 能写入现有权威设计文档时，不新增重复文档。
+- `tasks/progress.md` 保存历史流水；最新下一步以 stage digest 和最新 handoff 为准。
+
+## 10. Agent 工作原则
+
+1. 先恢复上下文，再改代码。
+2. 先复用现有模块和 schema，再考虑新增抽象。
+3. 保持小步、可审查、可回滚。
+4. 不越过安全边界来“让测试通过”。
+5. 完成前提供全量验证证据。
+6. 未经明确要求，不 push、不创建 tag、不执行真实外部操作。

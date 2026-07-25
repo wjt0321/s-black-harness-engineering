@@ -1,0 +1,394 @@
+# 000 — Stage Digest
+
+> **新会话先读这份，不要先翻整仓文档。**
+
+## 文档池规模
+
+- docs/ 活跃文档：50 个（2026-07-25 已按批准归档 12 份已冻结设计文档：41/45/54/56/58/60/62/63/66/70/73/74，全部引用已修复；新增 `110-pi-controlled-dry-run-adapter-contract.md` 与 `111-pi-controlled-dry-run-print-implementation.md`）
+- 归档文档：100 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：196 个
+- **文档维护规则：`docs/MAINTENANCE.md`**
+
+## 当前基线
+
+- 稳定基线：`v0.17.0-filtered-snapshot-display-host-integration`（annotated tag 已推送至 `origin`）
+- 上一冻结基线（v0.16）：`v0.16.0-filtered-snapshot-display-consumer`（annotated tag 已推送至 `origin`）
+- 上一冻结基线（v0.15）：`v0.15.0-filtered-snapshot-display-integration` / `b1fa0b3`（annotated tag 与 `main` 已推送至 `origin`）
+- 上一冻结基线（v0.14）：`v0.14.0-filtered-snapshot-host-integration` / `dfae346`（annotated tag 与 `main` 已推送至 `origin`）
+- 上一冻结基线：`v0.13.0-read-only-control-plane` / `f401b98`（已 push）
+- 再上一冻结基线：`v0.12.1-orchestration-read-loop-snapshot` / `0419a04`
+- Stage 13 最终收口提交：`9625ba2`
+- Stage 14 Evidence projection 提交：`4a64ace`
+- Stage 14 最终收口提交：`03b64dd`（已推送至 `origin/main`）
+- 上一 foundation 基线：`v0.12.0-orchestration-foundation`（commit `38b4b69`）
+- Stage 17–31 filtered snapshot host 能力包已冻结并推送 annotated milestone tag：`v0.14.0-filtered-snapshot-host-integration`
+
+## 当前阶段
+
+- **Stage 62 — Pi Controlled Dry-run Print Implementation（已实现并完成真实 DeepSeek smoke；lease/audit/Windows Job containment 全部闭合）**
+- **Stage 61 — Pi Controlled Dry-run Adapter Contract（已完成并收口；design-only，已由 Stage 62 落地）**
+- **Stage 60 — Pi Adapter Discovery & Capability Projection（已完成并收口；read-only，无执行权限）**
+- Stage 59 — Pi CLI/TUI Mode Stabilization Gate（已完成并收口；pinned default + entry contract + repeatable smoke）
+- Stage 58 — Pi Project-local Runtime Integration（已完成并收口；project-local ignored runtime）
+- Stage 57 — Pi First Real Session Gate（已完成并收口；SDK-host real session proof）
+- Stage 56 — Pi Native Install Smoke（已完成并收口；Layer 1 preflight only）
+- Stage 55 — Pi-first Operator Handoff Gate（已完成并收口；design gate）
+- Stage 54 — Pi Postflight Audit Projection v1（已完成并收口；host-side projection only）
+- Stage 53 — Pi Interactive Approval Roundtrip v1（已完成并收口；limited host approval only）
+- Stage 52 — Pi Coding Agent Preflight Bridge v1（已完成并收口；host-side preflight only）
+- Stage 51 — Fixed Execution Operational Recovery Implementation（已完成并收口）
+- Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（Windows limited enablement 已完成并收口）
+- Stage 47–48 — Execution Lifecycle Audit Writer（design + TDD implementation 已完成并收口）
+- Stage 46 — Fixed Git Status Executor Design Gate（已收口；design-only）
+- Stage 45 — Single-user Real Execution Readiness Milestone Closure（已收口；提交 `49a517b`）
+- Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
+- Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
+- 下一阶段候选：真实终端人工 TUI 会话验收仍为 operator 步骤；read 工具 roundtrip、npm identity binding、canonical approval binding 与 Layer 2/3 启用均需独立设计和授权
+- Stage 59 已诊断 Pi CLI 0 输出超时（当前不再现，主因为内置 provider API 侧不稳定 + 默认模型解析漂移），已在 gitignored `.runtime/pi-agent/settings.json` 钉住 `deepseek-compat/deepseek-v4-flash` 默认模型，并提交可重复 smoke `integrations/pi/smoke/cli-mode-smoke.sh`（首跑 5/5 PASS）；TUI 非 TTY fail-fast，入口契约见 `docs/108`。
+- Stage 57 已通过 SDK 直连 Pi agent 完成真实隔离 read 会话：模型调用 `read stage57-proof.txt`，preflight extension 已加载，工具执行完成，最终文本为 `STAGE57_OK:PI_LAYER1_REAL_SESSION_OK`；Pi CLI print/json mode 仍需另行稳定。
+- Stage 56 已安装独立 Pi `0.82.0`，持久部署全局 `pi-preflight-bridge`，只设置 `AGENT_RUNTIME_ROOT`；approval/postflight 仍关闭。
+- Stage 55 已将路线切为 Pi-first layered：独立 Pi CLI 与最小 extension 优先，OMP 只保留为兼容验证/备选。
+- Stage 54 已实现默认关闭的 postflight projection：`AGENT_RUNTIME_POSTFLIGHT_MODE=summary` 时，`tool_result` 会重跑 preflight 并追加 value-free 摘要块；不写 ledger、不改 `isError`、不回显 path/command/output/details，不声明 Harness 执行了工具。
+- Stage 53 已实现默认关闭的一次性交互批准：仅固定 `git push origin main`、同 cwd、交互 UI、显式 `AGENT_RUNTIME_APPROVAL_MODE=interactive` 才可确认；确认后重跑 preflight 并严格匹配 request/target identity，批准不持久化、不复用、不写 ledger，Harness 不执行工具。
+- 本机未安装独立 Pi CLI；使用 OMP 17.0.8 内含的同源 `@earendil-works/pi-coding-agent` API 真实加载 Stage 52 extension，验证普通 read 放行、`.env` read 阻断、`git push` needs_approval 阻断。未执行真实 push，未修改 Pi/OMP 持久配置。
+- Stage 52 已实现 Pi host preflight bridge v1：一次性 stdin/stdout JSON 预检（`pass`/`needs_approval`/`blocked`/`invalid`）、独立 `pi-host` registry 条目与 `integrations/pi/` 零依赖 Extension 示例；bridge 不执行任何工具、不写 ledger、不访问网络，不是 execution authority。
+- Stage 51 已实现 shared machine-local lease、trust inspect/identity-bound rotation、bounded locked open-attempt recovery、fixed outcome-unknown close、Windows Job accounting 与 audit v2；没有扩大真实执行权限。
+- Stage 49 只在 Windows 开放唯一 fixed operation `git status --short --branch`；必须显式 `--commit`，并依赖 machine-local reviewed trust binding。
+- Stage 51 没有运行 real smoke，只使用 fake backend、临时 ledger 与自动化测试。POSIX、通用 shell、任意 argv/cwd/env/path override、network adapter、linked worktree、submodule、alternate object store、第二个 operation 和 OS-enforced filesystem write proof 仍 unavailable。
+- Stage 13 已完成：资源/操作模型与真实 CLI/read models 的 stable、stable（受限）、preview、unavailable 矩阵已冻结。
+- Stage 14 最小编排闭环与 post-Stage 14 CLI 自动化消费者均已收口。
+- 2026-07-14 Stage 16 第一版已落地：确定性 `control-panel snapshot` 与自包含静态 HTML `render`，复用既有 read models，不启动 service、不访问网络、不写 ledger、不执行 adapter。
+- Stage 16 收口提交：`b46c013`（`Complete Stage 16 read-only control panel`）；已按用户授权推送到 `origin/main`。
+- 2026-07-14 Stage 17 第一拍已落地：`control-panel handoff` 输出版本化 stdio descriptor，复用 snapshot identity 并声明 JSON/HTML representation、renderer identity 与只读安全边界。
+- project-local 绝对 envelope 路径会归一化为 root-relative 表示；descriptor 不内嵌 HTML、不执行 argv、不启动 service、不访问网络、不写文件或 ledger。
+- Stage 17 当时以 release notes 收口且未追补 tag；其后已由 `v0.14.0-filtered-snapshot-host-integration` 汇总冻结。
+- Stage 18 第一拍已按 TDD 完成：标准库-only、stdin-only reference consumer 独立校验 handoff schema、identity、representation metadata、argv shape 与 boundary，绝不执行 argv。
+- 输入门禁覆盖 1 MiB 上限、空输入、非 UTF-8、非法 JSON、duplicate key；输出为确定性的 `control-plane/control-panel-host-consumer-validation/v1`。
+- Stage 18 事实源：`docs/79-read-only-host-consumer-validation-boundary.md` 与 `docs/archive/release-notes/82-release-notes-stage18-read-only-host-consumer-validation.md`。
+- Stage 19 已冻结 Codex Desktop 本地任务进程边界的只读 adapter design gate：一次性 bootstrap → reference consumer validation → 宿主状态映射；v1 不读取 representation、不执行 descriptor argv、不写文件。
+- Stage 19 事实源：`docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`。
+- Stage 20 已实现 `tools/codex_desktop_read_only_adapter.py`：固定 producer/consumer argv、一次性生命周期、30 秒默认/60 秒上限、1 MiB stdout 上限、最小环境白名单、确定性 adapter result 与状态/退出码映射。
+- Stage 20 历史事实源：`docs/archive/81-codex-desktop-read-only-adapter-implementation.md` 与 `docs/archive/release-notes/83-release-notes-stage20-codex-desktop-read-only-adapter.md`。
+- Stage 21 已审计 representation 消费边界并冻结 validation-only：当前不执行 descriptor argv、不读取 HTML/JSON、不新增 consume 命令、reader schema 或 service。
+- Stage 21 事实源：`docs/archive/82-read-only-representation-read-design-gate.md` 与 `docs/archive/release-notes/84-release-notes-stage21-read-only-representation-read-design-gate.md`。
+- Stage 22 已按 TDD 实现 `tools/codex_desktop_snapshot_json_reader.py`：用户显式选择 `snapshot-json`，固定 handoff → consumer → snapshot 三段 argv，独立校验 schema/source/guarantees/identity/canonical hash 后返回有界 JSON representation。
+- Stage 22 v1 不执行 descriptor argv、不读取 HTML、不接受 envelope/URL/任意路径、不写文件、不访问网络、不启动 service、不执行 candidate command 或真实 adapter。
+- Stage 22 事实源：`docs/83-codex-desktop-snapshot-json-reader-implementation.md` 与 `docs/archive/release-notes/85-release-notes-stage22-codex-desktop-snapshot-json-reader.md`。
+- Stage 22 post-close 文档沉淀已完成：旧 `v0.12.0` freeze checklist / execution plan（68/69）完整移入 `docs/archive/`，活跃根目录文档从 51 降至 49，所有外部引用已更新，内容未删除。
+- envelope 未提供时，run/approval/artifact 区段诚实显示 unavailable；report 保持 request-scoped boundary，不伪造持久 collection。
+- Stage 23 design gate 已通过，Stage 24 已在同一 reader 上新增显式 `--envelope` scoped v2；无 envelope 的 Stage 22 v1 保持兼容。
+- scoped input 只接受 `adapters/*.json` 与 `drafts/runtime/**/*.envelope.json`，并校验 path、1 MiB、UTF-8、duplicate key、schema/consistency、secret scan、scope/content identity 与 one-shot content drift。
+- Stage 23/24 事实源：`docs/84-envelope-scoped-snapshot-read-design-gate.md` 与 `docs/archive/release-notes/86-release-notes-stage24-envelope-scoped-snapshot-json-reader.md`。
+- Stage 25 已审计 consumer/filter 需求并冻结无 filter 方案：单个显式 envelope 的 v2 仍是唯一 scoped contract，reader 不新增 task/request/query/sort/page/export。
+- 宿主只可一次性读取 `status=ready` 的 bounded stdout JSON 并在内存展示；不得保存、cache、export、打开 HTML/browser、自动刷新、访问网络或执行 adapter。
+- Stage 25 事实源：`docs/archive/85-envelope-scoped-consumer-filter-design-gate.md` 与 `docs/archive/release-notes/87-release-notes-stage25-envelope-scoped-consumer-filter-design-gate.md`。
+- Stage 19 历史设计门已被 Stage 20 implementation 事实源取代，完整归档至 `docs/archive/80-codex-desktop-read-only-adapter-design-gate.md`；活跃文档保持 50 个。
+- 用户明确要求进入下一阶段后，Stage 26 已冻结未来 v3 的 task/request exact filter、双参数 AND、合法空视图和 request→task 关系闭包。
+- filter 仅作用于完整验证后的 runs/approvals/artifacts 安全 summaries；不传入 child argv，不触碰 raw envelope，不自动扩展 lineage。
+- v3 使用独立 filtered payload schema、canonical `filter_id` 与 `view_id`，关联 Stage 24 base snapshot id / scope id，不静默改变 v1/v2。
+- Stage 26 事实源：`docs/86-filtered-envelope-snapshot-read-design-gate.md` 与 `docs/archive/release-notes/88-release-notes-stage26-filtered-envelope-snapshot-read-design-gate.md`。
+- Stage 27 已在既有 reader 上实现 `--task-id` / `--request-id` filtered v3：支持 task-only、request-only、双参数 AND、合法空视图与 request→task 关系闭包。
+- v3 使用独立 filtered payload、canonical `filter_id` 与 `view_id`；过滤只发生在 Stage 24 base snapshot 全链验证及 content-drift recheck 之后，filter 不进入 child argv。
+- 无 filter 继续输出 Stage 24 v2；无 envelope 继续输出 Stage 22 v1；通用 query、lineage expansion、persistence/export、HTML/browser/network/write/execute 均未开放。
+- Stage 27 事实源：`docs/87-filtered-envelope-snapshot-json-reader-implementation.md` 与 `docs/archive/release-notes/89-release-notes-stage27-filtered-envelope-snapshot-json-reader.md`。
+- 2026-07-16 Stage 28 design gate 已收口：具体宿主冻结为 Codex Desktop 本地一次性任务进程，输入为完整 filtered v3 reader result，不接受 payload-only，也不扩展 Stage 18 handoff consumer。
+- 未来候选 consumer 冻结为标准库-only、stdin-only、1 MiB 输入上限；独立重算 scope/filter/view identity，base snapshot id 只做关联与形状检查。
+- 新增 `tests/test_filtered_snapshot_host_consumer_contract.py`，以真实 Stage 27 stdout 冻结 wrapper/lifecycle/guarantees/identity/safe sections 前置契约；本阶段没有实现 consumer。
+- Stage 28 事实源：`docs/archive/88-filtered-snapshot-host-consumer-validation-gate.md` 与 `docs/archive/release-notes/90-release-notes-stage28-filtered-snapshot-host-consumer-validation-gate.md`。
+- 旧 `docs/09-policy-checker-poc-plan.md` 已完整移入 `docs/archive/09-policy-checker-poc-plan.md`；活跃文档保持 50 个。
+- 2026-07-16 Stage 29 已按 TDD 实现 `tools/codex_desktop_filtered_snapshot_consumer.py`：标准库-only、stdin-only、1 MiB 输入、64 KiB 输出，不自动启动 reader。
+- consumer 固定 11 项检查，独立重算 scope/filter/view identity，严格验证 safe sections、counts、matched/status 与 task/request filter semantics；base/envelope/handoff identity 只关联检查。
+- 新增 `tests/test_codex_desktop_filtered_snapshot_consumer.py`，覆盖 valid/blocked/validation_failed/error、输入门禁、value-safe determinism、禁止依赖与真实 reader → consumer stdio smoke。
+- Stage 29 事实源：`docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md` 与 `docs/archive/release-notes/91-release-notes-stage29-codex-desktop-filtered-snapshot-consumer.md`。
+- 早期 `docs/14-task-runtime-bridge.md` 已完整移入 `docs/archive/14-task-runtime-bridge.md`；活跃文档保持 50 个。
+- Stage 20 实现文档已完整归档至 `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`；活跃文档保持 50 个。
+- Stage 21 历史 validation-only 设计门已被 Stage 22 及后续事实源取代，完整归档至 `docs/archive/82-read-only-representation-read-design-gate.md`；活跃文档仍为 50 个。
+
+### 新进落地：Stage 52 — Pi Coding Agent Preflight Bridge v1
+
+- 新增 `agent_runtime/pi_preflight_bridge.py` 与顶层 CLI `pi-bridge preflight`：stdin 单 bounded JSON request（64 KiB、UTF-8、duplicate key、严格最小字段），stdout 单 deterministic JSON response。
+- 只接受 Pi 默认工具 read/write/edit/bash 的安全最小字段；`.env`/`.pem` 等 credential 类目标直接 blocked；复用 `check_path`/`check_text`/`check_action` 与独立 `pi-host` adapter registry 条目（不复用 omp-acp）。
+- 输出稳定 decision `pass`/`needs_approval`/`blocked`/`invalid`、安全 findings、`next_action`、`request_hash`/`target_hash`；不回显 target、命令或文件内容；fail closed。
+- `integrations/pi/` 提供零 npm 依赖最小 Extension 示例：固定 argv、`shell=false`、bounded timeout/stdout/stderr、无重试、不读取 secret；pass 放行，其余 block。
+- 本阶段是 host-side preflight enforcement，不是 Harness real adapter execution authority；Stage 49 权限不变；按用户授权推送到 `origin/main`，不创建 tag。
+- Stage 52 事实源：`docs/101-pi-coding-agent-preflight-bridge.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 53 - Pi Interactive Approval Roundtrip v1
+
+- `integrations/pi/extension.ts` 新增默认关闭的 `AGENT_RUNTIME_APPROVAL_MODE=interactive`，只允许同 cwd 的精确 `git push origin main` 进入一次 UI 确认。
+- 确认后从当前 event input 重新归一化并二次 preflight，request id/hash、tool、target hash 必须一致；拒绝、超时、无 UI、输入漂移、bridge 漂移及 blocked/invalid 一律阻断。
+- 批准不写磁盘、不缓存、不跨调用复用；Harness 仍不执行工具。批准后深冻结 input，但 Pi/OMP 后续 extension 可替换整个 input，故这是有限 host approval 而非通用 approval authority。
+- 本机通过 OMP 17.0.8 同源 API 完成 Stage 52 真实 smoke；独立 Pi CLI 未安装，未做 Pi 本体安装验证。
+- Stage 53 事实源：`docs/102-pi-interactive-approval-roundtrip.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 54 - Pi Postflight Audit Projection v1
+
+- `integrations/pi/extension.ts` 新增默认关闭的 `AGENT_RUNTIME_POSTFLIGHT_MODE=summary`，只在 Pi/OMP `tool_result` 后追加一个脱敏摘要块。
+- 摘要通过当前 `event.input` 重跑 Stage 52 preflight，记录 tool、decision、request/target hash、hashed toolCallId、content block count、text chars 与原始 `isError` flag。
+- 摘要不包含 path、command、file content、tool output text、details payload 或 credential-like values；不写 ledger、不访问网络、不改 `isError`、不 patch details。
+- 这是 host-side projection，不是 durable audit writer，也不证明 Harness 执行了工具。
+- Stage 54 事实源：`docs/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 62 — Pi Controlled Dry-run Print Implementation
+
+- 用户授权按 docs/110 实现唯一固定 `pi_cli_print` 和一次受控真实 DeepSeek smoke。新增 `agent_runtime/pi_print_runner.py`（Windows Job Object tree containment；每流 256 KiB、5..120s、POSIX unavailable）与 `agent_runtime/orchestration_pi_print_execution.py`（`--commit`、prompt secret scan、lease、registry/readiness recheck、环境 allowlist、固定 argv、audit v2、输出协议和仅摘要投影）。
+- CLI 新增 `orchestration execution pi-print`；runtime discovery 新增仅变量名的 `api_key_env` 投影；contract manifest 与 35 项专项 TDD 同步更新。聚焦与相关回归通过，全量 pytest 0 failed；doctor、public scan、docs context、diff check 与 pre-commit 通过。
+- 真实 smoke 在 lease 门禁处阻断。operator 授权删除旧 0 字节锁后，新锁仍被拒绝；只读诊断确认新锁文件 ACL 合规，但 `%LOCALAPPDATA%\agent-runtime` 父目录 ACL 不满足最小权限。所有尝试均在 plan/audit/spawn 前终止，未模型调用、未触碰真实 ledger；模型调用次数仍为 0。修复父目录 ACL 须独立授权，且不得绕过 lease。
+- 事实源 `docs/111-pi-controlled-dry-run-print-implementation.md`；未 commit/push。
+
+### 新进落地：Stage 61 — Pi Controlled Dry-run Adapter Contract（design-only）
+
+- 新增 `docs/110-pi-controlled-dry-run-adapter-contract.md`，冻结唯一候选 operation `pi_cli_print`：固定 argv `pi --print --no-session --no-tools`，prompt 为唯一可控输入（4 KiB/UTF-8/控制字符有界、secret scan 前置、只以 digest 进入 plan/audit）。
+- `--no-session` + `--no-tools` 把本地副作用面压到最小（无 session 写入、无工具执行）；read 工具 roundtrip 与 `--mode json` 明确排除为独立后续候选。
+- child 环境显式 allowlist 重建：`PI_CODING_AGENT_DIR`/`AGENT_RUNTIME_ROOT` 固定 project-local，`DEEPSEEK_API_KEY` 只经 env 透传且永不回显，proxy 与其他变量一律不透传。
+- 诚实声明 npm 安装完整性信任缺口：Pi 入口是 node + npm cli.js 组合，Stage 46 式 executable trust binding 不直接适用，v1 不宣传为 trusted executable chain。
+- 复用 Stage 49 Windows Job Object runner 语义（60s 默认/120s 上限、每流 256 KiB、tree kill、no orphan）与 Stage 47–48 started/terminal audit 绑定；模型回答文本不进入公开投影，只留 digest/计数。
+- 冻结 failure mapping、10 条 stop-lines 与 12 项 TDD 验收矩阵；推荐下一实现为 Stage 62（条件启动，需用户再次授权真实模型调用与第二个真实 operation）。
+- 本 stage 只有设计文档：无代码、无 CLI、无 subprocess、无 ledger 写入、无网络、无 approval 启用。
+- Stage 61 事实源：`docs/110-pi-controlled-dry-run-adapter-contract.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 60 - Pi Adapter Discovery & Capability Projection
+
+- `adapters/adapters.sample.json` 末尾追加 `pi-cli` 条目（kind `pi_cli → agent`；schema enum 与 `KIND_TO_ADAPTER_TYPE` 同步），capabilities `cli_agent_print` / `cli_agent_json_events` / `cli_agent_tui` / `preflight_gated_read` 全新唯一，既有条目 source_index 与既有路由输出不变。
+- `risk_level=external`：guardrail 保持 `needs_approval`，本阶段不授予执行权限。
+- 新增 `agent_runtime/pi_runtime_discovery.py`：7 项确定性 fail-closed 检查（env var、`.runtime` containment、agent dir、settings 钉住默认、models provider/model、apiKey 仅接受 `$ENV_VAR` 引用且值不回显、extension 存在）；64 KiB 有界读取；绝不读取 auth/session/.env/凭据文件；不执行进程、不访问网络。
+- 接入：`orchestration adapter inspect pi-cli` 附加 `local_runtime` 块；`orchestration preflight` 对 pi-cli 未就绪时 `blocked`（fail closed），就绪时仍 `needs_approval`；control-panel snapshot 自动包含（adapter 9→10）。
+- 新增 `tests/test_pi_runtime_discovery.py` 19 项；全量 pytest 1390 passed / 0 failed；doctor、public scan、diff check 通过。
+- 事实源：`docs/109-pi-adapter-discovery-capability-projection.md`。
+
+### 新进落地：Stage 59 - Pi CLI/TUI Mode Stabilization Gate
+
+- 诊断 `pi --print` / `--mode json` 0 stdout / 0 stderr 超时：当前组合（项目本地 agent dir + deepseek-compat）下不再现，7+ 次受控运行全部 2–6s 返回 rc=0。
+- 根因：内置 deepseek provider API 侧不稳定（Stage 57 已记录）与默认模型解析漂移（未钉住时默认落到内置 `deepseek/deepseek-v4-pro`）的组合；已排除启动期模型目录网络刷新（CLI 路径未开启）与版本检查（仅 TUI 且非阻塞）。
+- 最小修复：gitignored `.runtime/pi-agent/settings.json` 钉住 `defaultProvider=deepseek-compat` / `defaultModel=deepseek-v4-flash`（写入前备份于 `backups/stage59-before-settings-20260725-192154/`）；未修改 Pi 上游。
+- 提交 `integrations/pi/smoke/cli-mode-smoke.sh`：固定 argv、`--no-session`、60s 有界 timeout、证据写入 gitignored `.runtime`、不回显凭据；首跑 5/5 PASS（print/json/read pass/.env block canary 不泄漏）。
+- TUI 非 TTY fail-fast（rc=1 `stdin is not a tty`）；人类 TUI 入口契约与真实模型调用披露见 `docs/108-pi-cli-mode-stabilization.md`。
+- approval/postflight 保持关闭；未开放 bash/write/edit；未执行真实 push；未写 ledger。
+
+### 新进落地：Stage 58 - Pi Project-local Runtime Integration
+
+- Pi agent dir 已迁入 `<project-root>\.runtime\pi-agent`，用户级 `PI_CODING_AGENT_DIR` 已指向该目录。
+- `.runtime/` 已被 Git 忽略；auth、session、backup 与模型运行配置不会进入仓库。
+- 原 `%USERPROFILE%\.pi\agent` 保留作回滚副本。
+- 新目录下 `deepseek-compat` 模型发现、`pi-preflight-bridge` 自动发现及 read/.env/push 三条 handler smoke 均通过。
+- Stage 58 事实源：`docs/107-pi-project-local-runtime-integration.md`。
+
+### 新进落地：Stage 57 - Pi First Real Session Gate
+
+- 网络恢复后继续 Stage 57；Node fetch 与 Pi `ModelRuntime` 验证 DeepSeek API 可用。
+- 已写入可回滚的 `%USERPROFILE%\.pi\agent\models.json` 自定义 provider `deepseek-compat`，密钥仅通过 `$DEEPSEEK_API_KEY` 解析，不写明文。
+- SDK 直连 `createAgentSession` 加载真实全局 extensions，包含 `pi-preflight-bridge\index.ts`，`extensionErrors=0`。
+- 隔离目录 `%USERPROFILE%\.pi\agent\backups\stage57-sdk-real-read` 中，模型发起一次 `read stage57-proof.txt`，工具执行完成，最终返回 `STAGE57_OK:PI_LAYER1_REAL_SESSION_OK`。
+- 限制：Pi CLI `--print` / `--mode json` 在当前组合下仍有 0 stdout / 0 stderr 超时，需要 Stage 59 专门稳定；Stage 57 只证明 SDK-host real session chain。
+- Stage 57 事实源：`docs/106-pi-first-real-session-gate.md`。
+
+### 新进落地：Stage 56 - Pi Native Install Smoke
+
+- 独立 Pi CLI 已安装为 `@earendil-works/pi-coding-agent@0.82.0`；`pi --version` 返回 `0.82.0`。
+- 全局 extension 已部署到 `%USERPROFILE%\.pi\agent\extensions\pi-preflight-bridge\`，写入前备份为 `%USERPROFILE%\.pi\agent\backups\stage56-before-pi-preflight-20260725-164539` 并生成 SHA-256 清单。
+- 用户级只设置 `AGENT_RUNTIME_ROOT=<project-root>`；approval/postflight 用户变量未设置。
+- Pi 官方 `DefaultResourceLoader` 真实自动发现 extension；已加载 handler 验证普通 read 放行、`.env` 阻断、`git push origin main` needs_approval 阻断。
+- smoke 不调用模型、不执行工具、不访问网络；事实源：`docs/105-pi-native-install-smoke.md`。
+
+### 新进落地：Stage 55 - Pi-first Operator Handoff Gate
+
+- 用户明确偏好：OMP 太重，后续应先从 Pi 开始，再像搭积木一样层层递进。
+- 主线切为 Pi-first layered：Layer 0 Pi native baseline → Layer 1 preflight only → Layer 2 optional approval → Layer 3 optional postflight projection → Layer 4 durable audit future → Layer 5 OMP compatibility future。
+- OMP 不再作为主推进基础，只保留为同源 ExtensionAPI 的兼容验证/备选。
+- Stage 55 仅收口 design gate，不安装 package、不写 `%USERPROFILE%\.pi`、不改现有 Orca extensions、不启动真实工作流。
+- Stage 55 事实源：`docs/104-pi-first-operator-handoff.md`。
+
+### Stage 10 基线（保留）
+
+- `adapters/adapters.sample.json` 是 adapter/capability/risk 的单一事实源。
+- `agent_runtime.adapter_registry` 提供 source-backed 投影，供 `orchestration adapter list/inspect`、route preview、preflight 共同消费。
+- 投影字段包括 adapter_id、display_name、kind、capabilities、risk_level、enabled、功能开关（background/artifacts/approval_roundtrip 等）、timeout_profile、指向该 entry 真实 input/output schema 的 JSON Pointer。
+- route preview 与 preflight 基于此投影生成路由决策，避免查询 registry 与路由 registry 漂移。
+
+### 新进落地：Stage 11 — Capability Routing Model 约束路由第一版
+
+- `RouteConstraints` 已接入 `orchestration route preview` / `orchestration preflight`。
+- 支持约束：`--preferred-adapter`、`--max-risk`、`--require-background`、`--require-artifacts`。
+- 路由流程：capability match → constraint filter → preference rank。
+- 默认未传约束参数时，route/preflight 保持原有输出字段不变；仅在显式使用约束 flag 时才输出 `routing_constraints` / `rejected_candidates` 等新增字段。
+- 新增 `--explain` 决策解释 trace：暴露 capability-matched / constraint-rejected / eligible / selected / fallback 候选及 deterministic reason，trace 由 `preview_route` 内部中间结果直接构造，preflight 复用不复算，为 Stage 12 状态模型做准备。
+
+### 新进落地：Stage 12 — Control Plane State Model 第一拍
+
+- 新增 `RoutingDecisionSnapshot`：把 Stage 11 route/preflight 决策投影为稳定、compact、只读的控制面状态对象。
+- `snapshot_id` 由 canonical safe payload 的 SHA-256 内容哈希确定性生成，无时间戳/随机数/进程状态。
+- CLI：`orchestration route snapshot` 与 `orchestration preflight --snapshot`。
+- snapshot 包含分层的 routing 状态与 guardrail 状态（preflight snapshot），不写 ledger、不生成持久 Run、不执行真实 adapter。
+
+### 新进落地：Routing Snapshot → Run Preview 安全引用第一拍
+
+- `orchestration run --dry-run` 新增可选 `--routing-snapshot-id sha256:<64hex>`。
+- 引用只接受 `sha256:<64 lowercase hex>` 格式；非法值返回 `needs_input`，绝不读取任意路径或把 JSON 当参数。
+- 引用进入 `RunDryRunResult`、candidate artifact refs、`run_planned` candidate event metadata keys 与 `plan_hash` canonical payload。
+- 默认不传时旧输出与 `plan_hash` 完全兼容；传入时相同输入重复运行产生 byte-equivalent JSON，`plan_hash` 随 snapshot id 变化。
+- retry / fallback dry-run 同样支持引用，lineage 与 routing snapshot 各自独立。
+- 不校验 snapshot 是否存在于磁盘，明确其为 content-addressed reference contract，不是持久化产物假装已落地。
+- 文档已更新：`docs/50-control-plane-state-model.md`、`docs/52-minimal-orchestration-loop.md`、`docs/02-roadmap.md`、`docs/10-cli-poc-usage.md`。
+
+- preflight 将 routing decision passthrough 到 guardrail，不越界替 guardrail 做阻断判断。
+- cost / latency / availability / 在线状态仍未实现，保留给后续阶段。
+
+### 新进落地：Run Preview → Event / Report 只读投影闭环
+
+- `orchestration run --dry-run --snapshot` 基于真实 `RunDryRunResult` 一次性构造 `OrchestrationReadLoopSnapshot` 只读闭环 snapshot。
+- snapshot 包含 Run Preview（`status=planned/preview`）、candidate Event summaries（`status=planned`，不伪造 event_id/timestamp）、Report Preview（`status=preview`，无持久 report_id）。
+- `snapshot_id` 由最终安全 payload（去掉 `snapshot_id`）的 canonical SHA-256 哈希确定性生成，无时间戳/随机数/进程状态。
+- 默认不传 `--snapshot` 时，`orchestration run --dry-run` 旧输出与 `plan_hash` 严格兼容；传入时仅新增 snapshot 字段。
+- `--commit` 模式下传入 `--snapshot` 会被明确拒绝（`blocked`），本拍仅 `--dry-run` preview 支持。
+- 不写入 ledger、不生成持久 Run/Event/Report、不执行真实 adapter；明确为 ephemeral read model。
+- Routing Snapshot → Run Preview → Event/Report read-only loop 已闭合，但仍明确非持久/非执行。
+
+
+### 新进落地：Recovery Lineage Aggregation Read Model
+
+- 新增 `agent_runtime/orchestration_recovery.py`，以现有 `run_planned` / `run_draft_exported` / `run_blocked` event metadata 为索引，确定性聚合同一 recovery chain。
+- `orchestration run inspect --aggregate-lineage` 与 `orchestration report generate --aggregate-lineage` 输出 root request、leaf/latest request、attempt count、effective plan hash 与安全 request summaries。
+- 多 leaf 不静默猜测 latest，返回 `needs_input`；missing/cross-task parent、cycle、重复 metadata 冲突返回 `validation_failed`。
+- 默认未传 flag 时现有 inspect 输出保持兼容；不扫描 drafts、不增加事件类型、不写 ledger、不执行 adapter。
+- 设计入口：`docs/archive/73-recovery-lineage-aggregation-read-model.md`。
+
+### 新进落地：Stage 36–38 — Display Consumer Validation 与 v0.16.0 Freeze
+
+- Stage 36 冻结完整 display v1 wrapper 的独立 stdin-only consumer contract。
+- Stage 37 新增 `tools/codex_desktop_filtered_snapshot_display_consumer.py`，不启动任何上游进程，独立验证 content hash、固定 Markdown grammar、安全 literal 与 view coherence。
+- 固定 10 项 checks，输出只保留 value-safe ids/checks/findings，不复制 Markdown content 或上游 finding message。
+- 16 项专用测试、124 项相关回归和 884 项全量测试通过；doctor、public scan、py_compile 与真实 ready/blocked 管道通过。
+- Stage 38 冻结 annotated tag `v0.16.0-filtered-snapshot-display-consumer`；后于 2026-07-16 按用户授权推送至 `origin`。
+- 下一拍只允许 Stage 39 one-shot display → consumer host integration design gate，不开放 UI、HTML/browser、file/URL、service/network、persistence/export、write 或真实 execution。
+
+### 新进落地：Stage 39–41 — Validated Markdown Release Host 与 v0.17.0 Freeze
+
+- Stage 39 冻结 fixed Stage 34 display → Stage 37 consumer 的 validation-before-release host contract。
+- Stage 40 新增 `tools/codex_desktop_filtered_snapshot_display_host.py`，consumer pass/0 与五项 identity match 前 content withheld。
+- fixed argv、minimal environment、64 KiB child I/O、128 KiB final output、timeout/cancel/no-retry 与 minimal safe result 已冻结。
+- 40 项专用测试、164 项相关回归和 924 项全量测试通过；doctor、public scan、py_compile 与四条真实 CLI 管道通过。
+- Stage 41 冻结 annotated tag `v0.17.0-filtered-snapshot-display-host-integration`；后于 2026-07-16 按用户授权推送至 `origin`。
+
+### 新进落地：Stage 42 — Validated Markdown Presentation Handoff Design-only Gate
+
+- 审计 Stage 40 ready result → read-only presentation boundary，选择 design-only freeze，不新增 presenter、CLI、schema、renderer 或专有 API。
+- future boundary 只能接受完整 Stage 40 host v1 ready result，并重确认 closed lifecycle、display `ready/0`、consumer `pass/0`、五项 identity 与 content SHA-256。
+- 不重复 Stage 37 Markdown grammar / safe-field validation；non-ready、protocol/identity/hash drift 必须 content withheld。
+- 新增 3 项 characterization contract tests；Stage 28 gate 完整归档，活跃文档保持 50 个。
+- 下一 implementation stage 不自动启动；等待用户给出具体 consumer identity、explicit action、transport、destination、retention、bounds 与 failure mapping。
+
+### 新进落地：Stage 43–45 — Single-user Real Execution Readiness
+
+- 明确单用户本地 operator，不实现 account/role/tenant/auth；保留 `actor_context` future extension。
+- 选定唯一首个候选 `shell-local/git_status`，future argv 固定 `git status --short --branch`、`shell=false`。
+- 新增 strict source-backed readiness schema/profile 与 `orchestration execution readiness` 只读命令。
+- 固定 cwd、环境白名单、10/30 秒 timeout、64 KiB stdout/stderr、no retry/network/write/background。
+- 固定 approval → plan binding 与 controlled execution audit contract。
+- 13 项 checks 中 10 项 design pass；executor、approval binding、audit writer 3 项按预期 blocked。
+- Stage 45 完成提交级里程碑与文档维护；不创建 tag、不 push，稳定 tag 仍为 v0.17.0。
+
+### 新进落地：Stage 46 — Fixed Git Status Executor Design-only Gate
+
+- 选择 trusted executable binding + bounded one-shot process-tree runner，拒绝通用 shell/任意 argv 与简单无界 `subprocess.run`。
+- PATH 只做候选发现；冻结 operator-reviewed trust binding、publisher/owner/ACL、digest/file-id、actual image binding 与 TOCTOU 停止线。
+- child 使用与 resolver 精确一致的 sanitized PATH；冻结 config 有限语法/command-path key denylist、`commondir`/object alternates/external worktree-excludes-attributes/submodule blocking 与固定 Git config overrides。
+- Git 核心 metadata 使用 lstat-first、never-follow containment；index/HEAD/refs/objects/pack 的 symlink、junction、reparse、hardlink、root escape 在任何 read/hash 前 blocked。
+- 冻结 POSIX process group / Windows Job Object、10/30 秒 timeout、64 KiB 双流 hard stop、tree terminate → kill → wait、no retry/no background。
+- 冻结有限 branch grammar、完整 porcelain-v1 XY allowlist 与唯一计数映射。
+- raw stdout/stderr、file paths、branch name、resolved executable path 与 environment 默认 withheld，只允许 dirty/count/ahead-behind/digest 安全摘要。
+- no-write 明确区分 contract controls、bounded guard evidence 与当前不存在的 OS-level filesystem proof，不夸大保证。
+- `execution_attempt_started` 写入成功前不得 spawn，且不宣称 child 已创建；reserved execution event 只能由专用 writer 写入，terminal audit 与 post-run guard 成功前不得释放 result。
+- Stage 46 仅新增设计文档和 release notes 106；没有 production executor/CLI/schema/event type，也没有执行 Git。
+
+### 新进落地：Stage 47–48 — Execution Lifecycle Audit Writer
+
+- Stage 47 冻结独立 reserved schema + internal-only writer + 通用入口负向门禁方案，拒绝 caller-supplied event/provenance。
+- 共享 `tasks/event.schema.json` 新增 `execution_attempt_started`、`execution_succeeded`、`execution_failed`、`execution_cancelled`；独立 schema 固定 `local-operator`、writer origin/version、phase 与 safe evidence allowlist。
+- `runtime event append/import` 在 dry-run/commit 均显式拒绝四类 reserved event，不能借共享 enum 伪造 execution audit。
+- 新增 `agent_runtime/execution_audit_writer.py`：started 与 terminal 在同一 locked file descriptor 上各自单行追加、flush/fsync、共享/专用 schema、task/event consistency 与 execution audit consistency post-check；成功与回滚均核对 writer-only append token 和 path/file identity，检测到并发漂移或 file replacement 则拒绝 committed/truncate。
+- terminal 写入失败不得删除 started；result 固定 `audit_incomplete=true`，read-only inspection 可区分 `awaiting_terminal`、三类 closed、`missing` 与 `invalid`。
+- `task validate --schema event` 对 reserved event 自动叠加 dedicated schema；普通历史 event 保持兼容。
+- Stage 44 readiness v1 永久保持历史 10 pass / 3 blocked；新增 reserved enum 不把旧 `audit_writer_implementation` 回改为 pass。
+- 本阶段没有新增 execution CLI、subprocess、network、service、DB、UI、tag 或 push；没有执行 Git。
+
+### 新进落地：Stage 49 — Fixed Git Status Executor Limited Enablement
+
+- 新增 machine-local strict trust binding schema 与 `orchestration execution trust bind` preview/commit/replace；CLI 不接受 binding path 或 executable path。
+- Windows trust backend 删除 project-local、reparse、重复和 actor-writable PATH 目录，只接受固定 `git.exe`；绑定 SHA-256、volume/file id、approved root 与 Authenticode signer。
+- executable 以禁止 write/delete share 的 read-only handle 持有到 image validation 完成；child 以 suspended 状态创建，加入 `KILL_ON_JOB_CLOSE` Job Object，核对 actual image 后才 resume。
+- repository guard 在 spawn 前后执行 lstat-first containment，拒绝 linked worktree、submodule、alternates、commondir、lock、dangerous config、symlink/reparse/hardlink 与 bounded traversal 超限。
+- runner 固定 exact argv、10 秒默认/30 秒上限、64 KiB stdout/stderr、no retry/no background；POSIX 明确 unavailable。
+- finite porcelain-v1 parser 丢弃 filename、branch 与 upstream token，只释放 dirty/count/ahead-behind/digest 等 safe summary。
+- execution chain 固定 started audit → final trust/guard recheck → spawn → post-run guard → terminal audit → safe release；terminal audit 失败时保留 started 并 withheld。
+- 2026-07-17 已在 pytest 临时 direct `.git/` 仓库完成一次显式授权真实 smoke；真实项目 ledger 未修改。
+- 本阶段不创建 tag、不 push，稳定 semver 仍为已推送的 v0.17.0。
+
+### 新进落地：Stage 50–51 — Fixed Execution Operational Recovery
+
+- Stage 50 选择 replacement-resistant single-flight machine-local lease + safe inspection + outcome-unknown closure + Windows Job accounting 方案；Stage 51 已按此 contract 实现。
+- future execution、trust rotation 与 recovery close 必须共用固定 exclusive lease；read-only inspect 不创建或修改 lease 文件。
+- trust inspection 冻结 missing/current/drifted/invalid/candidate/platform 状态；rotation 绑定 expected old binding id 与完整 new executable/PATH identity；损坏 binding 不允许 force overwrite 或自动删除。
+- open attempt 必须在固定 ledger 输入预算内解释为 historical process outcome unknown，禁止自动 retry 或释放历史 summary。
+- future fixed recovery close 只允许 `execution_failed` / `phase=audit` / `execution.recovery_outcome_unknown`，并绑定 expected started event id 与 plan hash。
+- Windows ready release gate 已要求 Job accounting active zero、direct child reaped 与 containment close；该证据不等于 filesystem write proof。
+- 历史 `execution-audit/v1` 保持可读；future Job evidence 使用 v2，不静默扩展 v1。
+- Stage 51 新增 trust inspect、recovery list/inspect/close CLI、bounded ledger 与 audit v2 接入；没有运行 real smoke；2026-07-25 已按用户授权推送到 `origin/main`，不创建 tag。
+
+## 现在已经能做什么
+
+- 已冻结里程碑 `v0.12.1-orchestration-read-loop-snapshot`（commit `0419a04`），包含 Stage 10–12 的 registry/routing/state read model 闭环。
+- `orchestration run --dry-run` 可安全引用 `orchestration route snapshot` / `orchestration preflight --snapshot` 的内容寻址 snapshot id
+- retry / fallback commit 第一版已落地
+- `orchestration run inspect` 可见 lineage
+- `orchestration run list` 可见紧凑 lineage 标识
+- `orchestration report generate` 可见 lineage 安全摘要
+- `python -m agent_runtime.cli docs context` 可输出恢复入口
+- `orchestration contract inspect --json` 可供脚本确定性发现当前 CLI 能力、关键 flag 与不可用边界
+- `orchestration contract check --require ...` 可供脚本在执行前做 requirement negotiation，不执行被声明的 command
+- `orchestration profile list/inspect/check` 可复用版本化的 CI read-only、local dry-run 与 controlled-write preparation profiles
+- `orchestration control-panel snapshot/render/handoff` 可输出确定性 snapshot、自包含只读 HTML 与版本化 stdio descriptor；可选 envelope 只用于投影 scoped run/approval/artifact
+- `orchestration adapter list` / `inspect` 可查询 source-backed adapter capability registry；`orchestration route preview` / `orchestration preflight` 已基于同一投影生成路由与 preflight 决策
+
+## 下次恢复顺序
+
+1. `docs/000-stage-digest.md`
+2. `docs/110-pi-controlled-dry-run-adapter-contract.md`
+3. `docs/109-pi-adapter-discovery-capability-projection.md`
+4. `docs/108-pi-cli-mode-stabilization.md`
+5. `docs/107-pi-project-local-runtime-integration.md`
+6. `docs/106-pi-first-real-session-gate.md`
+7. `docs/105-pi-native-install-smoke.md`
+8. `docs/104-pi-first-operator-handoff.md`
+9. `docs/103-pi-postflight-audit-projection.md`
+10. `docs/102-pi-interactive-approval-roundtrip.md`
+11. `docs/101-pi-coding-agent-preflight-bridge.md`
+12. `docs/100-fixed-execution-operational-recovery-implementation.md`
+13. `docs/99-fixed-execution-operational-recovery-design-gate.md`
+14. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+15. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+16. `tasks/handoff-2026-07-25.md`
+17. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
+18. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
+19. 再跑：`python -m agent_runtime.cli docs context --json`
+
+## 下一步做什么
+
+- **Stage 62 已通过最终真实 smoke**：修正后的固定 argv 在 `lt-5s` 内返回，status=`ready`、audit=`closed_succeeded`、Windows Job accounting/子进程回收/containment close 全部通过；stdout 原文继续 withheld。
+- **真实终端人工 TUI 会话验收（operator 执行）**：按 `docs/108` 第 3 节契约在真实终端运行 `pi`；间歇失败再观察，复现 0 输出时按 60s 有界 kill 收集证据。
+- Stage 60 已把 Pi 本地运行时以只读方式投影进 adapter registry / routing / snapshot；Stage 61 冻结 contract，Stage 62 已完成唯一固定 `pi_cli_print` 落地，但真实模型链仍待上述单次 smoke 证实。
+- Pi-first 是主线；OMP 仅作为兼容验证/备选。
+- POSIX enablement 必须另行闭合 executable image identity、process-group containment 与同等输出/审计停止线。
+- 任何第二个 command、通用 approval-required adapter、network operation、bridge execution authority、持久 audit writer、自动安装或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。
+- docs/ 活跃文档已收敛后随 Stage 60–62 增至 50 个：12 份已冻结设计文档（41/45/54/56/58/60/62/63/66/70/73/74）经用户批准以 `git mv` 完整移入 `docs/archive/`，活跃区全部引用已改为 `archive/` 路径，内容未删除；执行记录见 `tasks/handoff-2026-07-25.md` 第 9 节。
+
+## 重要约束
+
+- 唯一真实执行例外是 **Windows fixed Git status**；通用 adapter execution、shell、任意命令和网络执行仍禁止。
+- Stage 49 的 `--commit` 同时授权 started/terminal audit controlled write 与唯一 fixed subprocess，不授权更多 Git command。
+- 后续实现必须先消费本 digest、99、98、97、archive/96、archive/95 与最新 handoff，并保持验证、用户授权和本地提交边界。
+
+## 一句话理解当前项目
+
+这项目现在的重点不是继续堆零散功能，而是：
+
+> 在不服务化、不泛化执行权限的前提下，把唯一 fixed Git status 纳入可审计、可恢复、可继续收紧的受控执行契约。

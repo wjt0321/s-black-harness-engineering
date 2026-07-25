@@ -478,4 +478,4 @@ Guardrail 不是独立页面，而是**贯穿各页面的状态显示和写入�
 
 ## Stage 16 第一拍落地说明（2026-07-14）
 
-`docs/76-read-only-control-panel-mvp.md` 已按本文页面数据边界落地本地静态只读 MVP。首版仅聚合现有 read models 并渲染自包含 HTML，没有引入页面路由、前端状态管理、协议层、service、DB、auth、实时推送或 UI 写操作；因此本文列出的后端边界继续成立。
+`docs/archive/76-read-only-control-panel-mvp.md` 已按本文页面数据边界落地本地静态只读 MVP。首版仅聚合现有 read models 并渲染自包含 HTML，没有引入页面路由、前端状态管理、协议层、service、DB、auth、实时推送或 UI 写操作；因此本文列出的后端边界继续成立。

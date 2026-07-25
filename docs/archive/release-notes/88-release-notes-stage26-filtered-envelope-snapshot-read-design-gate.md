@@ -23,7 +23,7 @@ Stage 26 已完成设计审计并收口。用户明确要求直接进入下一�
 
 ## 文档维护
 
-- 新增 `docs/86-filtered-envelope-snapshot-read-design-gate.md`；
+- 新增 `docs/archive/86-filtered-envelope-snapshot-read-design-gate.md`；
 - Stage 21 validation-only 设计门已被 Stage 22 reader 及后续事实源取代，完整归档至 `docs/archive/82-read-only-representation-read-design-gate.md`；
 - 活跃文档继续保持 50 个，历史内容未删除；
 - 同步 digest、index、roadmap、README、AGENTS、CLI usage、handoff 与 progress。

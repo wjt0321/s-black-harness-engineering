@@ -1,7 +1,7 @@
 # 79 — Stage 18 Read-only Host Consumer Validation Boundary
 
 > 状态：**第一拍已按 TDD 实现并收口**
-> 前置事实源：`docs/78-control-panel-host-integration-boundary.md`、`docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`
+> 前置事实源：`docs/archive/78-control-panel-host-integration-boundary.md`、`docs/archive/release-notes/81-release-notes-stage17-control-panel-host-handoff.md`
 
 ## 1. 决策摘要
 

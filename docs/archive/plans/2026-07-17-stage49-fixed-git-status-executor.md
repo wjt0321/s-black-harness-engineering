@@ -172,7 +172,7 @@ Create a temporary project containing `pyproject.toml`, `agent_runtime/`, direct
 
 **Files:**
 - Modify: `docs/archive/96-fixed-git-status-executor-design-gate.md`
-- Create: `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+- Create: `docs/archive/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
 - Modify: `docs/000-stage-digest.md`
 - Modify: `docs/00-index.md`
 - Modify: `docs/02-roadmap.md`

@@ -42,6 +42,8 @@
 - 当前阶段正在推进的设计文档
 - `64-versioning-governance.md`
 
+长版入口文档在重大治理前先完整快照到 `docs/archive/snapshots/YYYY-MM-DD/`；快照只保留取证价值，不作为当前事实源。
+
 ---
 
 ## 智能体新增文档规则
@@ -87,4 +89,4 @@
 | 里程碑冻结 | 归档旧 freeze 文档（保留最近 2 个） |
 | 每 10 个 commit | 检查 000-stage-digest 是否需要更新 |
 | 每 30 个文档 | 评估是否需要合并/去重 |
-| 根目录超过 50 个 `.md` | 优先完整归档已冻结且被新事实源取代的 checklist / execution plan，并修复全部引用 |
+| 根目录超过 30 个 `.md` | 优先完整归档已完成阶段、旧 checklist / execution plan，并修复全部引用 |

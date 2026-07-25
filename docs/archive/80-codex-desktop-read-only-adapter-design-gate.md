@@ -5,7 +5,7 @@
 
 > 状态：**Stage 19 design gate 已冻结（仅冻结边界，不实现 bridge）**
 > 日期：2026-07-15
-> 前置事实源：`docs/78-control-panel-host-integration-boundary.md`、`docs/79-read-only-host-consumer-validation-boundary.md`
+> 前置事实源：`docs/archive/78-control-panel-host-integration-boundary.md`、`docs/archive/79-read-only-host-consumer-validation-boundary.md`
 
 ## 1. 决策摘要
 

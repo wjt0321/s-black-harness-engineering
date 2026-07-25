@@ -30,7 +30,7 @@ Stage 29 已按 Stage 28 contract 完成独立 filtered v3 stdin consumer 实现
 
 ## 文档维护
 
-- 新增 `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md`；
+- 新增 `docs/archive/89-codex-desktop-filtered-snapshot-consumer-implementation.md`；
 - 早期 `docs/archive/14-task-runtime-bridge.md` 完整归档至 `docs/archive/14-task-runtime-bridge.md`；
 - 活跃文档保持 50 个，历史内容未删除；
 - 同步 digest、index、roadmap、README、AGENTS、CLI usage、Stage 28 gate、handoff 与 progress。

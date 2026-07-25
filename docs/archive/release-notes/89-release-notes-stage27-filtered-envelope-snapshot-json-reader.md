@@ -33,7 +33,7 @@ Stage 27 已按 TDD 实现并收口。在既有 snapshot reader 上新增 task/r
 
 ## 文档维护
 
-- 新增 `docs/87-filtered-envelope-snapshot-json-reader-implementation.md`；
+- 新增 `docs/archive/87-filtered-envelope-snapshot-json-reader-implementation.md`；
 - Stage 20 host adapter 实现文档已被 Stage 22–27 reader 事实源取代，完整归档至 `docs/archive/81-codex-desktop-read-only-adapter-implementation.md`；
 - 活跃文档继续保持 50 个，历史内容未删除；
 - 同步 digest、index、roadmap、README、AGENTS、CLI usage、Stage 26 设计门、handoff 与 progress。

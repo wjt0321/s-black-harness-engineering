@@ -2,7 +2,7 @@
 
 > 状态：**第一拍已实现并收口**
 > 基线：`v0.13.0-read-only-control-plane` / `f401b98`  
-> 前置事实源：`docs/76-read-only-control-panel-mvp.md`、`docs/archive/77-read-only-control-plane-milestone-freeze.md`
+> 前置事实源：`docs/archive/76-read-only-control-panel-mvp.md`、`docs/archive/77-read-only-control-plane-milestone-freeze.md`
 
 ## 1. 决策摘要
 
@@ -190,7 +190,7 @@ git status --short --branch
 2. 本文
 3. `tasks/handoff-2026-07-14.md`
 4. `docs/archive/77-read-only-control-plane-milestone-freeze.md`
-5. `docs/76-read-only-control-panel-mvp.md`
-6. `docs/75-cli-automation-contract-discovery.md`
+5. `docs/archive/76-read-only-control-panel-mvp.md`
+6. `docs/archive/75-cli-automation-contract-discovery.md`
 
 然后先写 handoff 失败测试，不要先改 CLI 实现。

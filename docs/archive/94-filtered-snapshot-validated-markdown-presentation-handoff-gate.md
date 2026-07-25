@@ -5,7 +5,7 @@
 
 > 状态：**Stage 42 design-only gate 已收口；presentation implementation 未授权**
 > 日期：2026-07-16
-> 前置事实源：`docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`
+> 前置事实源：`docs/archive/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md`
 > 稳定基线：`v0.17.0-filtered-snapshot-display-host-integration`（已推送至 `origin`）
 
 ## 1. 决策摘要

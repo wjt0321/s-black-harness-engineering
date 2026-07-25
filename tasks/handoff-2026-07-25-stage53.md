@@ -1,7 +1,7 @@
 # Handoff - 2026-07-25 - Stage 53 Pi Interactive Approval Roundtrip
 
 > 状态：Stage 53 v1 已实现并完成本地验证
-> 当前事实源：`docs/102-pi-interactive-approval-roundtrip.md`
+> 当前事实源：`docs/archive/102-pi-interactive-approval-roundtrip.md`
 > 稳定 tag：`v0.17.0-filtered-snapshot-display-host-integration`
 > 下一候选：Stage 54 Pi Postflight Audit Design Gate
 
@@ -31,9 +31,9 @@
 ## 4. 恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/102-pi-interactive-approval-roundtrip.md`
-3. `docs/101-pi-coding-agent-preflight-bridge.md`
-4. `docs/100-fixed-execution-operational-recovery-implementation.md`
+2. `docs/archive/102-pi-interactive-approval-roundtrip.md`
+3. `docs/archive/101-pi-coding-agent-preflight-bridge.md`
+4. `docs/archive/100-fixed-execution-operational-recovery-implementation.md`
 5. `tasks/handoff-2026-07-25-stage53.md`
 
 ## 5. 下一阶段停止线

@@ -16,7 +16,7 @@ Stage 51 实现 Stage 50 冻结的 operational recovery contract：
 - Windows Job accounting active-zero、direct-child reaped、containment closed release gate；
 - historical `execution-audit/v1` compatibility 与 new-execution `execution-audit/v2`。
 
-权威实现事实源为 `docs/100-fixed-execution-operational-recovery-implementation.md`；Stage 50 design contract 继续由 `docs/99-fixed-execution-operational-recovery-design-gate.md` 保存。
+权威实现事实源为 `docs/archive/100-fixed-execution-operational-recovery-implementation.md`；Stage 50 design contract 继续由 `docs/archive/99-fixed-execution-operational-recovery-design-gate.md` 保存。
 
 ## 安全结论
 

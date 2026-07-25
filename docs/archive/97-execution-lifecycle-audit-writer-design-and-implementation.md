@@ -239,7 +239,7 @@ Stage 47 设计门冻结后，Stage 48 以同一事实源记录实现与验收�
 
 完成后下一阶段仍为 **Stage 49 — Fixed Git Status Executor Implementation and Limited Enablement（条件启动）**。Stage 49 需要用户再次明确授权真实 subprocess，并且 Stage 46 的 trust/image binding、sanitized child PATH、process-tree containment 与 finite porcelain parser 全部能在目标平台闭合。
 
-> 2026-07-17 post-close：用户已明确授权 Stage 49 的唯一 fixed subprocess；Windows limited enablement 已按 `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 完成。该实现复用本文件 writer，但不改变本文件的内部 API、reserved provenance、rollback 或 recovery contract。通用 execution、POSIX 与第二个 operation 仍 unavailable。
+> 2026-07-17 post-close：用户已明确授权 Stage 49 的唯一 fixed subprocess；Windows limited enablement 已按 `docs/archive/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 完成。该实现复用本文件 writer，但不改变本文件的内部 API、reserved provenance、rollback 或 recovery contract。通用 execution、POSIX 与第二个 operation 仍 unavailable。
 
 <!-- stage47-gate-status: frozen -->
 <!-- stage48-implementation-status: complete -->

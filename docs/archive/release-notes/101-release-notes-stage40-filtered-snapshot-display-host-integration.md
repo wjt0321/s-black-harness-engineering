@@ -1,4 +1,4 @@
-<!-- parents: ../../../docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md -->
+<!-- parents: ../../../docs/archive/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md -->
 
 # Release Notes 101 — Stage 40 Filtered Snapshot Display Host Integration
 

@@ -484,9 +484,9 @@ Stage 46 设计门通过，但真实 execution 仍 unavailable。合理后续顺
 
 approval plan binding 对 `requires_approval=false` 的 `git_status` 不构成 Stage 49 前置，但仍是任何 future approval-required adapter 的硬门禁。
 
-> 2026-07-17 post-close：Stage 47–48 已按 `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md` 实现并收口。该完成只解除 audit-writer 前置，不解除本文件的 executable/image trust、TOCTOU、sanitized PATH、repository containment、process-tree runner 与用户显式 subprocess 授权条件；Stage 49 继续 unavailable。
+> 2026-07-17 post-close：Stage 47–48 已按 `docs/archive/97-execution-lifecycle-audit-writer-design-and-implementation.md` 实现并收口。该完成只解除 audit-writer 前置，不解除本文件的 executable/image trust、TOCTOU、sanitized PATH、repository containment、process-tree runner 与用户显式 subprocess 授权条件；Stage 49 继续 unavailable。
 
-> 2026-07-17 Stage 49 implementation：用户已再次明确授权真实 subprocess；Windows trust binding、non-shareable executable handle、suspended image recheck、sanitized child PATH、repository guard、Job Object runner、finite parser、post-run guard 与 audit release gate 已按 `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 实现并通过一次真实临时仓库 smoke。该实现只开放 fixed `git status --short --branch`，POSIX 与任何第二个 operation 继续 unavailable。
+> 2026-07-17 Stage 49 implementation：用户已再次明确授权真实 subprocess；Windows trust binding、non-shareable executable handle、suspended image recheck、sanitized child PATH、repository guard、Job Object runner、finite parser、post-run guard 与 audit release gate 已按 `docs/archive/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 实现并通过一次真实临时仓库 smoke。该实现只开放 fixed `git status --short --branch`，POSIX 与任何第二个 operation 继续 unavailable。
 
 <!-- gate-status: passed-stage46-design-only -->
 <!-- execution-status: superseded-by-stage49-windows-limited-enablement -->

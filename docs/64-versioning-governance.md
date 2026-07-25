@@ -336,7 +336,7 @@ Stage 39–40 在 v0.16.0 display consumer 上形成 validation-before-release o
 v0.17.0-filtered-snapshot-display-host-integration
 ```
 
-事实源为 `docs/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 `docs/archive/release-notes/102-release-notes-v0.17.0-filtered-snapshot-display-host-integration.md`。该 tag 后于 2026-07-16 按用户授权推送至 `origin`；专有 UI、render、file/URL、network/service、persistence/export、write 与真实 execution 继续 unavailable。
+事实源为 `docs/archive/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 `docs/archive/release-notes/102-release-notes-v0.17.0-filtered-snapshot-display-host-integration.md`。该 tag 后于 2026-07-16 按用户授权推送至 `origin`；专有 UI、render、file/URL、network/service、persistence/export、write 与真实 execution 继续 unavailable。
 
 ## Stage 42 Presentation Handoff Design-only Gate（2026-07-16）
 
@@ -380,7 +380,7 @@ Stage 47–48 已形成可复用的内部 controlled-write 能力包：
 但本能力没有 CLI，也不启动 subprocess、执行 Git、访问网络或开放 adapter execution，因此仍不满足新的 semver tag 条件：
 
 - 稳定 tag 继续为已推送的 `v0.17.0-filtered-snapshot-display-host-integration`；
-- Stage 47–48 以 `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md` 与 release notes 107 收口；
+- Stage 47–48 以 `docs/archive/97-execution-lifecycle-audit-writer-design-and-implementation.md` 与 release notes 107 收口；
 - 本轮只创建本地提交，不创建 `v0.18.0` tag，不 push；
 - Stage 49 必须在用户再次明确授权真实 subprocess，并闭合 Stage 46 trust/image binding、sanitized child PATH、process-tree containment 与有限 parser 后，才允许实现；
 - audit writer 完成不得被解释为 execution permission。
@@ -404,7 +404,7 @@ Stage 49 已形成第一个真实但严格有限的 Windows execution 能力包�
 - machine-local trust binding 需要 operator provisioning，不是跨机器即开即用能力；
 - 用户要求只提交到本地，不 push。
 
-稳定 semver 继续为已推送的 `v0.17.0-filtered-snapshot-display-host-integration`。Stage 49 以 `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108 收口；后续是否形成 v0.18 必须在 operational recovery、平台覆盖和 stronger isolation 重新评估后决定。
+稳定 semver 继续为已推送的 `v0.17.0-filtered-snapshot-display-host-integration`。Stage 49 以 `docs/archive/98-fixed-git-status-executor-implementation-and-limited-enablement.md` 与 release notes 108 收口；后续是否形成 v0.18 必须在 operational recovery、平台覆盖和 stronger isolation 重新评估后决定。
 
 ## Stage 50 Fixed Execution Operational Recovery Design-only Gate（2026-07-17）
 
@@ -420,7 +420,7 @@ Stage 50 冻结 Stage 49 之后的 operational recovery contract：
 本阶段没有新增 production CLI、schema、writer、subprocess 或真实 operation，因此不形成新的 semver capability pack：
 
 - 稳定 tag 继续为已推送的 `v0.17.0-filtered-snapshot-display-host-integration`；
-- Stage 50 以 `docs/99-fixed-execution-operational-recovery-design-gate.md` 与 release notes 109 收口；
+- Stage 50 以 `docs/archive/99-fixed-execution-operational-recovery-design-gate.md` 与 release notes 109 收口；
 - 不创建 `v0.18.0`，不 push；
 - Stage 51 只能按 Stage 50 contract 实现 recovery，不得增加第二个 command、POSIX、network adapter 或 stronger filesystem claim。
 
@@ -434,7 +434,7 @@ Stage 51 已按 Stage 50 contract 实现 shared machine-local lease、trust insp
 - POSIX、第二个 operation、任意 shell/argv、network/service/UI 与 filesystem write proof 继续 unavailable；
 - Stage 51 没有运行 real smoke，只使用 fake backend、临时 ledger 与自动化测试；
 - 稳定 tag 继续为已推送的 `v0.17.0-filtered-snapshot-display-host-integration`；
-- Stage 51 以 `docs/100-fixed-execution-operational-recovery-implementation.md` 与 release notes 110 收口；
+- Stage 51 以 `docs/archive/100-fixed-execution-operational-recovery-implementation.md` 与 release notes 110 收口；
 - 本轮不创建 tag、不 push、不 merge。
 
 下一候选为 Stage 52 conditional design gate，只允许审计 remaining risks、operator/consumer need 与下一决策，不授予 implementation authority。

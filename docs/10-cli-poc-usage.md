@@ -2532,7 +2532,7 @@ printf '%s' '{"schema_version":"pi-bridge/preflight-request/v1","tool":"bash","i
 - `tool` ∈ `read` / `write` / `edit` / `bash`；最小字段：read `{path}`、write `{path, content}`、edit `{path, edits: [{old_string, new_string}]}`、bash `{command}`；可选 `request_id`。
 - decision：`pass`（exit 0）/ `needs_approval`（exit 3）/ `blocked`（exit 2）/ `invalid`（exit 5）。
 - 响应只含安全 findings、`next_action` 与 `request_hash` / `target_hash`，不回显 target、命令或文件内容。
-- 请求/响应 JSON schema 与最小 TypeScript Extension 示例见 `integrations/pi/`；事实源为 `docs/101-pi-coding-agent-preflight-bridge.md`。
+- 请求/响应 JSON schema 与最小 TypeScript Extension 示例见 `integrations/pi/`；事实源为 `docs/archive/101-pi-coding-agent-preflight-bridge.md`。
 
 ## Pi interactive approval（Stage 53，extension-only）
 
@@ -2542,7 +2542,7 @@ Stage 53 没有新增 Harness execution CLI。它是 `integrations/pi/extension.
 AGENT_RUNTIME_APPROVAL_MODE=interactive
 ```
 
-只有 host cwd 等于 `AGENT_RUNTIME_ROOT`、交互 UI 可用且命令精确为 `git push origin main` 时，`needs_approval` 才会弹一次确认；确认后 extension 重跑 bridge 并核对 request/target identity。批准不持久化、不复用，不让 Harness 执行工具；其他 `needs_approval`、`blocked`、`invalid`、无 UI、拒绝或超时仍阻断。事实源为 `docs/102-pi-interactive-approval-roundtrip.md`。
+只有 host cwd 等于 `AGENT_RUNTIME_ROOT`、交互 UI 可用且命令精确为 `git push origin main` 时，`needs_approval` 才会弹一次确认；确认后 extension 重跑 bridge 并核对 request/target identity。批准不持久化、不复用，不让 Harness 执行工具；其他 `needs_approval`、`blocked`、`invalid`、无 UI、拒绝或超时仍阻断。事实源为 `docs/archive/102-pi-interactive-approval-roundtrip.md`。
 
 ## Pi postflight projection（Stage 54，extension-only）
 
@@ -2552,4 +2552,4 @@ Stage 54 也没有新增 Harness execution CLI。它是 `integrations/pi/extensi
 AGENT_RUNTIME_POSTFLIGHT_MODE=summary
 ```
 
-启用后，extension 在 Pi/OMP 工具执行完成后用当前 `event.input` 重跑 `pi-bridge preflight`，并向 tool result 追加一个 value-free 摘要块。摘要只包含 hashes、decision、block counts、text char count 与原始 `isError`；不包含 path、command、tool output 或 details。不写 ledger、不改 `isError`，也不证明 Harness 执行了工具。事实源为 `docs/103-pi-postflight-audit-projection.md`。
+启用后，extension 在 Pi/OMP 工具执行完成后用当前 `event.input` 重跑 `pi-bridge preflight`，并向 tool result 追加一个 value-free 摘要块。摘要只包含 hashes、decision、block counts、text char count 与原始 `isError`；不包含 path、command、tool output 或 details。不写 ledger、不改 `isError`，也不证明 Harness 执行了工具。事实源为 `docs/archive/103-pi-postflight-audit-projection.md`。

@@ -109,7 +109,7 @@
 - Modify: `README.en.md`
 - Modify: `AGENTS.md`
 - Modify: `tasks/progress.md`
-- Create: `docs/100-fixed-execution-operational-recovery-implementation.md`
+- Create: `docs/archive/100-fixed-execution-operational-recovery-implementation.md`
 - Create: `docs/archive/release-notes/110-release-notes-stage51-fixed-execution-operational-recovery.md`
 - Create: `tasks/handoff-2026-07-22.md`
 

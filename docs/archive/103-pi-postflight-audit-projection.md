@@ -79,7 +79,7 @@ No real `git push` was executed. No Pi/OMP persistent configuration was modified
 
 ## 7. Next candidate
 
-Stage 55 已完成 Pi-first operator handoff，事实源为 `docs/104-pi-first-operator-handoff.md`。下一候选为 Stage 56 Pi Native Install Smoke：仅在明确授权后验证独立 Pi CLI、可回滚 extension 安装与 Layer 1 preflight smoke；不默认开启 approval、postflight projection 或持久 audit。
+Stage 55 已完成 Pi-first operator handoff，事实源为 `docs/archive/104-pi-first-operator-handoff.md`。下一候选为 Stage 56 Pi Native Install Smoke：仅在明确授权后验证独立 Pi CLI、可回滚 extension 安装与 Layer 1 preflight smoke；不默认开启 approval、postflight projection 或持久 audit。
 
 <!-- stage54-status: implemented-local -->
 <!-- authority: host-side-postflight-projection-only -->

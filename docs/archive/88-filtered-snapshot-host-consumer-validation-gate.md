@@ -390,7 +390,7 @@ Stage 28/29 继续不允许：
 - no import/read/write/network/service/subprocess/execute；
 - Stage 29 RED/GREEN 验收矩阵。
 
-Stage 29 已按本设计门实现并收口，事实源为 `docs/89-codex-desktop-filtered-snapshot-consumer-implementation.md` 与 `docs/archive/release-notes/91-release-notes-stage29-codex-desktop-filtered-snapshot-consumer.md`。下一阶段为 **Stage 30 — Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）**。
+Stage 29 已按本设计门实现并收口，事实源为 `docs/archive/89-codex-desktop-filtered-snapshot-consumer-implementation.md` 与 `docs/archive/release-notes/91-release-notes-stage29-codex-desktop-filtered-snapshot-consumer.md`。下一阶段为 **Stage 30 — Codex Desktop Filtered Snapshot Host Integration Gate（条件启动）**。
 
 <!-- gate-status: passed -->
 <!-- implementation-status: stage29-complete -->

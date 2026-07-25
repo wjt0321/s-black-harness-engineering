@@ -2,7 +2,7 @@
 
 > 日期：2026-07-15
 > 状态：验收完成
-> 设计与实现事实源：`docs/83-codex-desktop-snapshot-json-reader-implementation.md`
+> 设计与实现事实源：`docs/archive/83-codex-desktop-snapshot-json-reader-implementation.md`
 
 ## 1. 交付
 
