@@ -4,9 +4,9 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：48 个（2026-07-25 已按批准归档 12 份已冻结设计文档：41/45/54/56/58/60/62/63/66/70/73/74，全部引用已修复；新增 `109-pi-adapter-discovery-capability-projection.md`）
+- docs/ 活跃文档：49 个（2026-07-25 已按批准归档 12 份已冻结设计文档：41/45/54/56/58/60/62/63/66/70/73/74，全部引用已修复；新增 `110-pi-controlled-dry-run-adapter-contract.md`）
 - 归档文档：100 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：195 个
+- 全仓 .md 文件：196 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,6 +25,7 @@
 
 ## 当前阶段
 
+- **Stage 61 — Pi Controlled Dry-run Adapter Contract（已完成并收口；design-only，未授权实现）**
 - **Stage 60 — Pi Adapter Discovery & Capability Projection（已完成并收口；read-only，无执行权限）**
 - Stage 59 — Pi CLI/TUI Mode Stabilization Gate（已完成并收口；pinned default + entry contract + repeatable smoke）
 - Stage 58 — Pi Project-local Runtime Integration（已完成并收口；project-local ignored runtime）
@@ -126,6 +127,17 @@
 - 摘要不包含 path、command、file content、tool output text、details payload 或 credential-like values；不写 ledger、不访问网络、不改 `isError`、不 patch details。
 - 这是 host-side projection，不是 durable audit writer，也不证明 Harness 执行了工具。
 - Stage 54 事实源：`docs/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 61 — Pi Controlled Dry-run Adapter Contract（design-only）
+
+- 新增 `docs/110-pi-controlled-dry-run-adapter-contract.md`，冻结唯一候选 operation `pi_cli_print`：固定 argv `pi --print --no-session --no-tools`，prompt 为唯一可控输入（4 KiB/UTF-8/控制字符有界、secret scan 前置、只以 digest 进入 plan/audit）。
+- `--no-session` + `--no-tools` 把本地副作用面压到最小（无 session 写入、无工具执行）；read 工具 roundtrip 与 `--mode json` 明确排除为独立后续候选。
+- child 环境显式 allowlist 重建：`PI_CODING_AGENT_DIR`/`AGENT_RUNTIME_ROOT` 固定 project-local，`DEEPSEEK_API_KEY` 只经 env 透传且永不回显，proxy 与其他变量一律不透传。
+- 诚实声明 npm 安装完整性信任缺口：Pi 入口是 node + npm cli.js 组合，Stage 46 式 executable trust binding 不直接适用，v1 不宣传为 trusted executable chain。
+- 复用 Stage 49 Windows Job Object runner 语义（60s 默认/120s 上限、每流 256 KiB、tree kill、no orphan）与 Stage 47–48 started/terminal audit 绑定；模型回答文本不进入公开投影，只留 digest/计数。
+- 冻结 failure mapping、10 条 stop-lines 与 12 项 TDD 验收矩阵；推荐下一实现为 Stage 62（条件启动，需用户再次授权真实模型调用与第二个真实 operation）。
+- 本 stage 只有设计文档：无代码、无 CLI、无 subprocess、无 ledger 写入、无网络、无 approval 启用。
+- Stage 61 事实源：`docs/110-pi-controlled-dry-run-adapter-contract.md` 与 `tasks/handoff-2026-07-25.md`。
 
 ### 新进落地：Stage 60 - Pi Adapter Discovery & Capability Projection
 
@@ -332,28 +344,29 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/109-pi-adapter-discovery-capability-projection.md`
-3. `docs/108-pi-cli-mode-stabilization.md`
-3. `docs/107-pi-project-local-runtime-integration.md`
-4. `docs/106-pi-first-real-session-gate.md`
-5. `docs/105-pi-native-install-smoke.md`
-6. `docs/104-pi-first-operator-handoff.md`
-7. `docs/103-pi-postflight-audit-projection.md`
-8. `docs/102-pi-interactive-approval-roundtrip.md`
-9. `docs/101-pi-coding-agent-preflight-bridge.md`
-10. `docs/100-fixed-execution-operational-recovery-implementation.md`
-11. `docs/99-fixed-execution-operational-recovery-design-gate.md`
-12. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
-13. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
-14. `tasks/handoff-2026-07-25.md`
-15. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
-16. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
-17. 再跑：`python -m agent_runtime.cli docs context --json`
+2. `docs/110-pi-controlled-dry-run-adapter-contract.md`
+3. `docs/109-pi-adapter-discovery-capability-projection.md`
+4. `docs/108-pi-cli-mode-stabilization.md`
+5. `docs/107-pi-project-local-runtime-integration.md`
+6. `docs/106-pi-first-real-session-gate.md`
+7. `docs/105-pi-native-install-smoke.md`
+8. `docs/104-pi-first-operator-handoff.md`
+9. `docs/103-pi-postflight-audit-projection.md`
+10. `docs/102-pi-interactive-approval-roundtrip.md`
+11. `docs/101-pi-coding-agent-preflight-bridge.md`
+12. `docs/100-fixed-execution-operational-recovery-implementation.md`
+13. `docs/99-fixed-execution-operational-recovery-design-gate.md`
+14. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+15. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+16. `tasks/handoff-2026-07-25.md`
+17. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
+18. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
+19. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
 - **真实终端人工 TUI 会话验收（operator 执行）**：按 `docs/108` 第 3 节契约在真实终端运行 `pi`；间歇失败再观察，复现 0 输出时按 60s 有界 kill 收集证据。
-- Stage 60 已把 Pi 本地运行时以只读方式投影进 adapter registry / routing / snapshot；任何 pi-cli 的 dry-run/commit 执行语义都必须独立设计 stage 并由用户明确授权。
+- Stage 60 已把 Pi 本地运行时以只读方式投影进 adapter registry / routing / snapshot；Stage 61 已冻结 `pi_cli_print` 受控 dry-run contract（`docs/110`）；实现 stage（推荐 Stage 62）必须由用户再次明确授权真实模型调用与第二个真实 operation，并按 110 的验收矩阵 TDD 落地。
 - Pi-first 是主线；OMP 仅作为兼容验证/备选。
 - POSIX enablement 必须另行闭合 executable image identity、process-group containment 与同等输出/审计停止线。
 - 任何第二个 command、通用 approval-required adapter、network operation、bridge execution authority、持久 audit writer、自动安装或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。

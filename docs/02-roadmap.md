@@ -1223,6 +1223,12 @@ Pi agent dir 已迁入 `<project-root>\.runtime\pi-agent`，并通过用户级 `
 
 事实源：`docs/109-pi-adapter-discovery-capability-projection.md`。
 
+## Stage 61 — Pi Controlled Dry-run Adapter Contract（design-only，已冻结）
+
+已冻结唯一候选 operation `pi_cli_print`（固定 argv `pi --print --no-session --no-tools`，prompt 为唯一可控输入、4 KiB 有界、secret scan 前置）的受控 dry-run 执行契约：显式 `--commit` 才允许 spawn；环境显式 allowlist 重建（`DEEPSEEK_API_KEY` 只经 env 透传且永不回显）；诚实声明 npm 安装完整性信任缺口，v1 不宣传为 trusted executable chain；复用 Stage 49 Windows Job Object runner 语义（60s 默认/120s 上限、每流 256 KiB）与 Stage 47–48 audit 链；模型回答文本不进入 Harness 公开投影（只留 digest/计数）。read 工具 roundtrip、json 模式、approval binding、POSIX 均为独立后续候选。本 stage 只有设计文档，无代码、无 CLI、无 subprocess；推荐下一实现为 Stage 62（条件启动，需用户再次授权真实模型调用与第二个真实 operation）。
+
+事实源：`docs/110-pi-controlled-dry-run-adapter-contract.md`。
+
 ---
 
 ## Guardrail 主线策略

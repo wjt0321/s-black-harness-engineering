@@ -81,6 +81,7 @@
 - `107-pi-project-local-runtime-integration.md` — Stage 58 将 Pi agent dir 迁入项目 `.runtime`、Git 隔离、模型与 extension 自动发现验证（已收口）
 - `108-pi-cli-mode-stabilization.md` — Stage 59 Pi CLI/TUI mode 稳定门：0 输出超时诊断、钉住 deepseek-compat 默认模型、入口契约与可重复 smoke（已收口）
 - `109-pi-adapter-discovery-capability-projection.md` — Stage 60 Pi adapter discovery 与 capability/readiness 只读投影：`pi-cli` registry 条目、本地运行时 fail-closed 探测、inspect/preflight 接入（已收口；无执行权限）
+- `110-pi-controlled-dry-run-adapter-contract.md` — Stage 61 Pi controlled dry-run adapter contract（design-only）：固定 `pi_cli_print` 调用形状、环境 allowlist、信任缺口声明、process-tree containment、输出协议、plan/audit 绑定、failure mapping 与 stop-lines（已冻结；未授权实现）
 - `archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` — Stage 36–38 display v1 consumer 与 `v0.16.0` 历史事实源
 - `archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` — Stage 33–35 Markdown display 与 `v0.15.0` 历史事实源
 - `archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` — Stage 30–32 host design、实现、验收与 `v0.14.0` 历史冻结事实源

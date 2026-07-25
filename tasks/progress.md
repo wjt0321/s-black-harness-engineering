@@ -2967,3 +2967,11 @@
 - 接入：`orchestration adapter inspect pi-cli` 附加 `local_runtime` 块（其他 adapter 不变）；`orchestration preflight` 对 pi-cli 未就绪 `blocked`、就绪仍 `needs_approval`；control-panel snapshot 经既有 list 自动包含（adapter 9→10）。
 - 新增 `tests/test_pi_runtime_discovery.py` 19 项（含明文 apiKey 不回显、auth/session canary 不读取、既有路由不受影响）；全量 pytest 1390 passed / 0 failed；doctor PASS、public scan OK、diff check 干净。
 - 事实源 `docs/109-pi-adapter-discovery-capability-projection.md`；未 commit/push。
+
+
+## 2026-07-25 Stage 61 - Pi Controlled Dry-run Adapter Contract（design-only）
+
+- 用户授权按 Stage 46 范式做 design-only 阶段：冻结 Pi 受控 dry-run adapter contract，不实现 runner/CLI/subprocess/模型调用/网络/ledger writer/approval 启用/Pi 配置变更。
+- 新增 `docs/110-pi-controlled-dry-run-adapter-contract.md`：唯一候选 operation `pi_cli_print`（固定 argv `pi --print --no-session --no-tools`，`--` 分隔，prompt 唯一可控输入、4 KiB/UTF-8/控制字符有界、secret scan 前置）；`--no-session`/`--no-tools` 取舍与 read/json 候选排除理由；环境显式 allowlist 重建（`DEEPSEEK_API_KEY` 只经 env 透传永不回显，proxy 不透传）；诚实声明 npm 安装完整性信任缺口（v1 非 trusted executable chain）；复用 Stage 49 Job Object runner 语义（60s/120s、每流 256 KiB）与 Stage 47–48 audit 绑定；模型回答文本不进公开投影；failure mapping、10 条 stop-lines、12 项 TDD 验收矩阵。
+- 推荐下一实现为 Stage 62 Pi Controlled Dry-run Print Implementation（条件启动，需用户再次授权真实模型调用与第二个真实 operation）。
+- 同步更新 `docs/00-index.md`、`docs/02-roadmap.md`、`docs/000-stage-digest.md`（活跃文档 48→49，全仓 md 195→196，恢复顺序插入 110）与本 handoff；无代码改动、无新增测试（项目无 docs 一致性测试）；未 commit/push。
