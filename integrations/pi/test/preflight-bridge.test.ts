@@ -9,11 +9,13 @@ import { fileURLToPath } from "node:url";
 import { runPreflightBridge } from "../preflight-bridge.ts";
 import {
   createApprovalToolCallHandler,
+  createPostflightProjectionHandler,
   createToolCallHandler,
   decisionToGateResult,
   extractEditEntries,
   INTERACTIVE_APPROVAL_MODE,
   isInteractiveApprovalCandidate,
+  POSTFLIGHT_PROJECTION_MODE,
   resolveBridgeOptions,
   sanitizeRequestId,
   toBridgeRequest,
@@ -267,6 +269,65 @@ test("blocked decisions never prompt for approval", async () => {
   const result = await handler({ toolName: "read", toolCallId: "approval-6", input: { path: ".env" } });
   assert.equal(result?.block, true);
   assert.equal(confirms, 0);
+});
+
+test("postflight projection is default-off", async () => {
+  const handler = createPostflightProjectionHandler(options, undefined);
+  const result = await handler({
+    toolName: "read",
+    toolCallId: "postflight-1",
+    input: { path: "docs/00-index.md" },
+    content: [{ type: "text", text: "actual output" }],
+    isError: false,
+  });
+  assert.equal(result, undefined);
+});
+
+test("postflight projection appends value-free summary without changing error state", async () => {
+  const handler = createPostflightProjectionHandler(options, POSTFLIGHT_PROJECTION_MODE);
+  const result = await handler({
+    toolName: "read",
+    toolCallId: "postflight-2",
+    input: { path: "docs/00-index.md" },
+    content: [{ type: "text", text: "actual output" }],
+    isError: false,
+  });
+  assert.equal(result?.isError, undefined);
+  assert.equal(result?.content?.length, 2);
+  const summary = result?.content?.[1]?.text;
+  assert.equal(typeof summary, "string");
+  assert.match(summary as string, /\[Harness postflight projection\]/);
+  assert.match(summary as string, /decision=pass/);
+  assert.match(summary as string, /request_hash=sha256:[0-9a-f]{64}/);
+  assert.match(summary as string, /target_hash=sha256:[0-9a-f]{64}/);
+  assert.match(summary as string, /tool_call_id_hash=sha256:[0-9a-f]{64}/);
+  assert.match(summary as string, /content_blocks=1/);
+  assert.match(summary as string, /text_chars=13/);
+  assert.ok(!(summary as string).includes("actual output"));
+  assert.ok(!(summary as string).includes("docs/00-index.md"));
+});
+
+test("postflight projection records blocked status without echoing sensitive target", async () => {
+  const handler = createPostflightProjectionHandler(options, POSTFLIGHT_PROJECTION_MODE);
+  const result = await handler({
+    toolName: "read",
+    toolCallId: "postflight-3",
+    input: { path: ".env" },
+    content: [{ type: "text", text: "blocked output should not appear in summary" }],
+    isError: true,
+  });
+  const summary = result?.content?.[1]?.text;
+  assert.equal(typeof summary, "string");
+  assert.match(summary as string, /decision=blocked/);
+  assert.match(summary as string, /is_error=true/);
+  assert.ok(!(summary as string).includes(".env"));
+  assert.equal(result?.isError, undefined);
+});
+
+test("postflight projection ignores ungated tools and malformed input", async () => {
+  const handler = createPostflightProjectionHandler(options, POSTFLIGHT_PROJECTION_MODE);
+  assert.equal(await handler({ toolName: "web_search", toolCallId: "postflight-4", input: {}, content: [], isError: false }), undefined);
+  assert.equal(await handler({ toolName: "read", toolCallId: "postflight-5", input: {}, content: [], isError: false }), undefined);
 });
 
 test("resolveBridgeOptions requires AGENT_RUNTIME_ROOT", () => {

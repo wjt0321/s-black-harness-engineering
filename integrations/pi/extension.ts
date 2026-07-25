@@ -22,6 +22,7 @@
 // npm dependencies. Pure functions are exported for tests.
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { runPreflightBridge, REQUEST_SCHEMA_VERSION } from "./preflight-bridge.ts";
 import type { BridgeClientOptions, BridgeRequest, BridgeResponse } from "./preflight-bridge.ts";
@@ -33,6 +34,17 @@ export interface ToolCallEventLike {
   toolCallId: string;
   input: Record<string, unknown>;
 }
+
+export interface ToolResultEventLike {
+  toolName: string;
+  toolCallId: string;
+  input: Record<string, unknown>;
+  content: Array<Record<string, unknown>>;
+  isError: boolean;
+  details?: unknown;
+}
+
+export type ToolResultPatch = { content?: Array<Record<string, unknown>>; details?: unknown; isError?: boolean } | undefined;
 
 export interface PiEditEntry {
   oldText: string;
@@ -48,9 +60,12 @@ export interface ApprovalContextLike {
   confirm(title: string, message: string, options?: { timeout?: number }): Promise<boolean>;
 }
 
-// Only this explicit environment value enables the one-shot approval path.
+// Only these explicit environment values enable host-side optional behavior.
 export const INTERACTIVE_APPROVAL_MODE = "interactive";
+export const POSTFLIGHT_PROJECTION_MODE = "summary";
 const APPROVAL_ACTIONS = new Set(["require_user_approval", "require_secret_scan"]);
+const POSTFLIGHT_TOOLS: readonly string[] = ["read", "write", "edit", "bash"];
+const POSTFLIGHT_MARKER = "[Harness postflight projection]";
 
 // Pi default tools gated by the Stage 52 bridge. Anything else is blocked
 // fail-closed in this extension; relax only with an explicit design decision.
@@ -192,6 +207,65 @@ function sameApprovalIdentity(first: BridgeResponse, second: BridgeResponse): bo
   );
 }
 
+function sha256Text(value: string): string {
+  return `sha256:${createHash("sha256").update(value, "utf8").digest("hex")}`;
+}
+
+function summarizeContentBlocks(content: Array<Record<string, unknown>>): Record<string, number> {
+  let textBlocks = 0;
+  let imageBlocks = 0;
+  let otherBlocks = 0;
+  let textChars = 0;
+  for (const block of content) {
+    if (block?.type === "text" && typeof block.text === "string") {
+      textBlocks += 1;
+      textChars += block.text.length;
+    } else if (block?.type === "image") {
+      imageBlocks += 1;
+    } else {
+      otherBlocks += 1;
+    }
+  }
+  return { blocks: content.length, text_blocks: textBlocks, image_blocks: imageBlocks, other_blocks: otherBlocks, text_chars: textChars };
+}
+
+function postflightSummaryText(response: BridgeResponse, event: ToolResultEventLike): string {
+  const counts = summarizeContentBlocks(event.content ?? []);
+  const idHash = sha256Text(String(event.toolCallId || ""));
+  return [
+    POSTFLIGHT_MARKER,
+    `tool=${response.tool ?? event.toolName}`,
+    `decision=${response.decision}`,
+    `is_error=${event.isError ? "true" : "false"}`,
+    `request_id=${response.request_id ?? "none"}`,
+    `request_hash=${response.request_hash ?? "none"}`,
+    `target_hash=${response.target_hash ?? "none"}`,
+    `tool_call_id_hash=${idHash}`,
+    `content_blocks=${counts.blocks}`,
+    `text_blocks=${counts.text_blocks}`,
+    `image_blocks=${counts.image_blocks}`,
+    `other_blocks=${counts.other_blocks}`,
+    `text_chars=${counts.text_chars}`,
+    "writes_ledgers=false",
+    "executes_tools=false",
+  ].join("\n");
+}
+
+export function createPostflightProjectionHandler(
+  options: BridgeClientOptions,
+  postflightMode: string | undefined,
+): (event: ToolResultEventLike) => Promise<ToolResultPatch> {
+  return async (event: ToolResultEventLike): Promise<ToolResultPatch> => {
+    if (postflightMode !== POSTFLIGHT_PROJECTION_MODE) return undefined;
+    if (!POSTFLIGHT_TOOLS.includes(event.toolName)) return undefined;
+    const request = toBridgeRequest(event);
+    if (request === null) return undefined;
+    const response = await runPreflightBridge(request, options);
+    const summary = postflightSummaryText(response, event);
+    return { content: [...(event.content ?? []), { type: "text", text: summary }] };
+  };
+}
+
 export function createApprovalToolCallHandler(
   options: BridgeClientOptions,
   approvalMode: string | undefined,
@@ -280,6 +354,7 @@ export function resolveBridgeOptions(
 export default function (pi: ExtensionAPI) {
   const options = resolveBridgeOptions(process.env);
   const approvalMode = process.env.AGENT_RUNTIME_APPROVAL_MODE;
+  const postflightMode = process.env.AGENT_RUNTIME_POSTFLIGHT_MODE;
   pi.on("tool_call", async (event, ctx) => {
     if (options === null) {
       return {
@@ -295,5 +370,10 @@ export default function (pi: ExtensionAPI) {
       confirm: (title, message, dialogOptions) =>
         ctx.ui.confirm(title, message, { ...dialogOptions, timeout: 60_000 }),
     })(event as ToolCallEventLike);
+  });
+
+  pi.on("tool_result", async (event) => {
+    if (options === null) return undefined;
+    return createPostflightProjectionHandler(options, postflightMode)(event as ToolResultEventLike);
   });
 }

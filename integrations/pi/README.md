@@ -35,6 +35,7 @@ execution authority。bridge 只做规范化与门禁判断，绝不执行 read/
      默认工具调用 fail-closed block。**
    - `AGENT_RUNTIME_PYTHON`（可选）：python launcher 覆盖；其后的 argv 固定不变。
    - `AGENT_RUNTIME_APPROVAL_MODE=interactive`（可选，默认关闭）：启用 Stage 53 一次性交互批准。v1 只支持 host cwd 等于 Harness root 时的精确命令 `git push origin main`；其他 `needs_approval` 仍阻断。
+   - `AGENT_RUNTIME_POSTFLIGHT_MODE=summary`（可选，默认关闭）：启用 Stage 54 postflight projection。v1 在 `tool_result` 后追加脱敏摘要块，不写 ledger、不改 `isError`。
 
 ## Stage 53 一次性交互批准
 
@@ -42,6 +43,13 @@ execution authority。bridge 只做规范化与门禁判断，绝不执行 read/
 - 确认后从当前 `event.input` 重新归一化并重跑 bridge；request id/hash、tool、target hash 必须与确认前完全一致。
 - 批准不写磁盘、不缓存、不跨调用复用；`blocked` / `invalid` 永不弹确认。
 - v1 只允许 `git push origin main`，并深冻结已批准 input。Pi/OMP API 仍允许排序更后的扩展替换整个 input，因此该模式是有限本地 host approval，不是通用强隔离 approval authority。
+
+## Stage 54 postflight projection
+
+- 仅在 `AGENT_RUNTIME_POSTFLIGHT_MODE=summary` 时启用；默认不修改 tool result。
+- handler 监听 `tool_result`，用当前 `event.input` 重跑 Stage 52 preflight，并追加一个文本摘要块。
+- 摘要只包含 tool、decision、request/target hash、hashed toolCallId、content block/text char counts 与原始 `isError`；不包含 path、command、tool output、details 或凭据形态值。
+- 不返回 `isError` patch，不 patch details，不写 Harness ledger，不访问网络，也不证明 Harness 执行了工具。
 
 ## 工作方式
 

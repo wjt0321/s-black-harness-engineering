@@ -2894,3 +2894,11 @@
 - 批准不写盘、不缓存、不复用；Harness 不执行工具。批准后 deep freeze input，但后续 extension 可替换整个 input，因此明确为有限 host approval，不宣称通用强隔离 authority。
 - Node 行为测试从 12 项扩展至 18 项并通过；事实源为 `docs/102-pi-interactive-approval-roundtrip.md` 与 `tasks/handoff-2026-07-25.md`。
 - 下一候选为 Stage 54 Pi Postflight Audit Design Gate，仅设计 final-arguments identity、脱敏结果投影、失败/取消映射与 ledger 边界，不授予实现 authority。
+
+## 2026-07-25 Stage 54 - Pi Postflight Audit Projection
+
+- `integrations/pi/extension.ts` 新增默认关闭的 `AGENT_RUNTIME_POSTFLIGHT_MODE=summary`；启用后监听 Pi/OMP `tool_result`，用当前 `event.input` 重跑 Stage 52 preflight，并向 tool result content 追加 value-free 摘要块。
+- 摘要包含 tool、decision、request/target hash、hashed toolCallId、content block/text char counts 与原始 `isError`；不包含 path、command、tool output、details payload 或 credential-like values。
+- Stage 54 不写 Harness ledger、不访问网络、不改 `isError`、不 patch details，也不声明 Harness 执行了工具；它是 host-side projection，不是 durable audit writer。
+- Node 行为测试扩展至 22 项并通过；事实源为 `docs/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
+- 下一候选为 Stage 55 Pi Extension Install / Operator Handoff Gate，仅设计持久安装、extension 共存、env 开关与 persistent discovery smoke，不授予自动安装或扩大 execution authority。

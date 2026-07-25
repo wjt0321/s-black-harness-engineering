@@ -34,7 +34,7 @@
 - `41-runtime-event-import-consistency-freeze.md`
 - `45-runtime-event-import-strict-freeze-mode.md`
 
-### 5. 想看中枢台主线（Stage 53 Pi interactive approval 已收口）
+### 5. 想看中枢台主线（Stage 54 Pi postflight projection 已收口）
 
 - `47-orchestration-hub-vision.md` — 中枢台愿景
 - `48-adapter-runtime-interface.md` — 适配器运行时接口
@@ -74,6 +74,7 @@
 - `100-fixed-execution-operational-recovery-implementation.md` — Stage 51 lease、trust inspection/rotation、bounded recovery、Job accounting 与 audit v1/v2 implementation 事实源（已收口）
 - `101-pi-coding-agent-preflight-bridge.md` — Stage 52 Pi host preflight bridge v1：一次性 stdin/stdout JSON 预检桥与 `integrations/pi/` 最小 Extension 示例（已收口；host-side preflight only，非 execution authority）
 - `102-pi-interactive-approval-roundtrip.md` — Stage 53 默认关闭的一次性交互批准、二次 preflight identity binding 与有限 host approval 边界（已收口；非 execution authority）
+- `103-pi-postflight-audit-projection.md` — Stage 54 默认关闭的 `tool_result` 脱敏摘要投影、final input re-preflight 与非持久 audit 边界（已收口；非 execution authority）
 - `archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` — Stage 36–38 display v1 consumer 与 `v0.16.0` 历史事实源
 - `archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` — Stage 33–35 Markdown display 与 `v0.15.0` 历史事实源
 - `archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` — Stage 30–32 host design、实现、验收与 `v0.14.0` 历史冻结事实源

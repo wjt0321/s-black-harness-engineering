@@ -154,7 +154,8 @@ The repository formalizes this through `docs/64-versioning-governance.md`. The p
 - ✅ Stage 51 — Fixed Execution Operational Recovery Implementation (commit-level milestone)
 - ✅ Stage 52 — Pi Coding Agent Preflight Bridge (host-side preflight v1; commit-level milestone)
 - ✅ Stage 53 — Pi Interactive Approval Roundtrip (limited host approval v1; commit-level milestone)
-- ⏳ Stage 54 — Pi Postflight Audit Design Gate (conditional)
+- ✅ Stage 54 — Pi Postflight Audit Projection (host-side projection v1; commit-level milestone)
+- ⏳ Stage 55 — Pi Extension Install / Operator Handoff Gate (conditional)
 
 ### The Most Accurate Current Read
 
@@ -223,14 +224,15 @@ For more CLI usage, see `docs/10-cli-poc-usage.md`.
 For a new session, recover the current stage first; there is no need to read the full history in sequence:
 
 1. [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current stage, stable baseline, and next step.
-2. [`docs/102-pi-interactive-approval-roundtrip.md`](docs/102-pi-interactive-approval-roundtrip.md): Stage 53 limited, default-off interactive approval source of truth.
-3. [`docs/101-pi-coding-agent-preflight-bridge.md`](docs/101-pi-coding-agent-preflight-bridge.md): Stage 52 Pi host preflight bridge source of truth (host-side preflight only).
-4. [`docs/100-fixed-execution-operational-recovery-implementation.md`](docs/100-fixed-execution-operational-recovery-implementation.md): authoritative Stage 51 implementation source.
-5. [`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`](docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md): the only real execution capability and its stop lines.
-6. [`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`](docs/97-execution-lifecycle-audit-writer-design-and-implementation.md): execution audit writer source of truth.
-7. [`tasks/handoff-2026-07-25.md`](tasks/handoff-2026-07-25.md): latest Stage 53 handoff and Stage 54 conditional boundary.
-8. [`docs/02-roadmap.md`](docs/02-roadmap.md): complete stage roadmap.
-9. [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md): CLI flags and examples.
+2. [`docs/103-pi-postflight-audit-projection.md`](docs/103-pi-postflight-audit-projection.md): Stage 54 default-off `tool_result` value-free projection source of truth.
+3. [`docs/102-pi-interactive-approval-roundtrip.md`](docs/102-pi-interactive-approval-roundtrip.md): Stage 53 limited, default-off interactive approval source of truth.
+4. [`docs/101-pi-coding-agent-preflight-bridge.md`](docs/101-pi-coding-agent-preflight-bridge.md): Stage 52 Pi host preflight bridge source of truth (host-side preflight only).
+5. [`docs/100-fixed-execution-operational-recovery-implementation.md`](docs/100-fixed-execution-operational-recovery-implementation.md): authoritative Stage 51 implementation source.
+6. [`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`](docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md): the only real execution capability and its stop lines.
+7. [`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`](docs/97-execution-lifecycle-audit-writer-design-and-implementation.md): execution audit writer source of truth.
+8. [`tasks/handoff-2026-07-25.md`](tasks/handoff-2026-07-25.md): latest Stage 54 handoff and Stage 55 conditional boundary.
+9. [`docs/02-roadmap.md`](docs/02-roadmap.md): complete stage roadmap.
+10. [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md): CLI flags and examples.
 
 See [`docs/00-index.md`](docs/00-index.md) for the complete topic/archive map and [`tasks/progress.md`](tasks/progress.md) for the full progress ledger.
 

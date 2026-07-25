@@ -1181,9 +1181,15 @@ v0.14.0-filtered-snapshot-host-integration
 
 事实源：`docs/102-pi-interactive-approval-roundtrip.md`。
 
-## Stage 54 — Pi Postflight Audit Design Gate（条件启动）
+## Stage 54 — Pi Postflight Audit Projection v1（已完成，host-side projection only）
 
-仅作为下一候选 design gate：定义 Pi/OMP tool result 的脱敏投影、final-arguments identity、失败/取消映射、是否及如何写 ledger，以及如何避免将 host result 误表述为 Harness execution authority。不授予第二个 command、通用 approval、shell/network/service/UI、filesystem proof 或 bridge execution authority。
+在 Pi/OMP `tool_result` hook 上实现默认关闭的 postflight projection：只有设置 `AGENT_RUNTIME_POSTFLIGHT_MODE=summary` 时，extension 才会在工具结果后追加一个 value-free 摘要块。摘要通过当前 `event.input` 重跑 Stage 52 preflight，绑定 request/target hash、tool、decision、hashed toolCallId、content block count 与原始 `isError` flag；不回显 path、command、tool output、details 或 secret-like values。它不写 ledger、不改 `isError`、不 patch details，不声明 Harness 执行了工具。
+
+事实源：`docs/103-pi-postflight-audit-projection.md`。
+
+## Stage 55 — Pi Extension Install / Operator Handoff Gate（条件启动）
+
+仅作为下一候选 design gate：决定是否把 extension 持久安装进本地 Pi/OMP extension 目录、如何与现有 Orca extensions 共存、启用哪些 env 开关，以及需要哪些真实 smoke 证明持久发现而不意外改变用户工作流。不授予自动安装、推送、扩大命令范围、持久 audit writer 或 bridge execution authority。
 
 ---
 
