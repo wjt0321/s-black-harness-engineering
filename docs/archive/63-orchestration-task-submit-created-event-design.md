@@ -2,7 +2,7 @@
 
 ## 阶段定位
 
-`docs/62-orchestration-task-submit-controlled-write-design.md` 已经把 `orchestration task submit --dry-run / --commit` 的第一版入口边界定清楚，并且当前第一版实现已经落地：
+`docs/archive/62-orchestration-task-submit-controlled-write-design.md` 已经把 `orchestration task submit --dry-run / --commit` 的第一版入口边界定清楚，并且当前第一版实现已经落地：
 
 - `orchestration task submit --dry-run`：只读校验 candidate task。
 - `orchestration task submit --commit`：只向 task ledger 追加 task snapshot。

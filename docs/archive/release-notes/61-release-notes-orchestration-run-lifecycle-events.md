@@ -4,7 +4,7 @@
 
 本阶段是 Stage 15.9「Orchestration Run Lifecycle Events」的实现收口。
 
-在 `docs/60-orchestration-run-lifecycle-events-design.md` 定义 B 侧 event schema、controlled append、freeze/post-check 与 A+B all-or-nothing 关系之后，本阶段把 `orchestration run --commit` 从 A-only envelope draft export 升级为 A+B controlled write：
+在 `docs/archive/60-orchestration-run-lifecycle-events-design.md` 定义 B 侧 event schema、controlled append、freeze/post-check 与 A+B all-or-nothing 关系之后，本阶段把 `orchestration run --commit` 从 A-only envelope draft export 升级为 A+B controlled write：
 
 - A：写入 adapter execution envelope draft 文件。
 - B：向 event ledger 追加 `run_planned` 与 `run_draft_exported` lifecycle events。
@@ -74,8 +74,8 @@ lifecycle event metadata 仅保留安全摘要字段：
 - `tasks/event.schema.json`：新增 run lifecycle event types。
 - `docs/10-cli-poc-usage.md`：更新 run commit 示例与边界说明，加入 `--events-file`。
 - `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 run commit 状态从 A-only 更新为 A+B。
-- `docs/58-orchestration-run-controlled-execution-design.md`：标记 A+B 已落地。
-- `docs/60-orchestration-run-lifecycle-events-design.md`：标记 B 侧实现已落地。
+- `docs/archive/58-orchestration-run-controlled-execution-design.md`：标记 A+B 已落地。
+- `docs/archive/60-orchestration-run-lifecycle-events-design.md`：标记 B 侧实现已落地。
 - `tasks/progress.md`：追加 Stage 15.9 实现账本。
 
 ## 测试与验证

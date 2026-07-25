@@ -2,7 +2,7 @@
 
 ## 阶段定位
 
-本阶段是 `docs/63-orchestration-task-submit-created-event-design.md` 的实现收口。
+本阶段是 `docs/archive/63-orchestration-task-submit-created-event-design.md` 的实现收口。
 
 在 62 阶段，`orchestration task submit --commit` 已经作为 control-plane-facing 入口落地，但第一版只写 task ledger，也就是 A-only：
 
@@ -103,7 +103,7 @@ metadata 只保留安全摘要：
 文档：
 
 - `docs/10-cli-poc-usage.md`
-- `docs/63-orchestration-task-submit-created-event-design.md`
+- `docs/archive/63-orchestration-task-submit-created-event-design.md`
 - `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`
 
 ## 保持不变的边界

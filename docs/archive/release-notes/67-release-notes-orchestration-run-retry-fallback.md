@@ -2,7 +2,7 @@
 
 ## 阶段定位
 
-本阶段是 `docs/66-orchestration-run-retry-fallback-design.md` 的第一版实现收口。
+本阶段是 `docs/archive/66-orchestration-run-retry-fallback-design.md` 的第一版实现收口。
 
 在 `orchestration task submit --commit` 完成入口级 A+B、`orchestration run --commit` 完成 run 侧 A+B 之后，本阶段补上恢复性执行分支的只读 preview：
 
@@ -84,7 +84,7 @@ JSON 与 human 输出现在包含安全 lineage 字段，但仍不回显：
 文档：
 
 - `docs/10-cli-poc-usage.md`
-- `docs/66-orchestration-run-retry-fallback-design.md`
+- `docs/archive/66-orchestration-run-retry-fallback-design.md`
 - `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`
 
 ## 保持不变的边界

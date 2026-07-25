@@ -1,5 +1,5 @@
-<!-- parents: archive/95-single-user-real-execution-readiness-gate-and-milestone.md, 58-orchestration-run-controlled-execution-design.md -->
-<!-- relates: 48-adapter-runtime-interface.md, 56-orchestration-controlled-write-boundary.md, 64-versioning-governance.md -->
+<!-- parents: archive/95-single-user-real-execution-readiness-gate-and-milestone.md, archive/58-orchestration-run-controlled-execution-design.md -->
+<!-- relates: 48-adapter-runtime-interface.md, archive/56-orchestration-controlled-write-boundary.md, 64-versioning-governance.md -->
 
 # 96 — Fixed Git Status Executor Design Gate
 

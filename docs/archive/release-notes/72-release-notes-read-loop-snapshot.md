@@ -1,7 +1,7 @@
 # 72 — Release Notes: Read-Loop Snapshot（Stage 12 第二拍）
 
 <!-- parents: 50-control-plane-state-model.md -->
-<!-- relates: ../53-minimal-orchestration-loop-cli-draft.md, 58-orchestration-run-controlled-execution-design.md, 60-orchestration-run-lifecycle-events-design.md -->
+<!-- relates: ../53-minimal-orchestration-loop-cli-draft.md, archive/58-orchestration-run-controlled-execution-design.md, archive/60-orchestration-run-lifecycle-events-design.md -->
 
 ## 阶段定位
 

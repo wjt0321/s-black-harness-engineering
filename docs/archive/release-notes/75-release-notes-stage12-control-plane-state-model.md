@@ -1,5 +1,5 @@
 <!-- parents: ../../../50-control-plane-state-model.md -->
-<!-- relates: ../../../73-recovery-lineage-aggregation-read-model.md, ../../../74-recovery-lineage-report-reuse.md -->
+<!-- relates: ../../../archive/73-recovery-lineage-aggregation-read-model.md, ../../../archive/74-recovery-lineage-report-reuse.md -->
 
 # 75 — Release Notes — Stage 12 Control Plane State Model
 

@@ -60,7 +60,7 @@ This release includes the work from:
 - `docs/38-release-notes-runtime-event-import-dry-run.md`
 - `docs/39-runtime-event-import-commit-design.md`
 - `docs/40-release-notes-runtime-event-import-commit.md`
-- `docs/41-runtime-event-import-consistency-freeze.md`
+- `docs/archive/41-runtime-event-import-consistency-freeze.md`
 - `docs/42-release-notes-runtime-event-import-consistency-freeze.md`
 - `docs/43-controlled-write-regression-event-import.md`
 

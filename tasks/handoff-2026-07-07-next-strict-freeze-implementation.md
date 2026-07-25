@@ -56,7 +56,7 @@ f2c8be0 Extend controlled write regression for event import
 
 - 提交：`89aaaea Document runtime event import strict freeze mode`
 - 新增：
-  - `docs/45-runtime-event-import-strict-freeze-mode.md`
+  - `docs/archive/45-runtime-event-import-strict-freeze-mode.md`
   - `tasks/handoff-2026-07-07-strict-freeze-mode-design.md`
 - 更新：
   - `README.md`
@@ -104,7 +104,7 @@ python -m agent_runtime.cli runtime event import \
 
 ### 建议给 Kimi 的实现任务
 
-请让 Kimi 严格按 `docs/45-runtime-event-import-strict-freeze-mode.md` 实现：
+请让 Kimi 严格按 `docs/archive/45-runtime-event-import-strict-freeze-mode.md` 实现：
 
 - 在 `runtime event import` 上新增 `--require-dry-run` 参数。
 - `--require-dry-run` 只能用于 `--commit`。

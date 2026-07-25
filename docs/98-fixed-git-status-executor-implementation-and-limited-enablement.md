@@ -1,5 +1,5 @@
 <!-- parents: archive/96-fixed-git-status-executor-design-gate.md, 97-execution-lifecycle-audit-writer-design-and-implementation.md -->
-<!-- relates: archive/95-single-user-real-execution-readiness-gate-and-milestone.md, 58-orchestration-run-controlled-execution-design.md -->
+<!-- relates: archive/95-single-user-real-execution-readiness-gate-and-milestone.md, archive/58-orchestration-run-controlled-execution-design.md -->
 
 # 98 — Fixed Git Status Executor Implementation and Limited Enablement
 

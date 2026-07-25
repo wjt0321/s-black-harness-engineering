@@ -25,7 +25,7 @@
 
 ## 关键文件
 
-- `docs/73-recovery-lineage-aggregation-read-model.md`
+- `docs/archive/73-recovery-lineage-aggregation-read-model.md`
 - `agent_runtime/orchestration_recovery.py`
 - `agent_runtime/orchestration_run.py`
 - `agent_runtime/cli.py`
@@ -44,8 +44,8 @@
 ## 下一轮恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/74-recovery-lineage-report-reuse.md`
-3. `docs/73-recovery-lineage-aggregation-read-model.md`
+2. `docs/archive/74-recovery-lineage-report-reuse.md`
+3. `docs/archive/73-recovery-lineage-aggregation-read-model.md`
 4. `python -m agent_runtime.cli docs context --json`
 5. 本 handoff
 
@@ -57,7 +57,7 @@
 ## Report 复用切片
 
 - 决策：优先接入 `orchestration report generate --aggregate-lineage`；`run list` 保持 envelope-scoped。
-- 设计：`docs/74-recovery-lineage-report-reuse.md`。
+- 设计：`docs/archive/74-recovery-lineage-report-reuse.md`。
 - 实现：`ReportGenerateResult` 可选输出 `recovery_lineage`，并按 inspect 相同严重度合并整体状态；human 输出仅增加紧凑 root/latest/attempts/leaves 摘要。
 - 默认兼容：未传 flag 时 report JSON/human 不增加 aggregation 字段或输出。
 

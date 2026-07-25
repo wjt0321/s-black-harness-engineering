@@ -125,7 +125,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -133,7 +133,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 新增 ledger 跨记录一致性校验层 `agent_runtime/ledger_consistency.py`。
 - 新增 CLI 命令 `python -m agent_runtime.cli task check-ledger --tasks-file <file> --events-file <file>`。
@@ -162,7 +162,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -170,7 +170,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 新增 `agent_runtime/policy_profile.py`，实现 agent -> policy profile 自动映射。
 - 新增 `--agent <agent-id>` 与 `--assignee <agent-id>` 全局参数，供 `check text`、`check path`、`check action`、`policies list` 自动选择 policy profile。
@@ -199,7 +199,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -207,7 +207,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 将 agent -> policy profile 映射从 `agent_runtime/policy_profile.py` 硬编码迁移到 `agents/agents.sample.json` 的 `policy_profile` 字段。
 - 更新 `agents/agents.schema.json`：新增可选字段 `policy_profile`，类型 string，minLength 1，给出常见示例。
@@ -236,7 +236,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -244,12 +244,12 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 ## 2026-07-10 — Post-freeze 下一拍：Retry / Fallback Commit 设计与落地
 
-- 进入 post-freeze 后的下一拍 design gate：新增 `docs/70-orchestration-run-retry-fallback-commit-design.md`。
+- 进入 post-freeze 后的下一拍 design gate：新增 `docs/archive/70-orchestration-run-retry-fallback-commit-design.md`。
 - 目标不是放开真实 adapter execution，而是把恢复性分支的 commit 语义补齐为新的受控写入设计层：retry commit / fallback commit 继续复用现有 `orchestration run --commit` 的 A+B 事务模型。
 - 设计重点：lineage-aware envelope metadata、lifecycle event metadata、`--expected-plan-hash` 必填、source request 存在性校验、重复 commit 防护、approval 重新 preflight、A/B rollback 不留下半条 lineage。
 - 第一版继续复用现有 `run_planned` / `run_draft_exported` event_type，只在 metadata 中表达 `lineage_type`、`retry_of`、`fallback_from`、`fallback_to`，避免过早扩张 schema enum。
@@ -305,7 +305,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -313,7 +313,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增只读 `adapter validate` CLI 命令，用于校验 Adapter execution envelope JSON 文件。
@@ -342,7 +342,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -350,7 +350,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增明日接续文档 `tasks/handoff-2026-07-04.md`，记录当前远端状态、Adapter execution envelope 阶段成果、只读 `adapter plan` / `adapter validate` 能力、验证结果、推送与代理记录，以及明日建议路线。
@@ -389,7 +389,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -397,7 +397,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增只读 `adapter inspect` CLI 命令，用于读取 Adapter execution envelope JSON 文件并输出紧凑摘要。
@@ -428,7 +428,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -436,7 +436,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增只读 `adapter approval check` CLI 命令，用于检查某个 `adapter_request` 是否存在可继续执行的 `approval_record`。
@@ -467,7 +467,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -475,7 +475,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增只读 `adapter response check` CLI 命令，用于检查某个 `adapter_request` 是否已有 `adapter_response` 以及 response/evidence 状态。
@@ -506,7 +506,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -514,7 +514,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 新增只读 `adapter gate check` CLI 命令，用于聚合 `adapter approval check` 与 `adapter response check`，给出某个 request 当前是否可继续的单一判断。
@@ -558,7 +558,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -566,7 +566,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime gate check` 对 task-20260703-001 + req-20260703-002 返回 BLOCKED（task 已 finished），对缺失 task 返回 ERROR，对缺失 request 返回 NEEDS_INPUT，JSON 输出脱敏。
 
@@ -600,7 +600,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -608,7 +608,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime check-ledger` 对仓库样例文件返回 WARN，正确报告 `request-id-no-event-metadata` 与 `task-terminal-but-request-pending`，JSON 输出脱敏。
 
@@ -641,7 +641,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -649,7 +649,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime plan` 对 task-20260703-001 + shell-local read_file 因 task 已 finished 返回 BLOCKED；对 running task 返回 PASS 或 NEEDS_APPROVAL，JSON 输出脱敏。
 
@@ -683,7 +683,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -691,7 +691,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime plan --draft-json` 对 running task + shell-local read_file 输出 schema 合法 envelope；对 github-cli git_push 输出含 approval_record 与 approval_requested event；对 finished task 输出 `envelope_draft: null`。
 
@@ -772,7 +772,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -780,7 +780,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime draft export --dry-run` 对 running task + shell-local read_file 输出 PASS 且不创建目标文件；对含 GitHub token 的 draft 返回 BLOCKED 且不回显 token。
 
@@ -841,7 +841,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -849,7 +849,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime draft export --commit` 对 shell-local read_file 写入 `drafts/runtime/.../*.json` 并通过 post validate/inspect；对 schema invalid 和已存在文件均不写且正确报错。
 
@@ -894,7 +894,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -902,7 +902,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 - 已抽查 `runtime event append --dry-run` 对合法 candidate event返回 PASS 且不写 events file；对非法状态流转返回 VALIDATION_FAILED；对含 GitHub token 的 message 返回 BLOCKED 且不回显 token。
 
@@ -975,7 +975,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -983,7 +983,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 - 进入下一阶段：为未来 task snapshot 受控写入做预检门禁 —— `runtime task create --dry-run`。
@@ -1107,7 +1107,7 @@
 
 ## 2026-07-07（七续）— Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`：定义 `runtime event import --dry-run` 与 `--commit` 之间的一致性冻结策略，避免出现“dry-run 审阅的是 A，commit 提交的是 B”的时间差风险。
 - 设计重点：
   - 区分两类风险：candidate 文件在 dry-run 后被改动、目标 events ledger 在 dry-run 与 commit 之间发生变化。
   - 引入 `candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count` 与 `plan_hash` 的建议字段。
@@ -1115,7 +1115,7 @@
   - 建议 dry-run 默认输出 freeze 信息，commit 可选接收 `--expected-plan-hash`；若显式提供，则在 preflight 前先做 freeze 比对，mismatch 一律 `blocked`。
   - 第一版建议先冻结 candidate + events ledger，不强制冻结 tasks ledger；也不把 freeze 做成 commit 默认硬门槛。
   - 明确 freeze 失败输出只能回显 hash / 相对路径 / byte size / line count 等安全摘要，不得回显 candidate 原始 JSON 行与敏感字段。
-- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/41-runtime-event-import-consistency-freeze.md`。
+- 更新 `README.md` / `README.en.md` 文档索引，加入 `docs/archive/41-runtime-event-import-consistency-freeze.md`。
 - 本阶段只写设计，不实现 CLI，不新增真实写权限，不改 Runtime 行为。
 
 
@@ -1232,7 +1232,7 @@
 
 ## 2026-07-07（十一续）— Runtime Event Import Strict Freeze Mode 设计
 
-- 新增 `docs/45-runtime-event-import-strict-freeze-mode.md`：定义未来 strict freeze mode 边界，本阶段只写设计，不实现 CLI，不新增真实写权限。
+- 新增 `docs/archive/45-runtime-event-import-strict-freeze-mode.md`：定义未来 strict freeze mode 边界，本阶段只写设计，不实现 CLI，不新增真实写权限。
 - 设计重点：
   - 当前 v0.11 freeze 是 advisory-first：dry-run 输出 `plan_hash`，commit 可选 `--expected-plan-hash`，但不强制绑定 dry-run。
   - strict freeze mode 建议新增 `--require-dry-run`，表达“本次 commit 必须绑定某次 dry-run 审阅结果”。
@@ -1241,7 +1241,7 @@
   - hash mismatch 继续沿用现有 `plan-hash-mismatch` blocked 语义。
   - 第一版 strict mode 不强制 tasks ledger fingerprint，不新增单独 events ledger fingerprint 参数，不允许创建新 event ledger。
   - 未来实现 strict mode 后，controlled write regression 必须覆盖成功、缺 hash、stale hash 与兼容路径。
-- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/45-runtime-event-import-strict-freeze-mode.md`。
+- 更新 `README.md` 与 `README.en.md` 文档索引，加入 `docs/archive/45-runtime-event-import-strict-freeze-mode.md`。
 - 本阶段不新增代码能力，仅做设计与文档维护。
 
 ## 2026-07-07（十二续）— Runtime Event Import Strict Freeze Mode 实现
@@ -1319,7 +1319,7 @@
 
 ## 2026-07-09（续）— Orchestration 受控写入边界设计
 
-- 新增 `docs/56-orchestration-controlled-write-boundary.md`：作为进入第一批 orchestration 写入命令前的 safety / design gate。
+- 新增 `docs/archive/56-orchestration-controlled-write-boundary.md`：作为进入第一批 orchestration 写入命令前的 safety / design gate。
 - 明确第一批写入命令优先级：
   - 先实现只读 handoff：`orchestration route preview`、`orchestration preflight`。
   - 再实现第一个受控写入：`orchestration approval resolve`。
@@ -1363,7 +1363,7 @@
 - 调整测试期望：blocked 时的 fallback candidates 应为支持该 capability 的 adapter（如 `github-cli`），而非不支持 capability 的显式 `--adapter`。
 - 文档同步：
   - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration route preview` 从候选草案改为已存在只读命令，补充命令示例与边界说明。
-  - 更新 `docs/56-orchestration-controlled-write-boundary.md`：标记 route preview 已落地，并说明其字段与约束语义。
+  - 更新 `docs/archive/56-orchestration-controlled-write-boundary.md`：标记 route preview 已落地，并说明其字段与约束语义。
   - 更新 `docs/10-cli-poc-usage.md`：在「Orchestration Read-Model CLI」章节新增 routing handoff 预览示例。
 - 安全边界保持不变：
   - 不写 ledger / draft / envelope，不执行 adapter，不访问网络，不引入服务 / API / DB / UI。
@@ -1396,7 +1396,7 @@
 
 ## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
 
-- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 新增 `docs/archive/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
 - 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
 - 第一版边界：
   - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
@@ -1419,11 +1419,11 @@
 - 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 额外发现并确认一个产品化口径问题：仓库版本冻结 tag 目前仍停在 `v0.11.0-runtime-event-import`，后续 orchestration 阶段虽然持续新增 release notes（55/57/59/61/62），但没有继续打新 tag，也没有正式声明版本策略已切换到“阶段编号优先、semver/tag 暂停”。这意味着当前版本治理处于半迁移状态，需要单独补一份说明文档或路线图说明，避免后续新对话误判为“版本号忘做”还是“故意不打”。
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
-- 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
+- 已新增 `docs/archive/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
 - 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
-- 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
+- 新增 `docs/archive/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
@@ -1441,7 +1441,7 @@
 - 新增 `tests/test_orchestration_preflight.py`，覆盖 JSON 结构、human smoke、route blocked 跳过 guardrail、missing operation、missing target、local commit allowed、external commit 降级、guardrail blocked、task 上下文、只读不写文件。
 - 文档同步：
   - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration preflight` 从候选草案改为已存在只读命令，更新命令示例与脚本示例。
-  - 更新 `docs/56-orchestration-controlled-write-boundary.md`：标记 preflight 已落地，说明输入/处理/输出语义。
+  - 更新 `docs/archive/56-orchestration-controlled-write-boundary.md`：标记 preflight 已落地，说明输入/处理/输出语义。
   - 更新 `docs/10-cli-poc-usage.md`：新增 preflight 示例。
 - 安全边界保持不变：
   - 不写 ledger / draft / envelope，不执行 adapter，不访问网络，不引入服务 / API / DB / UI。
@@ -1473,7 +1473,7 @@
 
 ## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
 
-- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 新增 `docs/archive/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
 - 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
 - 第一版边界：
   - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
@@ -1496,11 +1496,11 @@
 - 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 额外发现并确认一个产品化口径问题：仓库版本冻结 tag 目前仍停在 `v0.11.0-runtime-event-import`，后续 orchestration 阶段虽然持续新增 release notes（55/57/59/61/62），但没有继续打新 tag，也没有正式声明版本策略已切换到“阶段编号优先、semver/tag 暂停”。这意味着当前版本治理处于半迁移状态，需要单独补一份说明文档或路线图说明，避免后续新对话误判为“版本号忘做”还是“故意不打”。
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
-- 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
+- 已新增 `docs/archive/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
 - 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
-- 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
+- 新增 `docs/archive/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
@@ -1527,7 +1527,7 @@
   - 完整 reason / secret / `decision_ref` 不回显到 CLI 输出。
 - 文档同步：
   - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration approval resolve` 从候选草案改为已存在受控写入命令，补充 dry-run / commit 示例与边界说明。
-  - 更新 `docs/56-orchestration-controlled-write-boundary.md`：标记 `approval resolve` 已按 event-ledger append 方案落地，更新产物形态与下一步。
+  - 更新 `docs/archive/56-orchestration-controlled-write-boundary.md`：标记 `approval resolve` 已按 event-ledger append 方案落地，更新产物形态与下一步。
   - 更新 `docs/10-cli-poc-usage.md`：新增 `orchestration approval resolve` 示例，并更新当前安全边界说明。
 - 安全边界保持不变：
   - 不写原 envelope，不执行 adapter，不访问网络，不引入服务 / API / DB / UI。
@@ -1559,7 +1559,7 @@
 
 ## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
 
-- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 新增 `docs/archive/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
 - 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
 - 第一版边界：
   - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
@@ -1582,11 +1582,11 @@
 - 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 额外发现并确认一个产品化口径问题：仓库版本冻结 tag 目前仍停在 `v0.11.0-runtime-event-import`，后续 orchestration 阶段虽然持续新增 release notes（55/57/59/61/62），但没有继续打新 tag，也没有正式声明版本策略已切换到“阶段编号优先、semver/tag 暂停”。这意味着当前版本治理处于半迁移状态，需要单独补一份说明文档或路线图说明，避免后续新对话误判为“版本号忘做”还是“故意不打”。
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
-- 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
+- 已新增 `docs/archive/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
 - 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
-- 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
+- 新增 `docs/archive/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
@@ -1628,7 +1628,7 @@
 
 ## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
 
-- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 新增 `docs/archive/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
 - 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
 - 第一版边界：
   - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
@@ -1651,11 +1651,11 @@
 - 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 额外发现并确认一个产品化口径问题：仓库版本冻结 tag 目前仍停在 `v0.11.0-runtime-event-import`，后续 orchestration 阶段虽然持续新增 release notes（55/57/59/61/62），但没有继续打新 tag，也没有正式声明版本策略已切换到“阶段编号优先、semver/tag 暂停”。这意味着当前版本治理处于半迁移状态，需要单独补一份说明文档或路线图说明，避免后续新对话误判为“版本号忘做”还是“故意不打”。
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
-- 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
+- 已新增 `docs/archive/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
 - 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
-- 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
+- 新增 `docs/archive/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
@@ -1663,7 +1663,7 @@
 
 ## 2026-07-09（续）— Stage 15.6：orchestration run 受控执行设计 gate
 
-- 新增 `docs/58-orchestration-run-controlled-execution-design.md`，作为进入 `orchestration run --dry-run/--commit` 实现前的设计 gate。
+- 新增 `docs/archive/58-orchestration-run-controlled-execution-design.md`，作为进入 `orchestration run --dry-run/--commit` 实现前的设计 gate。
 - 文档覆盖：
   - 命令候选形态：`--task-id`、`--request-id`、`--capability`、`--adapter`、`--operation`、`--target`、`--mode`、`--expected-plan-hash`、`--require-dry-run`。
   - dry-run 产物形态：只读 run plan preview，含 routing/preflight/candidate envelope/events/artifact/evidence refs 安全摘要和稳定 `plan_hash`。
@@ -1698,7 +1698,7 @@
 
 ## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
 
-- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 新增 `docs/archive/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
 - 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
 - 第一版边界：
   - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
@@ -1721,11 +1721,11 @@
 - 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 额外发现并确认一个产品化口径问题：仓库版本冻结 tag 目前仍停在 `v0.11.0-runtime-event-import`，后续 orchestration 阶段虽然持续新增 release notes（55/57/59/61/62），但没有继续打新 tag，也没有正式声明版本策略已切换到“阶段编号优先、semver/tag 暂停”。这意味着当前版本治理处于半迁移状态，需要单独补一份说明文档或路线图说明，避免后续新对话误判为“版本号忘做”还是“故意不打”。
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
-- 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
+- 已新增 `docs/archive/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
 - 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
-- 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
+- 新增 `docs/archive/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
@@ -1751,7 +1751,7 @@
   - 修正人类可读 smoke 测试，使其使用 `read_file` capability 以匹配期望 `pass` 状态。
 - 文档同步：
   - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration run --dry-run` 标为已存在，`orchestration run --commit` 仍草案。
-  - 更新 `docs/58-orchestration-run-controlled-execution-design.md`：标记 dry-run 已落地，commit 待实现。
+  - 更新 `docs/archive/58-orchestration-run-controlled-execution-design.md`：标记 dry-run 已落地，commit 待实现。
   - 更新 `docs/10-cli-poc-usage.md`：新增 `orchestration run --dry-run` 示例与边界说明。
 - 验证：
   - `python -m pytest tests/test_orchestration_run_dry_run.py -q`：11 passed。
@@ -1777,7 +1777,7 @@
 
 ## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
 
-- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 新增 `docs/archive/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
 - 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
 - 第一版边界：
   - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
@@ -1800,11 +1800,11 @@
 - 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 额外发现并确认一个产品化口径问题：仓库版本冻结 tag 目前仍停在 `v0.11.0-runtime-event-import`，后续 orchestration 阶段虽然持续新增 release notes（55/57/59/61/62），但没有继续打新 tag，也没有正式声明版本策略已切换到“阶段编号优先、semver/tag 暂停”。这意味着当前版本治理处于半迁移状态，需要单独补一份说明文档或路线图说明，避免后续新对话误判为“版本号忘做”还是“故意不打”。
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
-- 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
+- 已新增 `docs/archive/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
 - 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
-- 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
+- 新增 `docs/archive/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
@@ -1836,7 +1836,7 @@
   - `test_cli_commit_returns_needs_input` 断言改为提示 `--output`/`--expected-plan-hash`。
 - 文档同步：
   - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：把 `orchestration run --commit` 标为已存在第一版 A-only controlled write。
-  - 更新 `docs/58-orchestration-run-controlled-execution-design.md`：标记 commit A-only 已落地，B lifecycle events 仍后续。
+  - 更新 `docs/archive/58-orchestration-run-controlled-execution-design.md`：标记 commit A-only 已落地，B lifecycle events 仍后续。
   - 更新 `docs/10-cli-poc-usage.md`：新增 `orchestration run --commit` 示例与边界说明，更新安全边界与限制。
 - 验证：
   - `python -m pytest tests/test_orchestration_run_commit.py -q`：11 passed。
@@ -1862,7 +1862,7 @@
 
 ## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
 
-- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 新增 `docs/archive/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
 - 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
 - 第一版边界：
   - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
@@ -1885,11 +1885,11 @@
 - 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 额外发现并确认一个产品化口径问题：仓库版本冻结 tag 目前仍停在 `v0.11.0-runtime-event-import`，后续 orchestration 阶段虽然持续新增 release notes（55/57/59/61/62），但没有继续打新 tag，也没有正式声明版本策略已切换到“阶段编号优先、semver/tag 暂停”。这意味着当前版本治理处于半迁移状态，需要单独补一份说明文档或路线图说明，避免后续新对话误判为“版本号忘做”还是“故意不打”。
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
-- 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
+- 已新增 `docs/archive/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
 - 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
-- 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
+- 新增 `docs/archive/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
@@ -1940,7 +1940,7 @@
 
 ## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
 
-- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 新增 `docs/archive/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
 - 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
 - 第一版边界：
   - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
@@ -1963,11 +1963,11 @@
 - 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 额外发现并确认一个产品化口径问题：仓库版本冻结 tag 目前仍停在 `v0.11.0-runtime-event-import`，后续 orchestration 阶段虽然持续新增 release notes（55/57/59/61/62），但没有继续打新 tag，也没有正式声明版本策略已切换到“阶段编号优先、semver/tag 暂停”。这意味着当前版本治理处于半迁移状态，需要单独补一份说明文档或路线图说明，避免后续新对话误判为“版本号忘做”还是“故意不打”。
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
-- 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
+- 已新增 `docs/archive/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
 - 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
-- 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
+- 新增 `docs/archive/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
@@ -1975,7 +1975,7 @@
 
 ## 2026-07-09（续）— Stage 15.9：Run Lifecycle Events design gate
 
-- 新增 `docs/60-orchestration-run-lifecycle-events-design.md`，作为进入 B 侧 run lifecycle events 实现前的 design gate。
+- 新增 `docs/archive/60-orchestration-run-lifecycle-events-design.md`，作为进入 B 侧 run lifecycle events 实现前的 design gate。
 - 文档覆盖：
   - 阶段定位：59 已完成 A-only commit，60 定义 B 侧 event trail 设计。
   - 候选 event types：`run_planned`、`run_draft_exported`、`run_blocked` 进入 schema enum；`run_commit_failed` 暂不落地。
@@ -1988,7 +1988,7 @@
   - 验收标准与下一步建议。
 - 更新 `docs/00-index.md`：中枢台后端主线与发布/阶段收口列表加入 60。
 - 更新 `docs/02-roadmap.md`：新增 Stage 15.9（Run Lifecycle Events design gate），不标记 Stage 16 开始。
-- 更新 `docs/58-orchestration-run-controlled-execution-design.md`：下一步建议指向 60。
+- 更新 `docs/archive/58-orchestration-run-controlled-execution-design.md`：下一步建议指向 60。
 - 本次为纯文档改动，不改代码/测试/schema。
 - 验证：
   - `python -m agent_runtime.cli doctor`：PASS。
@@ -2012,7 +2012,7 @@
 
 ## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
 
-- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 新增 `docs/archive/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
 - 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
 - 第一版边界：
   - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
@@ -2035,11 +2035,11 @@
 - 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 额外发现并确认一个产品化口径问题：仓库版本冻结 tag 目前仍停在 `v0.11.0-runtime-event-import`，后续 orchestration 阶段虽然持续新增 release notes（55/57/59/61/62），但没有继续打新 tag，也没有正式声明版本策略已切换到“阶段编号优先、semver/tag 暂停”。这意味着当前版本治理处于半迁移状态，需要单独补一份说明文档或路线图说明，避免后续新对话误判为“版本号忘做”还是“故意不打”。
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
-- 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
+- 已新增 `docs/archive/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
 - 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
-- 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
+- 新增 `docs/archive/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
@@ -2062,8 +2062,8 @@
   - `tests/test_task_validation.py`：新增 schema enum 接受 `run_planned` / `run_draft_exported` / `run_blocked` / `approval_resolved` 的参数化测试。
 - 文档同步：
   - `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：`orchestration run --commit` 从 A-only 改为 A+B。
-  - `docs/58-orchestration-run-controlled-execution-design.md`：标记 B lifecycle events 已落地。
-  - `docs/60-orchestration-run-lifecycle-events-design.md`：标记 schema 与 A+B 实现已落地。
+  - `docs/archive/58-orchestration-run-controlled-execution-design.md`：标记 B lifecycle events 已落地。
+  - `docs/archive/60-orchestration-run-lifecycle-events-design.md`：标记 schema 与 A+B 实现已落地。
   - `docs/10-cli-poc-usage.md`：更新 run commit 示例与边界说明，加入 `--events-file`。
 - 硬约束保持：不执行真实 adapter、不访问网络、不发送消息、不写独立 Run storage、不引入 DB/service/UI。
 - 安全边界：event metadata 只存安全摘要；不回显 input/target 原文、raw_ref、decision_ref、payload_refs、evidence descriptions、reason 原文、secret match；使用相对路径。
@@ -2091,7 +2091,7 @@
 
 ## 2026-07-09（续）— 下一步 design gate：Task Submit 受控写入
 
-- 新增 `docs/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
+- 新增 `docs/archive/62-orchestration-task-submit-controlled-write-design.md`，把 `orchestration task submit --dry-run / --commit` 固定为下一批更低风险的 orchestration 写入入口。
 - 设计结论：先做 `task submit`，暂不直接进入 retry / fallback。原因是 task submit 属于 control plane 入口能力，且可薄包装现有 `runtime task create --dry-run / --commit`，风险明显低于恢复性自动化能力。
 - 第一版边界：
   - 推荐只支持 `--file` / `--stdin` 的 candidate task JSON 输入。
@@ -2114,11 +2114,11 @@
 - 更新 `docs/10-cli-poc-usage.md`：补充 orchestration task submit 示例与边界说明。
 - 额外发现并确认一个产品化口径问题：仓库版本冻结 tag 目前仍停在 `v0.11.0-runtime-event-import`，后续 orchestration 阶段虽然持续新增 release notes（55/57/59/61/62），但没有继续打新 tag，也没有正式声明版本策略已切换到“阶段编号优先、semver/tag 暂停”。这意味着当前版本治理处于半迁移状态，需要单独补一份说明文档或路线图说明，避免后续新对话误判为“版本号忘做”还是“故意不打”。
 - 已新增 `docs/64-versioning-governance.md`，正式把版本治理定为“阶段推进 + release notes 收口 + 里程碑打 tag”。当时决策为：不追补 55/57/59/61 的逐阶段 semver tag，不为 62 design gate 打 tag；待 orchestration task submit 完成实现收口后，再统一判断是否冻结新的 orchestration milestone tag（优先候选名：`v0.12.0-orchestration-foundation`）。后续已实际冻结为 commit `38b4b69` / tag `v0.12.0-orchestration-foundation`。
-- 已新增 `docs/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
+- 已新增 `docs/archive/63-orchestration-task-submit-created-event-design.md`，把 `orchestration task submit --commit` 的下一拍 design gate 固定为 A+B：A 写 task ledger，B 写 `created` event，整体 all-or-nothing rollback，并以补齐 `TaskCollection.create` 语义与 task/event read model 一致性为目标。明确优先级仍是先补入口级 A+B，再进入 retry / fallback design gate 与实现。
 - 已完成 `orchestration task submit --commit` A+B 实现收口：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_task_submit.py` 升级为事务协调层，成功时写 task ledger + `created` event，`--events-file` 在 commit 下必填，B 失败或 post-check 失败时回滚 task/events ledger 到原始 byte size；`agent_runtime/cli.py` 增加专用 summary 渲染；`tests/test_orchestration_task_submit.py` 增加 dry-run 预告、commit 双写、缺 events-file 不写、B 失败回滚、post-check 失败回滚与 CLI smoke 覆盖。
 - 新增 `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`，记录 Stage 15.95 实现收口、验证结果与下一步建议。已复核：`python -m pytest tests/test_orchestration_task_submit.py -q`、`python -m pytest tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 已清理 Kimi Code 额外生成的 `docs/superpowers/` 与 D 盘根目录旧产物 `DRIVE:/news-aggregator-plan`，均送回收站；未动 `DRIVE:/Kimi` 与 `DRIVE:/kimi-workspace` 工作目录。
-- 新增 `docs/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
+- 新增 `docs/archive/66-orchestration-run-retry-fallback-design.md`，作为 retry / fallback 的 design gate：第一版建议只做 dry-run preview，要求新 request_id、显式 lineage、重新 route/preflight/dry-run，不自动复用旧 approval，不执行真实 adapter，不扩展 event schema enum；后续实现顺序建议为 retry dry-run、fallback dry-run、release notes，再讨论 commit 设计。
 - 已完成 `orchestration run` retry / fallback dry-run preview 第一版：Kimi Code 负责主要编码，小黑负责审查与文档维护。核心变更为 `agent_runtime/orchestration_run_dry_run.py` 新增 lineage 字段、校验与 plan_hash 输入；`agent_runtime/cli.py` 新增 `--retry-of`、`--fallback-from`、`--fallback-to` 并在 human/json 输出展示安全 lineage；`tests/test_orchestration_run_dry_run.py` 增加 retry/fallback pass、参数互斥、request_id 冲突、不写 ledger/envelope、hash 差异、CLI smoke 与 direct-call fallback adapter 覆盖。
 - 新增 `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`，记录 Stage 15.96 dry-run preview 实现收口。已复核：`python -m pytest tests/test_orchestration_run_dry_run.py tests/test_orchestration_task_submit.py tests/test_controlled_write_regression.py -q`、`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`git diff --check` 均通过；`git diff --check` 仅提示两个既有 Python 文件后续会按 Git 设置从 LF 转 CRLF。
 - 新增 `docs/archive/68-orchestration-foundation-milestone-freeze-checklist.md` 与 `docs/archive/69-orchestration-foundation-freeze-execution-plan.md`，把 `v0.12.0-orchestration-foundation` 的候选冻结条件、验证证据、建议 commit/tag 文案与执行顺序整理为冻结前文档链路。后续已实际完成冻结：commit `38b4b69`、tag `v0.12.0-orchestration-foundation`、push 完成。
@@ -2414,7 +2414,7 @@
 
 ## 2026-07-12 — Recovery Lineage Aggregation Read Model 第一版
 
-- 新增 `docs/73-recovery-lineage-aggregation-read-model.md`，冻结 ledger-backed 数据源、确定性链解析、多 leaf 与异常语义、安全边界。
+- 新增 `docs/archive/73-recovery-lineage-aggregation-read-model.md`，冻结 ledger-backed 数据源、确定性链解析、多 leaf 与异常语义、安全边界。
 - 新增 `agent_runtime/orchestration_recovery.py`：聚合 `run_planned` / `run_draft_exported` / `run_blocked` metadata，输出 root/latest/leaves、attempt count、effective plan hash 与安全 request summaries。
 - `orchestration run inspect` 新增显式 `--aggregate-lineage`；默认输出兼容，多 leaf 返回 `needs_input`，missing/cross-task parent、cycle 与重复 metadata 冲突返回 `validation_failed`。
 - 新增 `tests/test_orchestration_recovery.py`，并扩展 `tests/test_orchestration_run_inspect.py` 的 JSON/human/default compatibility/validation failure 覆盖。
@@ -2424,13 +2424,13 @@
 
 - `README.md` / `README.en.md` 移除已过期的“下一步进入 retry/fallback commit”表述，更新为 aggregation stage acceptance。
 - `docs/00-index.md` 的当前最重要文档改为 digest → 73 design → roadmap → CLI usage → 最新 handoff。
-- `docs/73-recovery-lineage-aggregation-read-model.md` 吸收实现状态、commit、测试入口与下一轮验收清单，成为单一设计事实源。
+- `docs/archive/73-recovery-lineage-aggregation-read-model.md` 吸收实现状态、commit、测试入口与下一轮验收清单，成为单一设计事实源。
 - 删除已完成且内容已被 73 design / handoff 吸收的临时 implementation plan，减少重复文档。
 - `tasks/handoff-2026-07-12-recovery-lineage-aggregation.md` 补实现 commit、恢复顺序与“不要重复实现”的边界。
 
 ## 2026-07-12 — Recovery Lineage Aggregation 阶段验收通过
 
-- 按 `docs/73-recovery-lineage-aggregation-read-model.md` 的验收入口完成复核：duplicate lifecycle merge、branch / missing parent / cross-task parent / cycle、非法 lineage shape、JSON/human 脱敏、默认 inspect 兼容和 no-write 边界均符合契约。
+- 按 `docs/archive/73-recovery-lineage-aggregation-read-model.md` 的验收入口完成复核：duplicate lifecycle merge、branch / missing parent / cross-task parent / cycle、非法 lineage shape、JSON/human 脱敏、默认 inspect 兼容和 no-write 边界均符合契约。
 - 验证：`python -m pytest tests -q`、`python -m agent_runtime.cli doctor`、`python tools/public_scan.py`、`python -m compileall -q agent_runtime tests`、`git diff --check` 均通过。
 - 下一步从“实现聚合”转为“复用决策”：比较 `orchestration run list` / `report generate` 的价值与兼容成本，先定最小契约，不进入真实执行。
 
@@ -2940,3 +2940,21 @@
 - `pi --list-models deepseek-compat` 从新目录识别 `deepseek-v4-flash`；`DefaultResourceLoader` 自动发现新目录下 `pi-preflight-bridge`，extension 无加载错误。
 - handler smoke 再次验证普通 read 放行、`.env` 阻断、`git push origin main` needs_approval；未执行真实 push，approval/postflight 仍关闭。
 - 事实源为 `docs/107-pi-project-local-runtime-integration.md`；下一候选为 Pi CLI Mode Stabilization Gate。
+
+## 2026-07-25 Stage 59 - Pi CLI/TUI Mode Stabilization Gate
+
+- 用户授权诊断并稳定 `pi --print` / `--mode json` / TUI 入口；preflight 保持启用，不启用 approval/postflight，不执行真实 push 或写操作，不修改 Pi 上游。
+- 诊断：当前组合（项目本地 `PI_CODING_AGENT_DIR` + `deepseek-compat`）下 0 输出超时不再现，7+ 次受控 print/json 运行全部 2–6s 返回 rc=0；根因为内置 deepseek provider API 侧不稳定与默认模型解析漂移的组合（未钉住时默认落到内置 `deepseek/deepseek-v4-pro`）；已排除启动期模型目录网络刷新与版本检查（仅 TUI 且非阻塞）。
+- 最小修复：gitignored `.runtime/pi-agent/settings.json` 钉住 `defaultProvider=deepseek-compat` / `defaultModel=deepseek-v4-flash`；写入前备份为 `.runtime/pi-agent/backups/stage59-before-settings-20260725-192154/settings.json`。
+- 提交 `integrations/pi/smoke/cli-mode-smoke.sh`：固定 argv、`--no-session`、60s 有界 timeout、证据写入 gitignored `.runtime`、不回显凭据；首跑 5/5 PASS（print 文本、json provider/model 钉住验证、read pass roundtrip、`.env` block canary 不泄漏）。
+- 门禁对照证据：未设 `AGENT_RUNTIME_ROOT` 时 CLI 路径 read roundtrip 被 extension fail-closed 阻断；设置后 read pass，`.env` read 被阻断且 canary 值未出现在输出。
+- TUI 非 TTY fail-fast（rc=1 `stdin is not a tty`）；真实终端人工 TUI 验收留作 operator 步骤，入口契约见 `docs/108-pi-cli-mode-stabilization.md`。
+- docs/ 活跃文档 59 个（>50）；归档候选 12 份与引用影响已记录在 `tasks/handoff-2026-07-25.md`，按用户指示未执行移动。
+- 全量 pytest（无失败，1 个既有 skip）、doctor PASS、public scan OK 已通过；`.githooks/pre-commit` 与 `git diff --check` 尚未运行（用户中断，留待收口前补跑）；未 commit/push。
+
+## 2026-07-25 docs 归档收敛（Stage 59 收尾）
+
+- 用户批准执行归档提案：`git mv` 将 12 份已冻结设计文档（41/45/54/56/58/60/62/63/66/70/73/74）从 `docs/` 完整移入 `docs/archive/`，内容未删除。
+- docs/ 活跃文档 59 → 47（≤50 达标），`docs/archive/` 88 → 100。
+- 活跃区全部引用已改为 `archive/` 路径并 grep 复核无残留；`.worktrees/` 历史副本与 `MAINTENANCE.md` 通用格式示例按指示保留。
+- 执行记录见 `tasks/handoff-2026-07-25.md` 第 9 节；未 commit/push。

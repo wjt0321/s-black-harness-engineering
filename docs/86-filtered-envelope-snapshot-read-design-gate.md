@@ -1,5 +1,5 @@
 <!-- parents: 85-envelope-scoped-consumer-filter-design-gate.md, 84-envelope-scoped-snapshot-read-design-gate.md -->
-<!-- relates: 83-codex-desktop-snapshot-json-reader-implementation.md, 73-recovery-lineage-aggregation-read-model.md -->
+<!-- relates: 83-codex-desktop-snapshot-json-reader-implementation.md, archive/73-recovery-lineage-aggregation-read-model.md -->
 
 # 86 — Filtered Envelope Snapshot Read Design Gate
 

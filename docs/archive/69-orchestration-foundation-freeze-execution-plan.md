@@ -41,10 +41,10 @@
 
 ### 新增阶段文档
 
-- `docs/63-orchestration-task-submit-created-event-design.md`
+- `docs/archive/63-orchestration-task-submit-created-event-design.md`
 - `docs/64-versioning-governance.md`
 - `docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md`
-- `docs/66-orchestration-run-retry-fallback-design.md`
+- `docs/archive/66-orchestration-run-retry-fallback-design.md`
 - `docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md`
 - `docs/68-orchestration-foundation-milestone-freeze-checklist.md`
 - `docs/69-orchestration-foundation-freeze-execution-plan.md`
@@ -129,10 +129,10 @@ git add README.md README.en.md \
   agent_runtime/orchestration_task_submit.py \
   agent_runtime/orchestration_run_dry_run.py \
   docs/00-index.md docs/02-roadmap.md docs/10-cli-poc-usage.md \
-  docs/63-orchestration-task-submit-created-event-design.md \
+  docs/archive/63-orchestration-task-submit-created-event-design.md \
   docs/64-versioning-governance.md \
   docs/archive/release-notes/65-release-notes-orchestration-task-submit-created-event.md \
-  docs/66-orchestration-run-retry-fallback-design.md \
+  docs/archive/66-orchestration-run-retry-fallback-design.md \
   docs/archive/release-notes/67-release-notes-orchestration-run-retry-fallback.md \
   docs/68-orchestration-foundation-milestone-freeze-checklist.md \
   docs/69-orchestration-foundation-freeze-execution-plan.md \

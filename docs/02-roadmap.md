@@ -301,8 +301,8 @@
 主要交付物：
 
 - `docs/50-control-plane-state-model.md`
-- `docs/73-recovery-lineage-aggregation-read-model.md`
-- `docs/74-recovery-lineage-report-reuse.md`
+- `docs/archive/73-recovery-lineage-aggregation-read-model.md`
+- `docs/archive/74-recovery-lineage-report-reuse.md`
 - `docs/archive/release-notes/75-release-notes-stage12-control-plane-state-model.md`
 
 ---
@@ -384,7 +384,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 主要交付物：
 
-- `docs/54-backend-preparation-before-ui.md`
+- `docs/archive/54-backend-preparation-before-ui.md`
 - `docs/archive/release-notes/55-release-notes-orchestration-read-models.md`
 - 十只读 `orchestration *` CLI 命令（见 55）
 
@@ -418,7 +418,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 主要交付物：
 
-- `docs/56-orchestration-controlled-write-boundary.md`（design gate）
+- `docs/archive/56-orchestration-controlled-write-boundary.md`（design gate）
 - `docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md`
 - `orchestration route preview`（只读 capability routing preview）
 - `orchestration preflight`（只读 routing + guardrail 聚合）
@@ -451,7 +451,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 主要交付物：
 
-- `docs/58-orchestration-run-controlled-execution-design.md`
+- `docs/archive/58-orchestration-run-controlled-execution-design.md`
 
 要做的事：
 
@@ -503,7 +503,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 - `agent_runtime/orchestration_run_commit.py`
 - `tests/test_orchestration_run_commit.py`
 - `docs/archive/release-notes/59-release-notes-orchestration-run-controlled-execution.md`
-- `docs/10-cli-poc-usage.md` / `docs/archive/53-minimal-orchestration-loop-cli-draft.md` / `docs/58-orchestration-run-controlled-execution-design.md` 更新
+- `docs/10-cli-poc-usage.md` / `docs/archive/53-minimal-orchestration-loop-cli-draft.md` / `docs/archive/58-orchestration-run-controlled-execution-design.md` 更新
 
 已落地能力：
 
@@ -530,7 +530,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 主要交付物：
 
-- `docs/60-orchestration-run-lifecycle-events-design.md`
+- `docs/archive/60-orchestration-run-lifecycle-events-design.md`
 - `docs/archive/release-notes/61-release-notes-orchestration-run-lifecycle-events.md`
 - `tasks/event.schema.json` enum 扩展
 - `agent_runtime/orchestration_run_commit.py`
@@ -550,7 +550,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 - `run_blocked` 暂不写入 blocked/needs_approval/hash mismatch 路径。
 - retry / fallback 自动化。
-- `orchestration task submit --commit`（进入新的独立 design gate：`docs/62-orchestration-task-submit-controlled-write-design.md`）。
+- `orchestration task submit --commit`（进入新的独立 design gate：`docs/archive/62-orchestration-task-submit-controlled-write-design.md`）。
 - 真实 adapter execution、网络访问、消息发送、UI/服务/数据库。
 
 说明：
@@ -634,7 +634,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 - retry/fallback commit 对 `--expected-plan-hash`、`--output`、`--events-file` 采用更严格要求
 - 已补 source request 存在性校验、同 task 归属校验、重复 commit 防护与 rollback 边界
 - 第一版复用现有 `run_planned` / `run_draft_exported` event_type，仅在 metadata 中表达 lineage
-- 阶段设计与收口文档：`docs/70-orchestration-run-retry-fallback-commit-design.md`
+- 阶段设计与收口文档：`docs/archive/70-orchestration-run-retry-fallback-commit-design.md`
 
 说明：
 
@@ -660,7 +660,7 @@ Post-Stage 14 CLI 自动化消费者增量（2026-07-14）：
 
 - 本阶段仍不放开真实 adapter execution、独立 Run storage、DB、service 或 UI。
 - recovery lineage 已形成“可写 + 单条可读”的最小闭环。
-- 后续聚合能力已并入 Stage 12 post-freeze，并由 `docs/73-recovery-lineage-aggregation-read-model.md` 与 `orchestration run inspect --aggregate-lineage` 落地；该历史编号不再代表当前阶段。
+- 后续聚合能力已并入 Stage 12 post-freeze，并由 `docs/archive/73-recovery-lineage-aggregation-read-model.md` 与 `orchestration run inspect --aggregate-lineage` 落地；该历史编号不再代表当前阶段。
 
 ---
 
@@ -1211,9 +1211,11 @@ Pi agent dir 已迁入 `<project-root>\.runtime\pi-agent`，并通过用户级 `
 
 事实源：`docs/107-pi-project-local-runtime-integration.md`。
 
-## Stage 59 — Pi CLI Mode Stabilization Gate（条件启动）
+## Stage 59 — Pi CLI Mode Stabilization Gate（已完成）
 
-仅作为下一候选：稳定 Pi CLI `--print` / `--mode json` / TUI 入口在当前 `deepseek-compat` provider 与项目本地 preflight extension 下的输出行为。不授权真实 push、写操作、approval/postflight 默认开启、第二个 command 或 OMP 主线回退。
+已诊断 `pi --print` / `--mode json` 0 输出超时：当前组合下不再现（7+ 次受控运行 2–6s 返回）；历史失败主因是内置 deepseek provider API 侧不稳定与默认模型解析漂移的组合。已在 gitignored `.runtime/pi-agent/settings.json` 钉住 `defaultProvider=deepseek-compat` / `defaultModel=deepseek-v4-flash`（写入前有备份），并提交可重复 smoke `integrations/pi/smoke/cli-mode-smoke.sh`（首跑 5/5 PASS）。已冻结人类 CLI/TUI 入口契约：print/json 非交互入口会发起真实模型调用；TUI 必须在真实终端运行，非 TTY fail-fast。preflight 保持启用；approval/postflight 仍关闭；未修改 Pi 上游；未执行真实 push 或写操作。
+
+事实源：`docs/108-pi-cli-mode-stabilization.md`。
 
 ---
 

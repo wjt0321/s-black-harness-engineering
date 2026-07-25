@@ -4,9 +4,9 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：57 个
-- 归档文档：88 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：190 个
+- docs/ 活跃文档：47 个（2026-07-25 已按批准归档 12 份已冻结设计文档：41/45/54/56/58/60/62/63/66/70/73/74，全部引用已修复）
+- 归档文档：100 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
+- 全仓 .md 文件：194 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,7 +25,8 @@
 
 ## 当前阶段
 
-- **Stage 58 — Pi Project-local Runtime Integration（已完成并收口；project-local ignored runtime）**
+- **Stage 59 — Pi CLI/TUI Mode Stabilization Gate（已完成并收口；pinned default + entry contract + repeatable smoke）**
+- Stage 58 — Pi Project-local Runtime Integration（已完成并收口；project-local ignored runtime）
 - Stage 57 — Pi First Real Session Gate（已完成并收口；SDK-host real session proof）
 - Stage 56 — Pi Native Install Smoke（已完成并收口；Layer 1 preflight only）
 - Stage 55 — Pi-first Operator Handoff Gate（已完成并收口；design gate）
@@ -39,7 +40,8 @@
 - Stage 45 — Single-user Real Execution Readiness Milestone Closure（已收口；提交 `49a517b`）
 - Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
 - Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
-- 下一阶段候选：Stage 59 — Pi CLI Mode Stabilization Gate（条件启动；稳定 print/json/TUI 入口）
+- 下一阶段候选：真实终端人工 TUI 会话验收（operator 执行）；Layer 2/3 启用需独立授权
+- Stage 59 已诊断 Pi CLI 0 输出超时（当前不再现，主因为内置 provider API 侧不稳定 + 默认模型解析漂移），已在 gitignored `.runtime/pi-agent/settings.json` 钉住 `deepseek-compat/deepseek-v4-flash` 默认模型，并提交可重复 smoke `integrations/pi/smoke/cli-mode-smoke.sh`（首跑 5/5 PASS）；TUI 非 TTY fail-fast，入口契约见 `docs/108`。
 - Stage 57 已通过 SDK 直连 Pi agent 完成真实隔离 read 会话：模型调用 `read stage57-proof.txt`，preflight extension 已加载，工具执行完成，最终文本为 `STAGE57_OK:PI_LAYER1_REAL_SESSION_OK`；Pi CLI print/json mode 仍需另行稳定。
 - Stage 56 已安装独立 Pi `0.82.0`，持久部署全局 `pi-preflight-bridge`，只设置 `AGENT_RUNTIME_ROOT`；approval/postflight 仍关闭。
 - Stage 55 已将路线切为 Pi-first layered：独立 Pi CLI 与最小 extension 优先，OMP 只保留为兼容验证/备选。
@@ -123,6 +125,15 @@
 - 摘要不包含 path、command、file content、tool output text、details payload 或 credential-like values；不写 ledger、不访问网络、不改 `isError`、不 patch details。
 - 这是 host-side projection，不是 durable audit writer，也不证明 Harness 执行了工具。
 - Stage 54 事实源：`docs/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 59 - Pi CLI/TUI Mode Stabilization Gate
+
+- 诊断 `pi --print` / `--mode json` 0 stdout / 0 stderr 超时：当前组合（项目本地 agent dir + deepseek-compat）下不再现，7+ 次受控运行全部 2–6s 返回 rc=0。
+- 根因：内置 deepseek provider API 侧不稳定（Stage 57 已记录）与默认模型解析漂移（未钉住时默认落到内置 `deepseek/deepseek-v4-pro`）的组合；已排除启动期模型目录网络刷新（CLI 路径未开启）与版本检查（仅 TUI 且非阻塞）。
+- 最小修复：gitignored `.runtime/pi-agent/settings.json` 钉住 `defaultProvider=deepseek-compat` / `defaultModel=deepseek-v4-flash`（写入前备份于 `backups/stage59-before-settings-20260725-192154/`）；未修改 Pi 上游。
+- 提交 `integrations/pi/smoke/cli-mode-smoke.sh`：固定 argv、`--no-session`、60s 有界 timeout、证据写入 gitignored `.runtime`、不回显凭据；首跑 5/5 PASS（print/json/read pass/.env block canary 不泄漏）。
+- TUI 非 TTY fail-fast（rc=1 `stdin is not a tty`）；人类 TUI 入口契约与真实模型调用披露见 `docs/108-pi-cli-mode-stabilization.md`。
+- approval/postflight 保持关闭；未开放 bash/write/edit；未执行真实 push；未写 ledger。
 
 ### 新进落地：Stage 58 - Pi Project-local Runtime Integration
 
@@ -209,7 +220,7 @@
 - `orchestration run inspect --aggregate-lineage` 与 `orchestration report generate --aggregate-lineage` 输出 root request、leaf/latest request、attempt count、effective plan hash 与安全 request summaries。
 - 多 leaf 不静默猜测 latest，返回 `needs_input`；missing/cross-task parent、cycle、重复 metadata 冲突返回 `validation_failed`。
 - 默认未传 flag 时现有 inspect 输出保持兼容；不扫描 drafts、不增加事件类型、不写 ledger、不执行 adapter。
-- 设计入口：`docs/73-recovery-lineage-aggregation-read-model.md`。
+- 设计入口：`docs/archive/73-recovery-lineage-aggregation-read-model.md`。
 
 ### 新进落地：Stage 36–38 — Display Consumer Validation 与 v0.16.0 Freeze
 
@@ -311,29 +322,31 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/107-pi-project-local-runtime-integration.md`
-3. `docs/106-pi-first-real-session-gate.md`
-4. `docs/105-pi-native-install-smoke.md`
-5. `docs/104-pi-first-operator-handoff.md`
-6. `docs/103-pi-postflight-audit-projection.md`
-7. `docs/102-pi-interactive-approval-roundtrip.md`
-8. `docs/101-pi-coding-agent-preflight-bridge.md`
-9. `docs/100-fixed-execution-operational-recovery-implementation.md`
-10. `docs/99-fixed-execution-operational-recovery-design-gate.md`
-11. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
-12. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
-12. `tasks/handoff-2026-07-25.md`
-13. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
-14. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
-15. 再跑：`python -m agent_runtime.cli docs context --json`
+2. `docs/108-pi-cli-mode-stabilization.md`
+3. `docs/107-pi-project-local-runtime-integration.md`
+4. `docs/106-pi-first-real-session-gate.md`
+5. `docs/105-pi-native-install-smoke.md`
+6. `docs/104-pi-first-operator-handoff.md`
+7. `docs/103-pi-postflight-audit-projection.md`
+8. `docs/102-pi-interactive-approval-roundtrip.md`
+9. `docs/101-pi-coding-agent-preflight-bridge.md`
+10. `docs/100-fixed-execution-operational-recovery-implementation.md`
+11. `docs/99-fixed-execution-operational-recovery-design-gate.md`
+12. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+13. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+14. `tasks/handoff-2026-07-25.md`
+15. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
+16. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
+17. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 59 — Pi CLI Mode Stabilization Gate（条件启动；稳定 print/json/TUI 入口）**。
-- Stage 58 已把 Pi agent dir 纳入项目本地 `.runtime`；下一阶段才排查 Pi CLI `--print` / `--mode json` 的 0 stdout / 0 stderr 超时。
+- **真实终端人工 TUI 会话验收（operator 执行）**：按 `docs/108` 第 3 节契约在真实终端运行 `pi`；间歇失败再观察，复现 0 输出时按 60s 有界 kill 收集证据。
+- Stage 59 已钉住 `deepseek-compat/deepseek-v4-flash` 默认模型并提交可重复 smoke；print/json 入口已稳定。
 - Pi-first 是主线；OMP 仅作为兼容验证/备选。
 - POSIX enablement 必须另行闭合 executable image identity、process-group containment 与同等输出/审计停止线。
 - 任何第二个 command、通用 approval-required adapter、network operation、bridge execution authority、持久 audit writer、自动安装或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。
+- docs/ 活跃文档已收敛至 47 个：12 份已冻结设计文档（41/45/54/56/58/60/62/63/66/70/73/74）经用户批准以 `git mv` 完整移入 `docs/archive/`，活跃区全部引用已改为 `archive/` 路径，内容未删除；执行记录见 `tasks/handoff-2026-07-25.md` 第 9 节。
 
 ## 重要约束
 

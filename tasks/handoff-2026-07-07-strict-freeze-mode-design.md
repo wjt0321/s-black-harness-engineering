@@ -32,7 +32,7 @@ v0.11.0-runtime-event-import
 
 ### 45 — Runtime Event Import Strict Freeze Mode 设计
 
-- 新增 `docs/45-runtime-event-import-strict-freeze-mode.md`
+- 新增 `docs/archive/45-runtime-event-import-strict-freeze-mode.md`
 - 更新：
   - `README.md`
   - `README.en.md`

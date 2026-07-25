@@ -4,7 +4,7 @@
 
 本阶段承接：
 
-- `docs/70-orchestration-run-retry-fallback-commit-design.md`
+- `docs/archive/70-orchestration-run-retry-fallback-commit-design.md`
 - 已落地的 retry / fallback commit 第一版
 
 在上一阶段完成 retry/fallback 的 lineage-aware 受控写入之后，本阶段补的是**只读侧的可见性闭环**：让现有 orchestration read models 能稳定、脱敏地读出 recovery lineage，而不只是把 lineage 写进 envelope / event metadata 后无人消费。

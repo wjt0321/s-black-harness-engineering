@@ -2,7 +2,7 @@
 
 ## 阶段定位
 
-本文档标记 `runtime event import` 一致性冻结（consistency freeze）第一版实现完成。它在 `docs/41-runtime-event-import-consistency-freeze.md` 确定的设计基础上，为 dry-run 与 commit 之间增加了最小可用的“审阅上下文一致性”校验层。
+本文档标记 `runtime event import` 一致性冻结（consistency freeze）第一版实现完成。它在 `docs/archive/41-runtime-event-import-consistency-freeze.md` 确定的设计基础上，为 dry-run 与 commit 之间增加了最小可用的“审阅上下文一致性”校验层。
 
 ## 已实现能力
 

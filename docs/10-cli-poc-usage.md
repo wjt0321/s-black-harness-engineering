@@ -1465,7 +1465,7 @@ python -m agent_runtime.cli runtime event import \
 - `--commit` 只追加 event ledger，不写入 task ledger、不写 envelope。
 - 不回显完整 `message` / metadata values / artifacts payload / evidence description / `target` / `input` / `raw_ref` / `decision_ref` / secret match；freeze 字段只暴露 hash、size、line count 等安全元数据。
 
-详细设计见 `docs/37-runtime-event-import-dry-run.md`、`docs/39-runtime-event-import-commit-design.md`、`docs/41-runtime-event-import-consistency-freeze.md` 与 `docs/45-runtime-event-import-strict-freeze-mode.md`，阶段收口说明见 `docs/38-release-notes-runtime-event-import-dry-run.md`、`docs/40-release-notes-runtime-event-import-commit.md`、`docs/42-release-notes-runtime-event-import-consistency-freeze.md` 与 `docs/46-release-notes-runtime-event-import-strict-freeze.md`。
+详细设计见 `docs/37-runtime-event-import-dry-run.md`、`docs/39-runtime-event-import-commit-design.md`、`docs/archive/41-runtime-event-import-consistency-freeze.md` 与 `docs/archive/45-runtime-event-import-strict-freeze-mode.md`，阶段收口说明见 `docs/38-release-notes-runtime-event-import-dry-run.md`、`docs/40-release-notes-runtime-event-import-commit.md`、`docs/42-release-notes-runtime-event-import-consistency-freeze.md` 与 `docs/46-release-notes-runtime-event-import-strict-freeze.md`。
 
 ## Runtime Event Append Smoke / Report Loop
 

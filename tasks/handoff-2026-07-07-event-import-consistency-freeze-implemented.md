@@ -37,7 +37,7 @@ v0.10.0-runtime-task-create-commit
 
 ### Runtime Event Import Consistency Freeze 设计
 
-- 新增 `docs/41-runtime-event-import-consistency-freeze.md`
+- 新增 `docs/archive/41-runtime-event-import-consistency-freeze.md`
 - 目标：解决 dry-run / commit 之间 candidate 文件与目标 events ledger 的时间差风险。
 - 核心设计：`candidate_fingerprint`、`events_ledger_fingerprint`、`events_ledger_size_bytes`、`events_ledger_line_count`、`plan_hash`，以及 commit 可选 `--expected-plan-hash`。
 
@@ -45,7 +45,7 @@ v0.10.0-runtime-task-create-commit
 
 - 提交：`ce69947 Add runtime event import consistency freeze`
 - 新增：
-  - `docs/41-runtime-event-import-consistency-freeze.md`
+  - `docs/archive/41-runtime-event-import-consistency-freeze.md`
   - `docs/42-release-notes-runtime-event-import-consistency-freeze.md`
   - `tests/test_runtime_event_import_freeze.py`
 - 修改：

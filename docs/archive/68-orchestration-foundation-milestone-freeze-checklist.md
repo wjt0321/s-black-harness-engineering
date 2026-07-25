@@ -73,8 +73,8 @@
 
 ### D. Task submit entry
 
-- [x] `62-orchestration-task-submit-controlled-write-design.md`
-- [x] `63-orchestration-task-submit-created-event-design.md`
+- [x] `archive/62-orchestration-task-submit-controlled-write-design.md`
+- [x] `archive/63-orchestration-task-submit-created-event-design.md`
 - [x] `65-release-notes-orchestration-task-submit-created-event.md`
 - [x] `orchestration task submit --commit` A+B
 
@@ -82,7 +82,7 @@
 
 ### E. Recovery preview
 
-- [x] `66-orchestration-run-retry-fallback-design.md`
+- [x] `archive/66-orchestration-run-retry-fallback-design.md`
 - [x] `67-release-notes-orchestration-run-retry-fallback.md`
 - [x] `orchestration run --retry-of ... --dry-run`
 - [x] `orchestration run --fallback-from ... --fallback-to ... --dry-run`

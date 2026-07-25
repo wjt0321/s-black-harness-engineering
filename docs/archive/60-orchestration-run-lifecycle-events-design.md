@@ -197,10 +197,10 @@ B 第一版建议要求显式 `--events-file`，避免默认写真实仓库 `tas
 - `docs/51-backend-first-api-boundary.md` 定义了 Run 作为顶层资源；本文档把 Run 的生命周期事件沉淀规则细化到可执行层面。
 - `docs/52-minimal-orchestration-loop.md` 描述了“执行受控运行”这一步；本文档说明这一步成功后应留下哪些事件轨迹。
 - `docs/archive/53-minimal-orchestration-loop-cli-draft.md` 提供了 `orchestration run` 命令草案；本文档为其 B 侧扩展提供设计前置。
-- `docs/54-backend-preparation-before-ui.md` 定义了执行页 read model；本文档说明 lifecycle events 如何补充执行页数据。
-- `docs/56-orchestration-controlled-write-boundary.md` 定义了 dry-run/commit 统一语义；本文档将其扩展到 event ledger append。
+- `docs/archive/54-backend-preparation-before-ui.md` 定义了执行页 read model；本文档说明 lifecycle events 如何补充执行页数据。
+- `docs/archive/56-orchestration-controlled-write-boundary.md` 定义了 dry-run/commit 统一语义；本文档将其扩展到 event ledger append。
 - `docs/archive/release-notes/57-release-notes-orchestration-controlled-handoff.md` 记录了 route preview / preflight / approval resolve 落地；这些命令仍是 run commit 的前置。
-- `docs/58-orchestration-run-controlled-execution-design.md` 定义了 A/B 产物策略；本文档把 B 侧 event append 的 schema、payload、顺序、回滚规则讲清楚。
+- `docs/archive/58-orchestration-run-controlled-execution-design.md` 定义了 A/B 产物策略；本文档把 B 侧 event append 的 schema、payload、顺序、回滚规则讲清楚。
 - `docs/archive/release-notes/59-release-notes-orchestration-run-controlled-execution.md` 记录了 A-only 落地；本文档是 B 侧实现的直接前置。
 
 ## 实现状态

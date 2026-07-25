@@ -119,7 +119,7 @@ Release notes 是阶段收口文档，不自动等于 tag 候选。
 
 ### 62
 
-`62-orchestration-task-submit-controlled-write-design.md` 目前是 design gate，不是 release notes。
+`archive/62-orchestration-task-submit-controlled-write-design.md` 目前是 design gate，不是 release notes。
 
 因此：
 

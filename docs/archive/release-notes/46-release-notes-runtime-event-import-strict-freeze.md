@@ -2,7 +2,7 @@
 
 ## 阶段定位
 
-本文档标记 `runtime event import` strict freeze mode 第一版实现完成。它在 `docs/45-runtime-event-import-strict-freeze-mode.md` 确定的设计基础上，新增了 `--require-dry-run` 参数，使调用方可以显式声明：本次 commit 必须绑定某次 dry-run 审阅结果。
+本文档标记 `runtime event import` strict freeze mode 第一版实现完成。它在 `docs/archive/45-runtime-event-import-strict-freeze-mode.md` 确定的设计基础上，新增了 `--require-dry-run` 参数，使调用方可以显式声明：本次 commit 必须绑定某次 dry-run 审阅结果。
 
 ## 已实现能力
 

@@ -31,8 +31,8 @@
 - `16-runtime-plan.md`
 - `17-runtime-planning-bridge.md`
 - `19-runtime-report.md`
-- `41-runtime-event-import-consistency-freeze.md`
-- `45-runtime-event-import-strict-freeze-mode.md`
+- `archive/41-runtime-event-import-consistency-freeze.md`
+- `archive/45-runtime-event-import-strict-freeze-mode.md`
 
 ### 5. 想看中枢台主线（Stage 57 Pi real session proof 已收口）
 
@@ -43,16 +43,16 @@
 - `51-backend-first-api-boundary.md` — 后端优先 API 边界
 - `52-minimal-orchestration-loop.md` — 最小编排循环设计（Stage 14 已收口）
 - `archive/53-minimal-orchestration-loop-cli-draft.md` — CLI 草稿
-- `54-backend-preparation-before-ui.md` — 后端准备（UI 之前）
-- `56-orchestration-controlled-write-boundary.md` — 受控写入边界
-- `58-orchestration-run-controlled-execution-design.md` — Run 受控执行设计
-- `60-orchestration-run-lifecycle-events-design.md` — Run 生命周期事件
-- `62-orchestration-task-submit-controlled-write-design.md` — Task 提交受控写入
-- `63-orchestration-task-submit-created-event-design.md` — Task 提交事件设计
-- `66-orchestration-run-retry-fallback-design.md` — Retry/Fallback 设计
-- `70-orchestration-run-retry-fallback-commit-design.md` — Retry/Fallback Commit 设计
-- `73-recovery-lineage-aggregation-read-model.md` — Recovery lineage 聚合只读模型（Stage 12 post-freeze）
-- `74-recovery-lineage-report-reuse.md` — Recovery lineage 在 report generate 的显式复用契约
+- `archive/54-backend-preparation-before-ui.md` — 后端准备（UI 之前）
+- `archive/56-orchestration-controlled-write-boundary.md` — 受控写入边界
+- `archive/58-orchestration-run-controlled-execution-design.md` — Run 受控执行设计
+- `archive/60-orchestration-run-lifecycle-events-design.md` — Run 生命周期事件
+- `archive/62-orchestration-task-submit-controlled-write-design.md` — Task 提交受控写入
+- `archive/63-orchestration-task-submit-created-event-design.md` — Task 提交事件设计
+- `archive/66-orchestration-run-retry-fallback-design.md` — Retry/Fallback 设计
+- `archive/70-orchestration-run-retry-fallback-commit-design.md` — Retry/Fallback Commit 设计
+- `archive/73-recovery-lineage-aggregation-read-model.md` — Recovery lineage 聚合只读模型（Stage 12 post-freeze）
+- `archive/74-recovery-lineage-report-reuse.md` — Recovery lineage 在 report generate 的显式复用契约
 - `75-cli-automation-contract-discovery.md` — CLI 自动化 discovery、gate、profile、workflow plan 与 drift validation（已收口）
 - `76-read-only-control-panel-mvp.md` — Stage 16 本地静态只读 Control Panel 设计与验收边界（已收口）
 - `78-control-panel-host-integration-boundary.md` — Stage 17 本地只读 stdio handoff contract 设计与实现边界
@@ -79,6 +79,7 @@
 - `105-pi-native-install-smoke.md` — Stage 56 独立 Pi 安装、全局 extension 自动发现、Layer 1 preflight smoke 与回滚边界（已收口）
 - `106-pi-first-real-session-gate.md` — Stage 57 SDK-host 真实 Pi 会话、隔离 read 工具链路、DeepSeek compat provider 与 CLI mode 限制（已收口）
 - `107-pi-project-local-runtime-integration.md` — Stage 58 将 Pi agent dir 迁入项目 `.runtime`、Git 隔离、模型与 extension 自动发现验证（已收口）
+- `108-pi-cli-mode-stabilization.md` — Stage 59 Pi CLI/TUI mode 稳定门：0 输出超时诊断、钉住 deepseek-compat 默认模型、入口契约与可重复 smoke（已收口）
 - `archive/92-filtered-snapshot-markdown-display-consumer-validation-gate.md` — Stage 36–38 display v1 consumer 与 `v0.16.0` 历史事实源
 - `archive/91-codex-desktop-filtered-snapshot-markdown-display-integration-and-milestone-freeze.md` — Stage 33–35 Markdown display 与 `v0.15.0` 历史事实源
 - `archive/90-codex-desktop-filtered-snapshot-host-integration-and-milestone-freeze.md` — Stage 30–32 host design、实现、验收与 `v0.14.0` 历史冻结事实源

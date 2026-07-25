@@ -1,7 +1,7 @@
 # 76 — Stage 16 Read-only Control Panel MVP
 
 <!-- parents: 47-orchestration-hub-vision.md, 51-backend-first-api-boundary.md -->
-<!-- relates: 54-backend-preparation-before-ui.md, 75-cli-automation-contract-discovery.md -->
+<!-- relates: archive/54-backend-preparation-before-ui.md, 75-cli-automation-contract-discovery.md -->
 
 ## 1. 结论
 

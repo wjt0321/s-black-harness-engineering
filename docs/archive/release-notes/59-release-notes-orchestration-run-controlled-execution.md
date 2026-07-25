@@ -4,7 +4,7 @@
 
 本阶段是 Stage 15.6「Orchestration Run 受控执行设计」的实现收口。
 
-在 `docs/58-orchestration-run-controlled-execution-design.md` 把 run dry-run / commit 的产物形态、freeze guard、event/artifact/evidence 沉淀规则和 rollback 策略定清楚之后，本阶段实际落地了 run 侧第一版命令：
+在 `docs/archive/58-orchestration-run-controlled-execution-design.md` 把 run dry-run / commit 的产物形态、freeze guard、event/artifact/evidence 沉淀规则和 rollback 策略定清楚之后，本阶段实际落地了 run 侧第一版命令：
 
 - `orchestration run --dry-run`：只读 run plan preview + 稳定 `plan_hash`。
 - `orchestration run --commit`：A-only controlled write，把已审阅 run plan 沉淀为 envelope draft/export 文件。
@@ -130,7 +130,7 @@ python -m agent_runtime.cli orchestration run \
 - 更新 `docs/02-roadmap.md`：Stage 15.6/15.7/15.8 状态调整为 run dry-run / commit A-only 已落地，B lifecycle events 仍后续。
 - 更新 `docs/10-cli-poc-usage.md`：把 `orchestration run --commit` 从草案标记为已存在命令，并补充示例。
 - 更新 `docs/archive/53-minimal-orchestration-loop-cli-draft.md`：同步 run dry-run / run commit 状态。
-- 更新 `docs/58-orchestration-run-controlled-execution-design.md`：标记 commit A-only 已落地，B 仍后续。
+- 更新 `docs/archive/58-orchestration-run-controlled-execution-design.md`：标记 commit A-only 已落地，B 仍后续。
 - 更新 `README.md` / `README.en.md`：同步 Stage 15.6/15.7/15.8 状态与已落地能力列表。
 - 更新 `tasks/progress.md`：追加 2026-07-09 阶段收口记录。
 

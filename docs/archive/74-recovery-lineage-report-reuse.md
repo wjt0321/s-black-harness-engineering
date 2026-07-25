@@ -1,4 +1,4 @@
-<!-- parents: 73-recovery-lineage-aggregation-read-model.md -->
+<!-- parents: archive/73-recovery-lineage-aggregation-read-model.md -->
 <!-- relates: 50-control-plane-state-model.md -->
 
 # 74 — Recovery Lineage Report Reuse

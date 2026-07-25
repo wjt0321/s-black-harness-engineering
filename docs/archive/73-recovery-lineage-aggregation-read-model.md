@@ -1,5 +1,5 @@
 <!-- parents: 50-control-plane-state-model.md -->
-<!-- relates: 70-orchestration-run-retry-fallback-commit-design.md -->
+<!-- relates: archive/70-orchestration-run-retry-fallback-commit-design.md -->
 
 # 73 — Recovery Lineage Aggregation Read Model
 
@@ -113,6 +113,6 @@ orchestration run inspect --aggregate-lineage
 
 比较后选择先接入 `orchestration report generate --aggregate-lineage`：report 已具备 task/request/events 输入，单 request 聚合语义与 inspect 一致，兼容成本最低。`run list` 仍是 envelope-scoped 集合视图，暂不引入逐行 ledger 聚合或跨 envelope descendants。
 
-report 直接复用 `agent_runtime/orchestration_recovery.py` 和 `control-plane/recovery-lineage/v1`，默认不传 flag 时输出保持不变。详细契约见 `docs/74-recovery-lineage-report-reuse.md`。
+report 直接复用 `agent_runtime/orchestration_recovery.py` 和 `control-plane/recovery-lineage/v1`，默认不传 flag 时输出保持不变。详细契约见 `docs/archive/74-recovery-lineage-report-reuse.md`。
 
 最新交接：`tasks/handoff-2026-07-12-recovery-lineage-aggregation.md`。

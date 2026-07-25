@@ -239,7 +239,7 @@ envelope draft export 方案仍可作为未来候选，但不在第一版实现�
 - `docs/51-backend-first-api-boundary.md` 定义了资源与操作边界；本文档把其中 write-like 操作的 dry-run/commit 语义细化到可执行层面。
 - `docs/52-minimal-orchestration-loop.md` 描述了七步闭环；本文档规定其中 `route preview` / `preflight` / `approval resolve` 三步的最小实现边界。
 - `docs/archive/53-minimal-orchestration-loop-cli-draft.md` 提供了命令草案；本文档筛选出第一批可进入实现的命令，并明确其余仍留在草案。
-- `docs/54-backend-preparation-before-ui.md` 定义了页面 read model；本文档说明页面操作入口（如审批页的 resolve）在写入侧应如何安全落地。
+- `docs/archive/54-backend-preparation-before-ui.md` 定义了页面 read model；本文档说明页面操作入口（如审批页的 resolve）在写入侧应如何安全落地。
 
 ## 下一步建议
 
