@@ -1193,9 +1193,15 @@ v0.14.0-filtered-snapshot-host-integration
 
 事实源：`docs/104-pi-first-operator-handoff.md`。
 
-## Stage 56 — Pi Native Install Smoke（条件启动）
+## Stage 56 — Pi Native Install Smoke（已完成）
 
-仅作为下一候选 implementation gate：在用户明确授权后，验证独立 Pi CLI、可回滚安装 `pi-preflight-bridge/index.ts`、只启用 Layer 1 preflight，并完成普通 read 放行、`.env` 阻断、`git push origin main` needs_approval 阻断 smoke。不授予 approval/postflight 默认启用、持久 audit writer、现有 extension 改写、真实 push 或 OMP 主线回退。
+独立 Pi `0.82.0` 已安装；全局 `pi-preflight-bridge` 已可回滚部署并被 Pi 官方 `DefaultResourceLoader` 自动发现。只设置 `AGENT_RUNTIME_ROOT`，approval/postflight 保持关闭。已加载 handler smoke 验证普通 read 放行、`.env` 阻断、`git push origin main` needs_approval 阻断；未调用模型、未执行工具、未访问网络。
+
+事实源：`docs/105-pi-native-install-smoke.md`。
+
+## Stage 57 — Pi First Real Session Gate（条件启动）
+
+仅作为下一候选：决定是否允许一次受控模型调用，在真实 Pi agent session 中触发默认工具，并验证其行为与 Stage 56 已加载 handler smoke 一致。不授权真实 push、写操作、approval/postflight 默认开启、第二个 command 或 OMP 主线回退。
 
 ---
 

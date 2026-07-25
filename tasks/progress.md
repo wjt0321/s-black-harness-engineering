@@ -2911,3 +2911,13 @@
 - Stage 55 只完成 operator handoff design：未安装独立 Pi CLI、未写 `%USERPROFILE%\.pi`、未修改现有 Orca extensions、未启动真实 Pi 工作流。
 - 事实源为 `docs/104-pi-first-operator-handoff.md`；`docs context` 通过，Pi bridge Node 行为测试 22/22 通过。
 - 下一候选为 Stage 56 Pi Native Install Smoke：需用户对 package 安装、`~/.pi` extension 写入和可回滚备份给出明确授权；仅启用 Layer 1 preflight，approval/postflight 保持关闭。
+
+## 2026-07-25 Stage 56 - Pi Native Install Smoke
+
+- 用户明确授权直接完成 Stage 56。
+- 已安装独立 `@earendil-works/pi-coding-agent@0.82.0`；`pi --version` 为 `0.82.0`。
+- 已备份原全局 extension 到 `%USERPROFILE%\.pi\agent\backups\stage56-before-pi-preflight-20260725-164539`，包含 `SHA256SUMS.txt`；三份 Orca extension 原样保留。
+- 已部署 `%USERPROFILE%\.pi\agent\extensions\pi-preflight-bridge\index.ts` 与 `preflight-bridge.ts`，用户级只设置 `AGENT_RUNTIME_ROOT=D:\Mydev\agent-runtime`；approval/postflight 未设置。
+- Pi 官方 `DefaultResourceLoader` 从真实全局目录自动发现 extension，加载无错误且注册一个 `tool_call` handler；handler smoke 验证普通 read 放行、`.env` 阻断、`git push origin main` needs_approval 阻断。
+- 初次尝试发现 RPC `bash` 属于用户侧直接命令，绕过 LLM default-tool `tool_call` chain，不可作为扩展门禁证明；隔离仓库无 origin，因此未连接远端、未推送内容。有效验收已改为真实自动发现后的已加载 handler。
+- 事实源为 `docs/105-pi-native-install-smoke.md`；下一候选 Stage 57 Pi First Real Session Gate。

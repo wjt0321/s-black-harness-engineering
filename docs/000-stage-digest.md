@@ -4,9 +4,9 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：55 个
+- docs/ 活跃文档：56 个
 - 归档文档：88 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
-- 全仓 .md 文件：188 个
+- 全仓 .md 文件：189 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
 
 ## 当前基线
@@ -25,7 +25,8 @@
 
 ## 当前阶段
 
-- **Stage 55 — Pi-first Operator Handoff Gate（已完成并收口；design gate）**
+- **Stage 56 — Pi Native Install Smoke（已完成并收口；Layer 1 preflight only）**
+- Stage 55 — Pi-first Operator Handoff Gate（已完成并收口；design gate）
 - Stage 54 — Pi Postflight Audit Projection v1（已完成并收口；host-side projection only）
 - Stage 53 — Pi Interactive Approval Roundtrip v1（已完成并收口；limited host approval only）
 - Stage 52 — Pi Coding Agent Preflight Bridge v1（已完成并收口；host-side preflight only）
@@ -36,8 +37,9 @@
 - Stage 45 — Single-user Real Execution Readiness Milestone Closure（已收口；提交 `49a517b`）
 - Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
 - Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
-- 下一阶段候选：Stage 56 — Pi Native Install Smoke（条件启动；需明确写入/安装授权）
-- Stage 55 已将路线切为 Pi-first layered：独立 Pi CLI 与最小 extension 优先，OMP 只保留为兼容验证/备选；Stage 55 不安装 package、不写 `~/.pi`、不改现有 Orca extensions。
+- 下一阶段候选：Stage 57 — Pi First Real Session Gate（条件启动；需模型调用边界）
+- Stage 56 已安装独立 Pi `0.82.0`，持久部署全局 `pi-preflight-bridge`，只设置 `AGENT_RUNTIME_ROOT`；approval/postflight 仍关闭。
+- Stage 55 已将路线切为 Pi-first layered：独立 Pi CLI 与最小 extension 优先，OMP 只保留为兼容验证/备选。
 - Stage 54 已实现默认关闭的 postflight projection：`AGENT_RUNTIME_POSTFLIGHT_MODE=summary` 时，`tool_result` 会重跑 preflight 并追加 value-free 摘要块；不写 ledger、不改 `isError`、不回显 path/command/output/details，不声明 Harness 执行了工具。
 - Stage 53 已实现默认关闭的一次性交互批准：仅固定 `git push origin main`、同 cwd、交互 UI、显式 `AGENT_RUNTIME_APPROVAL_MODE=interactive` 才可确认；确认后重跑 preflight 并严格匹配 request/target identity，批准不持久化、不复用、不写 ledger，Harness 不执行工具。
 - 本机未安装独立 Pi CLI；使用 OMP 17.0.8 内含的同源 `@earendil-works/pi-coding-agent` API 真实加载 Stage 52 extension，验证普通 read 放行、`.env` read 阻断、`git push` needs_approval 阻断。未执行真实 push，未修改 Pi/OMP 持久配置。
@@ -118,6 +120,14 @@
 - 摘要不包含 path、command、file content、tool output text、details payload 或 credential-like values；不写 ledger、不访问网络、不改 `isError`、不 patch details。
 - 这是 host-side projection，不是 durable audit writer，也不证明 Harness 执行了工具。
 - Stage 54 事实源：`docs/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 56 - Pi Native Install Smoke
+
+- 独立 Pi CLI 已安装为 `@earendil-works/pi-coding-agent@0.82.0`；`pi --version` 返回 `0.82.0`。
+- 全局 extension 已部署到 `%USERPROFILE%\.pi\agent\extensions\pi-preflight-bridge\`，写入前备份为 `%USERPROFILE%\.pi\agent\backups\stage56-before-pi-preflight-20260725-164539` 并生成 SHA-256 清单。
+- 用户级只设置 `AGENT_RUNTIME_ROOT=D:\Mydev\agent-runtime`；approval/postflight 用户变量未设置。
+- Pi 官方 `DefaultResourceLoader` 真实自动发现 extension；已加载 handler 验证普通 read 放行、`.env` 阻断、`git push origin main` needs_approval 阻断。
+- smoke 不调用模型、不执行工具、不访问网络；事实源：`docs/105-pi-native-install-smoke.md`。
 
 ### 新进落地：Stage 55 - Pi-first Operator Handoff Gate
 
@@ -281,23 +291,24 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/104-pi-first-operator-handoff.md`
-3. `docs/103-pi-postflight-audit-projection.md`
-4. `docs/102-pi-interactive-approval-roundtrip.md`
-5. `docs/101-pi-coding-agent-preflight-bridge.md`
-6. `docs/100-fixed-execution-operational-recovery-implementation.md`
-7. `docs/99-fixed-execution-operational-recovery-design-gate.md`
-8. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
-9. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
-10. `tasks/handoff-2026-07-25.md`
-11. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
-12. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
-13. 再跑：`python -m agent_runtime.cli docs context --json`
+2. `docs/105-pi-native-install-smoke.md`
+3. `docs/104-pi-first-operator-handoff.md`
+4. `docs/103-pi-postflight-audit-projection.md`
+5. `docs/102-pi-interactive-approval-roundtrip.md`
+6. `docs/101-pi-coding-agent-preflight-bridge.md`
+7. `docs/100-fixed-execution-operational-recovery-implementation.md`
+8. `docs/99-fixed-execution-operational-recovery-design-gate.md`
+9. `docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`
+10. `docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`
+11. `tasks/handoff-2026-07-25.md`
+12. Stage 51/50/49/47–48 验收读 release notes 110/109/108/107。
+13. Stage 46/readiness/presentation/display 历史事实源按需读 archive/96、archive/95、archive/94、archive/92、archive/91、archive/90。
+14. 再跑：`python -m agent_runtime.cli docs context --json`
 
 ## 下一步做什么
 
-- **Stage 56 — Pi Native Install Smoke（条件启动；需明确写入/安装授权）**。
-- 仅允许验证独立 Pi CLI、可回滚安装 extension、Layer 1 preflight 与三条不执行远端的 smoke（普通 read 放行、`.env` 阻断、`git push origin main` needs_approval 阻断）。
+- **Stage 57 — Pi First Real Session Gate（条件启动；需模型调用边界）**。
+- Stage 56 已完成独立 Pi、持久 extension 自动发现与 Layer 1 handler smoke；下一阶段才考虑在真实 Pi 会话中触发默认工具。
 - Pi-first 是主线；OMP 仅作为兼容验证/备选。
 - POSIX enablement 必须另行闭合 executable image identity、process-group containment 与同等输出/审计停止线。
 - 任何第二个 command、通用 approval-required adapter、network operation、bridge execution authority、持久 audit writer、自动安装或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。

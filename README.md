@@ -158,7 +158,8 @@
 - ✅ Stage 53 — Pi Interactive Approval Roundtrip（有限 host approval v1；提交级里程碑）
 - ✅ Stage 54 — Pi Postflight Audit Projection（host-side projection v1；提交级里程碑）
 - ✅ Stage 55 — Pi-first Operator Handoff Gate（design gate；Pi-first 分层主线已收口）
-- ⏳ Stage 56 — Pi Native Install Smoke（条件启动；需独立安装/写入授权）
+- ✅ Stage 56 — Pi Native Install Smoke（独立 Pi 0.82.0 与 Layer 1 preflight 已部署）
+- ⏳ Stage 57 — Pi First Real Session Gate（条件启动；需模型调用边界）
 
 ### 现在最明确的位置
 
@@ -248,16 +249,17 @@ python -m agent_runtime.cli orchestration run inspect --task-id <task-id> --requ
 首次进入仓库时，按当前阶段恢复，不需要顺序阅读全部历史文档：
 
 1. [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前阶段、稳定基线和下一步。
-2. [`docs/104-pi-first-operator-handoff.md`](docs/104-pi-first-operator-handoff.md)：Pi-first 分层路线、持久安装边界与 Stage 56 停止线。
-3. [`docs/103-pi-postflight-audit-projection.md`](docs/103-pi-postflight-audit-projection.md)：Stage 54 默认关闭的 `tool_result` 脱敏摘要投影事实源。
-4. [`docs/102-pi-interactive-approval-roundtrip.md`](docs/102-pi-interactive-approval-roundtrip.md)：Stage 53 默认关闭的有限交互审批事实源。
-5. [`docs/101-pi-coding-agent-preflight-bridge.md`](docs/101-pi-coding-agent-preflight-bridge.md)：Stage 52 Pi host preflight bridge 事实源。
-6. [`docs/100-fixed-execution-operational-recovery-implementation.md`](docs/100-fixed-execution-operational-recovery-implementation.md)：Stage 51 权威实现事实源。
-7. [`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`](docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md)：当前唯一真实执行能力及停止线。
-8. [`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`](docs/97-execution-lifecycle-audit-writer-design-and-implementation.md)：execution audit writer 事实源。
-9. [`tasks/handoff-2026-07-25.md`](tasks/handoff-2026-07-25.md)：最新 Stage 55 交接与 Stage 56 条件边界。
-10. [`docs/02-roadmap.md`](docs/02-roadmap.md)：完整阶段路线图。
-11. [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md)：CLI 参数与示例。
+2. [`docs/105-pi-native-install-smoke.md`](docs/105-pi-native-install-smoke.md)：独立 Pi 安装、全局 extension 自动发现、Layer 1 smoke 与回滚事实源。
+3. [`docs/104-pi-first-operator-handoff.md`](docs/104-pi-first-operator-handoff.md)：Pi-first 分层路线与安装交接边界。
+4. [`docs/103-pi-postflight-audit-projection.md`](docs/103-pi-postflight-audit-projection.md)：Stage 54 默认关闭的 `tool_result` 脱敏摘要投影事实源。
+5. [`docs/102-pi-interactive-approval-roundtrip.md`](docs/102-pi-interactive-approval-roundtrip.md)：Stage 53 默认关闭的有限交互审批事实源。
+6. [`docs/101-pi-coding-agent-preflight-bridge.md`](docs/101-pi-coding-agent-preflight-bridge.md)：Stage 52 Pi host preflight bridge 事实源。
+7. [`docs/100-fixed-execution-operational-recovery-implementation.md`](docs/100-fixed-execution-operational-recovery-implementation.md)：Stage 51 权威实现事实源。
+8. [`docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md`](docs/98-fixed-git-status-executor-implementation-and-limited-enablement.md)：当前唯一真实执行能力及停止线。
+9. [`docs/97-execution-lifecycle-audit-writer-design-and-implementation.md`](docs/97-execution-lifecycle-audit-writer-design-and-implementation.md)：execution audit writer 事实源。
+10. [`tasks/handoff-2026-07-25.md`](tasks/handoff-2026-07-25.md)：最新 Stage 56 交接与 Stage 57 条件边界。
+11. [`docs/02-roadmap.md`](docs/02-roadmap.md)：完整阶段路线图。
+12. [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md)：CLI 参数与示例。
 
 完整主题导航和历史归档见 [`docs/00-index.md`](docs/00-index.md)；完整推进流水见 [`tasks/progress.md`](tasks/progress.md)。
 
