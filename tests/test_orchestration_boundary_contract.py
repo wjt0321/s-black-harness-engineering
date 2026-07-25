@@ -94,6 +94,7 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
     }
     assert _subparser_names(_nested_parser(orchestration, "execution")) == {
         "git-status",
+        "pi-print",
         "readiness",
         "recovery",
         "trust",

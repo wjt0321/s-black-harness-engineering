@@ -29,6 +29,7 @@ EXPECTED_CONTRACT_IDS = [
     "orchestration_artifact_export",
     "overview",
     "persistent_run_report_collection",
+    "pi_cli_print_execution",
     "read_loop_snapshot",
     "report_generate",
     "routing_preflight",
@@ -48,9 +49,9 @@ def test_contract_manifest_freezes_v1_shape_and_availability_counts() -> None:
     assert manifest["schema_version"] == "control-plane/orchestration-contract/v1"
     assert manifest["consumer"] == "cli-automation"
     assert manifest["summary"] == {
-        "total_entries": 29,
+        "total_entries": 30,
         "stable": 10,
-        "stable_limited": 8,
+        "stable_limited": 9,
         "preview": 8,
         "unavailable": 3,
     }
@@ -180,6 +181,6 @@ def test_contract_inspect_human_output_is_compact(capsys) -> None:
     assert code == 0
     assert "ORCHESTRATION CONTRACT" in captured.out
     assert "schema_version=control-plane/orchestration-contract/v1" in captured.out
-    assert "total_entries=29" in captured.out
+    assert "total_entries=30" in captured.out
     assert "run_plan preview read_only orchestration run" in captured.out
     assert "external_execution_service_stack unavailable unavailable -" in captured.out

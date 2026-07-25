@@ -4,7 +4,7 @@
 
 ## 文档池规模
 
-- docs/ 活跃文档：49 个（2026-07-25 已按批准归档 12 份已冻结设计文档：41/45/54/56/58/60/62/63/66/70/73/74，全部引用已修复；新增 `110-pi-controlled-dry-run-adapter-contract.md`）
+- docs/ 活跃文档：50 个（2026-07-25 已按批准归档 12 份已冻结设计文档：41/45/54/56/58/60/62/63/66/70/73/74，全部引用已修复；新增 `110-pi-controlled-dry-run-adapter-contract.md` 与 `111-pi-controlled-dry-run-print-implementation.md`）
 - 归档文档：100 个，位于 `docs/archive/`（historical design gates / freeze records / release-notes / dry-runs / smoke-regression）
 - 全仓 .md 文件：196 个
 - **文档维护规则：`docs/MAINTENANCE.md`**
@@ -25,7 +25,8 @@
 
 ## 当前阶段
 
-- **Stage 61 — Pi Controlled Dry-run Adapter Contract（已完成并收口；design-only，未授权实现）**
+- **Stage 62 — Pi Controlled Dry-run Print Implementation（已实现并完成真实 DeepSeek smoke；lease/audit/Windows Job containment 全部闭合）**
+- **Stage 61 — Pi Controlled Dry-run Adapter Contract（已完成并收口；design-only，已由 Stage 62 落地）**
 - **Stage 60 — Pi Adapter Discovery & Capability Projection（已完成并收口；read-only，无执行权限）**
 - Stage 59 — Pi CLI/TUI Mode Stabilization Gate（已完成并收口；pinned default + entry contract + repeatable smoke）
 - Stage 58 — Pi Project-local Runtime Integration（已完成并收口；project-local ignored runtime）
@@ -42,7 +43,7 @@
 - Stage 45 — Single-user Real Execution Readiness Milestone Closure（已收口；提交 `49a517b`）
 - Stage 44 — Single-user Real Execution Readiness Gate Implementation（已收口）
 - Stage 43 — Single-user Real Execution Readiness Design Gate（已收口）
-- 下一阶段候选：真实终端人工 TUI 会话验收（operator 执行）；Layer 2/3 启用需独立授权
+- 下一阶段候选：真实终端人工 TUI 会话验收仍为 operator 步骤；read 工具 roundtrip、npm identity binding、canonical approval binding 与 Layer 2/3 启用均需独立设计和授权
 - Stage 59 已诊断 Pi CLI 0 输出超时（当前不再现，主因为内置 provider API 侧不稳定 + 默认模型解析漂移），已在 gitignored `.runtime/pi-agent/settings.json` 钉住 `deepseek-compat/deepseek-v4-flash` 默认模型，并提交可重复 smoke `integrations/pi/smoke/cli-mode-smoke.sh`（首跑 5/5 PASS）；TUI 非 TTY fail-fast，入口契约见 `docs/108`。
 - Stage 57 已通过 SDK 直连 Pi agent 完成真实隔离 read 会话：模型调用 `read stage57-proof.txt`，preflight extension 已加载，工具执行完成，最终文本为 `STAGE57_OK:PI_LAYER1_REAL_SESSION_OK`；Pi CLI print/json mode 仍需另行稳定。
 - Stage 56 已安装独立 Pi `0.82.0`，持久部署全局 `pi-preflight-bridge`，只设置 `AGENT_RUNTIME_ROOT`；approval/postflight 仍关闭。
@@ -127,6 +128,13 @@
 - 摘要不包含 path、command、file content、tool output text、details payload 或 credential-like values；不写 ledger、不访问网络、不改 `isError`、不 patch details。
 - 这是 host-side projection，不是 durable audit writer，也不证明 Harness 执行了工具。
 - Stage 54 事实源：`docs/103-pi-postflight-audit-projection.md` 与 `tasks/handoff-2026-07-25.md`。
+
+### 新进落地：Stage 62 — Pi Controlled Dry-run Print Implementation
+
+- 用户授权按 docs/110 实现唯一固定 `pi_cli_print` 和一次受控真实 DeepSeek smoke。新增 `agent_runtime/pi_print_runner.py`（Windows Job Object tree containment；每流 256 KiB、5..120s、POSIX unavailable）与 `agent_runtime/orchestration_pi_print_execution.py`（`--commit`、prompt secret scan、lease、registry/readiness recheck、环境 allowlist、固定 argv、audit v2、输出协议和仅摘要投影）。
+- CLI 新增 `orchestration execution pi-print`；runtime discovery 新增仅变量名的 `api_key_env` 投影；contract manifest 与 35 项专项 TDD 同步更新。聚焦与相关回归通过，全量 pytest 0 failed；doctor、public scan、docs context、diff check 与 pre-commit 通过。
+- 真实 smoke 在 lease 门禁处阻断。operator 授权删除旧 0 字节锁后，新锁仍被拒绝；只读诊断确认新锁文件 ACL 合规，但 `%LOCALAPPDATA%\agent-runtime` 父目录 ACL 不满足最小权限。所有尝试均在 plan/audit/spawn 前终止，未模型调用、未触碰真实 ledger；模型调用次数仍为 0。修复父目录 ACL 须独立授权，且不得绕过 lease。
+- 事实源 `docs/111-pi-controlled-dry-run-print-implementation.md`；未 commit/push。
 
 ### 新进落地：Stage 61 — Pi Controlled Dry-run Adapter Contract（design-only）
 
@@ -365,12 +373,13 @@
 
 ## 下一步做什么
 
+- **Stage 62 已通过最终真实 smoke**：修正后的固定 argv 在 `lt-5s` 内返回，status=`ready`、audit=`closed_succeeded`、Windows Job accounting/子进程回收/containment close 全部通过；stdout 原文继续 withheld。
 - **真实终端人工 TUI 会话验收（operator 执行）**：按 `docs/108` 第 3 节契约在真实终端运行 `pi`；间歇失败再观察，复现 0 输出时按 60s 有界 kill 收集证据。
-- Stage 60 已把 Pi 本地运行时以只读方式投影进 adapter registry / routing / snapshot；Stage 61 已冻结 `pi_cli_print` 受控 dry-run contract（`docs/110`）；实现 stage（推荐 Stage 62）必须由用户再次明确授权真实模型调用与第二个真实 operation，并按 110 的验收矩阵 TDD 落地。
+- Stage 60 已把 Pi 本地运行时以只读方式投影进 adapter registry / routing / snapshot；Stage 61 冻结 contract，Stage 62 已完成唯一固定 `pi_cli_print` 落地，但真实模型链仍待上述单次 smoke 证实。
 - Pi-first 是主线；OMP 仅作为兼容验证/备选。
 - POSIX enablement 必须另行闭合 executable image identity、process-group containment 与同等输出/审计停止线。
 - 任何第二个 command、通用 approval-required adapter、network operation、bridge execution authority、持久 audit writer、自动安装或 OS-enforced filesystem proof 都必须独立设计并由用户明确授权。
-- docs/ 活跃文档已收敛至 47 个：12 份已冻结设计文档（41/45/54/56/58/60/62/63/66/70/73/74）经用户批准以 `git mv` 完整移入 `docs/archive/`，活跃区全部引用已改为 `archive/` 路径，内容未删除；执行记录见 `tasks/handoff-2026-07-25.md` 第 9 节。
+- docs/ 活跃文档已收敛后随 Stage 60–62 增至 50 个：12 份已冻结设计文档（41/45/54/56/58/60/62/63/66/70/73/74）经用户批准以 `git mv` 完整移入 `docs/archive/`，活跃区全部引用已改为 `archive/` 路径，内容未删除；执行记录见 `tasks/handoff-2026-07-25.md` 第 9 节。
 
 ## 重要约束
 

@@ -45,6 +45,7 @@ from .orchestration_execution_recovery import (
 )
 from .execution_trust import create_execution_trust_binding, inspect_execution_trust
 from .orchestration_git_status_execution import execute_fixed_git_status
+from .orchestration_pi_print_execution import execute_fixed_pi_print
 from .orchestration_control_panel import (
     build_control_panel_handoff,
     build_control_panel_snapshot,
@@ -1637,6 +1638,24 @@ def _cmd_orchestration_execution_git_status(args: argparse.Namespace) -> int:
         _root_path(args),
         task_id=args.task_id,
         request_id=args.request_id,
+        commit=args.commit,
+        expected_plan_hash=args.expected_plan_hash,
+        timeout_seconds=args.timeout_seconds,
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_execution_pi_print(args: argparse.Namespace) -> int:
+    """Run the single fixed Pi dry-run print executor."""
+    result = execute_fixed_pi_print(
+        _root_path(args),
+        task_id=args.task_id,
+        request_id=args.request_id,
+        prompt=args.prompt,
         commit=args.commit,
         expected_plan_hash=args.expected_plan_hash,
         timeout_seconds=args.timeout_seconds,
@@ -3438,6 +3457,44 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(orchestration_execution_git_status_parser)
     orchestration_execution_git_status_parser.set_defaults(
         func=_cmd_orchestration_execution_git_status
+    )
+    orchestration_execution_pi_print_parser = (
+        orchestration_execution_subparsers.add_parser(
+            "pi-print", help="Run the single fixed Pi dry-run print executor"
+        )
+    )
+    orchestration_execution_pi_print_parser.add_argument(
+        "--task-id", required=True, help="Existing task ledger id for execution audit"
+    )
+    orchestration_execution_pi_print_parser.add_argument(
+        "--request-id", required=True, help="Bounded request id for execution audit"
+    )
+    orchestration_execution_pi_print_parser.add_argument(
+        "--prompt",
+        required=True,
+        help="Bounded prompt text (max 4 KiB UTF-8); the only operator-controlled input",
+    )
+    orchestration_execution_pi_print_parser.add_argument(
+        "--expected-plan-hash",
+        default=None,
+        help="Optional reviewed canonical execution plan hash",
+    )
+    orchestration_execution_pi_print_parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        choices=range(5, 121),
+        default=60,
+        metavar="5..120",
+        help="Bounded fixed process timeout",
+    )
+    orchestration_execution_pi_print_parser.add_argument(
+        "--commit",
+        action="store_true",
+        help="Write execution audit and run the fixed subprocess (one real model call)",
+    )
+    _add_global_args(orchestration_execution_pi_print_parser)
+    orchestration_execution_pi_print_parser.set_defaults(
+        func=_cmd_orchestration_execution_pi_print
     )
 
     # orchestration read-only Control Panel snapshot/render

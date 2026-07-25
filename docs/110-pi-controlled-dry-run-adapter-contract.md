@@ -40,7 +40,7 @@ actor       = local-operator
 adapter_id  = pi-cli
 capability  = cli_agent_print
 operation   = pi_cli_print
-argv        = ["pi", "--print", "--no-session", "--no-tools", "--", "<bounded prompt>"]
+argv        = ["pi", "--print", "--no-session", "--no-tools", "<bounded prompt>"]
 shell       = false
 ```
 
@@ -65,7 +65,7 @@ v1 冻结 `--no-tools`：
 - 长度上限：4 KiB（UTF-8 byte）；拒绝 NUL 与控制字符（允许 `\n`、`\t`）；必须是合法 UTF-8。
 - 先经现有 policy 检查管线（`check_text` 语义）与 secret/public scan：prompt 内容若命中 secret 规则，`blocked`，且不输出命中值。
 - prompt 不进入公开 result 投影；只以 SHA-256 digest 进入 plan/audit 绑定（第 8 节）。
-- `--` 分隔符固定存在，防止 prompt 被 CLI 解析为 flag。
+- prompt 作为唯一位置参数直接跟在固定 flag 之后；**不使用 standalone `--` 分隔符**（已实现 Pi 0.82.0 `parseArgs` 不支持 standalone `--`，会把它当 unknown flag 并吞掉 prompt）。作为替代的 flag 注入防护：首个非空白字符为 `-` 的 prompt 一律 `blocked`（固定 rule `pi-print-prompt-flag-like`）。
 
 ## 4. 环境 allowlist 与 secret 处理
 
@@ -186,7 +186,7 @@ approval 语义：`pi_cli_print` 在 policy 上保持 `needs_approval`（externa
 2. readiness 7 项检查每类失败各一用例（fail closed）；
 3. prompt 边界：空、4 KiB 边界、超限、NUL/控制字符、非 UTF-8、secret 命中（值不出现）；
 4. 环境 allowlist：非 allowlist 变量不进入 child env；`DEEPSEEK_API_KEY` 缺失 → `needs_input`；值不出现在任何输出；
-5. argv 固定性：prompt 以 `--` 分隔进入 argv；任何注入 flag 尝试被 prompt 校验拒绝；
+5. argv 固定性：prompt 作为唯一位置参数进入 argv（无 standalone `--`）；首个非空白字符为 `-` 的 prompt 被 `pi-print-prompt-flag-like` 拒绝；任何其他注入 flag 尝试被 prompt 校验拒绝；
 6. runner：timeout tree kill、stdout/stderr overflow withheld、nonzero exit、no orphan（Job accounting）；
 7. 输出协议：非法 UTF-8、行数超限、scan 命中 → `execution_failed/output_validation`；raw 不进入 result/audit/log；
 8. audit 链：started → terminal 唯一、plan hash 一致、prompt 只有 digest；terminal 失败 `audit_incomplete=true` 且 summary withheld；open attempt recovery 可读；

@@ -114,7 +114,14 @@ def test_list_open_returns_safe_deterministic_ledger_order(project: Path) -> Non
         "recovery_action",
     }
     assert result.attempts[0]["recovery_action"] == "close_outcome_unknown"
-    assert result.lease_state in {"active", "inactive", "missing", "unavailable", "invalid"}
+    assert result.lease_state in {
+        "active",
+        "available",
+        "inactive",
+        "missing",
+        "unavailable",
+        "invalid",
+    }
     assert "timestamp" not in json.dumps(result.to_dict())
     assert "append_token" not in json.dumps(result.to_dict())
 

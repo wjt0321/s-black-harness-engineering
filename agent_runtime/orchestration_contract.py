@@ -228,7 +228,7 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             "external_execution_service_stack",
             "unavailable",
             "unavailable",
-            boundary="Generic adapter execution, long-running service, auth, database, and interactive write-capable UI are unavailable; the separate fixed Git status operation is the only limited exception.",
+            boundary="Generic adapter execution, long-running service, auth, database, and interactive write-capable UI are unavailable; the fixed Git status operation and the fixed Pi dry-run print operation are the only limited exceptions.",
         ),
         _entry(
             "fixed_git_status_execution",
@@ -237,6 +237,14 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             commands=(("orchestration", "execution", "git-status"),),
             key_flags=("--commit", "--expected-plan-hash", "--request-id", "--task-id", "--timeout-seconds"),
             boundary="Windows-only fixed Git status execution with external trust binding, Job Object containment, audit, bounded output, and path-free summary.",
+        ),
+        _entry(
+            "pi_cli_print_execution",
+            "stable_limited",
+            "controlled_write",
+            commands=(("orchestration", "execution", "pi-print"),),
+            key_flags=("--commit", "--expected-plan-hash", "--prompt", "--request-id", "--task-id", "--timeout-seconds"),
+            boundary="Windows-only fixed Pi dry-run print execution with env allowlist, Job Object containment, audit, and bounded output; each committed run performs one real model call; prompt, raw model output, and secrets stay withheld.",
         ),
         _entry(
             "orchestration_artifact_export",

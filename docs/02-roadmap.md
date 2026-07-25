@@ -1229,6 +1229,12 @@ Pi agent dir 已迁入 `<project-root>\.runtime\pi-agent`，并通过用户级 `
 
 事实源：`docs/110-pi-controlled-dry-run-adapter-contract.md`。
 
+## Stage 62 — Pi Controlled Dry-run Print Implementation（已完成；smoke 受阻于 lease）
+
+已按 docs/110 contract 以 TDD 实现唯一固定 operation `pi_cli_print`：`agent_runtime/pi_print_runner.py`（复用 Stage 49 Job Object containment，每流 256 KiB、timeout 5..120s 默认 60s，无 trust image 验证，POSIX unavailable）与 `agent_runtime/orchestration_pi_print_execution.py`（`--commit` 门禁 → prompt 校验/secret scan → lease → registry 对齐 → readiness recheck → 环境 allowlist → 固定 argv → plan hash → started audit → pre-spawn/post-run readiness recheck → bounded runner → 输出协议 → terminal audit → safe summary）。raw 输出、prompt、API key 永不回显；`guarantees` 声明 `real_model_call=true`、`trusted_executable_chain=false`。CLI 新增 `orchestration execution pi-print`；contract manifest 新增 `pi_cli_print_execution`。新增 35 项聚焦测试，全量 pytest 通过。后续 ACL 与隔离 fixture 门禁均已修复。最新 smoke 已真实 spawn 固定 Pi 进程，started/terminal audit 与 Windows Job accounting 完整闭合，但 child exit 1（raw withheld）；只读检查 Pi 0.82.0 源码确认 standalone `--` 不受支持并在参数解析阶段失败，模型调用次数仍为 0。契约与实现现已移除 standalone `--`，新增 flag-like prompt 门禁，专项 36 项通过。最终授权 smoke 已成功：DeepSeek 响应在 `lt-5s` 内返回，child exit 0、stdout 17 bytes（raw withheld）、stderr 0，audit=`closed_succeeded`，Windows Job accounting/子进程回收/containment close 全部通过；唯一固定 `pi_cli_print` 端到端可用。
+
+事实源：`docs/111-pi-controlled-dry-run-print-implementation.md`。
+
 ---
 
 ## Guardrail 主线策略

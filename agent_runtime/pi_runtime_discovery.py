@@ -66,6 +66,7 @@ class PiRuntimeStatus:
     agent_dir: str | None = None
     default_provider: str | None = None
     default_model: str | None = None
+    api_key_env: str | None = None
     checks: list[PiRuntimeCheck] = field(default_factory=list)
     findings: list[Finding] = field(default_factory=list)
     next_action: str | None = None
@@ -78,6 +79,8 @@ class PiRuntimeStatus:
             "default_model": self.default_model,
             "checks": [c.to_dict() for c in self.checks],
         }
+        if self.api_key_env is not None:
+            d["api_key_env"] = self.api_key_env
         if self.findings:
             d["findings"] = [f.to_dict() for f in self.findings]
         if self.next_action is not None:
@@ -265,6 +268,7 @@ def discover_pi_runtime(
         )
         return _finalize(result)
     api_key_env_name = api_key[1:]
+    result.api_key_env = api_key_env_name
     result.checks.append(
         PiRuntimeCheck("api_key_env_reference", "pass", f"apiKey references ${api_key_env_name}")
     )
