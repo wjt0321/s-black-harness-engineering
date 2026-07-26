@@ -10,9 +10,9 @@
 
 ## 当前阶段
 
-- **Stage 64 — 已完成 binding-only implementation：Node/Pi module closure inspect/create/rotate；未迁移 Pi runner、未扩大执行权限**
-- 收口记录：`archive/release-notes/111-release-notes-stage63-stage64-pi-runtime-binding.md`
-- 最近完成：**Stage 63 — Pi npm shim、Node runtime 与 CLI module closure 的 review-bound identity design gate**
+- **Stage 65 — 已完成 design gate：bound Node + sealed CLI entry runner migration；未改 runner、未创建 binding、未授权 smoke**
+- 收口记录：`archive/release-notes/112-release-notes-stage65-pi-bound-runner-migration-design.md`
+- 最近完成：**Stage 64 — Node/Pi module closure binding-only inspect/create/rotate；未迁移 Pi runner**
 
 ## 当前真实执行能力
 
@@ -33,13 +33,15 @@
 
 1. `README.md`
 2. `docs/00-index.md`
-3. `docs/113-pi-runtime-binding-implementation.md`
-4. `docs/112-pi-node-runtime-identity-binding-design.md`
-5. `docs/111-pi-controlled-dry-run-print-implementation.md`
-6. `docs/21-controlled-write-boundaries.md`
-7. `tasks/handoff-2026-07-26-stage64-pi-runtime-binding.md`
-8. `tasks/handoff-2026-07-25.md`（需要 Stage 52–62 细节时）
-9. `tasks/progress.md`（只做历史取证，不作为入口）
+3. `docs/114-pi-bound-runner-migration-design.md`
+4. `docs/113-pi-runtime-binding-implementation.md`
+5. `docs/112-pi-node-runtime-identity-binding-design.md`
+6. `docs/111-pi-controlled-dry-run-print-implementation.md`
+7. `docs/21-controlled-write-boundaries.md`
+8. `tasks/handoff-2026-07-26.md`
+9. `tasks/handoff-2026-07-26-stage64-pi-runtime-binding.md`
+10. `tasks/handoff-2026-07-25.md`（需要 Stage 52–62 细节时）
+11. `tasks/progress.md`（只做历史取证，不作为入口）
 
 然后运行：
 
@@ -50,9 +52,9 @@ python -m agent_runtime.cli doctor
 
 ## 下一步做什么
 
-- **Stage 65 bound runner migration design gate**：定义 direct Node + sealed CLI entry 的接线、post-run identity recheck 与真实 smoke 许可，不直接改 runner；
+- **Stage 66 bound runner migration implementation**：仅在单独授权、reviewed binding 与明确 smoke 范围后，才将 fixed Pi print 接入 direct Node launch；
 - read roundtrip 与 canonical approval binding 继续维持独立 design gate；
-- 若进入新能力阶段，先更新本页和 `02-roadmap.md`，不要继续堆叠已完成 Stage 叙事。
+- 当前暂停在此处，先复盘项目是否偏离初衷，再决定是否进入 Stage 66。
 
 ## 验证基线
 

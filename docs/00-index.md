@@ -45,7 +45,9 @@
 ## 当前执行事实源
 
 - `111-pi-controlled-dry-run-print-implementation.md` — fixed Pi print 当前实现、边界和真实 smoke。
+- `114-pi-bound-runner-migration-design.md` — bound Node + sealed CLI entry 迁移设计门；未改 runner。
 - `113-pi-runtime-binding-implementation.md` — Pi Node/package binding-only 当前实现；未迁移 runner。
+- `archive/release-notes/112-release-notes-stage65-pi-bound-runner-migration-design.md` — Stage 65 design-only 收口记录。
 - `archive/release-notes/111-release-notes-stage63-stage64-pi-runtime-binding.md` — Stage 63–64 commit-level 收口记录。
 - `112-pi-node-runtime-identity-binding-design.md` — Pi Node runtime、CLI entry 与 module closure 的设计契约。
 - `110-pi-controlled-dry-run-adapter-contract.md` — Pi print 当前设计契约。

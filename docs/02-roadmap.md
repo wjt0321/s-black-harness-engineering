@@ -43,10 +43,10 @@ Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job acc
 
 优先级从高到低：
 
-1. **Stage 65 bound runner migration design gate**：定义 direct Node + sealed CLI entry 接线、post-run identity recheck 与真实 smoke 停止线，不直接改 runner。
-2. **Bound runner implementation**：只有 Stage 65 验收、独立授权和 reviewed binding 完整后，才允许切换 `pi_cli_print` 到 direct Node launch。
-3. **Pi read roundtrip design gate**：仅研究 read containment 与 preflight 复用，不直接开放工具。
-4. **canonical approval binding**：把批准对象与固定 plan/runtime identity 更严格绑定。
+1. **Stage 66 bound runner migration implementation**：只有 Stage 65 验收、独立授权和 reviewed binding 完整后，才允许切换 `pi_cli_print` 到 direct Node launch。
+2. **Pi read roundtrip design gate**：仅研究 read containment 与 preflight 复用，不直接开放工具。
+3. **canonical approval binding**：把批准对象与固定 plan/runtime identity 更严格绑定。
+4. **路线复盘**：在进入 Stage 66 前，先确认当前“受控执行”主线仍符合项目初衷与优先级。
 5. **里程碑冻结**：在能力边界稳定后再决定是否创建新的 semver tag。
 
 ## 治理原则
