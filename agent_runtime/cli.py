@@ -44,6 +44,7 @@ from .orchestration_execution_recovery import (
     list_open_execution_attempts,
 )
 from .execution_trust import create_execution_trust_binding, inspect_execution_trust
+from .pi_runtime_binding import create_pi_runtime_binding, inspect_pi_runtime_binding
 from .orchestration_git_status_execution import execute_fixed_git_status
 from .orchestration_pi_print_execution import execute_fixed_pi_print
 from .orchestration_control_panel import (
@@ -1625,6 +1626,33 @@ def _cmd_orchestration_execution_trust_bind(args: argparse.Namespace) -> int:
 def _cmd_orchestration_execution_trust_inspect(args: argparse.Namespace) -> int:
     """Inspect the fixed machine-local executable trust state."""
     result = inspect_execution_trust(_root_path(args))
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_execution_pi_binding_inspect(args: argparse.Namespace) -> int:
+    """Inspect the local Pi Node/package binding without execution."""
+    result = inspect_pi_runtime_binding()
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_orchestration_execution_pi_binding_bind(args: argparse.Namespace) -> int:
+    """Preview or persist a reviewed Pi Node/package binding without execution."""
+    result = create_pi_runtime_binding(
+        node_path=Path(args.node_path),
+        cli_entry=Path(args.cli_entry),
+        module_roots=[Path(item) for item in args.module_root],
+        commit=args.commit,
+        replace=args.replace,
+        expected_binding_id=args.expected_binding_id,
+    )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
@@ -3399,6 +3427,33 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_execution_trust_inspect_parser.set_defaults(
         func=_cmd_orchestration_execution_trust_inspect
     )
+    orchestration_execution_pi_binding_parser = orchestration_execution_subparsers.add_parser(
+        "pi-binding", help="Inspect or review-bind the local Pi Node/package chain without execution"
+    )
+    orchestration_execution_pi_binding_subparsers = (
+        orchestration_execution_pi_binding_parser.add_subparsers(
+            dest="execution_pi_binding_command", required=True
+        )
+    )
+    pi_binding_inspect_parser = orchestration_execution_pi_binding_subparsers.add_parser(
+        "inspect", help="Inspect the local Pi runtime binding"
+    )
+    _add_global_args(pi_binding_inspect_parser)
+    pi_binding_inspect_parser.set_defaults(func=_cmd_orchestration_execution_pi_binding_inspect)
+    pi_binding_bind_parser = orchestration_execution_pi_binding_subparsers.add_parser(
+        "bind", help="Preview or create a reviewed Pi Node/package binding"
+    )
+    pi_binding_bind_parser.add_argument("--node-path", required=True)
+    pi_binding_bind_parser.add_argument("--cli-entry", required=True)
+    pi_binding_bind_parser.add_argument(
+        "--module-root", action="append", required=True,
+        help="Reviewed package root; repeat for each finite module closure",
+    )
+    pi_binding_bind_parser.add_argument("--commit", action="store_true")
+    pi_binding_bind_parser.add_argument("--replace", action="store_true")
+    pi_binding_bind_parser.add_argument("--expected-binding-id", default=None)
+    _add_global_args(pi_binding_bind_parser)
+    pi_binding_bind_parser.set_defaults(func=_cmd_orchestration_execution_pi_binding_bind)
     orchestration_execution_recovery_parser = orchestration_execution_subparsers.add_parser(
         "recovery", help="Inspect and close fixed open execution audit attempts"
     )

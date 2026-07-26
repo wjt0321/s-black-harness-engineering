@@ -94,6 +94,7 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
     }
     assert _subparser_names(_nested_parser(orchestration, "execution")) == {
         "git-status",
+        "pi-binding",
         "pi-print",
         "readiness",
         "recovery",
@@ -101,6 +102,9 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
     }
     assert _subparser_names(
         _nested_parser(_nested_parser(orchestration, "execution"), "trust")
+    ) == {"bind", "inspect"}
+    assert _subparser_names(
+        _nested_parser(_nested_parser(orchestration, "execution"), "pi-binding")
     ) == {"bind", "inspect"}
     assert _subparser_names(
         _nested_parser(_nested_parser(orchestration, "execution"), "recovery")

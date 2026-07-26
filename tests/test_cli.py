@@ -8,6 +8,7 @@ import pytest
 import agent_runtime.cli as cli
 from agent_runtime.cli import main
 from agent_runtime.execution_trust import TrustBindingResult, TrustInspectionResult
+from agent_runtime.pi_runtime_binding import PiRuntimeBindingResult
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -97,6 +98,49 @@ def test_cli_execution_trust_inspect_json_uses_fixed_public_api(
     assert calls == [ROOT]
     assert payload["schema_version"] == "control-plane/execution-trust-inspection/v1"
     assert payload["state"] == "missing"
+
+
+def test_cli_pi_binding_inspect_uses_fixed_public_api(
+    capsys, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[object] = []
+
+    def inspect() -> PiRuntimeBindingResult:
+        calls.append("inspect")
+        return PiRuntimeBindingResult(status="blocked")
+
+    monkeypatch.setattr(cli, "inspect_pi_runtime_binding", inspect)
+    code = main(["orchestration", "execution", "pi-binding", "inspect", "--json"])
+
+    assert code == 2
+    assert calls == ["inspect"]
+    assert json.loads(capsys.readouterr().out)["status"] == "blocked"
+
+
+def test_cli_pi_binding_bind_forwards_only_reviewed_paths(
+    capsys, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    captured: dict[str, object] = {}
+
+    def bind(**kwargs: object) -> PiRuntimeBindingResult:
+        captured.update(kwargs)
+        return PiRuntimeBindingResult(status="pass")
+
+    monkeypatch.setattr(cli, "create_pi_runtime_binding", bind)
+    code = main([
+        "orchestration", "execution", "pi-binding", "bind",
+        "--node-path", "C:" + "/reviewed/node.exe",
+        "--cli-entry", "C:" + "/reviewed/cli.js",
+        "--module-root", "C:" + "/reviewed/package",
+        "--replace", "--expected-binding-id", "sha256:" + "a" * 64, "--commit", "--json",
+    ])
+
+    assert code == 0
+    assert captured["commit"] is True
+    assert captured["replace"] is True
+    assert captured["expected_binding_id"] == "sha256:" + "a" * 64
+    assert list(captured["module_roots"]) == [Path("C:" + "/reviewed/package")]
+    assert json.loads(capsys.readouterr().out)["status"] == "pass"
 
 
 @pytest.mark.parametrize(

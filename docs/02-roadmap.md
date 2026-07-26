@@ -36,15 +36,15 @@ Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job acc
 - 不开放 POSIX fallback。
 - 不开放网络 adapter、服务、数据库或自动后台执行。
 - Pi 不开放 read/write/edit/bash 工具，也不保存 session。
-- npm/node chain 尚未形成完整 trusted executable identity。
+- Stage 63 已冻结 npm shim、Node runtime、CLI entry 与 module closure 的 review-bound identity contract；Stage 64 已实现 binding-only inspect/create/rotate，但未迁移 runner，也未将 `trusted_executable_chain` 改为 true。
 - 新增真实 operation 必须独立设计、测试和用户授权。
 
 ## 下一候选
 
 优先级从高到低：
 
-1. **Pi TUI 人工验收**：operator 在真实终端验证交互入口，不改变 Harness 权限。
-2. **npm identity binding design gate**：解决 Pi npm shim → node → cli.js 的可信链问题。
+1. **Stage 65 bound runner migration design gate**：定义 direct Node + sealed CLI entry 接线、post-run identity recheck 与真实 smoke 停止线，不直接改 runner。
+2. **Bound runner implementation**：只有 Stage 65 验收、独立授权和 reviewed binding 完整后，才允许切换 `pi_cli_print` 到 direct Node launch。
 3. **Pi read roundtrip design gate**：仅研究 read containment 与 preflight 复用，不直接开放工具。
 4. **canonical approval binding**：把批准对象与固定 plan/runtime identity 更严格绑定。
 5. **里程碑冻结**：在能力边界稳定后再决定是否创建新的 semver tag。

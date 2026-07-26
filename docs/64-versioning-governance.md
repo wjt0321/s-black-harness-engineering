@@ -338,6 +338,18 @@ v0.17.0-filtered-snapshot-display-host-integration
 
 事实源为 `docs/archive/93-codex-desktop-filtered-snapshot-display-host-integration-and-milestone-freeze.md` 与 `docs/archive/release-notes/102-release-notes-v0.17.0-filtered-snapshot-display-host-integration.md`。该 tag 后于 2026-07-16 按用户授权推送至 `origin`；专有 UI、render、file/URL、network/service、persistence/export、write 与真实 execution 继续 unavailable。
 
+## v0.18.0 Pi Runtime Binding 里程碑冻结（2026-07-26）
+
+Stage 52–64 形成新的受控 Pi runtime 能力包：host-side preflight、有限 approval/postflight primitives、Windows fixed no-tools print、execution audit/containment，以及 Node/Pi package binding evidence。
+
+用户明确要求创建 annotated tag：
+
+```text
+v0.18.0-pi-runtime-binding
+```
+
+冻结边界：Pi print 仍是唯一受限 Pi operation，`trusted_executable_chain=false` 保持不变；本 tag 不开放通用 agent execution、Pi tools、session、JSON mode、POSIX、network adapter、第三个 operation 或 bound runner migration。Stage 65 仍必须作为独立 design-only gate 启动。
+
 ## Stage 42 Presentation Handoff Design-only Gate（2026-07-16）
 
 Stage 42 仅冻结 Stage 40 ready result → future read-only presentation boundary 的 design-only contract 与启动条件，没有新增 production presenter、CLI、schema 或用户可见能力包，因此不满足新的 semver milestone tag 条件。

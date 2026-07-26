@@ -2490,7 +2490,51 @@ $env:AGENT_RUNTIME_RUN_REAL_GIT_STATUS_SMOKE = "1"
 python -m pytest tests/test_stage49_real_git_status_smoke.py -q
 ```
 
-### 3. Operational recovery（Stage 51）
+### 3. Pi Node/package binding（Stage 64，binding-only）
+
+该命令只散列 operator 明确给出的 Node、Pi CLI entry 与有限 package closure；不会执行 Node、Pi、npm、npx、package script 或模型调用，也不会改变现有 `pi-print` runner。
+
+缺少 binding 时检查会 fail-closed：
+
+```bash
+python -m agent_runtime.cli orchestration execution pi-binding inspect --json
+```
+
+先 preview，再由 operator 审阅 identity：
+
+```bash
+python -m agent_runtime.cli orchestration execution pi-binding bind \
+  --node-path <reviewed-node.exe> \
+  --cli-entry <reviewed-cli.js> \
+  --module-root <reviewed-pi-package-root> \
+  --json
+```
+
+显式 `--commit` 才会写 machine-local binding record：
+
+```bash
+python -m agent_runtime.cli orchestration execution pi-binding bind \
+  --node-path <reviewed-node.exe> \
+  --cli-entry <reviewed-cli.js> \
+  --module-root <reviewed-pi-package-root> \
+  --commit --json
+```
+
+已有 binding 不会被静默覆盖。package 更新或 closure drift 后，必须重新审阅并提供当前 binding identity：
+
+```bash
+python -m agent_runtime.cli orchestration execution pi-binding bind \
+  --node-path <reviewed-node.exe> \
+  --cli-entry <reviewed-cli.js> \
+  --module-root <reviewed-pi-package-root> \
+  --replace \
+  --expected-binding-id sha256:<reviewed-current-binding-id> \
+  --commit --json
+```
+
+约束：不接受 PATH、model、provider、cwd、env、loader 或任意 argv override；closure 上限为 2,048 文件和 64 MiB；binding 是本地 review evidence，尚未授权或接入任何 runner migration。
+
+### 4. Operational recovery（Stage 51）
 
 只读 trust inspection：
 

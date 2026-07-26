@@ -4,13 +4,15 @@
 
 ## 当前基线
 
-- 里程碑：`v0.17.0-filtered-snapshot-display-host-integration`
-- commit：`ee7f7d5`
+- 里程碑：`v0.18.0-pi-runtime-binding`
+- commit：`pending-amend`
 - 活跃 `docs/` 只保留当前架构、规范、CLI 和最新事实源；完成阶段已归档。
 
 ## 当前阶段
 
-- **Stage 62 — 已完成并收口：fixed Pi print 真实 smoke、lease、audit 与 Windows Job containment 全部闭合**
+- **Stage 64 — 已完成 binding-only implementation：Node/Pi module closure inspect/create/rotate；未迁移 Pi runner、未扩大执行权限**
+- 收口记录：`archive/release-notes/111-release-notes-stage63-stage64-pi-runtime-binding.md`
+- 最近完成：**Stage 63 — Pi npm shim、Node runtime 与 CLI module closure 的 review-bound identity design gate**
 
 ## 当前真实执行能力
 
@@ -31,10 +33,13 @@
 
 1. `README.md`
 2. `docs/00-index.md`
-3. `docs/111-pi-controlled-dry-run-print-implementation.md`
-4. `docs/21-controlled-write-boundaries.md`
-5. `tasks/handoff-2026-07-25.md`（需要 Stage 52–62 细节时）
-6. `tasks/progress.md`（只做历史取证，不作为入口）
+3. `docs/113-pi-runtime-binding-implementation.md`
+4. `docs/112-pi-node-runtime-identity-binding-design.md`
+5. `docs/111-pi-controlled-dry-run-print-implementation.md`
+6. `docs/21-controlled-write-boundaries.md`
+7. `tasks/handoff-2026-07-26-stage64-pi-runtime-binding.md`
+8. `tasks/handoff-2026-07-25.md`（需要 Stage 52–62 细节时）
+9. `tasks/progress.md`（只做历史取证，不作为入口）
 
 然后运行：
 
@@ -45,10 +50,10 @@ python -m agent_runtime.cli doctor
 
 ## 下一步做什么
 
-- operator 在真实终端完成 Pi TUI 人工验收；
-- read roundtrip、npm identity binding、canonical approval binding 分别建立独立 design gate；
+- **Stage 65 bound runner migration design gate**：定义 direct Node + sealed CLI entry 的接线、post-run identity recheck 与真实 smoke 许可，不直接改 runner；
+- read roundtrip 与 canonical approval binding 继续维持独立 design gate；
 - 若进入新能力阶段，先更新本页和 `02-roadmap.md`，不要继续堆叠已完成 Stage 叙事。
 
 ## 验证基线
 
-Stage 62 收口证据：1426 passed、8 skipped；public scan、doctor、docs context、diff check 与真实 Pi smoke 均通过。
+Stage 64 收口证据：full pytest、public scan、doctor、docs context、Markdown link audit、pre-commit 与 diff check 均通过；自动验证未创建真实 binding、未执行 Node/Pi/npm。

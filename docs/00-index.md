@@ -9,6 +9,8 @@
 - `02-roadmap.md` — 能力包与下一候选。
 - `10-cli-poc-usage.md` — 完整 CLI 参数和示例。
 - `111-pi-controlled-dry-run-print-implementation.md` — 最新真实执行事实源。
+- `112-pi-node-runtime-identity-binding-design.md` — Node/Pi trusted-chain design gate。
+- `113-pi-runtime-binding-implementation.md` — 当前 binding-only 实现事实源。
 - `MAINTENANCE.md` — 文档治理规则。
 
 ## 核心模型
@@ -43,6 +45,9 @@
 ## 当前执行事实源
 
 - `111-pi-controlled-dry-run-print-implementation.md` — fixed Pi print 当前实现、边界和真实 smoke。
+- `113-pi-runtime-binding-implementation.md` — Pi Node/package binding-only 当前实现；未迁移 runner。
+- `archive/release-notes/111-release-notes-stage63-stage64-pi-runtime-binding.md` — Stage 63–64 commit-level 收口记录。
+- `112-pi-node-runtime-identity-binding-design.md` — Pi Node runtime、CLI entry 与 module closure 的设计契约。
 - `110-pi-controlled-dry-run-adapter-contract.md` — Pi print 当前设计契约。
 - `archive/100-fixed-execution-operational-recovery-implementation.md` — shared lease、trust/recovery 与 audit v2。
 - `archive/98-fixed-git-status-executor-implementation-and-limited-enablement.md` — fixed Git status 实现。
