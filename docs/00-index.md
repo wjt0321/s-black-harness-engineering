@@ -44,7 +44,8 @@
 
 ## 当前事实源
 
-- `124-stage76-manual-collaboration-board.md` — 当前多 Agent 产品主线：manual-first 决策、人工计划 fixture、可视化泳道/时间线、未完成项与 Stage 77 建议。
+- `125-stage77-chinese-first-interface-and-manual-editor.md` — 当前多 Agent 产品主线：中文默认界面契约、术语中文注释与浏览器内存人工计划编辑器。
+- `124-stage76-manual-collaboration-board.md` — Stage 76 历史基线：manual-first 决策、人工协作 fixture、泳道与时间线。
 - `123-multi-agent-control-hub-current-state-and-stage75-gate.md` — Stage 75 历史基线：产品目标、安全边界与方向回正结论。
 - `111-pi-controlled-dry-run-print-implementation.md` — 当前唯一 Agent 类真实执行能力及其安全边界。
 - `114-pi-bound-runner-migration-design.md` — deferred 安全工作；不是当前产品主线。

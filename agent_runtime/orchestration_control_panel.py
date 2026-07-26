@@ -576,13 +576,89 @@ def build_control_panel_handoff(
     )
 
 
+_UI_TERMS = {
+    "pass": "正常",
+    "unavailable": "暂不可用",
+    "needs_input": "需要输入",
+    "blocked": "已阻止",
+    "validation_failed": "校验失败",
+    "error": "错误",
+    "planned": "已计划",
+    "ready": "已就绪",
+    "simulated_running": "模拟运行中",
+    "simulated_blocked": "模拟阻塞",
+    "simulated_complete": "模拟完成",
+    "not_executed": "未执行",
+    "not_required": "无需审阅",
+    "pending": "待审阅",
+    "approved": "已批准",
+    "changes_requested": "要求修改",
+    "planner": "规划者",
+    "implementer": "实现者",
+    "reviewer": "审阅者",
+    "researcher": "研究者",
+    "tester": "测试者",
+    "synthesizer": "汇总者",
+    "work_ready": "工作项已就绪",
+    "work_started": "工作项已开始",
+    "artifact_produced": "已产生产物",
+    "handoff_completed": "交接已完成",
+    "review_requested": "已请求审阅",
+    "review_resolved": "审阅已处理",
+    "work_completed": "工作项已完成",
+    "review_plan": "审阅计划",
+    "approve_start": "批准开始",
+    "cancel": "取消",
+    "retry": "重试",
+    "request_changes": "要求修改",
+    "approve_handoff": "批准交接",
+    "manual": "人工",
+    "operator": "操作者",
+    "simulated": "模拟",
+    "approve": "批准",
+    "analysis": "分析",
+    "plan": "计划",
+    "draft": "草稿",
+    "patch": "代码补丁",
+    "test_result": "测试结果",
+    "review": "审阅",
+    "summary": "摘要",
+    "external": "外部",
+    "local": "本地",
+    "stable": "稳定",
+    "stable_limited": "稳定但受限",
+    "fixture": "演示样例",
+    "experimental": "实验性",
+    "declared": "已声明",
+    "acp_delegate": "ACP 委派",
+    "local_cli": "本地命令行（CLI）",
+    "agent_api": "Agent 接口（API）",
+    "explicit_plan_binding": "人工计划显式绑定",
+    "not_collected": "尚未收集",
+    "runner_listed": "运行器已列出",
+    "read_only": "只读",
+    "controlled_write": "受控写入",
+}
+
+
+def _ui_term(value: Any, *, annotate: bool = True) -> str:
+    raw = str(value)
+    translated = _UI_TERMS.get(raw)
+    if translated is None:
+        return raw
+    return f"{translated}（{raw}）" if annotate else translated
+
+
 def _escape(value: Any) -> str:
     if value is None:
         return "—"
     if isinstance(value, bool):
-        return "yes" if value else "no"
+        return "是" if value else "否"
     if isinstance(value, (list, tuple)):
-        return html.escape(", ".join(str(item) for item in value), quote=True)
+        return html.escape(
+            ", ".join(_ui_term(item) if str(item) in _UI_TERMS else str(item) for item in value),
+            quote=True,
+        )
     if isinstance(value, dict):
         return html.escape(
             json.dumps(value, ensure_ascii=False, sort_keys=True),
@@ -597,7 +673,7 @@ def _status_badge(status: str) -> str:
     return (
         f'<span class="status status--{safe_status}">'
         f'<span class="status__dot" aria-hidden="true"></span>'
-        f"{_escape(status)}</span>"
+        f"{_escape(_ui_term(status))}</span>"
     )
 
 
@@ -613,7 +689,10 @@ def _table(
     body_rows: list[str] = []
     for row in row_list:
         search_text = " ".join(str(row.get(key, "")) for key, _ in columns).lower()
-        cells = "".join(f"<td>{_escape(row.get(key))}</td>" for key, _ in columns)
+        cells = "".join(
+            f"<td>{_escape(_ui_term(row.get(key)) if str(row.get(key)) in _UI_TERMS else row.get(key))}</td>"
+            for key, _ in columns
+        )
         body_rows.append(
             f'<tr data-search-row data-search="{_escape(search_text)}">{cells}</tr>'
         )
@@ -636,8 +715,8 @@ def _section_header(number: str, title: str, section: dict[str, Any]) -> str:
         f'<span class="section-index">{_escape(number)}</span>'
         '<div>'
         f"<h2>{_escape(title)}</h2>"
-        f'<p>scope={_escape(section.get("scope"))} · '
-        f'availability={_escape(section.get("availability"))}</p>'
+        f'<p>范围（scope）={_escape(section.get("scope"))} · '
+        f'可用性（availability）={_escape(section.get("availability"))}</p>'
         "</div>"
         f"{_status_badge(str(section.get('status', 'error')))}"
         "</div>"
@@ -645,12 +724,22 @@ def _section_header(number: str, title: str, section: dict[str, Any]) -> str:
 
 
 def _boundary_callout(section: dict[str, Any]) -> str:
+    explanations = {
+        "envelope_required": "该区段需要提供执行信封（Envelope）文件后才能投影；当前不是系统故障。",
+        "request_context_required": "报告只在单次请求上下文中生成，不作为持久集合展示。",
+    }
+    explanation = explanations.get(
+        str(section.get("reason")),
+        "当前数据源无法生成该区段，请按下方命令提示补充输入或修复来源。",
+    )
     return (
         '<div class="boundary-callout" data-search-row '
         f'data-search="{_escape(section.get("message", ""))}">'
         '<div class="boundary-callout__mark" aria-hidden="true">//</div>'
-        '<div><strong>BOUNDARY / NOT A COLLECTION</strong>'
-        f'<p>{_escape(section.get("message"))}</p>'
+        '<div><strong>边界提示（BOUNDARY）/ 不是持久集合</strong>'
+        f'<p>{_escape(explanation)}</p>'
+        '<details><summary>查看原始技术说明</summary>'
+        f'<p>{_escape(section.get("message"))}</p></details>'
         f'<code>{_escape(section.get("command_hint"))}</code></div>'
         "</div>"
     )
@@ -753,9 +842,9 @@ def _collaboration_graph(plan: dict[str, Any]) -> str:
 
     for item in work_items:
         x, y = positions[item["work_item_id"]]
-        subtitle = f"{item['role']} · {item['socket_id']}"
+        subtitle = f"{_ui_term(item['role'])} · Agent 插座（Socket）{item['socket_id']}"
         if item["review_required"]:
-            subtitle = f"{subtitle} · review"
+            subtitle = f"{subtitle} · 需要审阅"
         parts.append(
             f'<rect x="{x}" y="{y}" width="{_GRAPH_NODE_W}" height="{_GRAPH_NODE_H}" '
             'rx="4" fill="var(--panel-raised)" stroke="var(--line-hot)"/>'
@@ -779,17 +868,17 @@ def _collaboration_graph(plan: dict[str, Any]) -> str:
             f'<text x="{cx}" y="{cy - 4}" text-anchor="middle" font-size="11" '
             f'font-weight="700" fill="var(--amber)">{_escape(gate["gate_id"])}</text>'
             f'<text x="{cx}" y="{cy + 12}" text-anchor="middle" font-size="10" '
-            f'fill="var(--muted)">{_escape(gate["review_role"])}</text>'
+            f'fill="var(--muted)">{_escape(_ui_term(gate["review_role"]))}</text>'
         )
 
     parts.append("</svg>")
     summary = plan["summary"]
     caption = (
-        "Collaboration plan graph: "
-        f"{summary['socket_count']} sockets, "
-        f"{summary['work_item_count']} work items, "
-        f"{summary['handoff_count']} handoffs, "
-        f"{summary['review_gate_count']} review gates"
+        "协作计划图："
+        f"{summary['socket_count']} 个 Agent 插座（Socket），"
+        f"{summary['work_item_count']} 个工作项，"
+        f"{summary['handoff_count']} 次交接，"
+        f"{summary['review_gate_count']} 个审阅门"
     )
     return (
         '<figure class="collaboration-graph" role="img" '
@@ -816,78 +905,60 @@ def _collaboration_section_body(section: dict[str, Any]) -> str:
                 "command_hint": hint,
             }
         ) + _table(
-            caption="Collaboration plan findings",
-            columns=(
-                ("rule_id", "Rule"),
-                ("severity", "Severity"),
-                ("message", "Message"),
-            ),
+            caption="协作计划问题",
+            columns=(("rule_id", "规则 ID"), ("severity", "严重程度"), ("message", "原始技术详情")),
             rows=section.get("findings", []),
-            empty_message="No findings reported.",
+            empty_message="没有发现问题。",
         )
     return "".join(
         [
             _collaboration_graph(plan),
             _table(
-                caption="Collaboration socket bindings",
-                columns=(
-                    ("socket_id", "Socket"),
-                    ("role", "Role"),
-                    ("required_capabilities", "Capabilities"),
-                ),
+                caption="协作 Agent 插座绑定",
+                columns=(("socket_id", "Agent 插座（Socket）ID"), ("role", "角色"), ("required_capabilities", "所需能力")),
                 rows=plan["socket_bindings"],
-                empty_message="No socket bindings.",
+                empty_message="没有 Agent 插座绑定。",
             ),
             _table(
-                caption="Collaboration routing explanations",
+                caption="协作路由说明",
                 columns=(
-                    ("socket_id", "Socket"),
-                    ("role", "Role"),
-                    ("selection_basis", "Selection basis"),
-                    ("matched_capabilities", "Matched capabilities"),
-                    ("declared_availability", "Availability"),
-                    ("invocation_mode", "Invocation"),
-                    ("readiness_evidence", "Readiness evidence"),
-                    ("reason", "Reason"),
+                    ("socket_id", "Agent 插座（Socket）ID"),
+                    ("role", "角色"),
+                    ("selection_basis", "选择依据"),
+                    ("matched_capabilities", "匹配能力"),
+                    ("declared_availability", "声明可用性"),
+                    ("invocation_mode", "调用模式"),
+                    ("readiness_evidence", "就绪证据"),
+                    ("reason", "原始技术原因"),
                 ),
                 rows=plan["routing_explanations"],
-                empty_message="No routing explanations.",
+                empty_message="没有路由说明。",
             ),
             _table(
-                caption="Collaboration work items",
+                caption="协作工作项",
                 columns=(
-                    ("work_item_id", "Work item"),
-                    ("socket_id", "Socket"),
-                    ("role", "Role"),
-                    ("depends_on", "Depends on"),
-                    ("expected_artifact_types", "Artifacts"),
-                    ("review_required", "Review"),
-                    ("status", "Status"),
+                    ("work_item_id", "工作项 ID"),
+                    ("socket_id", "Agent 插座（Socket）ID"),
+                    ("role", "角色"),
+                    ("depends_on", "依赖工作项"),
+                    ("expected_artifact_types", "预期产物"),
+                    ("review_required", "需要审阅"),
+                    ("status", "状态"),
                 ),
                 rows=plan["work_items"],
-                empty_message="No work items.",
+                empty_message="没有工作项。",
             ),
             _table(
-                caption="Collaboration handoffs",
-                columns=(
-                    ("from_work_item_id", "From"),
-                    ("to_work_item_id", "To"),
-                    ("artifact_types", "Artifacts"),
-                ),
+                caption="协作交接",
+                columns=(("from_work_item_id", "来源工作项"), ("to_work_item_id", "目标工作项"), ("artifact_types", "交接产物")),
                 rows=plan["handoffs"],
-                empty_message="No handoffs.",
+                empty_message="没有交接。",
             ),
             _table(
-                caption="Collaboration review gates",
-                columns=(
-                    ("gate_id", "Gate"),
-                    ("after_work_item_ids", "After"),
-                    ("review_role", "Role"),
-                    ("decision_options", "Options"),
-                    ("status", "Status"),
-                ),
+                caption="协作审阅门",
+                columns=(("gate_id", "审阅门 ID"), ("after_work_item_ids", "位于工作项之后"), ("review_role", "审阅角色"), ("decision_options", "可选决定"), ("status", "状态")),
                 rows=plan["review_gates"],
-                empty_message="No review gates.",
+                empty_message="没有审阅门。",
             ),
         ]
     )
@@ -897,24 +968,24 @@ def _dispatch_section_body(section: dict[str, Any]) -> str:
     proposal = section.get("proposal")
     if section.get("status") != "pass" or proposal is None:
         return _table(
-            caption="Dispatch proposal findings",
-            columns=(("rule_id", "Rule"), ("severity", "Severity"), ("message", "Message")),
+            caption="派发提案问题",
+            columns=(("rule_id", "规则 ID"), ("severity", "严重程度"), ("message", "原始技术详情")),
             rows=section.get("findings", []),
-            empty_message="Dispatch proposal is unavailable.",
+            empty_message="派发提案暂不可用。",
         )
     return _table(
-        caption="Controlled collaboration dispatch eligibility",
+        caption="受控协作派发资格",
         columns=(
-            ("work_item_id", "Work item"),
-            ("socket_id", "Socket"),
-            ("plan_eligible", "Plan eligible"),
-            ("dispatch_eligible", "Dispatch eligible"),
-            ("execution", "Execution"),
-            ("readiness_evidence", "Readiness evidence"),
-            ("blocked_reasons", "Blocked reasons"),
+            ("work_item_id", "工作项 ID"),
+            ("socket_id", "Agent 插座（Socket）ID"),
+            ("plan_eligible", "计划合格"),
+            ("dispatch_eligible", "可派发"),
+            ("execution", "执行状态"),
+            ("readiness_evidence", "就绪证据"),
+            ("blocked_reasons", "阻止原因"),
         ),
         rows=[proposal],
-        empty_message="No dispatch proposal.",
+        empty_message="没有派发提案。",
     )
 
 
@@ -922,27 +993,45 @@ def _manual_board_section_body(section: dict[str, Any]) -> str:
     board = section.get("board")
     if section.get("status") != "pass" or board is None:
         return _table(
-            caption="Manual collaboration board findings",
-            columns=(("rule_id", "Rule"), ("severity", "Severity"), ("message", "Message")),
+            caption="人工协作看板问题",
+            columns=(("rule_id", "规则 ID"), ("severity", "严重程度"), ("message", "原始技术详情")),
             rows=section.get("findings", []),
-            empty_message="Manual collaboration board is unavailable.",
+            empty_message="人工协作看板暂不可用。",
         )
+    sockets = tuple(dict.fromkeys(lane["socket_id"] for lane in board["lanes"]))
+    socket_options = "".join(f'<option value="{_escape(item)}">{_escape(item)}</option>' for item in sockets)
     lane_html = []
+    editor_rows = []
     for lane in board["lanes"]:
         lane_html.append(
             '<article class="work-lane" '
             f'data-search="{_escape(json.dumps(lane, sort_keys=True))}">'
             '<div class="work-lane__head">'
             f'<strong>{_escape(lane["work_item_id"])}</strong>'
-            f'<span class="pill pill--neutral">{_escape(lane["status"])}</span>'
+            f'<span class="pill pill--neutral">{_escape(_ui_term(lane["status"]))}</span>'
             '</div>'
-            f'<p class="work-lane__socket">{_escape(lane["socket_id"])} · {_escape(lane["role"])}</p>'
-            f'<p>Depends on: <code>{_escape(lane["depends_on"] or ["none"])}</code></p>'
-            f'<p>Expected: <code>{_escape(lane["expected_artifact_types"])}</code></p>'
-            f'<p>Fixture artifacts: <code>{_escape(lane["artifact_types"] or ["none"])}</code></p>'
-            f'<p>Review: <strong>{_escape(lane["review_state"])}</strong></p>'
-            '<div class="simulation-mark">SIMULATED · NO AGENT TURN</div>'
+            f'<p class="work-lane__socket">Agent 插座（Socket）ID：{_escape(lane["socket_id"])} · 角色：{_escape(_ui_term(lane["role"]))}</p>'
+            f'<p>依赖工作项：<code>{_escape(lane["depends_on"] or ["无"])}</code></p>'
+            f'<p>预期产物：<code>{_escape(lane["expected_artifact_types"])}</code></p>'
+            f'<p>演示产物（fixture）：<code>{_escape(lane["artifact_types"] or ["无"])}</code></p>'
+            f'<p>审阅状态：<strong>{_escape(_ui_term(lane["review_state"]))}</strong></p>'
+            '<div class="simulation-mark">仅为模拟展示 · 未启动任何 Agent 对话</div>'
             '</article>'
+        )
+        selected_options = socket_options.replace(
+            f'value="{_escape(lane["socket_id"])}"',
+            f'value="{_escape(lane["socket_id"])}" selected',
+            1,
+        )
+        editor_rows.append(
+            '<tr class="draft-work-item">'
+            f'<td><input class="draft-id" aria-label="工作项 ID" value="{_escape(lane["work_item_id"])}"></td>'
+            f'<td><select class="draft-socket" aria-label="Agent 插座（Socket）ID">{selected_options}</select></td>'
+            f'<td><input class="draft-depends" aria-label="依赖工作项，多个值用逗号分隔" value="{_escape(",".join(lane["depends_on"]))}"></td>'
+            f'<td><input class="draft-artifacts" aria-label="预期产物，多个值用逗号分隔" value="{_escape(",".join(lane["expected_artifact_types"]))}"></td>'
+            f'<td><input class="draft-review" aria-label="是否需要审阅" type="checkbox" {"checked" if lane["review_state"] != "not_required" else ""}></td>'
+            '<td><button class="draft-remove" type="button" title="从浏览器内存草稿中删除">删除</button></td>'
+            '</tr>'
         )
     timeline_html = []
     for event in board["timeline"]:
@@ -951,41 +1040,50 @@ def _manual_board_section_body(section: dict[str, Any]) -> str:
             f'data-search="{_escape(json.dumps(event, sort_keys=True))}">'
             f'<span class="board-event__sequence">{event["sequence"]:02d}</span>'
             '<div>'
-            f'<strong>{_escape(event["event_type"])}</strong>'
-            f'<p>{_escape(event["label"])}</p>'
-            f'<code>{_escape(event["work_item_id"])} · {_escape(event["artifact_types"] or ["no artifact"])}</code>'
+            f'<strong>{_escape(_ui_term(event["event_type"]))}</strong>'
+            f'<p>工作项 {_escape(event["work_item_id"])}：{_escape(_ui_term(event["event_type"], annotate=False))}</p>'
+            f'<code>产物：{_escape(event["artifact_types"] or ["无"])}</code>'
             '</div></li>'
         )
     action_html = []
     for action in board["operator_actions"]:
         action_html.append(
-            f'<button type="button" class="board-action" disabled title="Fixture only; no execution authority">'
-            f'{_escape(action["action"])}<span>simulated</span></button>'
+            '<button type="button" class="board-action" disabled title="仅展示未来工作流；当前没有执行权限">'
+            f'{_escape(_ui_term(action["action"]))}<span>仅模拟</span></button>'
         )
     summary = board["summary"]
     return "".join(
         [
             '<div class="manual-board-banner">'
-            '<div><span class="eyebrow">OPERATOR AUTHORED</span>'
-            '<h3>Manual task split</h3>'
-            f'<p>{_escape(board["parent_task_ref"])} · {_escape(board["board_state"])}</p></div>'
+            '<div><span class="eyebrow">操作者人工编排</span>'
+            '<h3>人工计划拆分</h3>'
+            f'<p>父任务：{_escape(board["parent_task_ref"])} · 看板状态：{_escape(_ui_term(board["board_state"]))}</p></div>'
             '<div class="manual-board-stats">'
-            f'<strong>{summary["lane_count"]}</strong><span>work items</span>'
-            f'<strong>{summary["timeline_event_count"]}</strong><span>events</span>'
-            f'<strong>{summary["simulated_complete_count"]}</strong><span>fixture complete</span>'
+            f'<strong>{summary["lane_count"]}</strong><span>工作项</span>'
+            f'<strong>{summary["timeline_event_count"]}</strong><span>时间线事件</span>'
+            f'<strong>{summary["simulated_complete_count"]}</strong><span>模拟完成</span>'
             '</div></div>',
-            '<div class="work-lanes">',
-            "".join(lane_html),
-            '</div>',
-            '<div class="board-lower">'
-            '<div><h3>Handoff and artifact timeline</h3><ol class="board-timeline">',
+            '<div class="work-lanes">', "".join(lane_html), '</div>',
+            '<div class="board-lower"><div><h3>交接与产物时间线</h3><ol class="board-timeline">',
             "".join(timeline_html),
-            '</ol></div>',
-            '<div><h3>Operator controls</h3>'
-            '<p class="board-note">These controls show the intended workflow. They are disabled because this is a fixture-backed walkthrough.</p>'
-            '<div class="board-actions">',
-            "".join(action_html),
-            '</div></div></div>',
+            '</ol></div><div><h3>操作者控制项</h3>'
+            '<p class="board-note">这些按钮只说明未来工作流。当前是演示样例（fixture），全部禁用且没有执行权限。</p>'
+            '<div class="board-actions">', "".join(action_html), '</div></div></div>',
+            '<section class="draft-editor" id="manual-plan-editor">'
+            '<div class="draft-editor__head"><div><span class="eyebrow">仅浏览器内存</span><h3>人工计划草稿编辑器</h3>'
+            '<p>修改内容不会写入磁盘、不会访问网络、不会调用 Agent；刷新页面后草稿消失。</p></div>'
+            '<span class="pill pill--neutral">待人工确认 · 不可派发</span></div>'
+            '<div class="draft-task-fields"><div><label class="draft-task-label" for="draft-task-title">任务标题</label>'
+            '<input id="draft-task-title" value="未命名人工计划"></div><div><label class="draft-task-label" for="draft-parent-task">父任务引用</label>'
+            f'<input id="draft-parent-task" value="{_escape(board["parent_task_ref"])}"></div></div>'
+            '<p class="board-note">工作角色由当前 Agent 插座绑定决定；本编辑器不会绕过既有绑定契约。</p>'
+            '<div class="table-shell"><table><caption>人工计划草稿工作项</caption><thead><tr>'
+            '<th>工作项 ID</th><th>Agent 插座（Socket）ID</th><th>依赖工作项</th><th>预期产物</th><th>需要审阅</th><th>操作</th>'
+            '</tr></thead><tbody id="draft-work-items">', "".join(editor_rows), '</tbody></table></div>'
+            f'<template id="draft-work-item-template"><tr class="draft-work-item"><td><input class="draft-id" aria-label="工作项 ID"></td><td><select class="draft-socket" aria-label="Agent 插座（Socket）ID">{socket_options}</select></td><td><input class="draft-depends" aria-label="依赖工作项，多个值用逗号分隔"></td><td><input class="draft-artifacts" aria-label="预期产物，多个值用逗号分隔" value="analysis"></td><td><input class="draft-review" aria-label="是否需要审阅" type="checkbox"></td><td><button class="draft-remove" type="button" title="从浏览器内存草稿中删除">删除</button></td></tr></template>'
+            '<div class="draft-controls"><button id="draft-add" type="button">添加工作项</button><button id="draft-preview" type="button">生成中文草稿预览</button><span>不会保存或派发</span></div>'
+            '<div id="draft-preview-panel" class="draft-preview" hidden><h3>待人工确认的草稿</h3><p>此 JSON 仅用于本页预览，不具备派发资格。</p><pre id="draft-json"></pre></div>'
+            '</section>',
         ]
     )
 
@@ -1035,11 +1133,11 @@ a { color: inherit; }
 .skip-link:focus { top: 1rem; }
 .shell { width: min(1540px, calc(100% - 2rem)); margin: 0 auto; padding: 1rem 0 5rem; }
 .masthead { position: relative; border: 1px solid var(--line); background: linear-gradient(135deg, rgba(16,32,29,.98), rgba(7,16,15,.94)); box-shadow: 0 28px 70px var(--shadow); overflow: hidden; }
-.masthead::after { content: "CONTROL / 16"; position: absolute; right: -1rem; bottom: -2.7rem; color: rgba(245,185,66,.055); font: 900 clamp(5rem, 14vw, 12rem)/1 "Bahnschrift Condensed", Impact, sans-serif; letter-spacing: -.06em; }
+.masthead::after { content: "控制 / 77"; position: absolute; right: -1rem; bottom: -2.7rem; color: rgba(245,185,66,.055); font: 900 clamp(5rem, 14vw, 12rem)/1 "Bahnschrift Condensed", Impact, sans-serif; letter-spacing: -.06em; }
 .topline { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 1rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
 .hero { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(18rem, .65fr); gap: 2rem; padding: clamp(1.5rem, 5vw, 4.5rem); }
 .eyebrow { color: var(--amber); font-size: .75rem; letter-spacing: .2em; text-transform: uppercase; }
-h1 { max-width: 12ch; margin: .5rem 0 1rem; font: 900 clamp(3rem, 7vw, 7.4rem)/.86 "Bahnschrift Condensed", Impact, sans-serif; letter-spacing: -.045em; text-transform: uppercase; }
+h1 { max-width: none; margin: .5rem 0 1rem; font: 900 clamp(3rem, 6vw, 6rem)/.92 "Bahnschrift Condensed", Impact, sans-serif; letter-spacing: 0; text-transform: uppercase; }
 .hero-copy { max-width: 68ch; color: var(--muted); }
 .hero-meta { align-self: end; border-left: 3px solid var(--amber); padding-left: 1rem; }
 .hero-meta code { display: block; overflow-wrap: anywhere; color: var(--cyan); font-size: .72rem; }
@@ -1105,9 +1203,24 @@ tbody tr:hover { background: rgba(98,214,199,.05); color: #fff8dc; }
 .board-actions { display: grid; gap: .5rem; }
 .board-action { display: flex; justify-content: space-between; gap: .75rem; padding: .65rem; border: 1px solid var(--line); border-radius: 4px; background: var(--panel-raised); color: var(--muted); text-align: left; }
 .board-action span { color: var(--amber); font-family: var(--mono); font-size: .62rem; text-transform: uppercase; }
+.draft-editor { margin-top: 1rem; padding: 1rem; border-top: 1px solid var(--line-hot); background: rgba(7,16,15,.38); }
+.draft-editor__head { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+.draft-editor__head h3 { margin: .25rem 0; }
+.draft-editor__head p { color: var(--muted); }
+.draft-task-fields { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.draft-task-label { display: block; margin: .75rem 0 .35rem; color: var(--amber); }
+.draft-editor input, .draft-editor select { width: 100%; min-width: 8rem; padding: .55rem; border: 1px solid var(--line-hot); background: var(--ink); color: var(--text); font: inherit; }
+.draft-editor input[type="checkbox"] { min-width: auto; width: 1rem; }
+.draft-editor button { padding: .55rem .75rem; border: 1px solid var(--line-hot); border-radius: 4px; background: var(--panel-raised); color: var(--text); cursor: pointer; }
+.draft-editor button:hover { border-color: var(--amber); color: var(--amber); }
+.draft-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
+.draft-controls span { color: var(--amber); font-size: .68rem; }
+.draft-preview { margin-top: 1rem; padding: 1rem; border: 1px solid var(--amber-soft); }
+.draft-preview pre { max-height: 30rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--cyan); }
+.draft-preview--error { border-color: var(--red); color: var(--red); }
 .is-filtered-out { display: none !important; }
 @media (max-width: 1050px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } .hero { grid-template-columns: 1fr; } .toolbar { grid-template-columns: 1fr; } .board-lower { grid-template-columns: 1fr; } }
-@media (max-width: 640px) { .shell { width: min(100% - 1rem, 1540px); } .summary-grid { grid-template-columns: repeat(2, 1fr); } .hero { padding: 1.5rem; } h1 { font-size: 3.2rem; } .section-heading { grid-template-columns: auto 1fr; } .section-heading .status { grid-column: 2; justify-self: start; } th, td { padding: .65rem; } .manual-board-banner { align-items: stretch; flex-direction: column; } .manual-board-stats { text-align: left; } }
+@media (max-width: 640px) { .shell { width: min(100% - 1rem, 1540px); } .summary-grid { grid-template-columns: repeat(2, 1fr); } .hero { padding: 1.5rem; } h1 { font-size: 3.2rem; } .section-heading { grid-template-columns: auto 1fr; } .section-heading .status { grid-column: 2; justify-self: start; } th, td { padding: .65rem; } .manual-board-banner { align-items: stretch; flex-direction: column; } .manual-board-stats { text-align: left; } .draft-task-fields { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 """
 
@@ -1126,7 +1239,7 @@ _JS = r"""
       row.classList.toggle('is-filtered-out', !matched);
       if (matched) visible += 1;
     });
-    counter.textContent = `${visible}/${rows.length} visible`;
+    counter.textContent = `${visible}/${rows.length} 可见`;
   };
   input.addEventListener('input', apply);
   document.addEventListener('keydown', (event) => {
@@ -1136,6 +1249,66 @@ _JS = r"""
     }
   });
   apply();
+
+  const editor = document.querySelector('#manual-plan-editor');
+  if (!editor) return;
+  const body = editor.querySelector('#draft-work-items');
+  const template = editor.querySelector('#draft-work-item-template');
+  const previewPanel = editor.querySelector('#draft-preview-panel');
+  const previewJson = editor.querySelector('#draft-json');
+  const splitList = (value) => value.split(',').map((item) => item.trim()).filter(Boolean);
+  const bindRemove = (row) => {
+    row.querySelector('.draft-remove').addEventListener('click', () => row.remove());
+  };
+  body.querySelectorAll('.draft-work-item').forEach(bindRemove);
+  editor.querySelector('#draft-add').addEventListener('click', () => {
+    const row = template.content.firstElementChild.cloneNode(true);
+    bindRemove(row);
+    body.appendChild(row);
+    row.querySelector('.draft-id').focus();
+  });
+  editor.querySelector('#draft-preview').addEventListener('click', () => {
+    const workItems = Array.from(body.querySelectorAll('.draft-work-item')).map((row) => ({
+      work_item_id: row.querySelector('.draft-id').value.trim(),
+      socket_id: row.querySelector('.draft-socket').value,
+      depends_on: splitList(row.querySelector('.draft-depends').value),
+      expected_artifact_types: splitList(row.querySelector('.draft-artifacts').value),
+      review_required: row.querySelector('.draft-review').checked,
+    }));
+    const ids = workItems.map((item) => item.work_item_id);
+    const errors = [];
+    if (!editor.querySelector('#draft-task-title').value.trim()) errors.push('任务标题不能为空。');
+    if (!editor.querySelector('#draft-parent-task').value.trim()) errors.push('父任务引用不能为空。');
+    if (!workItems.length) errors.push('至少需要一个工作项。');
+    if (ids.some((item) => !item)) errors.push('每个工作项都必须填写 ID。');
+    if (new Set(ids).size !== ids.length) errors.push('工作项 ID 不能重复。');
+    workItems.forEach((item) => {
+      if (!item.expected_artifact_types.length) errors.push(`工作项 ${item.work_item_id || '未命名'} 必须填写至少一种预期产物。`);
+      item.depends_on.forEach((dependency) => {
+        if (!ids.includes(dependency)) errors.push(`工作项 ${item.work_item_id || '未命名'} 引用了不存在的依赖 ${dependency}。`);
+        if (dependency === item.work_item_id) errors.push(`工作项 ${item.work_item_id} 不能依赖自身。`);
+      });
+    });
+    previewPanel.hidden = false;
+    previewPanel.classList.toggle('draft-preview--error', errors.length > 0);
+    if (errors.length) {
+      previewJson.textContent = `草稿校验未通过：\n- ${errors.join('\n- ')}`;
+      return;
+    }
+    const draft = {
+      version: 1,
+      planning_mode: 'manual',
+      planned_by: 'operator',
+      task_title: editor.querySelector('#draft-task-title').value.trim(),
+      parent_task_ref: editor.querySelector('#draft-parent-task').value.trim(),
+      confirmation_state: 'pending_operator_confirmation',
+      dispatch_eligible: false,
+      execution: 'not_executed',
+      work_items: workItems,
+      chinese_note: '浏览器内存草稿；待人工确认；不可派发；未调用任何 Agent。',
+    };
+    previewJson.textContent = JSON.stringify(draft, null, 2);
+  });
 })();
 """
 
@@ -1145,15 +1318,15 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     summary = payload["summary"]
     sections = payload["sections"]
     snapshot_id = str(payload["snapshot_id"])
-    envelope_file = payload.get("source", {}).get("envelope_file") or "not supplied"
+    envelope_file = payload.get("source", {}).get("envelope_file") or "未提供"
 
     metric_specs = (
-        ("Tasks", summary.get("total_tasks", 0)),
-        ("Blocked", summary.get("blocked_tasks", 0)),
-        ("Adapters", summary.get("total_adapters", 0)),
-        ("Runs", summary.get("run_count", 0)),
-        ("Pending approvals", summary.get("pending_approval_count", 0)),
-        ("Artifacts", summary.get("artifact_count", 0)),
+        ("任务", summary.get("total_tasks", 0)),
+        ("已阻止", summary.get("blocked_tasks", 0)),
+        ("适配器（Adapter）", summary.get("total_adapters", 0)),
+        ("运行记录", summary.get("run_count", 0)),
+        ("待处理审批", summary.get("pending_approval_count", 0)),
+        ("产物", summary.get("artifact_count", 0)),
     )
     metrics = "".join(
         '<div class="metric">'
@@ -1164,25 +1337,42 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     )
 
     section_names = [name for name in _SECTION_ORDER if name in sections]
-    if "collaboration" in sections:
-        section_names.append("collaboration")
+    for optional_section in ("collaboration", "dispatch", "manual_board"):
+        if optional_section in sections:
+            section_names.append(optional_section)
+    nav_labels = {
+        "overview": "总览", "tasks": "任务", "adapters": "适配器", "automation": "自动化",
+        "runs": "运行记录", "approvals": "审批", "artifacts": "产物", "reports": "报告",
+        "collaboration": "协作计划", "dispatch": "派发资格", "manual_board": "人工看板",
+    }
     nav = "".join(
-        f'<a href="#{name}">{_escape(name)}</a>' for name in section_names
+        f'<a href="#{name.replace("_", "-")}">{_escape(nav_labels.get(name, name))}</a>'
+        for name in section_names
     )
 
     overview = sections["overview"]
+    overview_labels = {
+        "total_tasks": "任务总数",
+        "planned_tasks": "已计划任务",
+        "running_tasks": "运行中任务",
+        "blocked_tasks": "已阻止任务",
+        "finished_tasks": "已完成任务",
+        "failed_tasks": "失败任务",
+        "total_events": "事件总数",
+        "latest_task_updated_at": "最近任务更新时间",
+    }
     overview_rows = [
-        {"metric": key, "value": value}
+        {"metric": f"{overview_labels.get(key, '技术指标')}（{key}）", "value": value}
         for key, value in overview.get("summary", {}).items()
     ]
     section_html = [
         '<section class="panel-section" id="overview">',
-        _section_header("01", "Overview / Project pulse", overview),
+        _section_header("01", "总览 / 项目状态", overview),
         _table(
-            caption="Overview metrics",
-            columns=(("metric", "Metric"), ("value", "Value")),
+            caption="总览指标",
+            columns=(("metric", "指标"), ("value", "数值")),
             rows=overview_rows,
-            empty_message="No overview metrics.",
+            empty_message="没有总览指标。",
         ),
         "</section>",
     ]
@@ -1191,19 +1381,19 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     section_html.extend(
         [
             '<section class="panel-section" id="tasks">',
-            _section_header("02", "Tasks / Ledger snapshots", tasks),
+            _section_header("02", "任务 / 账本快照", tasks),
             _table(
-                caption="Task snapshots",
+                caption="任务快照",
                 columns=(
-                    ("task_id", "Task"),
-                    ("title", "Title"),
-                    ("status", "Status"),
-                    ("requested_capability", "Capability"),
-                    ("assignee", "Assignee"),
-                    ("updated_at", "Updated"),
+                    ("task_id", "任务 ID"),
+                    ("title", "标题"),
+                    ("status", "状态"),
+                    ("requested_capability", "请求能力"),
+                    ("assignee", "负责人"),
+                    ("updated_at", "更新时间"),
                 ),
                 rows=tasks.get("tasks", []),
-                empty_message="No task snapshots.",
+                empty_message="没有任务快照。",
             ),
             "</section>",
         ]
@@ -1213,32 +1403,32 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     section_html.extend(
         [
             '<section class="panel-section" id="adapters">',
-            _section_header("03", "Adapters / Capability registry", adapters),
+            _section_header("03", "适配器（Adapter）/ 能力注册表", adapters),
             _table(
-                caption="Adapter registry",
+                caption="适配器注册表",
                 columns=(
-                    ("adapter_id", "Adapter"),
-                    ("adapter_type", "Type"),
-                    ("risk_level", "Risk"),
-                    ("enabled", "Enabled"),
-                    ("capability_count", "Capabilities"),
-                    ("supports_approval_roundtrip", "Approval"),
-                    ("supports_artifacts", "Artifacts"),
+                    ("adapter_id", "适配器 ID"),
+                    ("adapter_type", "类型"),
+                    ("risk_level", "风险等级"),
+                    ("enabled", "已启用"),
+                    ("capability_count", "能力数量"),
+                    ("supports_approval_roundtrip", "支持审批闭环"),
+                    ("supports_artifacts", "支持产物"),
                 ),
                 rows=adapters.get("adapters", []),
-                empty_message="No adapters projected.",
+                empty_message="没有适配器投影。",
             ),
             _table(
-                caption="Agent sockets / declared plug-ins",
+                caption="Agent 插座（Socket）/ 已声明插件",
                 columns=(
-                    ("socket_id", "Socket"),
-                    ("invocation_mode", "Invocation"),
-                    ("availability", "Availability"),
-                    ("risk_level", "Risk"),
-                    ("capabilities", "Capabilities"),
+                    ("socket_id", "Agent 插座（Socket）ID"),
+                    ("invocation_mode", "调用模式"),
+                    ("availability", "可用性"),
+                    ("risk_level", "风险等级"),
+                    ("capabilities", "能力"),
                 ),
                 rows=adapters.get("agent_sockets", []),
-                empty_message="No Agent sockets projected.",
+                empty_message="没有 Agent 插座投影。",
             ),
             "</section>",
         ]
@@ -1248,18 +1438,18 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     section_html.extend(
         [
             '<section class="panel-section" id="automation">',
-            _section_header("04", "Automation / Consumer contracts", automation),
+            _section_header("04", "自动化 / 使用方契约", automation),
             _table(
-                caption="Automation profiles",
+                caption="自动化配置档（Profile）",
                 columns=(
-                    ("profile_id", "Profile"),
-                    ("requirement_count", "Requirements"),
-                    ("allow_preview", "Preview"),
-                    ("max_access", "Max access"),
-                    ("description", "Description"),
+                    ("profile_id", "配置档 ID"),
+                    ("requirement_count", "要求数量"),
+                    ("allow_preview", "允许预览"),
+                    ("max_access", "最高访问级别"),
+                    ("description", "原始技术说明"),
                 ),
                 rows=automation.get("profiles", []),
-                empty_message="No Automation Profiles projected.",
+                empty_message="没有自动化配置档投影。",
             ),
             "</section>",
         ]
@@ -1269,22 +1459,15 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     section_html.extend(
         [
             '<section class="panel-section" id="runs">',
-            _section_header("05", "Runs / Envelope projection", runs),
+            _section_header("05", "运行记录 / 执行信封（Envelope）投影", runs),
             (
                 _boundary_callout(runs)
                 if runs.get("status") == "unavailable"
                 else _table(
-                    caption="Envelope runs",
-                    columns=(
-                        ("request_id", "Request"),
-                        ("task_id", "Task"),
-                        ("adapter_id", "Adapter"),
-                        ("operation", "Operation"),
-                        ("mode", "Mode"),
-                        ("status", "Status"),
-                    ),
+                    caption="执行信封中的运行记录",
+                    columns=(("request_id", "请求 ID"), ("task_id", "任务 ID"), ("adapter_id", "适配器 ID"), ("operation", "操作"), ("mode", "模式"), ("status", "状态")),
                     rows=runs.get("runs", []),
-                    empty_message="No runs in this envelope.",
+                    empty_message="当前执行信封中没有运行记录。",
                 )
             ),
             "</section>",
@@ -1295,22 +1478,15 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     section_html.extend(
         [
             '<section class="panel-section" id="approvals">',
-            _section_header("06", "Approvals / Envelope projection", approvals),
+            _section_header("06", "审批 / 执行信封（Envelope）投影", approvals),
             (
                 _boundary_callout(approvals)
                 if approvals.get("status") == "unavailable"
                 else _table(
-                    caption="Envelope approvals",
-                    columns=(
-                        ("approval_id", "Approval"),
-                        ("task_id", "Task"),
-                        ("adapter_id", "Adapter"),
-                        ("operation", "Operation"),
-                        ("status", "Status"),
-                        ("requested_at", "Requested"),
-                    ),
+                    caption="执行信封中的审批",
+                    columns=(("approval_id", "审批 ID"), ("task_id", "任务 ID"), ("adapter_id", "适配器 ID"), ("operation", "操作"), ("status", "状态"), ("requested_at", "请求时间")),
                     rows=approvals.get("approvals", []),
-                    empty_message="No approvals in this envelope.",
+                    empty_message="当前执行信封中没有审批。",
                 )
             ),
             "</section>",
@@ -1321,22 +1497,15 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     section_html.extend(
         [
             '<section class="panel-section" id="artifacts">',
-            _section_header("07", "Artifacts / Safe summaries", artifacts),
+            _section_header("07", "产物 / 安全摘要", artifacts),
             (
                 _boundary_callout(artifacts)
                 if artifacts.get("status") == "unavailable"
                 else _table(
-                    caption="Envelope artifacts",
-                    columns=(
-                        ("artifact_id", "Artifact"),
-                        ("artifact_type", "Type"),
-                        ("task_id", "Task"),
-                        ("producer", "Producer"),
-                        ("timestamp", "Timestamp"),
-                        ("summary", "Summary"),
-                    ),
+                    caption="执行信封中的产物",
+                    columns=(("artifact_id", "产物 ID"), ("artifact_type", "类型"), ("task_id", "任务 ID"), ("producer", "产出者"), ("timestamp", "时间戳"), ("summary", "摘要")),
                     rows=artifacts.get("artifacts", []),
-                    empty_message="No artifacts in this envelope.",
+                    empty_message="当前执行信封中没有产物。",
                 )
             ),
             "</section>",
@@ -1347,7 +1516,7 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     section_html.extend(
         [
             '<section class="panel-section" id="reports">',
-            _section_header("08", "Reports / Request boundary", reports),
+            _section_header("08", "报告 / 请求边界", reports),
             _boundary_callout(reports),
             "</section>",
         ]
@@ -1359,7 +1528,7 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
             [
                 '<section class="panel-section" id="collaboration">',
                 _section_header(
-                    "09", "Collaboration / Plan projection", collaboration
+                    "09", "协作 / 计划投影", collaboration
                 ),
                 _collaboration_section_body(collaboration),
                 "</section>",
@@ -1371,7 +1540,7 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
         section_html.extend(
             [
                 '<section class="panel-section" id="dispatch">',
-                _section_header("10", "Collaboration / Dispatch eligibility", dispatch),
+                _section_header("10", "协作 / 派发资格", dispatch),
                 _dispatch_section_body(dispatch),
                 "</section>",
             ]
@@ -1382,7 +1551,7 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
         section_html.extend(
             [
                 '<section class="panel-section" id="manual-board">',
-                _section_header("11", "Collaboration / Manual board", manual_board),
+                _section_header("11", "协作 / 人工看板", manual_board),
                 _manual_board_section_body(manual_board),
                 "</section>",
             ]
@@ -1400,7 +1569,7 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
         )
         findings_html = (
             '<aside class="findings" aria-labelledby="findings-title">'
-            '<h2 id="findings-title">Source findings</h2>'
+            '<h2 id="findings-title">数据源问题</h2>'
             f"<ul>{items}</ul></aside>"
         )
 
@@ -1410,34 +1579,34 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
-<title>S-BLACK / Control Plane</title>
+<title>S-BLACK / 多 Agent 协作控制台</title>
 <style>{_CSS}</style>
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主内容</a>
 <div class="shell">
 <header class="masthead">
-  <div class="topline"><span>S-BLACK HARNESS ENGINEERING</span><span>LOCAL / READ-ONLY / DETERMINISTIC</span></div>
+  <div class="topline"><span>S-BLACK 控制框架工程（Harness Engineering）</span><span>本地 / 只读 / 确定性</span></div>
   <div class="hero">
     <div>
-      <span class="eyebrow">Stage 16 · Audit surface</span>
-      <h1>S-BLACK / CONTROL PLANE</h1>
-      <p class="hero-copy">本地静态控制面。所有内容来自既有安全 read model；不执行命令、不写 ledger、不启动 service。</p>
+      <span class="eyebrow">多 Agent 协作审计界面</span>
+      <h1>S-BLACK / 控制台</h1>
+      <p class="hero-copy">本地静态控制面。所有内容来自既有安全只读模型（read model）；不执行命令、不写账本（ledger）、不启动服务（service）。</p>
     </div>
     <div class="hero-meta">
-      <span class="eyebrow">Projection source</span>
-      <p>envelope: {_escape(envelope_file)}</p>
+      <span class="eyebrow">投影数据源</span>
+      <p>执行信封（Envelope）：{_escape(envelope_file)}</p>
       <code>{_escape(snapshot_id)}</code>
     </div>
   </div>
   <div class="summary-grid">{metrics}</div>
 </header>
 <div class="toolbar">
-  <div class="search"><label for="panel-search">FILTER /</label><input id="panel-search" aria-label="全局过滤" type="search" placeholder="按 task、adapter、status、artifact 过滤（按 / 聚焦）"><span id="filter-count" aria-live="polite"></span></div>
+  <div class="search"><label for="panel-search">筛选 /</label><input id="panel-search" aria-label="全局过滤" type="search" placeholder="按任务、适配器、状态、产物过滤（按 / 聚焦）"><span id="filter-count" aria-live="polite"></span></div>
   <nav class="nav" aria-label="控制台区段">{nav}</nav>
 </div>
 <main id="main">{''.join(section_html)}{findings_html}</main>
-<footer class="footer"><span>NO NETWORK · NO SERVICE · NO EXECUTION · NO WRITE</span><span>{_escape(payload.get('schema_version'))}</span></footer>
+<footer class="footer"><span>不访问网络 · 不启动服务 · 不执行 Agent · 不写入数据</span><span>数据结构版本（schema）：{_escape(payload.get('schema_version'))}</span></footer>
 </div>
 <script>{_JS}</script>
 </body>

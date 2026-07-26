@@ -4,16 +4,18 @@
 
 ## 当前基线
 
-- 里程碑：Stage 76 manual collaboration board
+- 里程碑：Stage 77 中文优先界面与人工计划编辑器
 - commit：见包含本文件的里程碑提交
 - 活跃 `docs/` 只保留当前架构、规范、CLI 和最新事实源；完成阶段已归档。
 
 ## 当前阶段
 
-- **Stage 76 — 已完成：manual-first 协作看板、人工拆分 fixture、Agent 泳道、交接/产物时间线与模拟操作面。**
-- 当前唯一主线事实源：`124-stage76-manual-collaboration-board.md`
-- 规划模式结论：用户可人工拆分；未来系统建议必须经人工确认；automatic 尚未启用。
-- 当前 walkthrough 全部为 fixture/simulated，不调用 Agent、不消耗模型额度、不授予执行权。
+- **Stage 77 — 已完成：Control Panel 简体中文默认、专业术语中文注释、浏览器内存人工计划编辑器。**
+- 当前唯一主线事实源：`125-stage77-chinese-first-interface-and-manual-editor.md`
+- 界面规则：用户实际看见、点击或操作的 UI/UX 默认中文；专业术语保留时紧邻中文解释；后台服务、代码、协议、日志与机器接口可默认英文。
+- 规划模式：用户可人工编辑工作项、Agent 插座、依赖、产物与审阅要求；生成结果固定为待人工确认、不可派发。
+- 当前编辑器与 walkthrough 全部在浏览器内存或 fixture 中，不调用 Agent、不消耗模型额度、不写磁盘、不授予执行权。
+- 下一断点 Stage 78：人工计划草稿确认与受控导出；校验和人工确认不授予派发权，真实 Agent 调用继续延后。
 - Stage 66 Pi bound runner migration 与 Stage 75 探针实现均为 deferred，不是当前产品主线。
 
 ## 当前真实执行能力
@@ -35,14 +37,15 @@
 
 1. `README.md`
 2. `docs/00-index.md`
-3. `docs/124-stage76-manual-collaboration-board.md`
-4. `docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md`
-5. `docs/47-orchestration-hub-vision.md`
-6. `docs/48-adapter-runtime-interface.md`
-7. `docs/49-capability-routing-model.md`
-8. `docs/111-pi-controlled-dry-run-print-implementation.md`（仅在核对真实执行边界时读取）
-9. `docs/21-controlled-write-boundaries.md`
-9. `tasks/progress.md`（只做历史取证，不作为入口）
+3. `docs/125-stage77-chinese-first-interface-and-manual-editor.md`
+4. `docs/124-stage76-manual-collaboration-board.md`
+5. `docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md`
+6. `docs/47-orchestration-hub-vision.md`
+7. `docs/48-adapter-runtime-interface.md`
+8. `docs/49-capability-routing-model.md`
+9. `docs/111-pi-controlled-dry-run-print-implementation.md`（仅在核对真实执行边界时读取）
+10. `docs/21-controlled-write-boundaries.md`
+11. `tasks/progress.md`（只做历史取证，不作为入口）
 
 然后运行：
 

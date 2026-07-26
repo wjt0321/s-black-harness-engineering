@@ -381,7 +381,7 @@ def test_control_panel_html_is_self_contained_accessible_and_escaped() -> None:
 
     assert html.startswith("<!doctype html>")
     assert '<html lang="zh-CN">' in html
-    assert "S-BLACK / CONTROL PLANE" in html
+    assert "S-BLACK / 控制台" in html
     assert 'href="#main"' in html
     assert 'aria-label="全局过滤"' in html
     assert "prefers-reduced-motion" in html
@@ -457,7 +457,7 @@ def test_control_panel_projects_blocked_dispatch_eligibility() -> None:
         "execution_authority_unavailable",
     ]
     rendered = render_control_panel_html(payload)
-    assert "Dispatch eligible" in rendered
+    assert "可派发" in rendered
     assert "not_executed" in rendered
     assert "readiness_not_collected" in rendered
     assert "execution_authority_unavailable" in rendered
@@ -512,10 +512,10 @@ def test_control_panel_manual_board_html_keeps_simulation_boundary() -> None:
     rendered = render_control_panel_html(payload)
 
     assert 'id="manual-board"' in rendered
-    assert "OPERATOR AUTHORED" in rendered
-    assert rendered.count("SIMULATED · NO AGENT TURN") == 3
+    assert "操作者人工编排" in rendered
+    assert rendered.count("仅为模拟展示 · 未启动任何 Agent 对话") == 3
     assert rendered.count('class="board-action" disabled') == 6
-    assert "Handoff and artifact timeline" in rendered
+    assert "交接与产物时间线" in rendered
 
 
 def test_control_panel_handoff_preserves_manual_board_file() -> None:
@@ -527,3 +527,63 @@ def test_control_panel_handoff_preserves_manual_board_file() -> None:
     assert payload["source"]["manual_board_file"] == board_file
     assert payload["snapshot"]["argv"][-3:] == ["--manual-board-file", board_file, "--json"]
     assert payload["render"]["argv"][-2:] == ["--manual-board-file", board_file]
+
+
+def test_control_panel_defaults_to_chinese_with_annotated_technical_terms() -> None:
+    board_file = "adapters/manual-collaboration-board.example.json"
+    collaboration_file = "adapters/collaboration-plan.example.json"
+    payload = build_control_panel_snapshot(
+        ROOT,
+        collaboration_file=collaboration_file,
+        manual_board_file=board_file,
+    ).to_dict()
+    rendered = render_control_panel_html(payload)
+
+    for expected in (
+        "总览 / 项目状态",
+        "任务总数（total_tasks）",
+        "安全只读模型（read model）",
+        "账本（ledger）",
+        "服务（service）",
+        "任务 / 账本快照",
+        "适配器（Adapter）/ 能力注册表",
+        "Agent 插座（Socket）ID",
+        "协作 / 计划投影",
+        "协作 / 人工看板",
+        "规划者（planner）",
+        "审阅者（reviewer）",
+        "模拟完成（simulated_complete）",
+        "批准开始（approve_start）",
+        "代码补丁（patch）",
+        "测试结果（test_result）",
+        "可见",
+    ):
+        assert expected in rendered
+    for forbidden in (
+        "OPERATOR AUTHORED",
+        "Manual task split",
+        "Operator controls",
+        "Handoff and artifact timeline",
+        "${visible}/${rows.length} visible",
+    ):
+        assert forbidden not in rendered
+
+
+def test_manual_plan_editor_is_local_pending_and_non_executing() -> None:
+    board_file = "adapters/manual-collaboration-board.example.json"
+    payload = build_control_panel_snapshot(ROOT, manual_board_file=board_file).to_dict()
+    rendered = render_control_panel_html(payload)
+
+    assert 'id="manual-plan-editor"' in rendered
+    assert "人工计划草稿编辑器" in rendered
+    assert "任务标题" in rendered
+    assert "角色由当前 Agent 插座绑定决定" in rendered
+    assert "task_title:" in rendered
+    assert "仅浏览器内存" in rendered
+    assert "待人工确认 · 不可派发" in rendered
+    assert "不会写入磁盘、不会访问网络、不会调用 Agent" in rendered
+    assert "pending_operator_confirmation" in rendered
+    assert "dispatch_eligible: false" in rendered
+    assert "execution: 'not_executed'" in rendered
+    assert "fetch(" not in rendered
+    assert "XMLHttpRequest" not in rendered

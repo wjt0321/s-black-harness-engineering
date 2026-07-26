@@ -191,20 +191,20 @@ def test_html_renders_accessible_collaboration_graph_and_tables() -> None:
     assert 'href="#collaboration"' in html
     assert 'role="img"' in html
     assert "<svg" in html
-    assert "Collaboration plan graph" in html
+    assert "协作计划图" in html
     for socket_id in ("kimi-code-acp", "omp-acp", "claude-code-acp"):
         assert socket_id in html
     for work_item_id in ("plan", "implement", "review"):
         assert work_item_id in html
     assert "review-implementation" in html
-    assert "Collaboration socket bindings" in html
-    assert "Collaboration routing explanations" in html
+    assert "协作 Agent 插座绑定" in html
+    assert "协作路由说明" in html
     assert "explicit_plan_binding" in html
     assert "not_collected" in html
     assert "live_probe_performed" in html
-    assert "Collaboration work items" in html
-    assert "Collaboration handoffs" in html
-    assert "Collaboration review gates" in html
+    assert "协作工作项" in html
+    assert "协作交接" in html
+    assert "协作审阅门" in html
 
 
 def test_html_collaboration_escapes_plan_strings(tmp_path: Path) -> None:
