@@ -10,8 +10,9 @@
 
 ## 当前阶段
 
-- **Stage 67 — Socket Registry v1 已完成：Pi、Kimi Code、Claude Code、OMP 与 QwenPaw API 统一 Agent socket 只读投影；未调用 Agent、未探测在线状态**
-- 事实源：`115-agent-socket-registry-v1.md`
+- **Stage 68 — 已完成 design gate：多 Agent collaboration plan 与可扩展 socket admission；未实现 plan、未调用 Agent**
+- 事实源：`116-multi-agent-collaboration-plan-and-socket-admission.md`
+- 最近完成：**Stage 67 — Socket Registry v1：Pi、Kimi Code、Claude Code、OMP 与 QwenPaw API 统一 Agent socket 只读投影**
 - Stage 66 Pi bound runner migration 已冻结为 deferred security work，不是当前产品主线。
 
 ## 当前真实执行能力
@@ -33,13 +34,14 @@
 
 1. `README.md`
 2. `docs/00-index.md`
-3. `docs/115-agent-socket-registry-v1.md`
-4. `docs/49-capability-routing-model.md`
-5. `docs/48-adapter-runtime-interface.md`
-6. `docs/114-pi-bound-runner-migration-design.md`（deferred security work）
-7. `docs/21-controlled-write-boundaries.md`
-8. `tasks/handoff-2026-07-26.md`
-9. `tasks/progress.md`（只做历史取证，不作为入口）
+3. `docs/116-multi-agent-collaboration-plan-and-socket-admission.md`
+4. `docs/115-agent-socket-registry-v1.md`
+5. `docs/49-capability-routing-model.md`
+6. `docs/48-adapter-runtime-interface.md`
+7. `docs/114-pi-bound-runner-migration-design.md`（deferred security work）
+8. `docs/21-controlled-write-boundaries.md`
+9. `tasks/handoff-2026-07-26.md`
+10. `tasks/progress.md`（只做历史取证，不作为入口）
 
 然后运行：
 
@@ -50,8 +52,8 @@ python -m agent_runtime.cli doctor
 
 ## 下一步做什么
 
-- **Stage 68 multi-Agent collaboration plan design gate**：定义一个任务如何选择多个 socket、分配角色、交接 artifact 与形成 review 结论；保持只读，不调用 Agent；
-- Socket-specific readiness 和 capability routing explanation 随后独立推进；
+- **Stage 69 collaboration plan read model**：以 declared sockets 实现 deterministic `plan/validate/inspect`，不探测 readiness、不持久化、不调用 Agent；
+- socket-specific readiness 和 capability routing explanation 随后独立推进；
 - Stage 66 Pi bound runner migration 保持 deferred，除非 Pi 成为明确优先执行器且获得单独授权。
 
 ## 验证基线

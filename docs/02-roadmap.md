@@ -23,7 +23,13 @@
 - Started/terminal execution audit、open-attempt recovery、audit v2。
 - Windows Job Object tree containment、bounded stdout/stderr、safe projection。
 
-### 4. Agent Socket Registry v1
+### 4. Agent Socket Registry v1 and Collaboration Planning
+
+- Stage 68 freezes socket admission/lifecycle rules and the deterministic multi-Agent collaboration plan contract: roles, work items, handoffs, expected artifacts, and review gates.
+- Future Agent additions must use the shared registry/socket contract; they cannot add custom routing or UI branches.
+- Stage 68 remains design-only: no plan persistence, readiness probe, or Agent invocation.
+
+### 5. Agent Socket Registry v1
 
 - Pi、Kimi Code、Claude Code、OMP 与 QwenPaw Agent API 统一以 Agent socket 投影进入 control plane。
 - 同一 source-backed adapter registry 继续是唯一事实源；socket 显示 declared capability、invocation mode 和边界，不探测在线状态或调用 Agent。
@@ -49,7 +55,7 @@ Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job acc
 
 优先级从高到低：
 
-1. **Stage 68 multi-Agent collaboration plan design gate**：先把 parent task、selected sockets、角色、预期 artifact、review point 与 handoff 关系做成确定性只读计划。
+1. **Stage 69 collaboration plan read model**：将 Stage 68 的 plan/validate/inspect 作为确定性只读投影实现，只消费 declared sockets。
 2. **Socket-specific readiness design**：只在明确需要时，为不同 invocation mode 定义有界、非秘密、非调用的 readiness 证据；不将 declared 误称为在线。
 3. **Capability routing explanation**：让 route preview 清楚展示为什么选择某个插头、哪些可替代及风险/成本约束。
 4. **Stage 66 Pi bound runner migration**：保留为 deferred security work；只有 Pi 成为明确优先执行器且获独立授权时再恢复。

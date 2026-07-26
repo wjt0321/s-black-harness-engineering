@@ -45,7 +45,8 @@
 ## 当前执行事实源
 
 - `111-pi-controlled-dry-run-print-implementation.md` — fixed Pi print 当前实现、边界和真实 smoke。
-- `115-agent-socket-registry-v1.md` — 多 Agent 插座式中枢的当前事实源；只读 socket 投影。
+- `116-multi-agent-collaboration-plan-and-socket-admission.md` — 可扩展 socket 准入与协作计划的当前设计事实源。
+- `115-agent-socket-registry-v1.md` — 多 Agent 插座式中枢的当前实现事实源；只读 socket 投影。
 - `114-pi-bound-runner-migration-design.md` — deferred security work：bound Node + sealed CLI entry 迁移设计门；未改 runner。
 - `113-pi-runtime-binding-implementation.md` — Pi Node/package binding-only 当前实现；未迁移 runner。
 - `archive/release-notes/112-release-notes-stage65-pi-bound-runner-migration-design.md` — Stage 65 design-only 收口记录。
