@@ -68,6 +68,7 @@ git diff --check
 - [`docs/00-index.md`](docs/00-index.md)：按主题导航。
 - [`docs/02-roadmap.md`](docs/02-roadmap.md)：已完成能力包与下一候选。
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md)：当前最新真实执行事实源。
+- [`docs/113-pi-runtime-binding-implementation.md`](docs/113-pi-runtime-binding-implementation.md)：当前 binding-only review evidence 事实源；不代表 runner migration 或执行授权。
 - [`docs/archive/`](docs/archive/)：完整历史设计、计划、smoke 与 release notes。
 
 ## 仓库结构

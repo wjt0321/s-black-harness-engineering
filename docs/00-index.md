@@ -9,8 +9,7 @@
 - `02-roadmap.md` — 能力包与下一候选。
 - `10-cli-poc-usage.md` — 完整 CLI 参数和示例。
 - `111-pi-controlled-dry-run-print-implementation.md` — 最新真实执行事实源。
-- `112-pi-node-runtime-identity-binding-design.md` — Node/Pi trusted-chain design gate。
-- `113-pi-runtime-binding-implementation.md` — 当前 binding-only 实现事实源。
+- `113-pi-runtime-binding-implementation.md` — 当前 binding-only 实现与本地 review evidence 事实源。
 - `MAINTENANCE.md` — 文档治理规则。
 
 ## 核心模型
@@ -46,9 +45,8 @@
 
 - `129-stage81-current-operator-inbox-and-approval-collection.md` — 当前多 Agent 产品主线：最新状态操作者待办、pending approval 集合、stale target 阻止，以及待办不等于执行授权的边界。
 - `111-pi-controlled-dry-run-print-implementation.md` — 当前唯一 Agent 类真实执行能力及其安全边界。
-- `114-pi-bound-runner-migration-design.md` — deferred 安全工作；不是当前产品主线。
 
-Stage 67-80 的 socket、协作计划、看板、dispatch、readiness、中文界面、人工导出、运行状态和 checkpoint 操作资格记录已归档到 `archive/115-*.md` 至 `archive/128-*.md`，仅在追溯设计依据时读取。
+Stage 61、63、65 和 67-80 的已完成/冻结设计、实现与阶段记录已归档到 `archive/110-*.md`、`archive/112-*.md`、`archive/114-*.md` 与 `archive/115-*.md` 至 `archive/128-*.md`，仅在追溯设计依据时读取。
 
 ## 历史归档
 

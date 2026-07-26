@@ -72,7 +72,7 @@ Stage 76-81 已完成人工计划看板、fixture 端到端演示、中文默认
 3. **无 prompt ACP 探针实现**：只有当前态资格契约明确需要真实 readiness 时才恢复，并需单独授权启动 runner/session。
 4. **单 work-item 真实派发**：在探针、真实审批绑定、取消、重试、审阅、交接和 artifact 回收契约齐备后另行设计和授权。
 
-Stage 66 Pi bound runner migration 与 canonical approval binding 保留为安全强化项，不再抢占产品主线。人工计划“已确认”不得被解释为派发授权。
+Stage 65 Pi bound runner migration 设计已归档为 `archive/114-pi-bound-runner-migration-design.md`，继续作为 deferred 安全强化项，不抢占产品主线。人工计划“已确认”不得被解释为派发授权。
 
 ## 治理原则
 

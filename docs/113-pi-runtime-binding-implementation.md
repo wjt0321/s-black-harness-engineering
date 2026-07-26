@@ -1,5 +1,5 @@
-<!-- parents: 112-pi-node-runtime-identity-binding-design.md -->
-<!-- relates: 110-pi-controlled-dry-run-adapter-contract.md, 111-pi-controlled-dry-run-print-implementation.md -->
+<!-- parents: archive/112-pi-node-runtime-identity-binding-design.md -->
+<!-- relates: archive/110-pi-controlled-dry-run-adapter-contract.md, 111-pi-controlled-dry-run-print-implementation.md -->
 
 # 113 — Pi Runtime Binding Implementation (Stage 64)
 

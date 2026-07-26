@@ -68,6 +68,7 @@ See [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md) for the full CLI refe
 - [`docs/00-index.md`](docs/00-index.md): topic-based navigation.
 - [`docs/02-roadmap.md`](docs/02-roadmap.md): completed capability packages and next candidates.
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md): latest real-execution fact source.
+- [`docs/113-pi-runtime-binding-implementation.md`](docs/113-pi-runtime-binding-implementation.md): current binding-only review-evidence source; it does not authorize runner migration or execution.
 - [`docs/archive/`](docs/archive/): historical designs, plans, smoke reports, and release notes.
 
 ## Repository Layout

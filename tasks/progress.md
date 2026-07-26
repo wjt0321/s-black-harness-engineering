@@ -2972,14 +2972,14 @@
 ## 2026-07-25 Stage 61 - Pi Controlled Dry-run Adapter Contract（design-only）
 
 - 用户授权按 Stage 46 范式做 design-only 阶段：冻结 Pi 受控 dry-run adapter contract，不实现 runner/CLI/subprocess/模型调用/网络/ledger writer/approval 启用/Pi 配置变更。
-- 新增 `docs/110-pi-controlled-dry-run-adapter-contract.md`：唯一候选 operation `pi_cli_print`（固定 argv `pi --print --no-session --no-tools`，`--` 分隔，prompt 唯一可控输入、4 KiB/UTF-8/控制字符有界、secret scan 前置）；`--no-session`/`--no-tools` 取舍与 read/json 候选排除理由；环境显式 allowlist 重建（`DEEPSEEK_API_KEY` 只经 env 透传永不回显，proxy 不透传）；诚实声明 npm 安装完整性信任缺口（v1 非 trusted executable chain）；复用 Stage 49 Job Object runner 语义（60s/120s、每流 256 KiB）与 Stage 47–48 audit 绑定；模型回答文本不进公开投影；failure mapping、10 条 stop-lines、12 项 TDD 验收矩阵。
+- 新增 `docs/archive/110-pi-controlled-dry-run-adapter-contract.md`：唯一候选 operation `pi_cli_print`（固定 argv `pi --print --no-session --no-tools`，`--` 分隔，prompt 唯一可控输入、4 KiB/UTF-8/控制字符有界、secret scan 前置）；`--no-session`/`--no-tools` 取舍与 read/json 候选排除理由；环境显式 allowlist 重建（`DEEPSEEK_API_KEY` 只经 env 透传永不回显，proxy 不透传）；诚实声明 npm 安装完整性信任缺口（v1 非 trusted executable chain）；复用 Stage 49 Job Object runner 语义（60s/120s、每流 256 KiB）与 Stage 47–48 audit 绑定；模型回答文本不进公开投影；failure mapping、10 条 stop-lines、12 项 TDD 验收矩阵。
 - 推荐下一实现为 Stage 62 Pi Controlled Dry-run Print Implementation（条件启动，需用户再次授权真实模型调用与第二个真实 operation）。
 - 同步更新 `docs/00-index.md`、`docs/02-roadmap.md`、`docs/000-stage-digest.md`（活跃文档 48→49，全仓 md 195→196，恢复顺序插入 110）与本 handoff；无代码改动、无新增测试（项目无 docs 一致性测试）；未 commit/push。
 
 
 ## 2026-07-25 Stage 62 - Pi Controlled Dry-run Print Implementation
 
-- 用户明确授权按 docs/110 实现 `pi_cli_print` 与一次受控真实 DeepSeek smoke。
+- 用户明确授权按 docs/archive/110 实现 `pi_cli_print` 与一次受控真实 DeepSeek smoke。
 - 新增 `agent_runtime/pi_print_runner.py`（复用 Stage 49 Job Object containment；每流 256 KiB、timeout 5..120s 默认 60s；无 trust image 验证；POSIX unavailable）与 `agent_runtime/orchestration_pi_print_execution.py`（完整 release gate 链：`--commit` 门禁、prompt 4 KiB/控制字符/secret scan、lease、registry 对齐、readiness recheck、环境 allowlist、固定 argv、plan hash、started/terminal audit v2、输出协议、safe summary）。
 - `pi_runtime_discovery` 新增 `api_key_env` 投影（仅变量名）；CLI 新增 `orchestration execution pi-print`；contract manifest 新增 `pi_cli_print_execution`（30 entries）并更新 `external_execution_service_stack` 边界文案。
 - 新增 `tests/test_pi_print_execution.py` 35 项；契约/边界测试同步更新；全量 pytest 0 failed（skip 均为既有）；doctor PASS、public scan OK、diff check 干净、pre-commit rc=0、docs context rc=0。

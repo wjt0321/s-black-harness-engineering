@@ -19,7 +19,7 @@ The binding can inspect, preview, create with explicit `--commit`, and rotate wi
 
 ## Evidence
 
-- `docs/112-pi-node-runtime-identity-binding-design.md`
+- `docs/archive/112-pi-node-runtime-identity-binding-design.md`
 - `docs/113-pi-runtime-binding-implementation.md`
 - `docs/archive/release-notes/111-release-notes-stage63-stage64-pi-runtime-binding.md`
 - `tests/test_pi_runtime_binding.py`
