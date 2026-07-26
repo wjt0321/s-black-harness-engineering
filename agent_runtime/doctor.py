@@ -32,6 +32,8 @@ SCHEMA_FILES = [
     "adapters/execution-envelope.schema.json",
     "adapters/execution-readiness.schema.json",
     "adapters/execution-trust-binding.schema.json",
+    "adapters/acp-readiness-evidence.schema.json",
+    "adapters/collaboration-dispatch.schema.json",
     "automation/automation-profiles.schema.json",
     "tasks/task.schema.json",
     "tasks/event.schema.json",
@@ -45,6 +47,8 @@ SAMPLE_TO_SCHEMA: list[tuple[str, str]] = [
     ("adapters/adapters.sample.json", "adapters/adapter.schema.json"),
     ("adapters/execution-envelope.examples.json", "adapters/execution-envelope.schema.json"),
     ("adapters/execution-readiness.sample.json", "adapters/execution-readiness.schema.json"),
+    ("adapters/acp-readiness-evidence.sample.json", "adapters/acp-readiness-evidence.schema.json"),
+    ("adapters/collaboration-dispatch.example.json", "adapters/collaboration-dispatch.schema.json"),
     ("automation/automation-profiles.sample.json", "automation/automation-profiles.schema.json"),
 ]
 

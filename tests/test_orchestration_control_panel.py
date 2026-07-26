@@ -441,3 +441,34 @@ def test_control_panel_snapshot_human_output_is_compact(capsys) -> None:
     assert "tasks=" in output
     assert "runs=0" in output
     assert "runs=unavailable" in output
+
+
+def test_control_panel_projects_blocked_dispatch_eligibility() -> None:
+    dispatch = "adapters/collaboration-dispatch.example.json"
+    payload = build_control_panel_snapshot(ROOT, dispatch_file=dispatch).to_dict()
+
+    section = payload["sections"]["dispatch"]
+    assert section["status"] == "pass"
+    assert section["availability"] == "experimental"
+    assert section["proposal"]["dispatch_eligible"] is False
+    assert section["proposal"]["execution"] == "not_executed"
+    assert section["proposal"]["blocked_reasons"] == [
+        "readiness_not_collected",
+        "execution_authority_unavailable",
+    ]
+    rendered = render_control_panel_html(payload)
+    assert "Dispatch eligible" in rendered
+    assert "not_executed" in rendered
+    assert "readiness_not_collected" in rendered
+    assert "execution_authority_unavailable" in rendered
+
+
+def test_control_panel_handoff_preserves_dispatch_file() -> None:
+    dispatch = "adapters/collaboration-dispatch.example.json"
+    payload = control_panel.build_control_panel_handoff(
+        ROOT, dispatch_file=dispatch
+    ).to_dict()
+
+    assert payload["source"]["dispatch_file"] == dispatch
+    assert payload["snapshot"]["argv"][-3:] == ["--dispatch-file", dispatch, "--json"]
+    assert payload["render"]["argv"][-2:] == ["--dispatch-file", dispatch]

@@ -48,6 +48,7 @@
 - `116-multi-agent-collaboration-plan-and-socket-admission.md` — 可扩展 socket 准入与协作计划的当前设计事实源。
 - `117-collaboration-plan-read-model.md` — 协作计划只读 read model 的当前实现事实源。
 - `118-control-panel-collaboration-projection.md` — Control Panel passive collaboration projection 的当前实现事实源。
+- `120-controlled-collaboration-dispatch-foundation.md` — 单 work item dispatch proposal、eligibility 与 blocked reason 当前事实源。
 - `119-socket-readiness-evidence-and-routing-explanations.md` — socket-family readiness evidence 契约与协作路由解释事实源。
 - `115-agent-socket-registry-v1.md` — 多 Agent 插座式中枢的当前实现事实源；只读 socket 投影。
 - `114-pi-bound-runner-migration-design.md` — deferred security work：bound Node + sealed CLI entry 迁移设计门；未改 runner。

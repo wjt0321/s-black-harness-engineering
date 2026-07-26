@@ -2988,3 +2988,11 @@
 - 契约与实现已移除 standalone `--`，新增 `pi-print-prompt-flag-like` 拒绝首个非空白字符为 `-` 的 prompt；专项测试增至 36 项并通过。
 - 最终授权 smoke 已成功：status=`ready`、lifecycle=`closed`、provider/model=`deepseek-compat/deepseek-v4-flash`、child exit 0、stdout 17 bytes（raw withheld）、stderr 0、duration=`lt-5s`；audit=`closed_succeeded` 且完整，Windows Job accounting/3 进程回收/containment close 全部通过。唯一固定 `pi_cli_print` 真实调用链端到端可用。
 - 事实源 `docs/111-pi-controlled-dry-run-print-implementation.md`；未 commit/push。
+
+## 2026-07-26 Stage 72 - Controlled Collaboration Dispatch Foundation
+
+- 新增单 work item、content-addressed dispatch proposal 与 `collaboration dispatch validate|inspect` 只读 CLI；校验 plan drift、socket/review/handoff artifact 绑定并 fail closed。
+- 新增 ACP readiness 静态 schema/sample；明确禁止 prompt、模型调用、额度消费、凭据读取与 session 持久化，collector 与 eligibility binding 均未实现。
+- Control Panel 可选 `--dispatch-file` 同时投影 JSON/HTML 与 handoff 重放参数；当前固定 `plan_eligible=true`、`dispatch_eligible=false`、`execution=not_executed`，阻塞原因为 readiness 未采集和无执行权。
+- 完整 pytest 0 failed；doctor、docs context、public scan、compileall、CLI/HTML smoke 与 diff check 通过。仓库无 `.pre-commit-config.yaml`，故 pre-commit 不可运行。
+- 事实源 `docs/120-controlled-collaboration-dispatch-foundation.md`；准备创建本地 `v0.20.0-controlled-collaboration-dispatch-foundation` 里程碑提交与标签，未 push。

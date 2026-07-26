@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "collaboration_file": "adapters/collaboration-plan.example.json",
+  "plan_id": "sha256:a8174227ff8520bcdd1d17f0d50477f4f14510aeb697d5b12c8025ced0891559",
+  "work_item_id": "implement",
+  "socket_id": "omp-acp",
+  "input_artifact_types": ["plan"],
+  "timeout_seconds": 900,
+  "review_required": true
+}

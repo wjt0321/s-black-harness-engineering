@@ -12,6 +12,7 @@ from typing import Any, Iterable
 from .loader import normalize_path
 from .orchestration_adapter import list_adapters
 from .orchestration_collaboration import inspect_collaboration_plan
+from .orchestration_collaboration_dispatch import inspect_collaboration_dispatch
 from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
 from .orchestration_artifact import list_artifacts
@@ -283,6 +284,7 @@ def build_control_panel_snapshot(
     *,
     envelope_file: str | None = None,
     collaboration_file: str | None = None,
+    dispatch_file: str | None = None,
 ) -> ControlPanelSnapshot:
     """Aggregate existing safe read models without executing or writing."""
     overview = _section(
@@ -391,6 +393,12 @@ def build_control_panel_snapshot(
             scope="file",
             availability="stable_limited",
         )
+    if dispatch_file is not None:
+        sections["dispatch"] = _section(
+            inspect_collaboration_dispatch(root, dispatch_file).to_dict(),
+            scope="file",
+            availability="experimental",
+        )
     findings = _deduplicate_findings(sections)
     status = _aggregate_status(sections)
 
@@ -440,6 +448,8 @@ def build_control_panel_snapshot(
     }
     if collaboration_file is not None:
         source["collaboration_file"] = _safe_envelope_reference(root, collaboration_file)
+    if dispatch_file is not None:
+        source["dispatch_file"] = _safe_envelope_reference(root, dispatch_file)
     return ControlPanelSnapshot(
         status=status,
         source=source,
@@ -455,12 +465,14 @@ def build_control_panel_handoff(
     *,
     envelope_file: str | None = None,
     collaboration_file: str | None = None,
+    dispatch_file: str | None = None,
 ) -> ControlPanelHandoff:
     """Describe existing panel representations without rendering or executing them."""
     snapshot_payload = build_control_panel_snapshot(
         root,
         envelope_file=envelope_file,
         collaboration_file=collaboration_file,
+        dispatch_file=dispatch_file,
     ).to_dict()
     snapshot_argv = [
         "python",
@@ -486,6 +498,10 @@ def build_control_panel_handoff(
     if safe_collaboration_file is not None:
         snapshot_argv.extend(("--collaboration-file", safe_collaboration_file))
         render_argv.extend(("--collaboration-file", safe_collaboration_file))
+    safe_dispatch_file = snapshot_payload["source"].get("dispatch_file")
+    if safe_dispatch_file is not None:
+        snapshot_argv.extend(("--dispatch-file", safe_dispatch_file))
+        render_argv.extend(("--dispatch-file", safe_dispatch_file))
     snapshot_argv.append("--json")
 
     snapshot_id = str(snapshot_payload["snapshot_id"])
@@ -861,6 +877,30 @@ def _collaboration_section_body(section: dict[str, Any]) -> str:
     )
 
 
+def _dispatch_section_body(section: dict[str, Any]) -> str:
+    proposal = section.get("proposal")
+    if section.get("status") != "pass" or proposal is None:
+        return _table(
+            caption="Dispatch proposal findings",
+            columns=(("rule_id", "Rule"), ("severity", "Severity"), ("message", "Message")),
+            rows=section.get("findings", []),
+            empty_message="Dispatch proposal is unavailable.",
+        )
+    return _table(
+        caption="Controlled collaboration dispatch eligibility",
+        columns=(
+            ("work_item_id", "Work item"),
+            ("socket_id", "Socket"),
+            ("plan_eligible", "Plan eligible"),
+            ("dispatch_eligible", "Dispatch eligible"),
+            ("execution", "Execution"),
+            ("blocked_reasons", "Blocked reasons"),
+        ),
+        rows=[proposal],
+        empty_message="No dispatch proposal.",
+    )
+
+
 _CSS = r"""
 :root {
   color-scheme: dark;
@@ -1214,6 +1254,17 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
                     "09", "Collaboration / Plan projection", collaboration
                 ),
                 _collaboration_section_body(collaboration),
+                "</section>",
+            ]
+        )
+
+    dispatch = sections.get("dispatch")
+    if dispatch is not None:
+        section_html.extend(
+            [
+                '<section class="panel-section" id="dispatch">',
+                _section_header("10", "Collaboration / Dispatch eligibility", dispatch),
+                _dispatch_section_body(dispatch),
                 "</section>",
             ]
         )

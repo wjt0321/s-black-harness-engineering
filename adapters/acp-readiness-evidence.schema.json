@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/acp-readiness-evidence.schema.json",
+  "title": "ACP Socket Readiness Evidence Contract",
+  "type": "object",
+  "required": ["version", "family", "contract", "collection", "future_checks", "forbidden_actions", "implementation"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"const": 1},
+    "family": {"const": "acp_delegate"},
+    "contract": {"const": "socket-readiness/acp-session/v1"},
+    "collection": {
+      "type": "object",
+      "required": ["status", "live_probe_performed", "expires_at"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {"const": "not_collected"},
+        "live_probe_performed": {"const": false},
+        "expires_at": {"const": null}
+      }
+    },
+    "future_checks": {
+      "const": ["runner_declared", "transport_available", "session_openable_without_turn"]
+    },
+    "forbidden_actions": {
+      "const": ["send_prompt", "invoke_model", "consume_quota", "read_credentials", "persist_session"]
+    },
+    "implementation": {
+      "type": "object",
+      "required": ["collector", "eligibility_binding"],
+      "additionalProperties": false,
+      "properties": {
+        "collector": {"const": false},
+        "eligibility_binding": {"const": false}
+      }
+    }
+  }
+}

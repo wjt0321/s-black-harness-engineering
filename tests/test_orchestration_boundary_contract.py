@@ -76,8 +76,14 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "list",
         "inspect",
     }
-    assert _subparser_names(_nested_parser(orchestration, "collaboration")) == {
+    collaboration = _nested_parser(orchestration, "collaboration")
+    assert _subparser_names(collaboration) == {
         "plan",
+        "validate",
+        "inspect",
+        "dispatch",
+    }
+    assert _subparser_names(_nested_parser(collaboration, "dispatch")) == {
         "validate",
         "inspect",
     }

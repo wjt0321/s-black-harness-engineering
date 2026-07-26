@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/collaboration-dispatch.schema.json",
+  "title": "Single Work Item Collaboration Dispatch Proposal",
+  "type": "object",
+  "required": ["version", "collaboration_file", "plan_id", "work_item_id", "socket_id", "input_artifact_types", "timeout_seconds", "review_required"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"const": 1},
+    "collaboration_file": {"type": "string", "minLength": 1, "maxLength": 260, "pattern": "^[^<>:\"|?*]+\\.json$"},
+    "plan_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "work_item_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "socket_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "input_artifact_types": {
+      "type": "array",
+      "items": {"enum": ["analysis", "plan", "draft", "patch", "test_result", "review", "summary"]},
+      "uniqueItems": true
+    },
+    "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 1800},
+    "review_required": {"type": "boolean"}
+  }
+}

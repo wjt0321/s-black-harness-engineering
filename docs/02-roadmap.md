@@ -35,7 +35,13 @@
 - 同一 source-backed adapter registry 继续是唯一事实源；socket 显示 declared capability、invocation mode 和边界，不探测在线状态或调用 Agent。
 - `orchestration socket list` / `orchestration socket inspect <socket_id>` 与 Control Panel adapters 区可见插头拓扑。
 
-### 5. 当前真实 operation
+### 6. Controlled Collaboration Dispatch Foundation
+
+- 单个 collaboration work item 可生成 schema-validated、content-addressed dispatch proposal。
+- CLI 与 Control Panel 只读展示 `plan_eligible`、`dispatch_eligible`、blocked reasons 和 `execution=not_executed`。
+- ACP readiness evidence 仅冻结静态契约；未实现 collector、eligibility binding 或真实派发。
+
+### 7. 当前真实 operation
 
 - fixed Git status：固定 `git status --short --branch`。
 - fixed Pi print：固定 `pi --print --no-session --no-tools <prompt>`。
@@ -55,10 +61,9 @@ Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job acc
 
 优先级从高到低：
 
-1. **Socket-specific readiness design**：只在明确需要时，为不同 invocation mode 定义有界、非秘密、非调用的 readiness 证据；不将 declared 误称为在线。
-2. **Capability routing explanation**：让 route preview 清楚展示为什么选择某个插头、哪些可替代及风险/成本约束。
-3. **Stage 66 Pi bound runner migration**：保留为 deferred security work；只有 Pi 成为明确优先执行器且获独立授权时再恢复。
-4. **canonical approval binding**：继续作为安全内核的独立强化项，不阻塞协作主线。
+1. **Stage 73 readiness collection design gate**：仅为一个 socket family 冻结有界证据采集、过期、withholding 与 eligibility binding；未获独立授权前不实现 live probe 或 Agent 调用。
+2. **Stage 66 Pi bound runner migration**：保留为 deferred security work；只有 Pi 成为明确优先执行器且获独立授权时再恢复。
+3. **canonical approval binding**：继续作为安全内核的独立强化项，不阻塞协作主线。
 
 ## 治理原则
 
