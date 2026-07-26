@@ -894,6 +894,7 @@ def _dispatch_section_body(section: dict[str, Any]) -> str:
             ("plan_eligible", "Plan eligible"),
             ("dispatch_eligible", "Dispatch eligible"),
             ("execution", "Execution"),
+            ("readiness_evidence", "Readiness evidence"),
             ("blocked_reasons", "Blocked reasons"),
         ),
         rows=[proposal],

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/acp-readiness-evidence-v2.schema.json",
+  "title": "Collected ACP Socket Readiness Evidence",
+  "type": "object",
+  "required": ["version", "contract", "socket_id", "runner_id", "status", "level", "observed_at", "evaluated_at", "expires_at", "session_state", "sufficient_for_dispatch", "probe_actions", "evidence_id"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"const": 2},
+    "contract": {"const": "socket-readiness/acp-session/v1"},
+    "socket_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,127}$"},
+    "runner_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_]{0,127}$"},
+    "status": {"enum": ["available", "unknown"]},
+    "level": {"enum": ["runner_listed", "runner_missing"]},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "evaluated_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "session_state": {"enum": ["closed", "open", "unknown", "not_observed"]},
+    "sufficient_for_dispatch": {"const": false},
+    "probe_actions": {
+      "type": "object",
+      "required": ["started_runner", "opened_session", "sent_prompt", "invoked_model", "read_credentials"],
+      "additionalProperties": false,
+      "properties": {
+        "started_runner": {"const": false},
+        "opened_session": {"const": false},
+        "sent_prompt": {"const": false},
+        "invoked_model": {"const": false},
+        "read_credentials": {"const": false}
+      }
+    },
+    "evidence_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

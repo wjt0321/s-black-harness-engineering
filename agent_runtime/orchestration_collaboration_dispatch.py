@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -18,11 +19,65 @@ SCHEMA_VERSION = "control-plane/collaboration-dispatch-proposal/v1"
 DISPATCH_SCHEMA = "adapters/collaboration-dispatch.schema.json"
 ACP_READINESS_SAMPLE = "adapters/acp-readiness-evidence.sample.json"
 ACP_READINESS_SCHEMA = "adapters/acp-readiness-evidence.schema.json"
+ACP_READINESS_V2_SCHEMA = "adapters/acp-readiness-evidence-v2.schema.json"
+ACP_RUNNER_BINDINGS = "adapters/acp-runner-bindings.sample.json"
+ACP_RUNNER_BINDINGS_SCHEMA = "adapters/acp-runner-bindings.schema.json"
 _MAX_BYTES = 64 * 1024
 
 
 def _finding(rule_id: str, message: str) -> Finding:
     return Finding(rule_id=rule_id, severity="block", action="deny", message=message)
+
+
+def _parse_time(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError("timezone required")
+    return parsed.astimezone(timezone.utc)
+
+
+def _validate_readiness_evidence(
+    root: Path,
+    evidence_file: str,
+    socket_id: str,
+    evaluated_at: str,
+) -> tuple[dict[str, Any] | None, Finding | None]:
+    evidence, _, failure = _load_project_json(root, evidence_file)
+    if failure is not None or evidence is None:
+        return None, _finding("dispatch-readiness-unavailable", "Readiness evidence must be project-local bounded JSON.")
+    try:
+        schema = json.loads((root / ACP_READINESS_V2_SCHEMA).read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        validate(evidence, schema)
+        evaluated = _parse_time(evaluated_at)
+        evidence_evaluated = _parse_time(evidence["evaluated_at"])
+        expires = _parse_time(evidence["expires_at"])
+    except (OSError, json.JSONDecodeError, SchemaError, ValidationError, ValueError, TypeError):
+        return None, _finding("dispatch-readiness-invalid", "Readiness evidence failed schema or timestamp validation.")
+    evidence_id = evidence["evidence_id"]
+    body = {key: value for key, value in evidence.items() if key != "evidence_id"}
+    canonical = json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    if evidence_id != f"sha256:{hashlib.sha256(canonical).hexdigest()}":
+        return None, _finding("dispatch-readiness-tampered", "Readiness evidence content hash does not match.")
+    if evidence["socket_id"] != socket_id:
+        return None, _finding("dispatch-readiness-socket-mismatch", "Readiness evidence is bound to another socket.")
+    if evaluated < evidence_evaluated:
+        return None, _finding("dispatch-readiness-time-invalid", "Dispatch evaluation cannot precede evidence evaluation.")
+    if evaluated > expires:
+        return None, _finding("dispatch-readiness-expired", "Readiness evidence has expired.")
+    bindings, _, binding_failure = _load_project_json(root, ACP_RUNNER_BINDINGS)
+    try:
+        binding_schema = json.loads((root / ACP_RUNNER_BINDINGS_SCHEMA).read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(binding_schema)
+        validate(bindings, binding_schema)
+    except (OSError, json.JSONDecodeError, SchemaError, ValidationError, TypeError):
+        return None, _finding("dispatch-readiness-binding-invalid", "ACP runner bindings failed validation.")
+    if binding_failure is not None or bindings is None:
+        return None, _finding("dispatch-readiness-binding-invalid", "ACP runner bindings are unavailable.")
+    binding = next((item for item in bindings["bindings"] if item["socket_id"] == socket_id), None)
+    if binding is None or binding["runner_id"] != evidence["runner_id"]:
+        return None, _finding("dispatch-readiness-runner-mismatch", "Readiness evidence runner does not match the socket binding.")
+    return evidence, None
 
 
 def _load_project_json(root: Path, relative: str, max_bytes: int = _MAX_BYTES) -> tuple[dict[str, Any] | None, str | None, Finding | None]:
@@ -135,8 +190,34 @@ def inspect_collaboration_dispatch(root: Path, dispatch_file: str) -> Collaborat
 
     readiness = explanation["readiness_evidence"]
     blocked_reasons = ["execution_authority_unavailable"]
-    if readiness["status"] != "collected":
+    evidence_file = data.get("readiness_evidence_file")
+    if evidence_file is None:
         blocked_reasons.insert(0, "readiness_not_collected")
+    else:
+        collected, readiness_failure = _validate_readiness_evidence(
+            root,
+            evidence_file,
+            data["socket_id"],
+            data["evaluated_at"],
+        )
+        if readiness_failure is not None or collected is None:
+            return CollaborationDispatchResult(
+                "validation_failed", source_file,
+                findings=(readiness_failure,) if readiness_failure else (),
+            )
+        readiness = {
+            "status": collected["status"],
+            "contract": collected["contract"],
+            "runner_id": collected["runner_id"],
+            "level": collected["level"],
+            "evidence_id": collected["evidence_id"],
+            "observed_at": collected["observed_at"],
+            "expires_at": collected["expires_at"],
+            "sufficient_for_dispatch": collected["sufficient_for_dispatch"],
+            "live_probe_performed": False,
+        }
+        if not collected["sufficient_for_dispatch"]:
+            blocked_reasons.insert(0, "readiness_insufficient")
     proposal = {
         "collaboration_plan_id": plan["plan_id"],
         "work_item_id": data["work_item_id"],

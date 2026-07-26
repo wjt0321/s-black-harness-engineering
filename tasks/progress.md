@@ -2996,3 +2996,11 @@
 - Control Panel 可选 `--dispatch-file` 同时投影 JSON/HTML 与 handoff 重放参数；当前固定 `plan_eligible=true`、`dispatch_eligible=false`、`execution=not_executed`，阻塞原因为 readiness 未采集和无执行权。
 - 完整 pytest 0 failed；doctor、docs context、public scan、compileall、CLI/HTML smoke 与 diff check 通过。仓库无 `.pre-commit-config.yaml`，故 pre-commit 不可运行。
 - 事实源 `docs/120-controlled-collaboration-dispatch-foundation.md`；准备创建本地 `v0.20.0-controlled-collaboration-dispatch-foundation` 里程碑提交与标签，未 push。
+
+## 2026-07-26 Stage 73-74 - ACP Readiness Evidence Foundation
+
+- Stage 73 冻结 ACP socket-to-runner binding、runner-list snapshot、内容寻址 evidence、1-900 秒 TTL、过期/撤销与 fail-closed dispatch binding 契约。
+- Stage 74 实现只读 `orchestration socket readiness collect`：仅消费项目内受限 snapshot，不启动 runner、不打开 session、不发送 prompt、不调用模型、不读取凭据或访问网络。
+- collector 最高只产出 `available/runner_listed`，schema 固定 `sufficient_for_dispatch=false`；dispatch 验证 evidence 哈希、socket、runner binding、时间下界与过期时间，阻塞原因升级为 `readiness_insufficient`，真实执行权仍不可用。
+- Control Panel JSON/HTML 展示 evidence status、level、id、expiry 与 blocked reasons；Stage 73-74 聚焦 42 项测试通过。
+- 事实源 `docs/121-acp-readiness-collection-design-gate.md` 与 `docs/122-acp-readiness-collector-and-dispatch-binding.md`；准备完整验收并创建本地 `v0.21.0-acp-readiness-evidence-foundation`，未 push。

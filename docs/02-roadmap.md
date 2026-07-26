@@ -41,7 +41,13 @@
 - CLI 与 Control Panel 只读展示 `plan_eligible`、`dispatch_eligible`、blocked reasons 和 `execution=not_executed`。
 - ACP readiness evidence 仅冻结静态契约；未实现 collector、eligibility binding 或真实派发。
 
-### 7. 当前真实 operation
+### 7. ACP Readiness Evidence Foundation
+
+- ACP socket 显式绑定 runner id，并可从项目内受限 runner-list snapshot 生成内容寻址、带 TTL 的 evidence。
+- collector 仅证明 `available/runner_listed`，不启动 runner、不打开 session、不发送 prompt，也不读取凭据。
+- dispatch 校验证据哈希、socket binding 与过期时间；当前仍固定 `sufficient_for_dispatch=false`、`dispatch_eligible=false`。
+
+### 8. 当前真实 operation
 
 - fixed Git status：固定 `git status --short --branch`。
 - fixed Pi print：固定 `pi --print --no-session --no-tools <prompt>`。
@@ -61,7 +67,7 @@ Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job acc
 
 优先级从高到低：
 
-1. **Stage 73 readiness collection design gate**：仅为一个 socket family 冻结有界证据采集、过期、withholding 与 eligibility binding；未获独立授权前不实现 live probe 或 Agent 调用。
+1. **Stage 75 ACP transport/session-openability design gate**：冻结更强但仍无 prompt 的 evidence 契约；未获独立授权前不启动 runner、不打开 session、不调用 Agent。
 2. **Stage 66 Pi bound runner migration**：保留为 deferred security work；只有 Pi 成为明确优先执行器且获独立授权时再恢复。
 3. **canonical approval binding**：继续作为安全内核的独立强化项，不阻塞协作主线。
 

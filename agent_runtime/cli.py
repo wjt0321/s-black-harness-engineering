@@ -36,6 +36,7 @@ from .runtime_task_create import TaskCreateDryRunResult, create_task, create_tas
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
 from .orchestration_socket import SocketDetailResult, SocketListResult, get_socket, list_sockets
+from .orchestration_acp_readiness import collect_acp_readiness
 from .orchestration_collaboration import inspect_collaboration_plan, validate_collaboration_plan
 from .orchestration_collaboration_dispatch import inspect_collaboration_dispatch
 from .orchestration_contract import build_contract_manifest
@@ -2907,6 +2908,34 @@ def _cmd_orchestration_collaboration_dispatch(args: argparse.Namespace) -> int:
     return result.exit_code()
 
 
+def _cmd_orchestration_socket_readiness_collect(args: argparse.Namespace) -> int:
+    """Collect bounded runner-list evidence without opening an ACP session."""
+    result = collect_acp_readiness(
+        _root_path(args),
+        args.socket_id,
+        args.snapshot_file,
+        args.evaluated_at,
+        args.ttl_seconds,
+    )
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"ACP READINESS {result.status.upper()}")
+        evidence = payload.get("evidence")
+        if evidence is not None:
+            print(f"evidence_id={evidence['evidence_id']}")
+            print(f"socket_id={evidence['socket_id']}")
+            print(f"runner_id={evidence['runner_id']}")
+            print(f"status={evidence['status']}")
+            print(f"level={evidence['level']}")
+            print(f"expires_at={evidence['expires_at']}")
+            print("sufficient_for_dispatch=false")
+        for finding in result.findings:
+            print(f"- {finding.rule_id}: {finding.message}")
+    return result.exit_code()
+
+
 def _cmd_orchestration_socket_list(args: argparse.Namespace) -> int:
     """Render declared Agent sockets without probing their live runtimes."""
     result = list_sockets(_root_path(args), capability_filter=getattr(args, "capability", None))
@@ -4286,6 +4315,29 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_socket_inspect_parser.add_argument("socket_id", help="Agent socket id")
     _add_global_args(orchestration_socket_inspect_parser)
     orchestration_socket_inspect_parser.set_defaults(func=_cmd_orchestration_socket_inspect)
+    orchestration_socket_readiness_parser = orchestration_socket_subparsers.add_parser(
+        "readiness", help="Collect bounded readiness evidence without opening an Agent session"
+    )
+    orchestration_socket_readiness_subparsers = orchestration_socket_readiness_parser.add_subparsers(
+        dest="socket_readiness_command", required=True
+    )
+    orchestration_socket_readiness_collect_parser = orchestration_socket_readiness_subparsers.add_parser(
+        "collect", help="Collect ACP runner-list evidence from a project-local snapshot"
+    )
+    orchestration_socket_readiness_collect_parser.add_argument("socket_id", help="ACP Agent socket id")
+    orchestration_socket_readiness_collect_parser.add_argument(
+        "--snapshot-file", required=True, help="Project-local ACP runner state snapshot JSON"
+    )
+    orchestration_socket_readiness_collect_parser.add_argument(
+        "--evaluated-at", required=True, help="Explicit timezone-aware evaluation timestamp"
+    )
+    orchestration_socket_readiness_collect_parser.add_argument(
+        "--ttl-seconds", type=int, default=300, help="Evidence TTL from 1 to 900 seconds"
+    )
+    _add_global_args(orchestration_socket_readiness_collect_parser)
+    orchestration_socket_readiness_collect_parser.set_defaults(
+        func=_cmd_orchestration_socket_readiness_collect
+    )
 
     orchestration_adapter_parser = orchestration_subparsers.add_parser(
         "adapter", help="Query read-only adapter capability registry through orchestration namespace"

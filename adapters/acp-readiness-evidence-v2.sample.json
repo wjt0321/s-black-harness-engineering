@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "contract": "socket-readiness/acp-session/v1",
+  "socket_id": "omp-acp",
+  "runner_id": "omp",
+  "status": "available",
+  "level": "runner_listed",
+  "observed_at": "2026-07-26T16:00:00+08:00",
+  "evaluated_at": "2026-07-26T08:05:00Z",
+  "expires_at": "2026-07-26T08:10:00Z",
+  "session_state": "closed",
+  "sufficient_for_dispatch": false,
+  "probe_actions": {
+    "started_runner": false,
+    "opened_session": false,
+    "sent_prompt": false,
+    "invoked_model": false,
+    "read_credentials": false
+  },
+  "evidence_id": "sha256:72dc7e971f0ea9e184c77d7a49ae05dfeb98ce477470cc4084dce18a81572881"
+}

@@ -17,6 +17,12 @@
       "uniqueItems": true
     },
     "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 1800},
-    "review_required": {"type": "boolean"}
+    "review_required": {"type": "boolean"},
+    "readiness_evidence_file": {"type": "string", "minLength": 1, "maxLength": 260, "pattern": "^[^<>:\"|?*]+\\.json$"},
+    "evaluated_at": {"type": "string", "format": "date-time"}
+  },
+  "dependentRequired": {
+    "readiness_evidence_file": ["evaluated_at"],
+    "evaluated_at": ["readiness_evidence_file"]
   }
 }

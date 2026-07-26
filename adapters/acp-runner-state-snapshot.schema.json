@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/acp-runner-state-snapshot.schema.json",
+  "title": "QwenPaw ACP Runner State Snapshot",
+  "type": "object",
+  "required": ["version", "source", "observed_at", "probe_actions", "runners"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"const": 1},
+    "source": {"const": "qwenpaw_acp_runner_list"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "probe_actions": {
+      "type": "object",
+      "required": ["started_runner", "opened_session", "sent_prompt", "invoked_model", "read_credentials"],
+      "additionalProperties": false,
+      "properties": {
+        "started_runner": {"const": false},
+        "opened_session": {"const": false},
+        "sent_prompt": {"const": false},
+        "invoked_model": {"const": false},
+        "read_credentials": {"const": false}
+      }
+    },
+    "runners": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["runner_id", "session_state"],
+        "additionalProperties": false,
+        "properties": {
+          "runner_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_]{0,127}$"},
+          "session_state": {"enum": ["closed", "open", "unknown"]}
+        }
+      }
+    }
+  }
+}

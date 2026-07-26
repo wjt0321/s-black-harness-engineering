@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "bindings": [
+    {"socket_id": "kimi-code-acp", "runner_id": "kimi_code"},
+    {"socket_id": "claude-code-acp", "runner_id": "claude_code"},
+    {"socket_id": "omp-acp", "runner_id": "omp"}
+  ]
+}

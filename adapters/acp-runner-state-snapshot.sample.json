@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "source": "qwenpaw_acp_runner_list",
+  "observed_at": "2026-07-26T16:00:00+08:00",
+  "probe_actions": {
+    "started_runner": false,
+    "opened_session": false,
+    "sent_prompt": false,
+    "invoked_model": false,
+    "read_credentials": false
+  },
+  "runners": [
+    {"runner_id": "claude_code", "session_state": "closed"},
+    {"runner_id": "kimi_code", "session_state": "closed"},
+    {"runner_id": "omp", "session_state": "closed"}
+  ]
+}

@@ -463,6 +463,24 @@ def test_control_panel_projects_blocked_dispatch_eligibility() -> None:
     assert "execution_authority_unavailable" in rendered
 
 
+def test_control_panel_renders_bound_readiness_evidence() -> None:
+    dispatch = "adapters/collaboration-dispatch-with-readiness.example.json"
+    payload = build_control_panel_snapshot(ROOT, dispatch_file=dispatch).to_dict()
+
+    proposal = payload["sections"]["dispatch"]["proposal"]
+    assert proposal["dispatch_eligible"] is False
+    assert proposal["readiness_evidence"]["status"] == "available"
+    assert proposal["readiness_evidence"]["level"] == "runner_listed"
+    assert proposal["blocked_reasons"] == [
+        "readiness_insufficient",
+        "execution_authority_unavailable",
+    ]
+    rendered = render_control_panel_html(payload)
+    assert "runner_listed" in rendered
+    assert proposal["readiness_evidence"]["evidence_id"] in rendered
+    assert "readiness_insufficient" in rendered
+
+
 def test_control_panel_handoff_preserves_dispatch_file() -> None:
     dispatch = "adapters/collaboration-dispatch.example.json"
     payload = control_panel.build_control_panel_handoff(
