@@ -578,12 +578,73 @@ def test_manual_plan_editor_is_local_pending_and_non_executing() -> None:
     assert "人工计划草稿编辑器" in rendered
     assert "任务标题" in rendered
     assert "角色由当前 Agent 插座绑定决定" in rendered
-    assert "task_title:" in rendered
     assert "仅浏览器内存" in rendered
     assert "待人工确认 · 不可派发" in rendered
-    assert "不会写入磁盘、不会访问网络、不会调用 Agent" in rendered
-    assert "pending_operator_confirmation" in rendered
-    assert "dispatch_eligible: false" in rendered
-    assert "execution: 'not_executed'" in rendered
+    assert "不会写入项目文件、不会访问网络、不会调用 Agent" in rendered
+    assert "operator_confirmed" in rendered
+    assert "dispatch_eligible=false" in rendered
+    assert "execution=not_executed" in rendered
     assert "fetch(" not in rendered
     assert "XMLHttpRequest" not in rendered
+
+
+def test_manual_plan_candidate_requires_validation_and_explicit_confirmation() -> None:
+    board_file = "adapters/manual-collaboration-board.example.json"
+    payload = build_control_panel_snapshot(ROOT, manual_board_file=board_file).to_dict()
+    rendered = render_control_panel_html(payload)
+
+    for expected in (
+        'id="draft-state"',
+        "编辑中 · 不可派发",
+        "校验通过 · 等待人工确认",
+        "已人工确认 · 仅可导出",
+        'id="draft-validate"',
+        'id="draft-confirm"',
+        'id="draft-copy"',
+        'id="draft-download"',
+        'id="draft-filename"',
+        'id="draft-validation-results"',
+        "operator_confirmed",
+        "resetDraftState",
+        "validateCandidate",
+    ):
+        assert expected in rendered
+
+    assert 'id="draft-confirm" type="button" disabled' in rendered
+    assert 'id="draft-copy" type="button" disabled' in rendered
+    assert 'id="draft-download" type="button" disabled' in rendered
+    assert 'class="draft-depends" aria-label="依赖工作项，多个值用逗号分隔" value=""' in rendered
+    assert "dispatch_eligible=false" in rendered
+    assert "execution=not_executed" in rendered
+
+
+def test_manual_plan_export_uses_existing_contract_and_user_triggered_browser_apis() -> None:
+    board_file = "adapters/manual-collaboration-board.example.json"
+    payload = build_control_panel_snapshot(ROOT, manual_board_file=board_file).to_dict()
+    rendered = render_control_panel_html(payload)
+
+    for expected in (
+        'data-role="planner"',
+        'data-role="implementer"',
+        'data-role="reviewer"',
+        "socket_bindings:",
+        "work_items:",
+        "handoffs:",
+        "review_gates:",
+        "required_capabilities: []",
+        "URL.createObjectURL",
+        "navigator.clipboard",
+        "application/json",
+        "collaboration-plan-",
+    ):
+        assert expected in rendered
+
+    for forbidden in (
+        "fetch(",
+        "XMLHttpRequest",
+        "localStorage",
+        "sessionStorage",
+        "dispatch_eligible:",
+        "execution:",
+    ):
+        assert forbidden not in rendered

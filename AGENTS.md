@@ -14,13 +14,13 @@ python -m agent_runtime.cli doctor
 1. `docs/000-stage-digest.md`
 2. `docs/00-index.md`
 3. 当前任务直接相关的 1-2 份事实源
-4. `tasks/handoff-2026-07-25.md`（仅需恢复 Stage 62 细节时）
+4. `tasks/handoff-2026-07-26.md`（仅需恢复当前实现细节时）
 
 不要先遍历整个 `docs/`、`docs/archive/` 或 `tasks/progress.md`。
 
 ## 当前能力与边界
 
-项目是 Python 3.11+ 的本地 Agent Runtime / Harness 控制面。Stage 62 已完成。
+项目是 Python 3.11+ 的本地 Agent Runtime / Harness 控制面。Stage 78 已完成；当前产品事实源为 `docs/126-stage78-manual-confirmation-and-controlled-export.md`。
 
 允许的真实执行仅有：
 

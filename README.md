@@ -12,15 +12,17 @@
 
 ## 当前状态
 
-项目已完成 Stage 75，当前具备：
+项目已完成 Stage 78，当前具备：
 
-- 统一 Agent socket registry 与 capability routing；
+- 统一 Agent socket registry、capability routing 与显式角色绑定；
 - 可校验的多 Agent collaboration plan，包含 work item、依赖、handoff、artifact 和 review gate；
-- 只读 Control Panel，展示协作计划、Agent 分工、派发资格和阻塞原因；
-- 单 work item dispatch proposal 与 ACP runner readiness evidence 基础；
-- policy、task/event/run/approval/artifact read model 和审计边界。
+- 中文优先的 Control Panel、人工协作 fixture、工作项泳道和 handoff/artifact 时间线；
+- 浏览器内存人工计划编辑器，以及结构、依赖、Agent 插座绑定和审阅要求校验；
+- `editing -> validated -> operator_confirmed` 人工确认状态机；
+- 用户主动复制或下载符合 collaboration plan v1 的候选 JSON；
+- 单 work item dispatch proposal、ACP readiness evidence 基础和完整审计边界。
 
-目前看板还不能启动真实 Kimi、Claude 或 OMP 协作。下一产品里程碑是可用协作看板与 fixture-backed 端到端演示，而不是继续扩展底层探针。
+看板仍不能启动真实 Kimi、Claude 或 OMP 协作。校验、人工确认、复制和下载都不会授予派发权，始终保持 `dispatch_eligible=false`、`execution=not_executed`。下一产品里程碑是 **Stage 79 协作运行状态模型设计**：先定义开始、取消、重试、审阅、交接、阻塞恢复和 artifact 回收，不调用 Agent。
 
 底层仍保留两项受限 Windows 真实执行能力：fixed Git status 与 fixed Pi print。两者都经过显式授权、固定参数、machine-local lease、执行审计和 Windows Job Object 进程树回收；它们是安全基础设施，不是产品主线。
 
@@ -58,7 +60,7 @@ git diff --check
 ## 文档入口
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
-- [`docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md`](docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md)：多 Agent 主控台目标、现状、缺口与方向决策。
+- [`docs/126-stage78-manual-confirmation-and-controlled-export.md`](docs/126-stage78-manual-confirmation-and-controlled-export.md)：当前人工计划校验、人工确认与受控导出事实源。
 - [`docs/00-index.md`](docs/00-index.md)：按主题导航。
 - [`docs/02-roadmap.md`](docs/02-roadmap.md)：已完成能力包与下一候选。
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md)：当前最新真实执行事实源。

@@ -12,17 +12,19 @@ An auditable multi-Agent collaboration control hub. Kimi Code, Claude Code, OMP/
 
 ## Current Status
 
-Stage 75 is complete. The repository now provides:
+Stage 78 is complete. The repository now provides:
 
-- a shared Agent socket registry and capability routing;
+- a shared Agent socket registry, capability routing, and explicit role bindings;
 - validated multi-Agent collaboration plans with work items, dependencies, handoffs, artifacts, and review gates;
-- a read-only Control Panel that shows collaboration plans, Agent ownership, dispatch eligibility, and blockers;
-- single-work-item dispatch proposals and ACP runner readiness evidence foundations;
-- policy and task/event/run/approval/artifact read models with audit boundaries.
+- a Chinese-first Control Panel with a manual collaboration fixture, work lanes, and a handoff/artifact timeline;
+- an in-memory manual plan editor with structure, dependency, Agent socket binding, and review validation;
+- an `editing -> validated -> operator_confirmed` confirmation state machine;
+- user-triggered copy and download of collaboration plan v1 candidate JSON;
+- single-work-item dispatch proposals, ACP readiness evidence foundations, and audit boundaries.
 
-The board cannot yet start a real Kimi, Claude, or OMP collaboration. The next product milestone is a usable collaboration board with a fixture-backed end-to-end walkthrough, rather than deeper probe infrastructure.
+The board still cannot start a real Kimi, Claude, or OMP collaboration. Validation, operator confirmation, copy, and download never grant dispatch authority; the boundary remains `dispatch_eligible=false` and `execution=not_executed`. The next product milestone is **Stage 79 collaboration run state model design**: define start, cancel, retry, review, handoff, blocked recovery, and artifact collection without invoking an Agent.
 
-Two limited Windows real-execution operations remain available underneath: fixed Git status and fixed Pi print. Both use explicit authorization, fixed arguments, a machine-local lease, execution audit, and Windows Job Object process-tree cleanup. They are safety infrastructure, not the product direction.
+Two limited Windows real-execution operations remain available underneath: fixed Git status and fixed Pi print. Both use explicit authorization, fixed arguments, a machine-local lease, execution audit, and Windows Job Object process-tree containment. They are security infrastructure, not the product mainline.
 
 ## Security Boundary
 
@@ -58,7 +60,7 @@ See [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md) for the full CLI refe
 ## Documentation
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current state and recovery order.
-- [`docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md`](docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md): multi-Agent goal, current capabilities, gaps, and direction decision.
+- [`docs/126-stage78-manual-confirmation-and-controlled-export.md`](docs/126-stage78-manual-confirmation-and-controlled-export.md): current fact source for manual validation, operator confirmation, and controlled export.
 - [`docs/00-index.md`](docs/00-index.md): topic-based navigation.
 - [`docs/02-roadmap.md`](docs/02-roadmap.md): completed capability packages and next candidates.
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md): latest real-execution fact source.

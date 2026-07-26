@@ -44,13 +44,11 @@
 
 ## 当前事实源
 
-- `125-stage77-chinese-first-interface-and-manual-editor.md` — 当前多 Agent 产品主线：中文默认界面契约、术语中文注释与浏览器内存人工计划编辑器。
-- `124-stage76-manual-collaboration-board.md` — Stage 76 历史基线：manual-first 决策、人工协作 fixture、泳道与时间线。
-- `123-multi-agent-control-hub-current-state-and-stage75-gate.md` — Stage 75 历史基线：产品目标、安全边界与方向回正结论。
+- `126-stage78-manual-confirmation-and-controlled-export.md` — 当前多 Agent 产品主线：候选校验、人工确认、用户触发复制与下载，以及持续不可派发边界。
 - `111-pi-controlled-dry-run-print-implementation.md` — 当前唯一 Agent 类真实执行能力及其安全边界。
 - `114-pi-bound-runner-migration-design.md` — deferred 安全工作；不是当前产品主线。
 
-Stage 67-74 的 socket、协作计划、看板、dispatch 与 readiness 详细记录已归档到 `archive/115-*.md` 至 `archive/122-*.md`，仅在追溯设计依据时读取。
+Stage 67-77 的 socket、协作计划、看板、dispatch、readiness、中文界面与内存编辑器记录已归档到 `archive/115-*.md` 至 `archive/125-*.md`，仅在追溯设计依据时读取。
 
 ## 历史归档
 

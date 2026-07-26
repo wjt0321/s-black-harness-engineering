@@ -998,8 +998,13 @@ def _manual_board_section_body(section: dict[str, Any]) -> str:
             rows=section.get("findings", []),
             empty_message="人工协作看板暂不可用。",
         )
-    sockets = tuple(dict.fromkeys(lane["socket_id"] for lane in board["lanes"]))
-    socket_options = "".join(f'<option value="{_escape(item)}">{_escape(item)}</option>' for item in sockets)
+    socket_roles: dict[str, str] = {}
+    for lane in board["lanes"]:
+        socket_roles.setdefault(lane["socket_id"], lane["role"])
+    socket_options = "".join(
+        f'<option value="{_escape(socket_id)}" data-role="{_escape(role)}">{_escape(socket_id)}</option>'
+        for socket_id, role in socket_roles.items()
+    )
     lane_html = []
     editor_rows = []
     for lane in board["lanes"]:
@@ -1027,8 +1032,8 @@ def _manual_board_section_body(section: dict[str, Any]) -> str:
             '<tr class="draft-work-item">'
             f'<td><input class="draft-id" aria-label="工作项 ID" value="{_escape(lane["work_item_id"])}"></td>'
             f'<td><select class="draft-socket" aria-label="Agent 插座（Socket）ID">{selected_options}</select></td>'
-            f'<td><input class="draft-depends" aria-label="依赖工作项，多个值用逗号分隔" value="{_escape(",".join(lane["depends_on"]))}"></td>'
-            f'<td><input class="draft-artifacts" aria-label="预期产物，多个值用逗号分隔" value="{_escape(",".join(lane["expected_artifact_types"]))}"></td>'
+            f'<td><input class="draft-depends" aria-label="依赖工作项，多个值用逗号分隔" value="{html.escape(",".join(lane["depends_on"]), quote=True)}"></td>'
+            f'<td><input class="draft-artifacts" aria-label="预期产物，多个值用逗号分隔" value="{html.escape(",".join(lane["expected_artifact_types"]), quote=True)}"></td>'
             f'<td><input class="draft-review" aria-label="是否需要审阅" type="checkbox" {"checked" if lane["review_state"] != "not_required" else ""}></td>'
             '<td><button class="draft-remove" type="button" title="从浏览器内存草稿中删除">删除</button></td>'
             '</tr>'
@@ -1071,19 +1076,25 @@ def _manual_board_section_body(section: dict[str, Any]) -> str:
             '<div class="board-actions">', "".join(action_html), '</div></div></div>',
             '<section class="draft-editor" id="manual-plan-editor">'
             '<div class="draft-editor__head"><div><span class="eyebrow">仅浏览器内存</span><h3>人工计划草稿编辑器</h3>'
-            '<p>修改内容不会写入磁盘、不会访问网络、不会调用 Agent；刷新页面后草稿消失。</p></div>'
-            '<span class="pill pill--neutral">待人工确认 · 不可派发</span></div>'
+            '<p>修改内容不会写入项目文件、不会访问网络、不会调用 Agent；刷新页面后草稿消失。</p></div>'
+            '<span id="draft-state" class="pill pill--neutral" data-state="editing">编辑中 · 不可派发</span></div>'
             '<div class="draft-task-fields"><div><label class="draft-task-label" for="draft-task-title">任务标题</label>'
             '<input id="draft-task-title" value="未命名人工计划"></div><div><label class="draft-task-label" for="draft-parent-task">父任务引用</label>'
             f'<input id="draft-parent-task" value="{_escape(board["parent_task_ref"])}"></div></div>'
-            '<p class="board-note">工作角色由当前 Agent 插座绑定决定；本编辑器不会绕过既有绑定契约。</p>'
+            '<p class="board-note">工作角色由当前 Agent 插座绑定决定；候选必须先校验并人工确认。待人工确认 · 不可派发。</p>'
             '<div class="table-shell"><table><caption>人工计划草稿工作项</caption><thead><tr>'
             '<th>工作项 ID</th><th>Agent 插座（Socket）ID</th><th>依赖工作项</th><th>预期产物</th><th>需要审阅</th><th>操作</th>'
             '</tr></thead><tbody id="draft-work-items">', "".join(editor_rows), '</tbody></table></div>'
             f'<template id="draft-work-item-template"><tr class="draft-work-item"><td><input class="draft-id" aria-label="工作项 ID"></td><td><select class="draft-socket" aria-label="Agent 插座（Socket）ID">{socket_options}</select></td><td><input class="draft-depends" aria-label="依赖工作项，多个值用逗号分隔"></td><td><input class="draft-artifacts" aria-label="预期产物，多个值用逗号分隔" value="analysis"></td><td><input class="draft-review" aria-label="是否需要审阅" type="checkbox"></td><td><button class="draft-remove" type="button" title="从浏览器内存草稿中删除">删除</button></td></tr></template>'
-            '<div class="draft-controls"><button id="draft-add" type="button">添加工作项</button><button id="draft-preview" type="button">生成中文草稿预览</button><span>不会保存或派发</span></div>'
-            '<div id="draft-preview-panel" class="draft-preview" hidden><h3>待人工确认的草稿</h3><p>此 JSON 仅用于本页预览，不具备派发资格。</p><pre id="draft-json"></pre></div>'
-            '</section>',
+            '<div class="draft-controls"><button id="draft-add" type="button">添加工作项</button><button id="draft-validate" type="button">校验候选计划</button><button id="draft-confirm" type="button" disabled>人工确认候选</button><span>校验和确认都不会授予派发权</span></div>'
+            '<dl class="draft-guardrails"><div><dt>派发资格</dt><dd><code>dispatch_eligible=false</code></dd></div><div><dt>执行状态</dt><dd><code>execution=not_executed</code></dd></div><div><dt>确认边界</dt><dd>只有人工确认后才能复制或下载</dd></div></dl>'
+            '<div id="draft-preview-panel" class="draft-preview" hidden>'
+            '<div class="draft-preview__head"><div><h3>collaboration plan 候选预览</h3><p id="draft-validation-summary">尚未校验。</p></div>'
+            '<div class="draft-filename-field"><label for="draft-filename">导出文件名</label><input id="draft-filename" readonly value="collaboration-plan-candidate.json"></div></div>'
+            '<ul id="draft-validation-results" class="draft-validation-results" aria-live="polite"></ul>'
+            '<pre id="draft-json"></pre>'
+            '<div class="draft-export-controls"><button id="draft-copy" type="button" disabled>复制候选 JSON</button><button id="draft-download" type="button" disabled>下载候选 JSON</button><span id="draft-export-feedback" aria-live="polite">需先校验并人工确认。</span></div>'
+            '</div></section>',
         ]
     )
 
@@ -1133,7 +1144,7 @@ a { color: inherit; }
 .skip-link:focus { top: 1rem; }
 .shell { width: min(1540px, calc(100% - 2rem)); margin: 0 auto; padding: 1rem 0 5rem; }
 .masthead { position: relative; border: 1px solid var(--line); background: linear-gradient(135deg, rgba(16,32,29,.98), rgba(7,16,15,.94)); box-shadow: 0 28px 70px var(--shadow); overflow: hidden; }
-.masthead::after { content: "控制 / 77"; position: absolute; right: -1rem; bottom: -2.7rem; color: rgba(245,185,66,.055); font: 900 clamp(5rem, 14vw, 12rem)/1 "Bahnschrift Condensed", Impact, sans-serif; letter-spacing: -.06em; }
+.masthead::after { content: "控制 / 78"; position: absolute; right: -1rem; bottom: -2.7rem; color: rgba(245,185,66,.055); font: 900 clamp(5rem, 14vw, 12rem)/1 "Bahnschrift Condensed", Impact, sans-serif; letter-spacing: -.06em; }
 .topline { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 1rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
 .hero { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(18rem, .65fr); gap: 2rem; padding: clamp(1.5rem, 5vw, 4.5rem); }
 .eyebrow { color: var(--amber); font-size: .75rem; letter-spacing: .2em; text-transform: uppercase; }
@@ -1213,14 +1224,32 @@ tbody tr:hover { background: rgba(98,214,199,.05); color: #fff8dc; }
 .draft-editor input[type="checkbox"] { min-width: auto; width: 1rem; }
 .draft-editor button { padding: .55rem .75rem; border: 1px solid var(--line-hot); border-radius: 4px; background: var(--panel-raised); color: var(--text); cursor: pointer; }
 .draft-editor button:hover { border-color: var(--amber); color: var(--amber); }
+.draft-editor button:disabled { cursor: not-allowed; opacity: .45; border-color: var(--line); color: var(--muted); }
+.pill { display: inline-flex; align-items: center; padding: .3rem .55rem; border: 1px solid var(--line-hot); border-radius: 999px; color: var(--muted); font-size: .64rem; white-space: nowrap; }
+.pill--pass { border-color: var(--green); color: var(--green); }
 .draft-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
 .draft-controls span { color: var(--amber); font-size: .68rem; }
+.draft-guardrails { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; margin: .8rem 0 0; }
+.draft-guardrails div { padding: .65rem; border: 1px solid var(--line); background: var(--panel-raised); }
+.draft-guardrails dt { color: var(--muted); font-size: .62rem; }
+.draft-guardrails dd { margin: .25rem 0 0; color: var(--amber); overflow-wrap: anywhere; }
 .draft-preview { margin-top: 1rem; padding: 1rem; border: 1px solid var(--amber-soft); }
+.draft-preview__head { display: grid; grid-template-columns: 1fr minmax(16rem, .65fr); gap: 1rem; align-items: end; }
+.draft-preview__head h3, .draft-preview__head p { margin: 0 0 .35rem; }
+.draft-filename-field label { display: block; margin-bottom: .35rem; color: var(--amber); }
+.draft-validation-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin: 1rem 0; padding: 0; list-style: none; }
+.draft-check { padding: .65rem; border: 1px solid var(--line); color: var(--muted); }
+.draft-check strong { color: var(--green); }
+.draft-check--error { border-color: var(--red); }
+.draft-check--error strong { color: var(--red); }
+.draft-check ul { margin: .45rem 0 0; padding-left: 1.2rem; }
 .draft-preview pre { max-height: 30rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--cyan); }
-.draft-preview--error { border-color: var(--red); color: var(--red); }
+.draft-preview--error { border-color: var(--red); }
+.draft-export-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; }
+.draft-export-controls span { color: var(--muted); font-size: .68rem; }
 .is-filtered-out { display: none !important; }
 @media (max-width: 1050px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } .hero { grid-template-columns: 1fr; } .toolbar { grid-template-columns: 1fr; } .board-lower { grid-template-columns: 1fr; } }
-@media (max-width: 640px) { .shell { width: min(100% - 1rem, 1540px); } .summary-grid { grid-template-columns: repeat(2, 1fr); } .hero { padding: 1.5rem; } h1 { font-size: 3.2rem; } .section-heading { grid-template-columns: auto 1fr; } .section-heading .status { grid-column: 2; justify-self: start; } th, td { padding: .65rem; } .manual-board-banner { align-items: stretch; flex-direction: column; } .manual-board-stats { text-align: left; } .draft-task-fields { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .shell { width: min(100% - 1rem, 1540px); } .summary-grid { grid-template-columns: repeat(2, 1fr); } .hero { padding: 1.5rem; } h1 { font-size: 3.2rem; } .section-heading { grid-template-columns: auto 1fr; } .section-heading .status { grid-column: 2; justify-self: start; } th, td { padding: .65rem; } .manual-board-banner { align-items: stretch; flex-direction: column; } .manual-board-stats { text-align: left; } .draft-task-fields, .draft-preview__head, .draft-guardrails, .draft-validation-results { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 """
 
@@ -1256,59 +1285,256 @@ _JS = r"""
   const template = editor.querySelector('#draft-work-item-template');
   const previewPanel = editor.querySelector('#draft-preview-panel');
   const previewJson = editor.querySelector('#draft-json');
-  const splitList = (value) => value.split(',').map((item) => item.trim()).filter(Boolean);
-  const bindRemove = (row) => {
-    row.querySelector('.draft-remove').addEventListener('click', () => row.remove());
+  const stateBadge = editor.querySelector('#draft-state');
+  const validationSummary = editor.querySelector('#draft-validation-summary');
+  const validationResults = editor.querySelector('#draft-validation-results');
+  const filenameInput = editor.querySelector('#draft-filename');
+  const confirmButton = editor.querySelector('#draft-confirm');
+  const copyButton = editor.querySelector('#draft-copy');
+  const downloadButton = editor.querySelector('#draft-download');
+  const exportFeedback = editor.querySelector('#draft-export-feedback');
+  const allowedArtifactTypes = new Set(['analysis', 'plan', 'draft', 'patch', 'test_result', 'review', 'summary']);
+  let validatedCandidateText = '';
+  let confirmationState = 'editing';
+
+  const stateLabels = {
+    editing: '编辑中 · 不可派发',
+    validated: '校验通过 · 等待人工确认',
+    operator_confirmed: '已人工确认 · 仅可导出',
   };
+  const setState = (state) => {
+    confirmationState = state;
+    stateBadge.dataset.state = state;
+    stateBadge.textContent = stateLabels[state];
+    stateBadge.classList.toggle('pill--pass', state === 'validated' || state === 'operator_confirmed');
+    confirmButton.disabled = state !== 'validated';
+    copyButton.disabled = state !== 'operator_confirmed';
+    downloadButton.disabled = state !== 'operator_confirmed';
+  };
+  const splitList = (value) => Array.from(new Set(value.split(',').map((item) => item.trim()).filter(Boolean)));
+  const filenameFor = () => {
+    const title = editor.querySelector('#draft-task-title').value.trim();
+    const parent = editor.querySelector('#draft-parent-task').value.trim();
+    const base = `${title}-${parent}`.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 96) || 'candidate';
+    return `collaboration-plan-${base}.json`;
+  };
+  const resetDraftState = () => {
+    validatedCandidateText = '';
+    previewPanel.hidden = true;
+    validationResults.replaceChildren();
+    validationSummary.textContent = '内容已修改，请重新校验。';
+    exportFeedback.textContent = '需先校验并人工确认。';
+    setState('editing');
+  };
+  const bindRemove = (row) => {
+    row.querySelector('.draft-remove').addEventListener('click', () => {
+      row.remove();
+      resetDraftState();
+    });
+  };
+  const readWorkItems = () => Array.from(body.querySelectorAll('.draft-work-item')).map((row) => {
+    const socket = row.querySelector('.draft-socket');
+    const selected = socket.selectedOptions[0];
+    return {
+      work_item_id: row.querySelector('.draft-id').value.trim(),
+      socket_id: socket.value,
+      role: selected ? selected.dataset.role : '',
+      depends_on: splitList(row.querySelector('.draft-depends').value),
+      expected_artifact_types: splitList(row.querySelector('.draft-artifacts').value),
+      review_required: row.querySelector('.draft-review').checked,
+    };
+  });
+  const hasDependencyCycle = (workItems) => {
+    const byId = new Map(workItems.map((item) => [item.work_item_id, item]));
+    const visiting = new Set();
+    const visited = new Set();
+    const visit = (itemId) => {
+      if (visiting.has(itemId)) return true;
+      if (visited.has(itemId)) return false;
+      visiting.add(itemId);
+      const item = byId.get(itemId);
+      if (item && item.depends_on.some((dependency) => byId.has(dependency) && visit(dependency))) return true;
+      visiting.delete(itemId);
+      visited.add(itemId);
+      return false;
+    };
+    return workItems.some((item) => visit(item.work_item_id));
+  };
+  const buildCandidate = (workItems) => {
+    const bindingMap = new Map();
+    workItems.forEach((item) => {
+      if (!bindingMap.has(item.socket_id)) {
+        bindingMap.set(item.socket_id, {
+          socket_id: item.socket_id,
+          role: item.role,
+          required_capabilities: [],
+        });
+      }
+    });
+    const byId = new Map(workItems.map((item) => [item.work_item_id, item]));
+    const handoffs = [];
+    workItems.forEach((target) => target.depends_on.forEach((sourceId) => {
+      const source = byId.get(sourceId);
+      handoffs.push({
+        from_work_item_id: sourceId,
+        to_work_item_id: target.work_item_id,
+        artifact_types: source ? [...source.expected_artifact_types] : [],
+      });
+    }));
+    const reviewGates = workItems.filter((item) => item.review_required).map((item) => ({
+      gate_id: `review-${item.work_item_id}`,
+      after_work_item_ids: [item.work_item_id],
+      review_role: 'reviewer',
+      decision_options: ['approve', 'request_changes'],
+    }));
+    return {
+      parent_task_ref: editor.querySelector('#draft-parent-task').value.trim(),
+      revision: 1,
+      socket_bindings: Array.from(bindingMap.values()),
+      work_items: workItems,
+      handoffs: handoffs,
+      review_gates: reviewGates,
+    };
+  };
+  const validateCandidate = () => {
+    const title = editor.querySelector('#draft-task-title').value.trim();
+    const parent = editor.querySelector('#draft-parent-task').value.trim();
+    const workItems = readWorkItems();
+    const ids = workItems.map((item) => item.work_item_id);
+    const categories = {
+      '结构校验': [],
+      '依赖校验': [],
+      'Agent 插座绑定校验': [],
+      '审阅要求校验': [],
+    };
+    const fail = (category, message) => categories[category].push(message);
+    if (!title) fail('结构校验', '任务标题不能为空。');
+    if (!parent) fail('结构校验', '父任务引用不能为空。');
+    if (!workItems.length) fail('结构校验', '至少需要一个工作项。');
+    if (ids.some((item) => !item)) fail('结构校验', '每个工作项都必须填写 ID。');
+    if (new Set(ids).size !== ids.length) fail('结构校验', '工作项 ID 不能重复。');
+    const bindingRoles = new Map();
+    workItems.forEach((item) => {
+      if (!item.socket_id || !item.role) fail('Agent 插座绑定校验', `工作项 ${item.work_item_id || '未命名'} 必须选择带角色绑定的 Agent 插座。`);
+      if (bindingRoles.has(item.socket_id) && bindingRoles.get(item.socket_id) !== item.role) fail('Agent 插座绑定校验', `Agent 插座 ${item.socket_id} 不能绑定多个角色。`);
+      bindingRoles.set(item.socket_id, item.role);
+      if (!item.expected_artifact_types.length) fail('结构校验', `工作项 ${item.work_item_id || '未命名'} 必须填写至少一种预期产物。`);
+      item.expected_artifact_types.forEach((artifact) => {
+        if (!allowedArtifactTypes.has(artifact)) fail('结构校验', `工作项 ${item.work_item_id || '未命名'} 使用了不支持的产物类型 ${artifact}。`);
+      });
+      item.depends_on.forEach((dependency) => {
+        if (!ids.includes(dependency)) fail('依赖校验', `工作项 ${item.work_item_id || '未命名'} 引用了不存在的依赖 ${dependency}。`);
+        if (dependency === item.work_item_id) fail('依赖校验', `工作项 ${item.work_item_id} 不能依赖自身。`);
+      });
+    });
+    if (hasDependencyCycle(workItems)) fail('依赖校验', '工作项依赖不能形成循环。');
+    const candidate = buildCandidate(workItems);
+    const reviewedIds = new Set(candidate.review_gates.flatMap((gate) => gate.after_work_item_ids));
+    workItems.forEach((item) => {
+      if (item.review_required && !reviewedIds.has(item.work_item_id)) fail('审阅要求校验', `工作项 ${item.work_item_id} 缺少审阅门。`);
+    });
+    return {candidate, categories, errorCount: Object.values(categories).reduce((count, errors) => count + errors.length, 0)};
+  };
+  const renderValidation = ({categories, errorCount}) => {
+    validationResults.replaceChildren();
+    Object.entries(categories).forEach(([category, errors]) => {
+      const item = document.createElement('li');
+      item.className = errors.length ? 'draft-check draft-check--error' : 'draft-check draft-check--pass';
+      const label = document.createElement('strong');
+      label.textContent = `${errors.length ? '未通过' : '通过'}：${category}`;
+      item.appendChild(label);
+      if (errors.length) {
+        const detail = document.createElement('ul');
+        errors.forEach((message) => {
+          const row = document.createElement('li');
+          row.textContent = message;
+          detail.appendChild(row);
+        });
+        item.appendChild(detail);
+      }
+      validationResults.appendChild(item);
+    });
+    validationSummary.textContent = errorCount ? `校验未通过：发现 ${errorCount} 个问题。` : '校验通过：结构、依赖、Agent 插座绑定和审阅要求均符合候选契约。';
+  };
+
   body.querySelectorAll('.draft-work-item').forEach(bindRemove);
+  editor.addEventListener('input', (event) => {
+    if (event.target.matches('input, select')) resetDraftState();
+  });
+  editor.addEventListener('change', (event) => {
+    if (event.target.matches('input, select')) resetDraftState();
+  });
   editor.querySelector('#draft-add').addEventListener('click', () => {
     const row = template.content.firstElementChild.cloneNode(true);
     bindRemove(row);
     body.appendChild(row);
+    resetDraftState();
     row.querySelector('.draft-id').focus();
   });
-  editor.querySelector('#draft-preview').addEventListener('click', () => {
-    const workItems = Array.from(body.querySelectorAll('.draft-work-item')).map((row) => ({
-      work_item_id: row.querySelector('.draft-id').value.trim(),
-      socket_id: row.querySelector('.draft-socket').value,
-      depends_on: splitList(row.querySelector('.draft-depends').value),
-      expected_artifact_types: splitList(row.querySelector('.draft-artifacts').value),
-      review_required: row.querySelector('.draft-review').checked,
-    }));
-    const ids = workItems.map((item) => item.work_item_id);
-    const errors = [];
-    if (!editor.querySelector('#draft-task-title').value.trim()) errors.push('任务标题不能为空。');
-    if (!editor.querySelector('#draft-parent-task').value.trim()) errors.push('父任务引用不能为空。');
-    if (!workItems.length) errors.push('至少需要一个工作项。');
-    if (ids.some((item) => !item)) errors.push('每个工作项都必须填写 ID。');
-    if (new Set(ids).size !== ids.length) errors.push('工作项 ID 不能重复。');
-    workItems.forEach((item) => {
-      if (!item.expected_artifact_types.length) errors.push(`工作项 ${item.work_item_id || '未命名'} 必须填写至少一种预期产物。`);
-      item.depends_on.forEach((dependency) => {
-        if (!ids.includes(dependency)) errors.push(`工作项 ${item.work_item_id || '未命名'} 引用了不存在的依赖 ${dependency}。`);
-        if (dependency === item.work_item_id) errors.push(`工作项 ${item.work_item_id} 不能依赖自身。`);
-      });
-    });
+  editor.querySelector('#draft-validate').addEventListener('click', () => {
+    const result = validateCandidate();
+    const candidateText = `${JSON.stringify(result.candidate, null, 2)}\n`;
     previewPanel.hidden = false;
-    previewPanel.classList.toggle('draft-preview--error', errors.length > 0);
-    if (errors.length) {
-      previewJson.textContent = `草稿校验未通过：\n- ${errors.join('\n- ')}`;
+    previewPanel.classList.toggle('draft-preview--error', result.errorCount > 0);
+    previewJson.textContent = candidateText;
+    filenameInput.value = filenameFor();
+    renderValidation(result);
+    exportFeedback.textContent = result.errorCount ? '请修正问题后重新校验。' : '校验通过，但仍需人工确认。';
+    if (result.errorCount) {
+      validatedCandidateText = '';
+      setState('editing');
       return;
     }
-    const draft = {
-      version: 1,
-      planning_mode: 'manual',
-      planned_by: 'operator',
-      task_title: editor.querySelector('#draft-task-title').value.trim(),
-      parent_task_ref: editor.querySelector('#draft-parent-task').value.trim(),
-      confirmation_state: 'pending_operator_confirmation',
-      dispatch_eligible: false,
-      execution: 'not_executed',
-      work_items: workItems,
-      chinese_note: '浏览器内存草稿；待人工确认；不可派发；未调用任何 Agent。',
-    };
-    previewJson.textContent = JSON.stringify(draft, null, 2);
+    validatedCandidateText = candidateText;
+    setState('validated');
   });
+  confirmButton.addEventListener('click', () => {
+    const result = validateCandidate();
+    const currentText = `${JSON.stringify(result.candidate, null, 2)}\n`;
+    if (result.errorCount || currentText !== validatedCandidateText) {
+      exportFeedback.textContent = '候选内容已变化，请重新校验。';
+      setState('editing');
+      return;
+    }
+    setState('operator_confirmed');
+    exportFeedback.textContent = '已人工确认。复制或下载不会授予派发权。';
+  });
+  const fallbackCopy = (text) => {
+    const field = document.createElement('textarea');
+    field.value = text;
+    field.setAttribute('readonly', '');
+    field.style.position = 'fixed';
+    field.style.opacity = '0';
+    document.body.appendChild(field);
+    field.select();
+    const copied = document.execCommand('copy');
+    field.remove();
+    if (!copied) throw new Error('copy-not-supported');
+  };
+  copyButton.addEventListener('click', async () => {
+    if (confirmationState !== 'operator_confirmed' || !validatedCandidateText) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(validatedCandidateText);
+      else fallbackCopy(validatedCandidateText);
+      exportFeedback.textContent = '候选 JSON 已复制。仍不可派发、未执行。';
+    } catch (error) {
+      exportFeedback.textContent = '浏览器未允许复制，请使用下载按钮。';
+    }
+  });
+  downloadButton.addEventListener('click', () => {
+    if (confirmationState !== 'operator_confirmed' || !validatedCandidateText) return;
+    const blob = new Blob([validatedCandidateText], {type: 'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filenameInput.value;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    exportFeedback.textContent = '候选 JSON 下载已由用户触发。仍不可派发、未执行。';
+  });
+  setState('editing');
 })();
 """
 

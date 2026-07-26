@@ -65,14 +65,14 @@ Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job acc
 
 ## 下一产品里程碑
 
-Stage 76-77 已完成人工计划看板、fixture 端到端演示、中文默认 UI/UX 与浏览器内存编辑器。后续优先级：
+Stage 76-78 已完成人工计划看板、fixture 端到端演示、中文默认 UI/UX、浏览器内存编辑器、候选校验、人工确认与用户触发导出。后续优先级：
 
-1. **Stage 78 人工确认与受控导出**：把内存草稿转换为可校验的 collaboration plan 候选，展示校验结果，要求人工确认，并由用户主动复制或下载；仍不可派发。
-2. **协作运行状态模型**：先设计真实运行所需的开始、取消、重试、审阅、交接与 artifact 回收状态，不调用 Agent。
-3. **无 prompt ACP 探针实现**：只有看板明确需要真实 readiness 时才恢复，并需单独授权启动 runner/session。
-4. **单 work-item 真实派发**：在探针、审批、取消、审阅和 artifact 回收契约齐备后另行授权。
+1. **Stage 79 协作运行状态模型设计**：冻结真实运行未来所需的开始、取消、重试、审阅、交接、blocked recovery 与 artifact 回收状态和事件；仍不调用 Agent。
+2. **协作运行只读投影**：在 fixture 或 read model 上展示上述状态、操作资格和阻塞原因，不授予执行权。
+3. **无 prompt ACP 探针实现**：只有状态模型明确需要真实 readiness 时才恢复，并需单独授权启动 runner/session。
+4. **单 work-item 真实派发**：在探针、审批、取消、审阅、交接和 artifact 回收契约齐备后另行设计和授权。
 
-Stage 66 Pi bound runner migration 与 canonical approval binding 保留为安全强化项，不再抢占产品主线。
+Stage 66 Pi bound runner migration 与 canonical approval binding 保留为安全强化项，不再抢占产品主线。人工计划“已确认”不得被解释为派发授权。
 
 ## 治理原则
 
