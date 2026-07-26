@@ -1763,6 +1763,52 @@ python -m agent_runtime.cli orchestration control-panel handoff \
 - `render` 在同一边界内追加自包含 SVG 协作图（work item 依赖分层、handoff 箭头、review gate 菱形）与 socket/work item/handoff/review gate 转义表格。
 - `handoff` 把归一化后的计划路径写入 snapshot/render 两个 `argv`；不传 `--collaboration-file` 时输出与 Stage 16–18 完全一致。
 
+Stage 79 fixture-backed 协作运行状态检查与 Control Panel 投影：
+
+```bash
+python -m agent_runtime.cli orchestration collaboration run-state inspect \
+  --file adapters/collaboration-run-state.example.json \
+  --json
+python -m agent_runtime.cli orchestration control-panel snapshot \
+  --collaboration-run-file adapters/collaboration-run-state.example.json \
+  --json
+python -m agent_runtime.cli orchestration control-panel render \
+  --collaboration-run-file adapters/collaboration-run-state.example.json \
+  > control-panel.html
+python -m agent_runtime.cli orchestration control-panel handoff \
+  --collaboration-run-file adapters/collaboration-run-state.example.json \
+  --json
+```
+
+- `run-state inspect` 输出 `control-plane/collaboration-run-state/v1`，检查 schema、plan 绑定、attempt 连续性、review/handoff/artifact 关系、连续事件重放和 completed run 收口条件。
+- 输入固定为项目内最大 128 KiB JSON；缺失、越界、超限、非法迁移或最终状态不一致时 fail closed，并返回稳定 failure code。
+- `--collaboration-run-file` 增加 file-scoped `collaboration_run` 区段；HTML 展示当前尝试、尝试历史、审阅决定、交接状态、产物回收和运行事件时间线。
+- 批准开始、取消、重试、要求修改和批准交接只以 disabled 模拟按钮展示；固定 `dispatch_eligible=false`、`execution=not_executed`，不调用 Agent、不启动 session、不探测 readiness、不写 ledger。
+
+Stage 80 checkpoint 操作资格、fixture 审批绑定与幂等候选：
+
+```bash
+python -m agent_runtime.cli orchestration collaboration action-eligibility inspect \
+  --file adapters/collaboration-action-eligibility.example.json \
+  --json
+python -m agent_runtime.cli orchestration control-panel snapshot \
+  --collaboration-action-file adapters/collaboration-action-eligibility.example.json \
+  --json
+python -m agent_runtime.cli orchestration control-panel render \
+  --collaboration-action-file adapters/collaboration-action-eligibility.example.json \
+  > control-panel.html
+python -m agent_runtime.cli orchestration control-panel handoff \
+  --collaboration-action-file adapters/collaboration-action-eligibility.example.json \
+  --json
+```
+
+- `action-eligibility inspect` 复用已验证 Stage 79 run-state 事件流，并按 `as_of_sequence` 重建目标实体 checkpoint 状态。
+- 固定支持批准开始、取消、重试、要求修改和批准交接；action、target type 和允许状态使用封闭矩阵。
+- fixture approval 必须精确绑定 run id、run projection id、action、target、checkpoint 和 expected state；审批未批准或任一绑定漂移产生稳定 blocked reason。
+- 业务合格时生成内容寻址的 command candidate 和 idempotency key；已记录幂等键返回 `command_already_recorded`。
+- candidate 不包含 argv/cwd/env；即使 `action_eligible=true`，也固定 `execution_authorized=false`、`dispatch_eligible=false`、`execution=not_executed`。
+- `--collaboration-action-file` 增加 file-scoped `collaboration_actions` 区段；所有中文操作控件仍 disabled，并标注“资格不等于执行授权”。
+
 - `snapshot` 输出 `control-plane/control-panel-snapshot/v1` 与确定性 `snapshot_id`。
 - `render` 只向 stdout 输出自包含 HTML；CLI 自身不创建文件、不启动 service。
 - `handoff` 输出 `control-plane/control-panel-handoff/v1`，声明 JSON/HTML representation、media type、encoding、renderer version、`snapshot_id`、`render_id`、`working_directory=project_root` 与 argv 数组。

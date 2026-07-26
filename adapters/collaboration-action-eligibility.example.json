@@ -1,0 +1,78 @@
+{
+  "run_state_file": "adapters/collaboration-run-state.example.json",
+  "approvals": [
+    {
+      "approval_id": "approval-start-001",
+      "status": "approved",
+      "binding": {
+        "run_id": "collab-run-demo-001",
+        "run_projection_id": "sha256:0536d0997f362710ed32d21029f37256c1589469651c1ba3fddd91d83557a2fb",
+        "action": "approve_start",
+        "target_type": "run",
+        "target_id": "collab-run-demo-001",
+        "as_of_sequence": 2,
+        "expected_state": "awaiting_approval"
+      }
+    },
+    {
+      "approval_id": "approval-cancel-001",
+      "status": "approved",
+      "binding": {
+        "run_id": "collab-run-demo-001",
+        "run_projection_id": "sha256:0536d0997f362710ed32d21029f37256c1589469651c1ba3fddd91d83557a2fb",
+        "action": "cancel",
+        "target_type": "run",
+        "target_id": "collab-run-demo-001",
+        "as_of_sequence": 4,
+        "expected_state": "running"
+      }
+    },
+    {
+      "approval_id": "approval-retry-001",
+      "status": "approved",
+      "binding": {
+        "run_id": "collab-run-demo-001",
+        "run_projection_id": "sha256:0536d0997f362710ed32d21029f37256c1589469651c1ba3fddd91d83557a2fb",
+        "action": "retry",
+        "target_type": "work_item_attempt",
+        "target_id": "attempt-implement-1",
+        "as_of_sequence": 26,
+        "expected_state": "changes_requested"
+      }
+    },
+    {
+      "approval_id": "approval-changes-001",
+      "status": "approved",
+      "binding": {
+        "run_id": "collab-run-demo-001",
+        "run_projection_id": "sha256:0536d0997f362710ed32d21029f37256c1589469651c1ba3fddd91d83557a2fb",
+        "action": "request_changes",
+        "target_type": "review",
+        "target_id": "review-implement-1",
+        "as_of_sequence": 23,
+        "expected_state": "in_review"
+      }
+    },
+    {
+      "approval_id": "approval-handoff-001",
+      "status": "approved",
+      "binding": {
+        "run_id": "collab-run-demo-001",
+        "run_projection_id": "sha256:0536d0997f362710ed32d21029f37256c1589469651c1ba3fddd91d83557a2fb",
+        "action": "approve_handoff",
+        "target_type": "handoff",
+        "target_id": "handoff-plan-implement",
+        "as_of_sequence": 13,
+        "expected_state": "ready"
+      }
+    }
+  ],
+  "action_requests": [
+    {"request_id": "request-start-001", "action": "approve_start", "target_type": "run", "target_id": "collab-run-demo-001", "as_of_sequence": 2, "expected_state": "awaiting_approval", "approval_id": "approval-start-001"},
+    {"request_id": "request-cancel-001", "action": "cancel", "target_type": "run", "target_id": "collab-run-demo-001", "as_of_sequence": 4, "expected_state": "running", "approval_id": "approval-cancel-001"},
+    {"request_id": "request-retry-001", "action": "retry", "target_type": "work_item_attempt", "target_id": "attempt-implement-1", "as_of_sequence": 26, "expected_state": "changes_requested", "approval_id": "approval-retry-001"},
+    {"request_id": "request-changes-001", "action": "request_changes", "target_type": "review", "target_id": "review-implement-1", "as_of_sequence": 23, "expected_state": "in_review", "approval_id": "approval-changes-001"},
+    {"request_id": "request-handoff-001", "action": "approve_handoff", "target_type": "handoff", "target_id": "handoff-plan-implement", "as_of_sequence": 13, "expected_state": "ready", "approval_id": "approval-handoff-001"}
+  ],
+  "recorded_idempotency_keys": []
+}

@@ -65,12 +65,12 @@ Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job acc
 
 ## 下一产品里程碑
 
-Stage 76-78 已完成人工计划看板、fixture 端到端演示、中文默认 UI/UX、浏览器内存编辑器、候选校验、人工确认与用户触发导出。后续优先级：
+Stage 76-80 已完成人工计划看板、fixture 端到端演示、中文默认 UI/UX、浏览器内存编辑器、候选校验与导出、协作运行事件模型，以及 checkpoint 操作资格、fixture 审批绑定和不可执行幂等命令候选。后续优先级：
 
-1. **Stage 79 协作运行状态模型设计**：冻结真实运行未来所需的开始、取消、重试、审阅、交接、blocked recovery 与 artifact 回收状态和事件；仍不调用 Agent。
-2. **协作运行只读投影**：在 fixture 或 read model 上展示上述状态、操作资格和阻塞原因，不授予执行权。
-3. **无 prompt ACP 探针实现**：只有状态模型明确需要真实 readiness 时才恢复，并需单独授权启动 runner/session。
-4. **单 work-item 真实派发**：在探针、审批、取消、审阅、交接和 artifact 回收契约齐备后另行设计和授权。
+1. **Stage 81 当前态操作者待办与审批集合投影**：只针对最新运行状态聚合待处理审批、当前可选操作和稳定阻止原因；不读取真实 approval ledger。
+2. **当前态操作候选收口**：验证历史 checkpoint 资格与最新状态待办的一致性，继续保持 `execution_authorized=false`。
+3. **无 prompt ACP 探针实现**：只有当前态资格契约明确需要真实 readiness 时才恢复，并需单独授权启动 runner/session。
+4. **单 work-item 真实派发**：在探针、真实审批绑定、取消、重试、审阅、交接和 artifact 回收契约齐备后另行设计和授权。
 
 Stage 66 Pi bound runner migration 与 canonical approval binding 保留为安全强化项，不再抢占产品主线。人工计划“已确认”不得被解释为派发授权。
 

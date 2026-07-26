@@ -12,7 +12,7 @@ An auditable multi-Agent collaboration control hub. Kimi Code, Claude Code, OMP/
 
 ## Current Status
 
-Stage 78 is complete. The repository now provides:
+Stage 80 is complete. The repository now provides:
 
 - a shared Agent socket registry, capability routing, and explicit role bindings;
 - validated multi-Agent collaboration plans with work items, dependencies, handoffs, artifacts, and review gates;
@@ -20,9 +20,12 @@ Stage 78 is complete. The repository now provides:
 - an in-memory manual plan editor with structure, dependency, Agent socket binding, and review validation;
 - an `editing -> validated -> operator_confirmed` confirmation state machine;
 - user-triggered copy and download of collaboration plan v1 candidate JSON;
+- a fixture-backed collaboration run state, continuous event replay, retries, reviews, handoffs, blocked recovery, and artifact collection;
+- checkpoint action eligibility, exact fixture approval bindings, and non-executable idempotent command candidates;
+- Chinese Control Panel run/action projections with operator controls permanently disabled;
 - single-work-item dispatch proposals, ACP readiness evidence foundations, and audit boundaries.
 
-The board still cannot start a real Kimi, Claude, or OMP collaboration. Validation, operator confirmation, copy, and download never grant dispatch authority; the boundary remains `dispatch_eligible=false` and `execution=not_executed`. The next product milestone is **Stage 79 collaboration run state model design**: define start, cancel, retry, review, handoff, blocked recovery, and artifact collection without invoking an Agent.
+The board still cannot start a real Kimi, Claude, or OMP collaboration. Even when a fixture projection reports `action_eligible=true`, it remains `execution_authorized=false`, `dispatch_eligible=false`, and `execution=not_executed`. The next product milestone is **Stage 81 current operator inbox and approval collection projection**: aggregate pending approvals, available actions, and stable blocked reasons for the latest run state without reading a real approval ledger or invoking an Agent.
 
 Two limited Windows real-execution operations remain available underneath: fixed Git status and fixed Pi print. Both use explicit authorization, fixed arguments, a machine-local lease, execution audit, and Windows Job Object process-tree containment. They are security infrastructure, not the product mainline.
 
@@ -60,7 +63,7 @@ See [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md) for the full CLI refe
 ## Documentation
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current state and recovery order.
-- [`docs/126-stage78-manual-confirmation-and-controlled-export.md`](docs/126-stage78-manual-confirmation-and-controlled-export.md): current fact source for manual validation, operator confirmation, and controlled export.
+- [`docs/128-stage80-operator-action-eligibility-and-approval-binding.md`](docs/128-stage80-operator-action-eligibility-and-approval-binding.md): current fact source for action eligibility, approval binding, idempotent candidates, and the read-only control projection.
 - [`docs/00-index.md`](docs/00-index.md): topic-based navigation.
 - [`docs/02-roadmap.md`](docs/02-roadmap.md): completed capability packages and next candidates.
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md): latest real-execution fact source.

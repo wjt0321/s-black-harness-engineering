@@ -20,7 +20,7 @@ python -m agent_runtime.cli doctor
 
 ## 当前能力与边界
 
-项目是 Python 3.11+ 的本地 Agent Runtime / Harness 控制面。Stage 78 已完成；当前产品事实源为 `docs/126-stage78-manual-confirmation-and-controlled-export.md`。
+项目是 Python 3.11+ 的本地 Agent Runtime / Harness 控制面。Stage 80 已完成；当前产品事实源为 `docs/128-stage80-operator-action-eligibility-and-approval-binding.md`。
 
 允许的真实执行仅有：
 

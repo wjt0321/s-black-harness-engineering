@@ -39,6 +39,10 @@ from .orchestration_socket import SocketDetailResult, SocketListResult, get_sock
 from .orchestration_acp_readiness import collect_acp_readiness
 from .orchestration_manual_board import inspect_manual_board
 from .orchestration_collaboration import inspect_collaboration_plan, validate_collaboration_plan
+from .orchestration_collaboration_run_state import inspect_collaboration_run_state
+from .orchestration_collaboration_action_eligibility import (
+    inspect_collaboration_action_eligibility,
+)
 from .orchestration_collaboration_dispatch import inspect_collaboration_dispatch
 from .orchestration_contract import build_contract_manifest
 from .orchestration_contract_check import check_contract_requirements
@@ -1557,6 +1561,8 @@ def _cmd_orchestration_control_panel_handoff(args: argparse.Namespace) -> int:
         collaboration_file=args.collaboration_file,
         dispatch_file=args.dispatch_file,
         manual_board_file=args.manual_board_file,
+        collaboration_run_file=args.collaboration_run_file,
+        collaboration_action_file=args.collaboration_action_file,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1573,6 +1579,8 @@ def _cmd_orchestration_control_panel_snapshot(args: argparse.Namespace) -> int:
         collaboration_file=args.collaboration_file,
         dispatch_file=args.dispatch_file,
         manual_board_file=args.manual_board_file,
+        collaboration_run_file=args.collaboration_run_file,
+        collaboration_action_file=args.collaboration_action_file,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1589,6 +1597,8 @@ def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
         collaboration_file=args.collaboration_file,
         dispatch_file=args.dispatch_file,
         manual_board_file=args.manual_board_file,
+        collaboration_run_file=args.collaboration_run_file,
+        collaboration_action_file=args.collaboration_action_file,
     )
     print(render_control_panel_html(result.to_dict()))
     return result.exit_code()
@@ -2913,6 +2923,41 @@ def _cmd_orchestration_manual_board(args: argparse.Namespace) -> int:
     return result.exit_code()
 
 
+def _cmd_orchestration_collaboration_run_state(args: argparse.Namespace) -> int:
+    """Inspect one fixture-backed collaboration run state projection."""
+    result = inspect_collaboration_run_state(_root_path(args), args.file)
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"COLLABORATION RUN STATE {result.status.upper()}")
+        run = payload.get("run")
+        if run is not None:
+            print(f"run_id={run['run_id']}")
+            print(f"status={run['status']}")
+            print(f"attempts={run['summary']['attempt_count']}")
+            print(f"retries={run['summary']['retry_count']}")
+            print(f"reviews={run['summary']['review_count']}")
+            print(f"handoffs={run['summary']['handoff_count']}")
+            print("dispatch_eligible=false")
+            print("execution=not_executed")
+        for finding in result.findings:
+            print(f"- {finding.rule_id}: {finding.message}")
+    return result.exit_code()
+
+
+def _cmd_orchestration_collaboration_action_eligibility(
+    args: argparse.Namespace,
+) -> int:
+    """Inspect fixture-backed operator action eligibility without execution."""
+    result = inspect_collaboration_action_eligibility(_root_path(args), args.file)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
 def _cmd_orchestration_collaboration_dispatch(args: argparse.Namespace) -> int:
     """Validate or inspect one non-executing work-item dispatch proposal."""
     result = inspect_collaboration_dispatch(_root_path(args), args.file)
@@ -3750,6 +3795,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional operator-authored manual collaboration board fixture JSON",
     )
+    orchestration_control_panel_handoff_parser.add_argument(
+        "--collaboration-run-file",
+        default=None,
+        help="Optional fixture-backed collaboration run state JSON",
+    )
+    orchestration_control_panel_handoff_parser.add_argument(
+        "--collaboration-action-file",
+        default=None,
+        help="Optional fixture-backed operator action eligibility JSON",
+    )
     _add_global_args(orchestration_control_panel_handoff_parser)
     orchestration_control_panel_handoff_parser.set_defaults(
         func=_cmd_orchestration_control_panel_handoff
@@ -3780,6 +3835,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional operator-authored manual collaboration board fixture JSON",
     )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--collaboration-run-file",
+        default=None,
+        help="Optional fixture-backed collaboration run state JSON",
+    )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--collaboration-action-file",
+        default=None,
+        help="Optional fixture-backed operator action eligibility JSON",
+    )
     _add_global_args(orchestration_control_panel_snapshot_parser)
     orchestration_control_panel_snapshot_parser.set_defaults(
         func=_cmd_orchestration_control_panel_snapshot
@@ -3809,6 +3874,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--manual-board-file",
         default=None,
         help="Optional operator-authored manual collaboration board fixture JSON",
+    )
+    orchestration_control_panel_render_parser.add_argument(
+        "--collaboration-run-file",
+        default=None,
+        help="Optional fixture-backed collaboration run state JSON",
+    )
+    orchestration_control_panel_render_parser.add_argument(
+        "--collaboration-action-file",
+        default=None,
+        help="Optional fixture-backed operator action eligibility JSON",
     )
     _add_global_args(orchestration_control_panel_render_parser)
     orchestration_control_panel_render_parser.set_defaults(
@@ -4335,6 +4410,41 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_global_args(collaboration_manual_board_inspect_parser)
     collaboration_manual_board_inspect_parser.set_defaults(func=_cmd_orchestration_manual_board)
+
+    collaboration_run_state_parser = orchestration_collaboration_subparsers.add_parser(
+        "run-state", help="Inspect a fixture-backed collaboration run state model"
+    )
+    collaboration_run_state_subparsers = collaboration_run_state_parser.add_subparsers(
+        dest="collaboration_run_state_command", required=True
+    )
+    collaboration_run_state_inspect_parser = collaboration_run_state_subparsers.add_parser(
+        "inspect", help="Validate and inspect one simulated collaboration run fixture"
+    )
+    collaboration_run_state_inspect_parser.add_argument(
+        "--file", required=True, help="Project-local collaboration run state JSON file"
+    )
+    _add_global_args(collaboration_run_state_inspect_parser)
+    collaboration_run_state_inspect_parser.set_defaults(
+        func=_cmd_orchestration_collaboration_run_state
+    )
+
+    collaboration_action_parser = orchestration_collaboration_subparsers.add_parser(
+        "action-eligibility",
+        help="Inspect fixture-backed operator action eligibility and approval bindings",
+    )
+    collaboration_action_subparsers = collaboration_action_parser.add_subparsers(
+        dest="collaboration_action_eligibility_command", required=True
+    )
+    collaboration_action_inspect_parser = collaboration_action_subparsers.add_parser(
+        "inspect", help="Validate action checkpoints and fixture approval bindings"
+    )
+    collaboration_action_inspect_parser.add_argument(
+        "--file", required=True, help="Project-local action eligibility JSON file"
+    )
+    _add_global_args(collaboration_action_inspect_parser)
+    collaboration_action_inspect_parser.set_defaults(
+        func=_cmd_orchestration_collaboration_action_eligibility
+    )
 
     collaboration_dispatch_parser = orchestration_collaboration_subparsers.add_parser(
         "dispatch", help="Validate or inspect one non-executing work-item dispatch proposal"

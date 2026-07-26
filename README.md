@@ -12,7 +12,7 @@
 
 ## 当前状态
 
-项目已完成 Stage 78，当前具备：
+项目已完成 Stage 80，当前具备：
 
 - 统一 Agent socket registry、capability routing 与显式角色绑定；
 - 可校验的多 Agent collaboration plan，包含 work item、依赖、handoff、artifact 和 review gate；
@@ -20,9 +20,12 @@
 - 浏览器内存人工计划编辑器，以及结构、依赖、Agent 插座绑定和审阅要求校验；
 - `editing -> validated -> operator_confirmed` 人工确认状态机；
 - 用户主动复制或下载符合 collaboration plan v1 的候选 JSON；
+- fixture-backed 协作运行状态、连续事件重放、工作项重试、审阅、交接、阻塞恢复与产物回收；
+- checkpoint 操作资格、fixture 审批精确绑定和不可执行的幂等命令候选；
+- 中文 Control Panel 运行/操作资格投影及固定禁用的操作者控件；
 - 单 work item dispatch proposal、ACP readiness evidence 基础和完整审计边界。
 
-看板仍不能启动真实 Kimi、Claude 或 OMP 协作。校验、人工确认、复制和下载都不会授予派发权，始终保持 `dispatch_eligible=false`、`execution=not_executed`。下一产品里程碑是 **Stage 79 协作运行状态模型设计**：先定义开始、取消、重试、审阅、交接、阻塞恢复和 artifact 回收，不调用 Agent。
+看板仍不能启动真实 Kimi、Claude 或 OMP 协作。即使 fixture 投影显示 `action_eligible=true`，也固定 `execution_authorized=false`、`dispatch_eligible=false`、`execution=not_executed`。下一产品里程碑是 **Stage 81 当前态操作者待办与审批集合投影**：只聚合最新运行状态下的待处理审批、可选操作和稳定阻止原因，仍不读取真实 approval ledger 或调用 Agent。
 
 底层仍保留两项受限 Windows 真实执行能力：fixed Git status 与 fixed Pi print。两者都经过显式授权、固定参数、machine-local lease、执行审计和 Windows Job Object 进程树回收；它们是安全基础设施，不是产品主线。
 
@@ -60,7 +63,7 @@ git diff --check
 ## 文档入口
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
-- [`docs/126-stage78-manual-confirmation-and-controlled-export.md`](docs/126-stage78-manual-confirmation-and-controlled-export.md)：当前人工计划校验、人工确认与受控导出事实源。
+- [`docs/128-stage80-operator-action-eligibility-and-approval-binding.md`](docs/128-stage80-operator-action-eligibility-and-approval-binding.md)：当前操作资格、审批绑定、幂等候选与只读控制面事实源。
 - [`docs/00-index.md`](docs/00-index.md)：按主题导航。
 - [`docs/02-roadmap.md`](docs/02-roadmap.md)：已完成能力包与下一候选。
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md)：当前最新真实执行事实源。

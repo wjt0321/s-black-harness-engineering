@@ -1,0 +1,391 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/collaboration-run-state.schema.json",
+  "title": "Fixture-backed Collaboration Run State",
+  "type": "object",
+  "required": [
+    "version",
+    "collaboration_file",
+    "run_id",
+    "run_state",
+    "work_item_attempts",
+    "reviews",
+    "handoffs",
+    "artifacts",
+    "events"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "collaboration_file": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260,
+      "pattern": "^[^<>:\"|?*]+\\.json$"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "run_state": {
+      "enum": [
+        "draft",
+        "awaiting_approval",
+        "ready",
+        "running",
+        "blocked",
+        "cancelling",
+        "cancelled",
+        "completed",
+        "failed"
+      ]
+    },
+    "work_item_attempts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "attempt_id",
+          "work_item_id",
+          "attempt_number",
+          "status",
+          "artifact_ids",
+          "review_ids"
+        ],
+        "properties": {
+          "attempt_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "work_item_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "attempt_number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 32
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "ready",
+              "running",
+              "blocked",
+              "review_pending",
+              "changes_requested",
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "artifact_ids": {
+            "type": "array",
+            "maxItems": 32,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "review_ids": {
+            "type": "array",
+            "maxItems": 16,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        }
+      }
+    },
+    "reviews": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "review_id",
+          "gate_id",
+          "work_item_id",
+          "attempt_id",
+          "status",
+          "artifact_ids"
+        ],
+        "properties": {
+          "review_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "gate_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "work_item_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "attempt_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "in_review",
+              "approved",
+              "changes_requested",
+              "cancelled"
+            ]
+          },
+          "artifact_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        }
+      }
+    },
+    "handoffs": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "handoff_id",
+          "from_work_item_id",
+          "to_work_item_id",
+          "from_attempt_id",
+          "to_attempt_id",
+          "status",
+          "artifact_ids"
+        ],
+        "properties": {
+          "handoff_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "from_work_item_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "to_work_item_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "from_attempt_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "to_attempt_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "ready",
+              "accepted",
+              "rejected",
+              "superseded"
+            ]
+          },
+          "artifact_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "artifact_id",
+          "work_item_id",
+          "attempt_id",
+          "artifact_type",
+          "status",
+          "content_hash"
+        ],
+        "properties": {
+          "artifact_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "work_item_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "attempt_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "artifact_type": {
+            "enum": [
+              "analysis",
+              "plan",
+              "draft",
+              "patch",
+              "test_result",
+              "review",
+              "summary"
+            ]
+          },
+          "status": {
+            "enum": [
+              "expected",
+              "reported",
+              "validated",
+              "rejected",
+              "superseded"
+            ]
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sequence",
+          "event_id",
+          "event_type",
+          "entity_type",
+          "entity_id",
+          "from_state",
+          "to_state",
+          "label"
+        ],
+        "properties": {
+          "sequence": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "event_type": {
+            "enum": [
+              "run_created",
+              "plan_confirmed",
+              "start_approved",
+              "run_started",
+              "run_blocked",
+              "run_resumed",
+              "cancel_requested",
+              "run_cancelled",
+              "run_completed",
+              "run_failed",
+              "work_item_attempt_created",
+              "work_item_ready",
+              "work_item_started",
+              "work_item_blocked",
+              "work_item_review_requested",
+              "work_item_changes_requested",
+              "work_item_completed",
+              "work_item_failed",
+              "work_item_cancelled",
+              "review_created",
+              "review_started",
+              "review_approved",
+              "review_changes_requested",
+              "review_cancelled",
+              "handoff_created",
+              "handoff_ready",
+              "handoff_accepted",
+              "handoff_rejected",
+              "handoff_superseded",
+              "artifact_expected",
+              "artifact_reported",
+              "artifact_validated",
+              "artifact_rejected",
+              "artifact_superseded"
+            ]
+          },
+          "entity_type": {
+            "enum": [
+              "run",
+              "work_item_attempt",
+              "review",
+              "handoff",
+              "artifact"
+            ]
+          },
+          "entity_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "from_state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to_state": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      }
+    }
+  }
+}

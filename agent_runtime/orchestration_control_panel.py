@@ -13,6 +13,10 @@ from .loader import normalize_path
 from .orchestration_adapter import list_adapters
 from .orchestration_collaboration import inspect_collaboration_plan
 from .orchestration_collaboration_dispatch import inspect_collaboration_dispatch
+from .orchestration_collaboration_run_state import inspect_collaboration_run_state
+from .orchestration_collaboration_action_eligibility import (
+    inspect_collaboration_action_eligibility,
+)
 from .orchestration_manual_board import inspect_manual_board
 from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
@@ -287,6 +291,8 @@ def build_control_panel_snapshot(
     collaboration_file: str | None = None,
     dispatch_file: str | None = None,
     manual_board_file: str | None = None,
+    collaboration_run_file: str | None = None,
+    collaboration_action_file: str | None = None,
 ) -> ControlPanelSnapshot:
     """Aggregate existing safe read models without executing or writing."""
     overview = _section(
@@ -407,6 +413,20 @@ def build_control_panel_snapshot(
             scope="file",
             availability="fixture",
         )
+    if collaboration_run_file is not None:
+        sections["collaboration_run"] = _section(
+            inspect_collaboration_run_state(root, collaboration_run_file).to_dict(),
+            scope="file",
+            availability="fixture",
+        )
+    if collaboration_action_file is not None:
+        sections["collaboration_actions"] = _section(
+            inspect_collaboration_action_eligibility(
+                root, collaboration_action_file
+            ).to_dict(),
+            scope="file",
+            availability="fixture",
+        )
     findings = _deduplicate_findings(sections)
     status = _aggregate_status(sections)
 
@@ -440,6 +460,18 @@ def build_control_panel_snapshot(
             for name, section in sections.items()
         },
     }
+    collaboration_run = sections.get("collaboration_run")
+    if collaboration_run is not None:
+        summary["collaboration_run_status"] = collaboration_run.get("run", {}).get("status")
+    collaboration_actions = sections.get("collaboration_actions")
+    if collaboration_actions is not None:
+        action_summary = collaboration_actions.get("summary", {})
+        summary["eligible_operator_action_count"] = action_summary.get(
+            "eligible_count", 0
+        )
+        summary["blocked_operator_action_count"] = action_summary.get(
+            "blocked_count", 0
+        )
     next_action = (
         {
             "code": "review_control_panel",
@@ -460,6 +492,12 @@ def build_control_panel_snapshot(
         source["dispatch_file"] = _safe_envelope_reference(root, dispatch_file)
     if manual_board_file is not None:
         source["manual_board_file"] = _safe_envelope_reference(root, manual_board_file)
+    if collaboration_run_file is not None:
+        source["collaboration_run_file"] = _safe_envelope_reference(root, collaboration_run_file)
+    if collaboration_action_file is not None:
+        source["collaboration_action_file"] = _safe_envelope_reference(
+            root, collaboration_action_file
+        )
     return ControlPanelSnapshot(
         status=status,
         source=source,
@@ -477,6 +515,8 @@ def build_control_panel_handoff(
     collaboration_file: str | None = None,
     dispatch_file: str | None = None,
     manual_board_file: str | None = None,
+    collaboration_run_file: str | None = None,
+    collaboration_action_file: str | None = None,
 ) -> ControlPanelHandoff:
     """Describe existing panel representations without rendering or executing them."""
     snapshot_payload = build_control_panel_snapshot(
@@ -485,6 +525,8 @@ def build_control_panel_handoff(
         collaboration_file=collaboration_file,
         dispatch_file=dispatch_file,
         manual_board_file=manual_board_file,
+        collaboration_run_file=collaboration_run_file,
+        collaboration_action_file=collaboration_action_file,
     ).to_dict()
     snapshot_argv = [
         "python",
@@ -518,6 +560,20 @@ def build_control_panel_handoff(
     if safe_manual_board_file is not None:
         snapshot_argv.extend(("--manual-board-file", safe_manual_board_file))
         render_argv.extend(("--manual-board-file", safe_manual_board_file))
+    safe_collaboration_run_file = snapshot_payload["source"].get("collaboration_run_file")
+    if safe_collaboration_run_file is not None:
+        snapshot_argv.extend(("--collaboration-run-file", safe_collaboration_run_file))
+        render_argv.extend(("--collaboration-run-file", safe_collaboration_run_file))
+    safe_collaboration_action_file = snapshot_payload["source"].get(
+        "collaboration_action_file"
+    )
+    if safe_collaboration_action_file is not None:
+        snapshot_argv.extend(
+            ("--collaboration-action-file", safe_collaboration_action_file)
+        )
+        render_argv.extend(
+            ("--collaboration-action-file", safe_collaboration_action_file)
+        )
     snapshot_argv.append("--json")
 
     snapshot_id = str(snapshot_payload["snapshot_id"])
@@ -593,6 +649,20 @@ _UI_TERMS = {
     "pending": "待审阅",
     "approved": "已批准",
     "changes_requested": "要求修改",
+    "awaiting_approval": "等待批准",
+    "running": "运行中",
+    "cancelling": "取消中",
+    "cancelled": "已取消",
+    "completed": "已完成",
+    "failed": "失败",
+    "review_pending": "等待审阅",
+    "in_review": "审阅中",
+    "accepted": "已接受",
+    "rejected": "已拒绝",
+    "superseded": "已取代",
+    "expected": "待产出",
+    "reported": "已报告",
+    "validated": "已验证",
     "planner": "规划者",
     "implementer": "实现者",
     "reviewer": "审阅者",
@@ -1099,6 +1169,166 @@ def _manual_board_section_body(section: dict[str, Any]) -> str:
     )
 
 
+def _collaboration_run_section_body(section: dict[str, Any]) -> str:
+    run = section.get("run")
+    if section.get("status") != "pass" or run is None:
+        return _table(
+            caption="协作运行状态问题",
+            columns=(("rule_id", "规则 ID"), ("severity", "严重程度"), ("message", "原始技术详情")),
+            rows=section.get("findings", []),
+            empty_message="协作运行状态暂不可用。",
+        )
+
+    attempts_by_id = {
+        attempt["attempt_id"]: attempt for attempt in run.get("attempts", [])
+    }
+    current_attempts = []
+    for work_item_id, attempt_id in sorted(run.get("current_attempts", {}).items()):
+        attempt = dict(attempts_by_id.get(attempt_id, {}))
+        attempt["current_work_item_id"] = work_item_id
+        current_attempts.append(attempt)
+
+    actions = "".join(
+        '<button type="button" class="run-action" disabled '
+        'title="仅模拟展示；当前没有执行权限">'
+        f'{_escape(_ui_term(action.get("action")))}'
+        '<span>仅模拟 · 无执行权限</span></button>'
+        for action in run.get("operator_actions", [])
+    )
+    summary = run.get("summary", {})
+    return "".join(
+        [
+            '<div class="run-state-banner">'
+            '<div><span class="eyebrow">只读模拟投影</span>'
+            '<h3>模拟协作运行</h3>'
+            f'<p>运行 ID：{_escape(run.get("run_id"))} · 父任务：{_escape(run.get("parent_task_ref"))} · 状态：{_escape(_ui_term(run.get("status")))}</p></div>'
+            '<div class="run-state-stats">'
+            f'<strong>{_escape(summary.get("attempt_count", 0))}</strong><span>尝试</span>'
+            f'<strong>{_escape(summary.get("retry_count", 0))}</strong><span>重试</span>'
+            f'<strong>{_escape(summary.get("blocked_recovery_count", 0))}</strong><span>阻塞恢复次数</span>'
+            '</div></div>',
+            '<dl class="run-boundary">'
+            '<div><dt>派发资格</dt><dd><code>dispatch_eligible=false</code></dd></div>'
+            '<div><dt>执行状态</dt><dd><code>execution=not_executed</code></dd></div>'
+            '<div><dt>安全边界</dt><dd>不启动 Agent、不探测就绪状态、不写入账本</dd></div>'
+            '</dl>',
+            _table(
+                caption="当前尝试",
+                columns=(("current_work_item_id", "工作项 ID"), ("attempt_id", "当前尝试 ID"), ("attempt_number", "尝试序号"), ("status", "状态"), ("artifact_ids", "产物 ID")),
+                rows=current_attempts,
+                empty_message="没有当前尝试。",
+            ),
+            _table(
+                caption="工作项尝试历史",
+                columns=(("work_item_id", "工作项 ID"), ("attempt_id", "尝试 ID"), ("attempt_number", "尝试序号"), ("status", "状态"), ("review_ids", "审阅 ID"), ("artifact_ids", "产物 ID")),
+                rows=run.get("attempts", []),
+                empty_message="没有工作项尝试历史。",
+            ),
+            _table(
+                caption="审阅决定",
+                columns=(("review_id", "审阅 ID"), ("gate_id", "审阅门 ID"), ("work_item_id", "工作项 ID"), ("attempt_id", "尝试 ID"), ("status", "决定"), ("artifact_ids", "审阅产物")),
+                rows=run.get("reviews", []),
+                empty_message="没有审阅决定。",
+            ),
+            _table(
+                caption="交接状态",
+                columns=(("handoff_id", "交接 ID"), ("from_work_item_id", "来源工作项"), ("to_work_item_id", "目标工作项"), ("from_attempt_id", "来源尝试"), ("to_attempt_id", "目标尝试"), ("status", "状态"), ("artifact_ids", "交接产物")),
+                rows=run.get("handoffs", []),
+                empty_message="没有交接状态。",
+            ),
+            _table(
+                caption="产物回收",
+                columns=(("artifact_id", "产物 ID"), ("work_item_id", "工作项 ID"), ("attempt_id", "尝试 ID"), ("artifact_type", "产物类型"), ("status", "状态"), ("content_hash", "内容哈希")),
+                rows=run.get("artifacts", []),
+                empty_message="没有产物回收记录。",
+            ),
+            _table(
+                caption="运行事件时间线",
+                columns=(("sequence", "序号"), ("event_type", "事件类型"), ("entity_type", "实体类型"), ("entity_id", "实体 ID"), ("from_state", "原状态"), ("to_state", "新状态"), ("label", "事件说明")),
+                rows=run.get("events", []),
+                empty_message="没有运行事件。",
+            ),
+            '<div class="run-actions"><div><h3>操作者控制项</h3>'
+            '<p>按钮只表达未来运行控制语义；本阶段全部禁用。</p></div>'
+            f'<div class="run-actions__buttons">{actions}</div></div>',
+        ]
+    )
+
+
+def _collaboration_action_section_body(section: dict[str, Any]) -> str:
+    actions = section.get("actions")
+    if section.get("status") != "pass" or actions is None:
+        return _table(
+            caption="操作者操作资格问题",
+            columns=(("rule_id", "规则 ID"), ("severity", "严重程度"), ("message", "原始技术详情")),
+            rows=section.get("findings", []),
+            empty_message="操作者操作资格暂不可用。",
+        )
+
+    candidates = []
+    for item in actions:
+        candidate = item.get("command_candidate")
+        if candidate is not None:
+            candidates.append(
+                {
+                    "action": item["action"],
+                    "candidate_id": candidate["candidate_id"],
+                    "idempotency_key": candidate["idempotency_key"],
+                    "approval_id": candidate["approval_id"],
+                    "execution": candidate["execution"],
+                }
+            )
+    controls = "".join(
+        '<button type="button" class="action-eligibility-control" disabled '
+        'title="业务资格不等于执行授权；当前按钮不可执行">'
+        f'{_escape(_ui_term(item["action"]))}'
+        f'<span>action_eligible={str(bool(item["action_eligible"])).lower()}</span>'
+        '<span>资格不等于执行授权</span></button>'
+        for item in actions
+    )
+    summary = section.get("summary", {})
+    run = section.get("run", {})
+    return "".join(
+        [
+            '<div class="action-eligibility-banner">'
+            '<div><span class="eyebrow">fixture 审批证据 / 只读投影</span>'
+            '<h3>操作者操作资格</h3>'
+            f'<p>运行 ID：{_escape(run.get("run_id"))} · 事件数：{_escape(run.get("event_count"))}</p></div>'
+            '<div class="action-eligibility-stats">'
+            f'<strong>{_escape(summary.get("action_count", 0))}</strong><span>操作请求</span>'
+            f'<strong>{_escape(summary.get("eligible_count", 0))}</strong><span>业务合格</span>'
+            f'<strong>{_escape(summary.get("blocked_count", 0))}</strong><span>已阻止</span>'
+            '</div></div>',
+            '<dl class="action-eligibility-boundary">'
+            '<div><dt>执行授权</dt><dd><code>execution_authorized=false</code></dd></div>'
+            '<div><dt>派发资格</dt><dd><code>dispatch_eligible=false</code></dd></div>'
+            '<div><dt>执行状态</dt><dd><code>execution=not_executed</code></dd></div>'
+            '</dl>',
+            _table(
+                caption="操作资格检查点",
+                columns=(("action", "操作"), ("target_type", "目标类型"), ("target_id", "目标 ID"), ("as_of_sequence", "事件检查点"), ("expected_state", "期望状态"), ("current_state", "检查点状态"), ("action_eligible", "业务资格"), ("blocked_reasons", "阻止原因")),
+                rows=actions,
+                empty_message="没有操作资格请求。",
+            ),
+            _table(
+                caption="审批绑定",
+                columns=(("action", "操作"), ("approval_id", "审批 ID"), ("approval_status", "审批状态"), ("target_id", "绑定目标"), ("as_of_sequence", "绑定检查点"), ("expected_state", "绑定状态")),
+                rows=actions,
+                empty_message="没有审批绑定。",
+            ),
+            _table(
+                caption="幂等命令候选",
+                columns=(("action", "操作"), ("candidate_id", "候选 ID"), ("idempotency_key", "幂等键"), ("approval_id", "审批 ID"), ("execution", "执行状态")),
+                rows=candidates,
+                empty_message="没有业务合格的命令候选。",
+            ),
+            '<div class="action-eligibility-actions"><div><h3>只读操作控件</h3>'
+            '<p>即使业务资格为 true，也没有执行授权；所有控件固定禁用。</p></div>'
+            f'<div class="action-eligibility-actions__buttons">{controls}</div></div>',
+        ]
+    )
+
+
 _CSS = r"""
 :root {
   color-scheme: dark;
@@ -1144,7 +1374,39 @@ a { color: inherit; }
 .skip-link:focus { top: 1rem; }
 .shell { width: min(1540px, calc(100% - 2rem)); margin: 0 auto; padding: 1rem 0 5rem; }
 .masthead { position: relative; border: 1px solid var(--line); background: linear-gradient(135deg, rgba(16,32,29,.98), rgba(7,16,15,.94)); box-shadow: 0 28px 70px var(--shadow); overflow: hidden; }
-.masthead::after { content: "控制 / 78"; position: absolute; right: -1rem; bottom: -2.7rem; color: rgba(245,185,66,.055); font: 900 clamp(5rem, 14vw, 12rem)/1 "Bahnschrift Condensed", Impact, sans-serif; letter-spacing: -.06em; }
+
+.run-state-banner { display: flex; justify-content: space-between; gap: 2rem; align-items: end; margin: 1rem 0; padding: 1.2rem; border: 1px solid var(--line-hot); background: linear-gradient(120deg, rgba(98,214,199,.08), rgba(245,185,66,.04)); }
+.run-state-banner h3, .run-actions h3 { margin: .25rem 0; }
+.run-state-banner p, .run-actions p { margin: .35rem 0 0; color: var(--muted); }
+.run-state-stats { display: grid; grid-template-columns: repeat(3, minmax(5rem, 1fr)); gap: .65rem; text-align: right; }
+.run-state-stats strong { display: block; color: var(--amber); font-size: 1.7rem; }
+.run-state-stats span { color: var(--muted); font-size: .75rem; }
+.run-boundary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 1rem 0; }
+.run-boundary div { padding: .8rem; border: 1px solid var(--line); background: var(--panel); }
+.run-boundary dt { color: var(--muted); font-size: .78rem; }
+.run-boundary dd { margin: .35rem 0 0; }
+.run-actions { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin: 1rem 0; padding: 1rem; border: 1px solid var(--line); background: var(--panel-raised); }
+.run-actions__buttons { display: flex; flex-wrap: wrap; gap: .55rem; justify-content: flex-end; }
+.run-action { color: var(--muted); border: 1px solid var(--line); background: var(--ink); padding: .55rem .7rem; cursor: not-allowed; }
+.run-action span { display: block; margin-top: .2rem; color: var(--amber-soft); font-size: .66rem; }
+@media (max-width: 800px) { .run-state-banner, .run-actions { align-items: stretch; flex-direction: column; } .run-state-stats, .run-boundary { grid-template-columns: 1fr; text-align: left; } }
+
+.action-eligibility-banner { display: flex; justify-content: space-between; gap: 2rem; align-items: end; margin: 1rem 0; padding: 1.2rem; border: 1px solid var(--amber-soft); background: linear-gradient(120deg, rgba(245,185,66,.08), rgba(98,214,199,.04)); }
+.action-eligibility-banner h3, .action-eligibility-actions h3 { margin: .25rem 0; }
+.action-eligibility-banner p, .action-eligibility-actions p { margin: .35rem 0 0; color: var(--muted); }
+.action-eligibility-stats { display: grid; grid-template-columns: repeat(3, minmax(5rem, 1fr)); gap: .65rem; text-align: right; }
+.action-eligibility-stats strong { display: block; color: var(--cyan); font-size: 1.7rem; }
+.action-eligibility-stats span { color: var(--muted); font-size: .75rem; }
+.action-eligibility-boundary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 1rem 0; }
+.action-eligibility-boundary div { padding: .8rem; border: 1px solid var(--line); background: var(--panel); }
+.action-eligibility-boundary dt { color: var(--muted); font-size: .78rem; }
+.action-eligibility-boundary dd { margin: .35rem 0 0; }
+.action-eligibility-actions { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin: 1rem 0; padding: 1rem; border: 1px solid var(--line); background: var(--panel-raised); }
+.action-eligibility-actions__buttons { display: flex; flex-wrap: wrap; gap: .55rem; justify-content: flex-end; }
+.action-eligibility-control { color: var(--muted); border: 1px solid var(--line); background: var(--ink); padding: .55rem .7rem; cursor: not-allowed; }
+.action-eligibility-control span { display: block; margin-top: .2rem; color: var(--amber-soft); font-size: .66rem; }
+@media (max-width: 800px) { .action-eligibility-banner, .action-eligibility-actions { align-items: stretch; flex-direction: column; } .action-eligibility-stats, .action-eligibility-boundary { grid-template-columns: 1fr; text-align: left; } }
+.masthead::after { content: "控制 / 80"; position: absolute; right: -1rem; bottom: -2.7rem; color: rgba(245,185,66,.055); font: 900 clamp(5rem, 14vw, 12rem)/1 "Bahnschrift Condensed", Impact, sans-serif; letter-spacing: -.06em; }
 .topline { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 1rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
 .hero { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(18rem, .65fr); gap: 2rem; padding: clamp(1.5rem, 5vw, 4.5rem); }
 .eyebrow { color: var(--amber); font-size: .75rem; letter-spacing: .2em; text-transform: uppercase; }
@@ -1563,13 +1825,14 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     )
 
     section_names = [name for name in _SECTION_ORDER if name in sections]
-    for optional_section in ("collaboration", "dispatch", "manual_board"):
+    for optional_section in ("collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions"):
         if optional_section in sections:
             section_names.append(optional_section)
     nav_labels = {
         "overview": "总览", "tasks": "任务", "adapters": "适配器", "automation": "自动化",
         "runs": "运行记录", "approvals": "审批", "artifacts": "产物", "reports": "报告",
         "collaboration": "协作计划", "dispatch": "派发资格", "manual_board": "人工看板",
+        "collaboration_run": "协作运行", "collaboration_actions": "操作资格",
     }
     nav = "".join(
         f'<a href="#{name.replace("_", "-")}">{_escape(nav_labels.get(name, name))}</a>'
@@ -1779,6 +2042,28 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
                 '<section class="panel-section" id="manual-board">',
                 _section_header("11", "协作 / 人工看板", manual_board),
                 _manual_board_section_body(manual_board),
+                "</section>",
+            ]
+        )
+
+    collaboration_run = sections.get("collaboration_run")
+    if collaboration_run is not None:
+        section_html.extend(
+            [
+                '<section class="panel-section" id="collaboration-run">',
+                _section_header("12", "协作 / 运行状态", collaboration_run),
+                _collaboration_run_section_body(collaboration_run),
+                "</section>",
+            ]
+        )
+
+    collaboration_actions = sections.get("collaboration_actions")
+    if collaboration_actions is not None:
+        section_html.extend(
+            [
+                '<section class="panel-section" id="collaboration-actions">',
+                _section_header("13", "协作 / 操作资格", collaboration_actions),
+                _collaboration_action_section_body(collaboration_actions),
                 "</section>",
             ]
         )
