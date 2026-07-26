@@ -17,6 +17,9 @@ from .orchestration_collaboration_run_state import inspect_collaboration_run_sta
 from .orchestration_collaboration_action_eligibility import (
     inspect_collaboration_action_eligibility,
 )
+from .orchestration_collaboration_operator_inbox import (
+    inspect_collaboration_operator_inbox,
+)
 from .orchestration_manual_board import inspect_manual_board
 from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
@@ -293,6 +296,7 @@ def build_control_panel_snapshot(
     manual_board_file: str | None = None,
     collaboration_run_file: str | None = None,
     collaboration_action_file: str | None = None,
+    collaboration_inbox_file: str | None = None,
 ) -> ControlPanelSnapshot:
     """Aggregate existing safe read models without executing or writing."""
     overview = _section(
@@ -427,6 +431,12 @@ def build_control_panel_snapshot(
             scope="file",
             availability="fixture",
         )
+    if collaboration_inbox_file is not None:
+        sections["collaboration_inbox"] = _section(
+            inspect_collaboration_operator_inbox(root, collaboration_inbox_file).to_dict(),
+            scope="file",
+            availability="fixture",
+        )
     findings = _deduplicate_findings(sections)
     status = _aggregate_status(sections)
 
@@ -472,6 +482,18 @@ def build_control_panel_snapshot(
         summary["blocked_operator_action_count"] = action_summary.get(
             "blocked_count", 0
         )
+    collaboration_inbox = sections.get("collaboration_inbox")
+    if collaboration_inbox is not None:
+        inbox_summary = collaboration_inbox.get("summary", {})
+        summary["current_inbox_eligible_count"] = inbox_summary.get(
+            "eligible_count", 0
+        )
+        summary["current_inbox_blocked_count"] = inbox_summary.get(
+            "blocked_count", 0
+        )
+        summary["current_inbox_pending_approval_count"] = inbox_summary.get(
+            "pending_approval_count", 0
+        )
     next_action = (
         {
             "code": "review_control_panel",
@@ -498,6 +520,10 @@ def build_control_panel_snapshot(
         source["collaboration_action_file"] = _safe_envelope_reference(
             root, collaboration_action_file
         )
+    if collaboration_inbox_file is not None:
+        source["collaboration_inbox_file"] = _safe_envelope_reference(
+            root, collaboration_inbox_file
+        )
     return ControlPanelSnapshot(
         status=status,
         source=source,
@@ -517,6 +543,7 @@ def build_control_panel_handoff(
     manual_board_file: str | None = None,
     collaboration_run_file: str | None = None,
     collaboration_action_file: str | None = None,
+    collaboration_inbox_file: str | None = None,
 ) -> ControlPanelHandoff:
     """Describe existing panel representations without rendering or executing them."""
     snapshot_payload = build_control_panel_snapshot(
@@ -527,6 +554,7 @@ def build_control_panel_handoff(
         manual_board_file=manual_board_file,
         collaboration_run_file=collaboration_run_file,
         collaboration_action_file=collaboration_action_file,
+        collaboration_inbox_file=collaboration_inbox_file,
     ).to_dict()
     snapshot_argv = [
         "python",
@@ -573,6 +601,16 @@ def build_control_panel_handoff(
         )
         render_argv.extend(
             ("--collaboration-action-file", safe_collaboration_action_file)
+        )
+    safe_collaboration_inbox_file = snapshot_payload["source"].get(
+        "collaboration_inbox_file"
+    )
+    if safe_collaboration_inbox_file is not None:
+        snapshot_argv.extend(
+            ("--collaboration-inbox-file", safe_collaboration_inbox_file)
+        )
+        render_argv.extend(
+            ("--collaboration-inbox-file", safe_collaboration_inbox_file)
         )
     snapshot_argv.append("--json")
 
@@ -1329,6 +1367,87 @@ def _collaboration_action_section_body(section: dict[str, Any]) -> str:
     )
 
 
+def _collaboration_inbox_section_body(section: dict[str, Any]) -> str:
+    actions = section.get("actions")
+    if section.get("status") != "pass" or actions is None:
+        return _table(
+            caption="当前操作者待办问题",
+            columns=(("rule_id", "规则 ID"), ("severity", "严重程度"), ("message", "原始技术详情")),
+            rows=section.get("findings", []),
+            empty_message="当前操作者待办暂不可用。",
+        )
+
+    current_run = section.get("current_run", {})
+    summary = section.get("summary", {})
+    pending = section.get("pending_approvals", [])
+    candidates = []
+    for item in actions:
+        candidate = item.get("command_candidate")
+        if candidate is not None:
+            candidates.append(
+                {
+                    "action": item["action"],
+                    "candidate_id": candidate["candidate_id"],
+                    "idempotency_key": candidate["idempotency_key"],
+                    "approval_id": candidate["approval_id"],
+                    "execution": candidate["execution"],
+                }
+            )
+    controls = "".join(
+        '<button type="button" class="operator-inbox-control" disabled '
+        'title="当前待办不是执行授权；当前按钮不可执行">'
+        f'{_escape(_ui_term(item["action"]))}'
+        f'<span>action_eligible={str(bool(item["action_eligible"])).lower()}</span>'
+        '<span>当前待办不是执行授权</span></button>'
+        for item in actions
+    )
+    return "".join(
+        [
+            '<div class="operator-inbox-banner">'
+            '<div><span class="eyebrow">current-state fixture / 只读待办</span>'
+            '<h3>当前操作者待办</h3>'
+            f'<p>运行 ID：{_escape(current_run.get("run_id"))} · 当前运行状态：{_escape(_ui_term(current_run.get("status")))}</p></div>'
+            '<div class="operator-inbox-stats">'
+            f'<strong>{_escape(summary.get("pending_approval_count", 0))}</strong><span>待处理审批</span>'
+            f'<strong>{_escape(summary.get("eligible_count", 0))}</strong><span>当前合格</span>'
+            f'<strong>{_escape(summary.get("blocked_count", 0))}</strong><span>当前阻止</span>'
+            '</div></div>',
+            '<dl class="operator-inbox-boundary">'
+            '<div><dt>执行授权</dt><dd><code>execution_authorized=false</code></dd></div>'
+            '<div><dt>派发资格</dt><dd><code>dispatch_eligible=false</code></dd></div>'
+            '<div><dt>执行状态</dt><dd><code>execution=not_executed</code></dd></div>'
+            '</dl>',
+            _table(
+                caption="当前运行状态",
+                columns=(("run_id", "运行 ID"), ("status", "状态"), ("current_attempts", "当前尝试"), ("current_review_ids", "当前审阅"), ("current_handoff_ids", "当前交接"), ("event_count", "事件数")),
+                rows=[current_run],
+                empty_message="没有当前运行状态。",
+            ),
+            _table(
+                caption="待处理审批",
+                columns=(("approval_id", "审批 ID"), ("status", "状态"), ("action", "操作"), ("target_type", "目标类型"), ("target_id", "目标 ID"), ("expected_state", "期望状态")),
+                rows=pending,
+                empty_message="当前没有待处理审批。",
+            ),
+            _table(
+                caption="当前操作资格",
+                columns=(("action", "操作"), ("target_type", "目标类型"), ("target_id", "目标 ID"), ("expected_state", "期望状态"), ("current_state", "当前状态"), ("approval_status", "审批状态"), ("action_eligible", "业务资格"), ("blocked_reasons", "阻止原因")),
+                rows=actions,
+                empty_message="没有当前操作请求。",
+            ),
+            _table(
+                caption="当前幂等命令候选",
+                columns=(("action", "操作"), ("candidate_id", "候选 ID"), ("idempotency_key", "幂等键"), ("approval_id", "审批 ID"), ("execution", "执行状态")),
+                rows=candidates,
+                empty_message="没有当前合格的命令候选。",
+            ),
+            '<div class="operator-inbox-actions"><div><h3>当前待办控件</h3>'
+            '<p>当前待办、审批状态和业务资格都不会授予执行授权；所有控件固定禁用。</p></div>'
+            f'<div class="operator-inbox-actions__buttons">{controls}</div></div>',
+        ]
+    )
+
+
 _CSS = r"""
 :root {
   color-scheme: dark;
@@ -1406,7 +1525,23 @@ a { color: inherit; }
 .action-eligibility-control { color: var(--muted); border: 1px solid var(--line); background: var(--ink); padding: .55rem .7rem; cursor: not-allowed; }
 .action-eligibility-control span { display: block; margin-top: .2rem; color: var(--amber-soft); font-size: .66rem; }
 @media (max-width: 800px) { .action-eligibility-banner, .action-eligibility-actions { align-items: stretch; flex-direction: column; } .action-eligibility-stats, .action-eligibility-boundary { grid-template-columns: 1fr; text-align: left; } }
-.masthead::after { content: "控制 / 80"; position: absolute; right: -1rem; bottom: -2.7rem; color: rgba(245,185,66,.055); font: 900 clamp(5rem, 14vw, 12rem)/1 "Bahnschrift Condensed", Impact, sans-serif; letter-spacing: -.06em; }
+
+.operator-inbox-banner { display: flex; justify-content: space-between; gap: 2rem; align-items: end; margin: 1rem 0; padding: 1.2rem; border: 1px solid var(--cyan); background: linear-gradient(120deg, rgba(98,214,199,.09), rgba(245,185,66,.035)); }
+.operator-inbox-banner h3, .operator-inbox-actions h3 { margin: .25rem 0; }
+.operator-inbox-banner p, .operator-inbox-actions p { margin: .35rem 0 0; color: var(--muted); }
+.operator-inbox-stats { display: grid; grid-template-columns: repeat(3, minmax(5rem, 1fr)); gap: .65rem; text-align: right; }
+.operator-inbox-stats strong { display: block; color: var(--cyan); font-size: 1.7rem; }
+.operator-inbox-stats span { color: var(--muted); font-size: .75rem; }
+.operator-inbox-boundary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 1rem 0; }
+.operator-inbox-boundary div { padding: .8rem; border: 1px solid var(--line); background: var(--panel); }
+.operator-inbox-boundary dt { color: var(--muted); font-size: .78rem; }
+.operator-inbox-boundary dd { margin: .35rem 0 0; }
+.operator-inbox-actions { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin: 1rem 0; padding: 1rem; border: 1px solid var(--line); background: var(--panel-raised); }
+.operator-inbox-actions__buttons { display: flex; flex-wrap: wrap; gap: .55rem; justify-content: flex-end; }
+.operator-inbox-control { color: var(--muted); border: 1px solid var(--line); background: var(--ink); padding: .55rem .7rem; cursor: not-allowed; }
+.operator-inbox-control span { display: block; margin-top: .2rem; color: var(--amber-soft); font-size: .66rem; }
+@media (max-width: 800px) { .operator-inbox-banner, .operator-inbox-actions { align-items: stretch; flex-direction: column; } .operator-inbox-stats, .operator-inbox-boundary { grid-template-columns: 1fr; text-align: left; } }
+.masthead::after { content: "控制 / 81"; position: absolute; right: -1rem; bottom: -2.7rem; color: rgba(245,185,66,.055); font: 900 clamp(5rem, 14vw, 12rem)/1 "Bahnschrift Condensed", Impact, sans-serif; letter-spacing: -.06em; }
 .topline { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 1rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
 .hero { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(18rem, .65fr); gap: 2rem; padding: clamp(1.5rem, 5vw, 4.5rem); }
 .eyebrow { color: var(--amber); font-size: .75rem; letter-spacing: .2em; text-transform: uppercase; }
@@ -1825,14 +1960,14 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     )
 
     section_names = [name for name in _SECTION_ORDER if name in sections]
-    for optional_section in ("collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions"):
+    for optional_section in ("collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
         if optional_section in sections:
             section_names.append(optional_section)
     nav_labels = {
         "overview": "总览", "tasks": "任务", "adapters": "适配器", "automation": "自动化",
         "runs": "运行记录", "approvals": "审批", "artifacts": "产物", "reports": "报告",
         "collaboration": "协作计划", "dispatch": "派发资格", "manual_board": "人工看板",
-        "collaboration_run": "协作运行", "collaboration_actions": "操作资格",
+        "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
     }
     nav = "".join(
         f'<a href="#{name.replace("_", "-")}">{_escape(nav_labels.get(name, name))}</a>'
@@ -2064,6 +2199,17 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
                 '<section class="panel-section" id="collaboration-actions">',
                 _section_header("13", "协作 / 操作资格", collaboration_actions),
                 _collaboration_action_section_body(collaboration_actions),
+                "</section>",
+            ]
+        )
+
+    collaboration_inbox = sections.get("collaboration_inbox")
+    if collaboration_inbox is not None:
+        section_html.extend(
+            [
+                '<section class="panel-section" id="collaboration-inbox">',
+                _section_header("14", "协作 / 当前待办", collaboration_inbox),
+                _collaboration_inbox_section_body(collaboration_inbox),
                 "</section>",
             ]
         )

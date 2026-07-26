@@ -12,7 +12,7 @@
 
 ## 当前状态
 
-项目已完成 Stage 80，当前具备：
+项目已完成 Stage 81，当前具备：
 
 - 统一 Agent socket registry、capability routing 与显式角色绑定；
 - 可校验的多 Agent collaboration plan，包含 work item、依赖、handoff、artifact 和 review gate；
@@ -22,10 +22,11 @@
 - 用户主动复制或下载符合 collaboration plan v1 的候选 JSON；
 - fixture-backed 协作运行状态、连续事件重放、工作项重试、审阅、交接、阻塞恢复与产物回收；
 - checkpoint 操作资格、fixture 审批精确绑定和不可执行的幂等命令候选；
-- 中文 Control Panel 运行/操作资格投影及固定禁用的操作者控件；
+- 只聚合最新 attempt/review/handoff 的当前操作者待办、pending approval 集合与稳定 stale target 阻止原因；
+- 中文 Control Panel 运行/操作资格/当前待办投影及固定禁用的操作者控件；
 - 单 work item dispatch proposal、ACP readiness evidence 基础和完整审计边界。
 
-看板仍不能启动真实 Kimi、Claude 或 OMP 协作。即使 fixture 投影显示 `action_eligible=true`，也固定 `execution_authorized=false`、`dispatch_eligible=false`、`execution=not_executed`。下一产品里程碑是 **Stage 81 当前态操作者待办与审批集合投影**：只聚合最新运行状态下的待处理审批、可选操作和稳定阻止原因，仍不读取真实 approval ledger 或调用 Agent。
+看板仍不能启动真实 Kimi、Claude 或 OMP 协作。即使 current inbox 投影显示 `action_eligible=true`，也固定 `execution_authorized=false`、`dispatch_eligible=false`、`execution=not_executed`。下一产品里程碑是 **Stage 82 真实 approval ledger 接入前的安全审查与只读契约收口**：只审查 fixture approval、当前待办与未来真实绑定的授权边界，仍不读取真实 ledger 或调用 Agent。
 
 底层仍保留两项受限 Windows 真实执行能力：fixed Git status 与 fixed Pi print。两者都经过显式授权、固定参数、machine-local lease、执行审计和 Windows Job Object 进程树回收；它们是安全基础设施，不是产品主线。
 
@@ -63,7 +64,7 @@ git diff --check
 ## 文档入口
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
-- [`docs/128-stage80-operator-action-eligibility-and-approval-binding.md`](docs/128-stage80-operator-action-eligibility-and-approval-binding.md)：当前操作资格、审批绑定、幂等候选与只读控制面事实源。
+- [`docs/129-stage81-current-operator-inbox-and-approval-collection.md`](docs/129-stage81-current-operator-inbox-and-approval-collection.md)：当前操作者待办、审批集合、stale target 阻止与只读控制面事实源。
 - [`docs/00-index.md`](docs/00-index.md)：按主题导航。
 - [`docs/02-roadmap.md`](docs/02-roadmap.md)：已完成能力包与下一候选。
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md)：当前最新真实执行事实源。

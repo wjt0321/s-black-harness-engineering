@@ -1,0 +1,411 @@
+{
+  "version": 1,
+  "collaboration_file": "adapters/collaboration-plan.example.json",
+  "run_id": "collab-run-demo-001",
+  "run_state": "blocked",
+  "work_item_attempts": [
+    {
+      "attempt_id": "attempt-plan-1",
+      "work_item_id": "plan",
+      "attempt_number": 1,
+      "status": "completed",
+      "artifact_ids": [
+        "artifact-plan-1"
+      ],
+      "review_ids": []
+    },
+    {
+      "attempt_id": "attempt-implement-1",
+      "work_item_id": "implement",
+      "attempt_number": 1,
+      "status": "changes_requested",
+      "artifact_ids": [
+        "artifact-patch-1"
+      ],
+      "review_ids": [
+        "review-implement-1"
+      ]
+    },
+    {
+      "attempt_id": "attempt-implement-2",
+      "work_item_id": "implement",
+      "attempt_number": 2,
+      "status": "blocked",
+      "artifact_ids": [],
+      "review_ids": []
+    },
+    {
+      "attempt_id": "attempt-review-1",
+      "work_item_id": "review",
+      "attempt_number": 1,
+      "status": "planned",
+      "artifact_ids": [],
+      "review_ids": []
+    }
+  ],
+  "reviews": [
+    {
+      "review_id": "review-implement-1",
+      "gate_id": "review-implementation",
+      "work_item_id": "implement",
+      "attempt_id": "attempt-implement-1",
+      "status": "changes_requested",
+      "artifact_ids": [
+        "artifact-patch-1"
+      ]
+    }
+  ],
+  "handoffs": [
+    {
+      "handoff_id": "handoff-plan-implement",
+      "from_work_item_id": "plan",
+      "to_work_item_id": "implement",
+      "from_attempt_id": "attempt-plan-1",
+      "to_attempt_id": "attempt-implement-1",
+      "status": "accepted",
+      "artifact_ids": [
+        "artifact-plan-1"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "artifact-plan-1",
+      "work_item_id": "plan",
+      "attempt_id": "attempt-plan-1",
+      "artifact_type": "plan",
+      "status": "validated",
+      "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "artifact_id": "artifact-patch-1",
+      "work_item_id": "implement",
+      "attempt_id": "attempt-implement-1",
+      "artifact_type": "patch",
+      "status": "superseded",
+      "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "events": [
+    {
+      "sequence": 1,
+      "event_id": "event-01",
+      "event_type": "run_created",
+      "entity_type": "run",
+      "entity_id": "collab-run-demo-001",
+      "from_state": null,
+      "to_state": "draft",
+      "label": "Fixture collaboration run created"
+    },
+    {
+      "sequence": 2,
+      "event_id": "event-02",
+      "event_type": "plan_confirmed",
+      "entity_type": "run",
+      "entity_id": "collab-run-demo-001",
+      "from_state": "draft",
+      "to_state": "awaiting_approval",
+      "label": "Operator-confirmed plan entered approval boundary"
+    },
+    {
+      "sequence": 3,
+      "event_id": "event-03",
+      "event_type": "start_approved",
+      "entity_type": "run",
+      "entity_id": "collab-run-demo-001",
+      "from_state": "awaiting_approval",
+      "to_state": "ready",
+      "label": "Fixture start approval recorded"
+    },
+    {
+      "sequence": 4,
+      "event_id": "event-04",
+      "event_type": "run_started",
+      "entity_type": "run",
+      "entity_id": "collab-run-demo-001",
+      "from_state": "ready",
+      "to_state": "running",
+      "label": "Fixture run entered simulated running state"
+    },
+    {
+      "sequence": 5,
+      "event_id": "event-05",
+      "event_type": "work_item_attempt_created",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-plan-1",
+      "from_state": null,
+      "to_state": "planned",
+      "label": "Plan attempt created"
+    },
+    {
+      "sequence": 6,
+      "event_id": "event-06",
+      "event_type": "work_item_ready",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-plan-1",
+      "from_state": "planned",
+      "to_state": "ready",
+      "label": "Plan attempt became ready"
+    },
+    {
+      "sequence": 7,
+      "event_id": "event-07",
+      "event_type": "work_item_started",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-plan-1",
+      "from_state": "ready",
+      "to_state": "running",
+      "label": "Plan attempt started in fixture"
+    },
+    {
+      "sequence": 8,
+      "event_id": "event-08",
+      "event_type": "artifact_expected",
+      "entity_type": "artifact",
+      "entity_id": "artifact-plan-1",
+      "from_state": null,
+      "to_state": "expected",
+      "label": "Plan artifact expected"
+    },
+    {
+      "sequence": 9,
+      "event_id": "event-09",
+      "event_type": "artifact_reported",
+      "entity_type": "artifact",
+      "entity_id": "artifact-plan-1",
+      "from_state": "expected",
+      "to_state": "reported",
+      "label": "Plan artifact reported"
+    },
+    {
+      "sequence": 10,
+      "event_id": "event-10",
+      "event_type": "artifact_validated",
+      "entity_type": "artifact",
+      "entity_id": "artifact-plan-1",
+      "from_state": "reported",
+      "to_state": "validated",
+      "label": "Plan artifact validated"
+    },
+    {
+      "sequence": 11,
+      "event_id": "event-11",
+      "event_type": "work_item_completed",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-plan-1",
+      "from_state": "running",
+      "to_state": "completed",
+      "label": "Plan attempt completed"
+    },
+    {
+      "sequence": 12,
+      "event_id": "event-12",
+      "event_type": "handoff_created",
+      "entity_type": "handoff",
+      "entity_id": "handoff-plan-implement",
+      "from_state": null,
+      "to_state": "pending",
+      "label": "Plan to implementation handoff created"
+    },
+    {
+      "sequence": 13,
+      "event_id": "event-13",
+      "event_type": "handoff_ready",
+      "entity_type": "handoff",
+      "entity_id": "handoff-plan-implement",
+      "from_state": "pending",
+      "to_state": "ready",
+      "label": "Plan handoff became ready"
+    },
+    {
+      "sequence": 14,
+      "event_id": "event-14",
+      "event_type": "handoff_accepted",
+      "entity_type": "handoff",
+      "entity_id": "handoff-plan-implement",
+      "from_state": "ready",
+      "to_state": "accepted",
+      "label": "Plan handoff accepted"
+    },
+    {
+      "sequence": 15,
+      "event_id": "event-15",
+      "event_type": "work_item_attempt_created",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-implement-1",
+      "from_state": null,
+      "to_state": "planned",
+      "label": "First implementation attempt created"
+    },
+    {
+      "sequence": 16,
+      "event_id": "event-16",
+      "event_type": "work_item_ready",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-implement-1",
+      "from_state": "planned",
+      "to_state": "ready",
+      "label": "First implementation attempt became ready"
+    },
+    {
+      "sequence": 17,
+      "event_id": "event-17",
+      "event_type": "work_item_started",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-implement-1",
+      "from_state": "ready",
+      "to_state": "running",
+      "label": "First implementation attempt started"
+    },
+    {
+      "sequence": 18,
+      "event_id": "event-18",
+      "event_type": "artifact_expected",
+      "entity_type": "artifact",
+      "entity_id": "artifact-patch-1",
+      "from_state": null,
+      "to_state": "expected",
+      "label": "First patch expected"
+    },
+    {
+      "sequence": 19,
+      "event_id": "event-19",
+      "event_type": "artifact_reported",
+      "entity_type": "artifact",
+      "entity_id": "artifact-patch-1",
+      "from_state": "expected",
+      "to_state": "reported",
+      "label": "First patch reported"
+    },
+    {
+      "sequence": 20,
+      "event_id": "event-20",
+      "event_type": "artifact_validated",
+      "entity_type": "artifact",
+      "entity_id": "artifact-patch-1",
+      "from_state": "reported",
+      "to_state": "validated",
+      "label": "First patch structurally validated"
+    },
+    {
+      "sequence": 21,
+      "event_id": "event-21",
+      "event_type": "work_item_review_requested",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-implement-1",
+      "from_state": "running",
+      "to_state": "review_pending",
+      "label": "First implementation attempt requested review"
+    },
+    {
+      "sequence": 22,
+      "event_id": "event-22",
+      "event_type": "review_created",
+      "entity_type": "review",
+      "entity_id": "review-implement-1",
+      "from_state": null,
+      "to_state": "pending",
+      "label": "First implementation review created"
+    },
+    {
+      "sequence": 23,
+      "event_id": "event-23",
+      "event_type": "review_started",
+      "entity_type": "review",
+      "entity_id": "review-implement-1",
+      "from_state": "pending",
+      "to_state": "in_review",
+      "label": "First implementation review started"
+    },
+    {
+      "sequence": 24,
+      "event_id": "event-24",
+      "event_type": "review_changes_requested",
+      "entity_type": "review",
+      "entity_id": "review-implement-1",
+      "from_state": "in_review",
+      "to_state": "changes_requested",
+      "label": "Review requested changes"
+    },
+    {
+      "sequence": 25,
+      "event_id": "event-25",
+      "event_type": "work_item_changes_requested",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-implement-1",
+      "from_state": "review_pending",
+      "to_state": "changes_requested",
+      "label": "First implementation attempt closed for retry"
+    },
+    {
+      "sequence": 26,
+      "event_id": "event-26",
+      "event_type": "artifact_superseded",
+      "entity_type": "artifact",
+      "entity_id": "artifact-patch-1",
+      "from_state": "validated",
+      "to_state": "superseded",
+      "label": "First patch superseded by retry"
+    },
+    {
+      "sequence": 27,
+      "event_id": "event-27",
+      "event_type": "work_item_attempt_created",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-implement-2",
+      "from_state": null,
+      "to_state": "planned",
+      "label": "Retry implementation attempt created"
+    },
+    {
+      "sequence": 28,
+      "event_id": "event-28",
+      "event_type": "work_item_ready",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-implement-2",
+      "from_state": "planned",
+      "to_state": "ready",
+      "label": "Retry implementation attempt became ready"
+    },
+    {
+      "sequence": 29,
+      "event_id": "event-29",
+      "event_type": "work_item_started",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-implement-2",
+      "from_state": "ready",
+      "to_state": "running",
+      "label": "Retry implementation attempt started"
+    },
+    {
+      "sequence": 30,
+      "event_id": "event-30",
+      "event_type": "run_blocked",
+      "entity_type": "run",
+      "entity_id": "collab-run-demo-001",
+      "from_state": "running",
+      "to_state": "blocked",
+      "label": "Fixture run blocked on recoverable input"
+    },
+    {
+      "sequence": 31,
+      "event_id": "event-31",
+      "event_type": "work_item_blocked",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-implement-2",
+      "from_state": "running",
+      "to_state": "blocked",
+      "label": "Retry attempt blocked on recoverable input"
+    },
+    {
+      "sequence": 32,
+      "event_id": "event-current-review-attempt-created",
+      "event_type": "work_item_attempt_created",
+      "entity_type": "work_item_attempt",
+      "entity_id": "attempt-review-1",
+      "from_state": null,
+      "to_state": "planned",
+      "label": "Current reviewer attempt planned"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "control-plane/collaboration-operator-inbox/v1",
+  "title": "Current collaboration operator inbox",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["inbox_id", "operator_ref", "run_state_file", "approvals", "action_requests", "recorded_idempotency_keys"],
+  "properties": {
+    "inbox_id": {"$ref": "#/$defs/identifier"},
+    "operator_ref": {"$ref": "#/$defs/identifier"},
+    "run_state_file": {"type": "string", "minLength": 1, "maxLength": 240, "pattern": "^[^\\r\\n]+\\.json$"},
+    "approvals": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"$ref": "#/$defs/approval"}},
+    "action_requests": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"$ref": "#/$defs/actionRequest"}},
+    "recorded_idempotency_keys": {"type": "array", "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/hash"}}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 96, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "action": {"enum": ["approve_start", "cancel", "retry", "request_changes", "approve_handoff"]},
+    "targetType": {"enum": ["run", "work_item_attempt", "review", "handoff"]},
+    "expectedState": {"enum": ["awaiting_approval", "ready", "running", "blocked", "changes_requested", "failed", "in_review"]},
+    "binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["run_id", "run_projection_id", "action", "target_type", "target_id", "expected_state"],
+      "properties": {
+        "run_id": {"$ref": "#/$defs/identifier"},
+        "run_projection_id": {"$ref": "#/$defs/hash"},
+        "action": {"$ref": "#/$defs/action"},
+        "target_type": {"$ref": "#/$defs/targetType"},
+        "target_id": {"$ref": "#/$defs/identifier"},
+        "expected_state": {"$ref": "#/$defs/expectedState"}
+      }
+    },
+    "approval": {
+      "type": "object", "additionalProperties": false,
+      "required": ["approval_id", "status", "binding"],
+      "properties": {
+        "approval_id": {"$ref": "#/$defs/identifier"},
+        "status": {"enum": ["pending", "approved", "rejected", "cancelled", "expired"]},
+        "binding": {"$ref": "#/$defs/binding"}
+      }
+    },
+    "actionRequest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["request_id", "action", "target_type", "target_id", "expected_state", "approval_id"],
+      "properties": {
+        "request_id": {"$ref": "#/$defs/identifier"},
+        "action": {"$ref": "#/$defs/action"},
+        "target_type": {"$ref": "#/$defs/targetType"},
+        "target_id": {"$ref": "#/$defs/identifier"},
+        "expected_state": {"$ref": "#/$defs/expectedState"},
+        "approval_id": {"$ref": "#/$defs/identifier"}
+      }
+    }
+  }
+}

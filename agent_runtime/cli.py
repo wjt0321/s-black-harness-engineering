@@ -43,6 +43,9 @@ from .orchestration_collaboration_run_state import inspect_collaboration_run_sta
 from .orchestration_collaboration_action_eligibility import (
     inspect_collaboration_action_eligibility,
 )
+from .orchestration_collaboration_operator_inbox import (
+    inspect_collaboration_operator_inbox,
+)
 from .orchestration_collaboration_dispatch import inspect_collaboration_dispatch
 from .orchestration_contract import build_contract_manifest
 from .orchestration_contract_check import check_contract_requirements
@@ -1563,6 +1566,7 @@ def _cmd_orchestration_control_panel_handoff(args: argparse.Namespace) -> int:
         manual_board_file=args.manual_board_file,
         collaboration_run_file=args.collaboration_run_file,
         collaboration_action_file=args.collaboration_action_file,
+        collaboration_inbox_file=args.collaboration_inbox_file,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1581,6 +1585,7 @@ def _cmd_orchestration_control_panel_snapshot(args: argparse.Namespace) -> int:
         manual_board_file=args.manual_board_file,
         collaboration_run_file=args.collaboration_run_file,
         collaboration_action_file=args.collaboration_action_file,
+        collaboration_inbox_file=args.collaboration_inbox_file,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1599,6 +1604,7 @@ def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
         manual_board_file=args.manual_board_file,
         collaboration_run_file=args.collaboration_run_file,
         collaboration_action_file=args.collaboration_action_file,
+        collaboration_inbox_file=args.collaboration_inbox_file,
     )
     print(render_control_panel_html(result.to_dict()))
     return result.exit_code()
@@ -2958,6 +2964,18 @@ def _cmd_orchestration_collaboration_action_eligibility(
     return result.exit_code()
 
 
+def _cmd_orchestration_collaboration_operator_inbox(
+    args: argparse.Namespace,
+) -> int:
+    """Inspect the current fixture-backed operator inbox without execution."""
+    result = inspect_collaboration_operator_inbox(_root_path(args), args.file)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(result.render_human())
+    return result.exit_code()
+
+
 def _cmd_orchestration_collaboration_dispatch(args: argparse.Namespace) -> int:
     """Validate or inspect one non-executing work-item dispatch proposal."""
     result = inspect_collaboration_dispatch(_root_path(args), args.file)
@@ -3805,6 +3823,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional fixture-backed operator action eligibility JSON",
     )
+    orchestration_control_panel_handoff_parser.add_argument(
+        "--collaboration-inbox-file",
+        default=None,
+        help="Optional fixture-backed current operator inbox JSON",
+    )
     _add_global_args(orchestration_control_panel_handoff_parser)
     orchestration_control_panel_handoff_parser.set_defaults(
         func=_cmd_orchestration_control_panel_handoff
@@ -3845,6 +3868,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional fixture-backed operator action eligibility JSON",
     )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--collaboration-inbox-file",
+        default=None,
+        help="Optional fixture-backed current operator inbox JSON",
+    )
     _add_global_args(orchestration_control_panel_snapshot_parser)
     orchestration_control_panel_snapshot_parser.set_defaults(
         func=_cmd_orchestration_control_panel_snapshot
@@ -3884,6 +3912,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--collaboration-action-file",
         default=None,
         help="Optional fixture-backed operator action eligibility JSON",
+    )
+    orchestration_control_panel_render_parser.add_argument(
+        "--collaboration-inbox-file",
+        default=None,
+        help="Optional fixture-backed current operator inbox JSON",
     )
     _add_global_args(orchestration_control_panel_render_parser)
     orchestration_control_panel_render_parser.set_defaults(
@@ -4444,6 +4477,23 @@ def build_parser() -> argparse.ArgumentParser:
     _add_global_args(collaboration_action_inspect_parser)
     collaboration_action_inspect_parser.set_defaults(
         func=_cmd_orchestration_collaboration_action_eligibility
+    )
+
+    collaboration_inbox_parser = orchestration_collaboration_subparsers.add_parser(
+        "inbox", help="Inspect the current fixture-backed operator inbox"
+    )
+    collaboration_inbox_subparsers = collaboration_inbox_parser.add_subparsers(
+        dest="collaboration_inbox_command", required=True
+    )
+    collaboration_inbox_inspect_parser = collaboration_inbox_subparsers.add_parser(
+        "inspect", help="Validate current action eligibility and pending approvals"
+    )
+    collaboration_inbox_inspect_parser.add_argument(
+        "--file", required=True, help="Project-local operator inbox JSON file"
+    )
+    _add_global_args(collaboration_inbox_inspect_parser)
+    collaboration_inbox_inspect_parser.set_defaults(
+        func=_cmd_orchestration_collaboration_operator_inbox
     )
 
     collaboration_dispatch_parser = orchestration_collaboration_subparsers.add_parser(

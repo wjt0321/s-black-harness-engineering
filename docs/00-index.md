@@ -44,11 +44,11 @@
 
 ## 当前事实源
 
-- `128-stage80-operator-action-eligibility-and-approval-binding.md` — 当前多 Agent 产品主线：checkpoint 操作资格、fixture 审批绑定、幂等候选，以及资格不等于执行授权的边界。
+- `129-stage81-current-operator-inbox-and-approval-collection.md` — 当前多 Agent 产品主线：最新状态操作者待办、pending approval 集合、stale target 阻止，以及待办不等于执行授权的边界。
 - `111-pi-controlled-dry-run-print-implementation.md` — 当前唯一 Agent 类真实执行能力及其安全边界。
 - `114-pi-bound-runner-migration-design.md` — deferred 安全工作；不是当前产品主线。
 
-Stage 67-79 的 socket、协作计划、看板、dispatch、readiness、中文界面、人工导出和运行状态记录已归档到 `archive/115-*.md` 至 `archive/127-*.md`，仅在追溯设计依据时读取。
+Stage 67-80 的 socket、协作计划、看板、dispatch、readiness、中文界面、人工导出、运行状态和 checkpoint 操作资格记录已归档到 `archive/115-*.md` 至 `archive/128-*.md`，仅在追溯设计依据时读取。
 
 ## 历史归档
 

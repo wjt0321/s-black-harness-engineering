@@ -1809,6 +1809,30 @@ python -m agent_runtime.cli orchestration control-panel handoff \
 - candidate 不包含 argv/cwd/env；即使 `action_eligible=true`，也固定 `execution_authorized=false`、`dispatch_eligible=false`、`execution=not_executed`。
 - `--collaboration-action-file` 增加 file-scoped `collaboration_actions` 区段；所有中文操作控件仍 disabled，并标注“资格不等于执行授权”。
 
+Stage 81 当前态操作者待办、pending approval 集合与 stale target 阻止：
+
+```bash
+python -m agent_runtime.cli orchestration collaboration inbox inspect \
+  --file adapters/collaboration-operator-inbox.example.json \
+  --json
+python -m agent_runtime.cli orchestration control-panel snapshot \
+  --collaboration-inbox-file adapters/collaboration-operator-inbox.example.json \
+  --json
+python -m agent_runtime.cli orchestration control-panel render \
+  --collaboration-inbox-file adapters/collaboration-operator-inbox.example.json \
+  > control-panel.html
+python -m agent_runtime.cli orchestration control-panel handoff \
+  --collaboration-inbox-file adapters/collaboration-operator-inbox.example.json \
+  --json
+```
+
+- `inbox inspect` 复用已验证的 Stage 79 run-state 投影，但只把最新 work-item attempt 及与其对齐的 review/handoff 视为当前实体。
+- 历史 attempt/review/handoff 稳定返回 `target_not_current` 或 `target_state_mismatch`，不会因仍存在于事件历史中重新成为当前待办。
+- `pending` fixture approval 进入 `pending_approvals`，但不会生成候选或授权执行；审批证据仍不是实际 ledger 事实。
+- 示例 blocked Run 聚合 5 个操作：1 个当前合格 cancel、1 个 pending approval，以及 4 个 blocked/stale action。
+- `--collaboration-inbox-file` 增加 file-scoped `collaboration_inbox` 区段；中文“协作 / 当前待办”控件全部 disabled，并标注“当前待办不是执行授权”。
+- candidate 不包含 argv/cwd/env；即使 `action_eligible=true`，也固定 `execution_authorized=false`、`dispatch_eligible=false`、`execution=not_executed`。
+
 - `snapshot` 输出 `control-plane/control-panel-snapshot/v1` 与确定性 `snapshot_id`。
 - `render` 只向 stdout 输出自包含 HTML；CLI 自身不创建文件、不启动 service。
 - `handoff` 输出 `control-plane/control-panel-handoff/v1`，声明 JSON/HTML representation、media type、encoding、renderer version、`snapshot_id`、`render_id`、`working_directory=project_root` 与 argv 数组。
