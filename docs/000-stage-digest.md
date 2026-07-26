@@ -10,9 +10,9 @@
 
 ## 当前阶段
 
-- **Stage 65 — 已完成 design gate：bound Node + sealed CLI entry runner migration；未改 runner、未创建 binding、未授权 smoke**
-- 收口记录：`archive/release-notes/112-release-notes-stage65-pi-bound-runner-migration-design.md`
-- 最近完成：**Stage 64 — Node/Pi module closure binding-only inspect/create/rotate；未迁移 Pi runner**
+- **Stage 67 — Socket Registry v1 已完成：Pi、Kimi Code、Claude Code、OMP 与 QwenPaw API 统一 Agent socket 只读投影；未调用 Agent、未探测在线状态**
+- 事实源：`115-agent-socket-registry-v1.md`
+- Stage 66 Pi bound runner migration 已冻结为 deferred security work，不是当前产品主线。
 
 ## 当前真实执行能力
 
@@ -33,15 +33,13 @@
 
 1. `README.md`
 2. `docs/00-index.md`
-3. `docs/114-pi-bound-runner-migration-design.md`
-4. `docs/113-pi-runtime-binding-implementation.md`
-5. `docs/112-pi-node-runtime-identity-binding-design.md`
-6. `docs/111-pi-controlled-dry-run-print-implementation.md`
+3. `docs/115-agent-socket-registry-v1.md`
+4. `docs/49-capability-routing-model.md`
+5. `docs/48-adapter-runtime-interface.md`
+6. `docs/114-pi-bound-runner-migration-design.md`（deferred security work）
 7. `docs/21-controlled-write-boundaries.md`
 8. `tasks/handoff-2026-07-26.md`
-9. `tasks/handoff-2026-07-26-stage64-pi-runtime-binding.md`
-10. `tasks/handoff-2026-07-25.md`（需要 Stage 52–62 细节时）
-11. `tasks/progress.md`（只做历史取证，不作为入口）
+9. `tasks/progress.md`（只做历史取证，不作为入口）
 
 然后运行：
 
@@ -52,10 +50,10 @@ python -m agent_runtime.cli doctor
 
 ## 下一步做什么
 
-- **Stage 66 bound runner migration implementation**：仅在单独授权、reviewed binding 与明确 smoke 范围后，才将 fixed Pi print 接入 direct Node launch；
-- read roundtrip 与 canonical approval binding 继续维持独立 design gate；
-- 当前暂停在此处，先复盘项目是否偏离初衷，再决定是否进入 Stage 66。
+- **Stage 68 multi-Agent collaboration plan design gate**：定义一个任务如何选择多个 socket、分配角色、交接 artifact 与形成 review 结论；保持只读，不调用 Agent；
+- Socket-specific readiness 和 capability routing explanation 随后独立推进；
+- Stage 66 Pi bound runner migration 保持 deferred，除非 Pi 成为明确优先执行器且获得单独授权。
 
 ## 验证基线
 
-Stage 64 收口证据：full pytest、public scan、doctor、docs context、Markdown link audit、pre-commit 与 diff check 均通过；自动验证未创建真实 binding、未执行 Node/Pi/npm。
+Socket Registry v1 收口需通过：full pytest、public scan、doctor、docs context、Markdown link audit、pre-commit 与 diff check；自动验证不得调用 Agent 或进行进程、网络、会话、额度探测。

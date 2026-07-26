@@ -11,6 +11,7 @@ from typing import Any, Iterable
 
 from .loader import normalize_path
 from .orchestration_adapter import list_adapters
+from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
 from .orchestration_artifact import list_artifacts
 from .orchestration_contract import build_contract_manifest
@@ -297,6 +298,11 @@ def build_control_panel_snapshot(
         scope="registry",
         availability="stable",
     )
+    sockets = list_sockets(root).to_dict()
+    adapters["agent_sockets"] = sockets.get("sockets", [])
+    adapters["agent_socket_status"] = sockets["status"]
+    if sockets.get("findings"):
+        adapters.setdefault("findings", []).extend(sockets["findings"])
 
     manifest = build_contract_manifest().to_dict()
     profiles = list_automation_profiles(root).to_dict()
@@ -390,6 +396,10 @@ def build_control_panel_snapshot(
         "total_events": overview_summary.get("total_events", 0),
         "total_adapters": len(adapter_rows),
         "enabled_adapters": sum(bool(item.get("enabled")) for item in adapter_rows),
+        "agent_socket_count": len(adapters.get("agent_sockets", [])),
+        "enabled_agent_socket_count": sum(
+            bool(item.get("enabled")) for item in adapters.get("agent_sockets", [])
+        ),
         "automation_profile_count": len(automation.get("profiles", [])),
         "run_count": len(runs.get("runs", [])),
         "pending_approval_count": sum(
@@ -810,6 +820,18 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
                 ),
                 rows=adapters.get("adapters", []),
                 empty_message="No adapters projected.",
+            ),
+            _table(
+                caption="Agent sockets / declared plug-ins",
+                columns=(
+                    ("socket_id", "Socket"),
+                    ("invocation_mode", "Invocation"),
+                    ("availability", "Availability"),
+                    ("risk_level", "Risk"),
+                    ("capabilities", "Capabilities"),
+                ),
+                rows=adapters.get("agent_sockets", []),
+                empty_message="No Agent sockets projected.",
             ),
             "</section>",
         ]

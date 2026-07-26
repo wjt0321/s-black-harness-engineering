@@ -98,6 +98,20 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Source-backed metadata only; online availability is not probed.",
         ),
         _entry(
+            "agent_socket_registry",
+            "stable",
+            "read_only",
+            commands=(
+                ("orchestration", "socket", "inspect"),
+                ("orchestration", "socket", "list"),
+            ),
+            key_flags=("--capability",),
+            boundary=(
+                "Projects declared Agent sockets from the shared adapter registry; "
+                "does not probe processes, sessions, networks, quota, or readiness."
+            ),
+        ),
+        _entry(
             "approval_read",
             "stable_limited",
             "read_only",

@@ -10,6 +10,7 @@ from agent_runtime.orchestration_contract import build_contract_manifest
 
 EXPECTED_CONTRACT_IDS = [
     "adapter_registry",
+    "agent_socket_registry",
     "approval_read",
     "approval_resolve",
     "artifact_read",
@@ -49,8 +50,8 @@ def test_contract_manifest_freezes_v1_shape_and_availability_counts() -> None:
     assert manifest["schema_version"] == "control-plane/orchestration-contract/v1"
     assert manifest["consumer"] == "cli-automation"
     assert manifest["summary"] == {
-        "total_entries": 30,
-        "stable": 10,
+        "total_entries": 31,
+        "stable": 11,
         "stable_limited": 9,
         "preview": 8,
         "unavailable": 3,
@@ -181,6 +182,6 @@ def test_contract_inspect_human_output_is_compact(capsys) -> None:
     assert code == 0
     assert "ORCHESTRATION CONTRACT" in captured.out
     assert "schema_version=control-plane/orchestration-contract/v1" in captured.out
-    assert "total_entries=30" in captured.out
+    assert "total_entries=31" in captured.out
     assert "run_plan preview read_only orchestration run" in captured.out
     assert "external_execution_service_stack unavailable unavailable -" in captured.out

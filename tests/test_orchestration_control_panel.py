@@ -296,6 +296,12 @@ def test_control_panel_snapshot_without_envelope_is_honest_and_read_only() -> No
     assert payload["summary"]["total_adapters"] == len(
         payload["sections"]["adapters"]["adapters"]
     )
+    sockets = payload["sections"]["adapters"]["agent_sockets"]
+    assert payload["summary"]["agent_socket_count"] == len(sockets)
+    assert {socket["socket_id"] for socket in sockets} >= {
+        "pi-cli", "kimi-code-acp", "claude-code-acp", "omp-acp"
+    }
+    assert all(socket["availability"] == "declared" for socket in sockets)
     assert payload["summary"]["run_count"] == 0
     assert payload["guarantees"] == {
         "deterministic": True,

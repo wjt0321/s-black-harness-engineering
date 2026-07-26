@@ -35,6 +35,7 @@ from .runtime_plan import RuntimePlanResult, plan_runtime_action
 from .runtime_task_create import TaskCreateDryRunResult, create_task, create_task_dry_run
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
+from .orchestration_socket import SocketDetailResult, SocketListResult, get_socket, list_sockets
 from .orchestration_contract import build_contract_manifest
 from .orchestration_contract_check import check_contract_requirements
 from .orchestration_execution_readiness import check_execution_readiness
@@ -2846,6 +2847,53 @@ def _cmd_orchestration_adapter_list(args: argparse.Namespace) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _cmd_orchestration_socket_list(args: argparse.Namespace) -> int:
+    """Render declared Agent sockets without probing their live runtimes."""
+    result = list_sockets(_root_path(args), capability_filter=getattr(args, "capability", None))
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("SOCKET LIST")
+        if getattr(args, "capability", None) is not None:
+            print(f"capability_filter={args.capability}")
+        print(f"sockets={len(result.sockets)}")
+        for socket in result.sockets:
+            print(
+                f"- {socket['socket_id']:<16} "
+                f"mode={socket['invocation_mode']:<12} "
+                f"availability={socket['availability']:<8} "
+                f"caps={len(socket['capabilities'])}"
+            )
+        for finding in result.findings:
+            print(f"- {finding.rule_id}: {finding.message}")
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
+def _cmd_orchestration_socket_inspect(args: argparse.Namespace) -> int:
+    """Render one declared Agent socket without live runtime probing."""
+    result = get_socket(_root_path(args), socket_id=args.socket_id)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print("SOCKET INSPECT")
+        if result.socket is not None:
+            socket = result.socket
+            print(f"socket_id={socket['socket_id']}")
+            print(f"display_name={socket['display_name']}")
+            print(f"adapter_id={socket['adapter_id']}")
+            print(f"invocation_mode={socket['invocation_mode']}")
+            print(f"availability={socket['availability']}")
+            print(f"capabilities={', '.join(socket['capabilities'])}")
+            print(f"boundary={socket['availability_detail']}")
+        for finding in result.findings:
+            print(f"- {finding.rule_id}: {finding.message}")
+        if result.next_action:
+            print(f"Next: {result.next_action}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_orchestration_adapter_inspect(args: argparse.Namespace) -> int:
     """Render a read-only adapter capability registry inspect view."""
     root = _root_path(args)
@@ -4097,6 +4145,27 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_report_generate_parser.set_defaults(func=_cmd_orchestration_report_generate)
 
     # orchestration adapter list/inspect
+    orchestration_socket_parser = orchestration_subparsers.add_parser(
+        "socket", help="Discover declared Agent sockets without runtime probing"
+    )
+    orchestration_socket_subparsers = orchestration_socket_parser.add_subparsers(
+        dest="socket_command", required=True
+    )
+    orchestration_socket_list_parser = orchestration_socket_subparsers.add_parser(
+        "list", help="List Agent sockets projected from the shared adapter registry"
+    )
+    orchestration_socket_list_parser.add_argument(
+        "--capability", default=None, help="Filter by declared capability"
+    )
+    _add_global_args(orchestration_socket_list_parser)
+    orchestration_socket_list_parser.set_defaults(func=_cmd_orchestration_socket_list)
+    orchestration_socket_inspect_parser = orchestration_socket_subparsers.add_parser(
+        "inspect", help="Inspect one declared Agent socket"
+    )
+    orchestration_socket_inspect_parser.add_argument("socket_id", help="Agent socket id")
+    _add_global_args(orchestration_socket_inspect_parser)
+    orchestration_socket_inspect_parser.set_defaults(func=_cmd_orchestration_socket_inspect)
+
     orchestration_adapter_parser = orchestration_subparsers.add_parser(
         "adapter", help="Query read-only adapter capability registry through orchestration namespace"
     )

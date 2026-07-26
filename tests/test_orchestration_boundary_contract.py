@@ -39,6 +39,7 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "artifact",
         "report",
         "adapter",
+        "socket",
         "contract",
         "profile",
         "workflow",
@@ -71,6 +72,10 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "generate",
     }
     assert _subparser_names(_nested_parser(orchestration, "adapter")) == {
+        "list",
+        "inspect",
+    }
+    assert _subparser_names(_nested_parser(orchestration, "socket")) == {
         "list",
         "inspect",
     }
