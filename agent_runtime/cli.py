@@ -37,6 +37,7 @@ from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
 from .orchestration_socket import SocketDetailResult, SocketListResult, get_socket, list_sockets
 from .orchestration_acp_readiness import collect_acp_readiness
+from .orchestration_manual_board import inspect_manual_board
 from .orchestration_collaboration import inspect_collaboration_plan, validate_collaboration_plan
 from .orchestration_collaboration_dispatch import inspect_collaboration_dispatch
 from .orchestration_contract import build_contract_manifest
@@ -1555,6 +1556,7 @@ def _cmd_orchestration_control_panel_handoff(args: argparse.Namespace) -> int:
         envelope_file=args.envelope,
         collaboration_file=args.collaboration_file,
         dispatch_file=args.dispatch_file,
+        manual_board_file=args.manual_board_file,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1570,6 +1572,7 @@ def _cmd_orchestration_control_panel_snapshot(args: argparse.Namespace) -> int:
         envelope_file=args.envelope,
         collaboration_file=args.collaboration_file,
         dispatch_file=args.dispatch_file,
+        manual_board_file=args.manual_board_file,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1585,6 +1588,7 @@ def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
         envelope_file=args.envelope,
         collaboration_file=args.collaboration_file,
         dispatch_file=args.dispatch_file,
+        manual_board_file=args.manual_board_file,
     )
     print(render_control_panel_html(result.to_dict()))
     return result.exit_code()
@@ -2887,6 +2891,28 @@ def _cmd_orchestration_collaboration(args: argparse.Namespace) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _cmd_orchestration_manual_board(args: argparse.Namespace) -> int:
+    """Inspect one operator-authored collaboration board fixture."""
+    result = inspect_manual_board(_root_path(args), args.file)
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"MANUAL COLLABORATION BOARD {result.status.upper()}")
+        board = payload.get("board")
+        if board is not None:
+            print(f"board_id={board['board_id']}")
+            print("planning_mode=manual")
+            print("planned_by=operator")
+            print(f"board_state={board['board_state']}")
+            print(f"lanes={board['summary']['lane_count']}")
+            print(f"timeline_events={board['summary']['timeline_event_count']}")
+            print("execution=simulated")
+        for finding in result.findings:
+            print(f"- {finding.rule_id}: {finding.message}")
+    return result.exit_code()
+
+
 def _cmd_orchestration_collaboration_dispatch(args: argparse.Namespace) -> int:
     """Validate or inspect one non-executing work-item dispatch proposal."""
     result = inspect_collaboration_dispatch(_root_path(args), args.file)
@@ -3719,6 +3745,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional project-local dispatch proposal JSON for blocked eligibility projection",
     )
+    orchestration_control_panel_handoff_parser.add_argument(
+        "--manual-board-file",
+        default=None,
+        help="Optional operator-authored manual collaboration board fixture JSON",
+    )
     _add_global_args(orchestration_control_panel_handoff_parser)
     orchestration_control_panel_handoff_parser.set_defaults(
         func=_cmd_orchestration_control_panel_handoff
@@ -3744,6 +3775,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional project-local dispatch proposal JSON for blocked eligibility projection",
     )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--manual-board-file",
+        default=None,
+        help="Optional operator-authored manual collaboration board fixture JSON",
+    )
     _add_global_args(orchestration_control_panel_snapshot_parser)
     orchestration_control_panel_snapshot_parser.set_defaults(
         func=_cmd_orchestration_control_panel_snapshot
@@ -3768,6 +3804,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--dispatch-file",
         default=None,
         help="Optional project-local dispatch proposal JSON for blocked eligibility projection",
+    )
+    orchestration_control_panel_render_parser.add_argument(
+        "--manual-board-file",
+        default=None,
+        help="Optional operator-authored manual collaboration board fixture JSON",
     )
     _add_global_args(orchestration_control_panel_render_parser)
     orchestration_control_panel_render_parser.set_defaults(
@@ -4279,6 +4320,21 @@ def build_parser() -> argparse.ArgumentParser:
         command_parser.add_argument("--file", required=True, help="Project-local collaboration plan JSON file")
         _add_global_args(command_parser)
         command_parser.set_defaults(func=_cmd_orchestration_collaboration)
+
+    collaboration_manual_board_parser = orchestration_collaboration_subparsers.add_parser(
+        "manual-board", help="Inspect an operator-authored fixture-backed collaboration board"
+    )
+    collaboration_manual_board_subparsers = collaboration_manual_board_parser.add_subparsers(
+        dest="collaboration_manual_board_command", required=True
+    )
+    collaboration_manual_board_inspect_parser = collaboration_manual_board_subparsers.add_parser(
+        "inspect", help="Validate and inspect one manual collaboration board fixture"
+    )
+    collaboration_manual_board_inspect_parser.add_argument(
+        "--file", required=True, help="Project-local manual collaboration board JSON file"
+    )
+    _add_global_args(collaboration_manual_board_inspect_parser)
+    collaboration_manual_board_inspect_parser.set_defaults(func=_cmd_orchestration_manual_board)
 
     collaboration_dispatch_parser = orchestration_collaboration_subparsers.add_parser(
         "dispatch", help="Validate or inspect one non-executing work-item dispatch proposal"

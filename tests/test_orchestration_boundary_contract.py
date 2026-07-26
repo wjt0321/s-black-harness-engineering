@@ -82,6 +82,10 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "validate",
         "inspect",
         "dispatch",
+        "manual-board",
+    }
+    assert _subparser_names(_nested_parser(collaboration, "manual-board")) == {
+        "inspect",
     }
     assert _subparser_names(_nested_parser(collaboration, "dispatch")) == {
         "validate",

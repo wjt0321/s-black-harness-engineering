@@ -4,15 +4,16 @@
 
 ## 当前基线
 
-- 里程碑：`v0.22.0-stage75-direction-reset-and-docs-convergence`
-- commit：见该里程碑标签指向的提交
+- 里程碑：Stage 76 manual collaboration board
+- commit：见包含本文件的里程碑提交
 - 活跃 `docs/` 只保留当前架构、规范、CLI 和最新事实源；完成阶段已归档。
 
 ## 当前阶段
 
-- **Stage 75 — 已完成：无 prompt ACP transport/session-openability 证据设计门；未实现探针、未启动 runner 或 session**
-- 当前唯一主线事实源：`123-multi-agent-control-hub-current-state-and-stage75-gate.md`
-- 方向结论：Stage 67-71 回到了插座式中枢目标；Stage 72-75 的安全基础设施有必要，但连续推进过深，产品可见进展偏慢。下一里程碑回归可用协作看板。
+- **Stage 76 — 已完成：manual-first 协作看板、人工拆分 fixture、Agent 泳道、交接/产物时间线与模拟操作面。**
+- 当前唯一主线事实源：`124-stage76-manual-collaboration-board.md`
+- 规划模式结论：用户可人工拆分；未来系统建议必须经人工确认；automatic 尚未启用。
+- 当前 walkthrough 全部为 fixture/simulated，不调用 Agent、不消耗模型额度、不授予执行权。
 - Stage 66 Pi bound runner migration 与 Stage 75 探针实现均为 deferred，不是当前产品主线。
 
 ## 当前真实执行能力
@@ -34,12 +35,13 @@
 
 1. `README.md`
 2. `docs/00-index.md`
-3. `docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md`
-4. `docs/47-orchestration-hub-vision.md`
-5. `docs/48-adapter-runtime-interface.md`
-6. `docs/49-capability-routing-model.md`
-7. `docs/111-pi-controlled-dry-run-print-implementation.md`（仅在核对真实执行边界时读取）
-8. `docs/21-controlled-write-boundaries.md`
+3. `docs/124-stage76-manual-collaboration-board.md`
+4. `docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md`
+5. `docs/47-orchestration-hub-vision.md`
+6. `docs/48-adapter-runtime-interface.md`
+7. `docs/49-capability-routing-model.md`
+8. `docs/111-pi-controlled-dry-run-print-implementation.md`（仅在核对真实执行边界时读取）
+9. `docs/21-controlled-write-boundaries.md`
 9. `tasks/progress.md`（只做历史取证，不作为入口）
 
 然后运行：

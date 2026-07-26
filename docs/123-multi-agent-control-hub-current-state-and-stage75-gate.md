@@ -2,7 +2,7 @@
 
 # 123 - Multi-Agent Control Hub Current State and Stage 75 Gate
 
-> Status: current fact source; Stage 75 design complete
+> Status: Stage 75 historical baseline; superseded as current fact source by `124-stage76-manual-collaboration-board.md`
 > Date: 2026-07-26
 
 ## Plain-Language Goal

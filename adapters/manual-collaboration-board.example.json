@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "planning_mode": "manual",
+  "planned_by": "operator",
+  "collaboration_file": "adapters/collaboration-plan.example.json",
+  "board_state": "simulated_complete",
+  "work_item_states": [
+    {
+      "work_item_id": "plan",
+      "status": "simulated_complete",
+      "artifact_types": ["plan"],
+      "review_state": "not_required"
+    },
+    {
+      "work_item_id": "implement",
+      "status": "simulated_complete",
+      "artifact_types": ["patch", "test_result"],
+      "review_state": "approved"
+    },
+    {
+      "work_item_id": "review",
+      "status": "simulated_complete",
+      "artifact_types": ["review"],
+      "review_state": "not_required"
+    }
+  ],
+  "timeline": [
+    {"sequence": 1, "event_type": "work_ready", "work_item_id": "plan", "artifact_types": [], "label": "Operator approved the manual plan work item"},
+    {"sequence": 2, "event_type": "artifact_produced", "work_item_id": "plan", "artifact_types": ["plan"], "label": "Fixture plan artifact produced"},
+    {"sequence": 3, "event_type": "handoff_completed", "work_item_id": "implement", "artifact_types": ["plan"], "label": "Fixture plan handed to implementation"},
+    {"sequence": 4, "event_type": "artifact_produced", "work_item_id": "implement", "artifact_types": ["patch", "test_result"], "label": "Fixture implementation artifacts produced"},
+    {"sequence": 5, "event_type": "review_requested", "work_item_id": "implement", "artifact_types": ["patch"], "label": "Fixture implementation sent for review"},
+    {"sequence": 6, "event_type": "review_resolved", "work_item_id": "implement", "artifact_types": ["review"], "label": "Fixture review approved"},
+    {"sequence": 7, "event_type": "handoff_completed", "work_item_id": "review", "artifact_types": ["patch"], "label": "Fixture patch handed to reviewer work item"},
+    {"sequence": 8, "event_type": "work_completed", "work_item_id": "review", "artifact_types": ["review"], "label": "Fixture collaboration completed"}
+  ],
+  "operator_actions": [
+    "review_plan",
+    "approve_start",
+    "cancel",
+    "retry",
+    "request_changes",
+    "approve_handoff"
+  ]
+}

@@ -44,7 +44,8 @@
 
 ## 当前事实源
 
-- `123-multi-agent-control-hub-current-state-and-stage75-gate.md` — 当前产品目标、已有能力、未完成项、Stage 75 结论与方向决策；多 Agent 主线只需先读这一份。
+- `124-stage76-manual-collaboration-board.md` — 当前多 Agent 产品主线：manual-first 决策、人工计划 fixture、可视化泳道/时间线、未完成项与 Stage 77 建议。
+- `123-multi-agent-control-hub-current-state-and-stage75-gate.md` — Stage 75 历史基线：产品目标、安全边界与方向回正结论。
 - `111-pi-controlled-dry-run-print-implementation.md` — 当前唯一 Agent 类真实执行能力及其安全边界。
 - `114-pi-bound-runner-migration-design.md` — deferred 安全工作；不是当前产品主线。
 

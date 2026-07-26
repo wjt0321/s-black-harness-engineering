@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/manual-collaboration-board.schema.json",
+  "title": "Manual Collaboration Board Fixture",
+  "type": "object",
+  "required": ["version", "planning_mode", "planned_by", "collaboration_file", "board_state", "work_item_states", "timeline", "operator_actions"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"const": 1},
+    "planning_mode": {"const": "manual"},
+    "planned_by": {"const": "operator"},
+    "collaboration_file": {"type": "string", "minLength": 1, "maxLength": 260, "pattern": "^[^<>:\"|?*]+\\.json$"},
+    "board_state": {"enum": ["draft", "ready_for_review", "simulated_running", "simulated_complete"]},
+    "work_item_states": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["work_item_id", "status", "artifact_types", "review_state"],
+        "additionalProperties": false,
+        "properties": {
+          "work_item_id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "status": {"enum": ["planned", "ready", "simulated_running", "simulated_blocked", "simulated_complete"]},
+          "artifact_types": {"type": "array", "items": {"enum": ["analysis", "plan", "draft", "patch", "test_result", "review", "summary"]}, "uniqueItems": true},
+          "review_state": {"enum": ["not_required", "pending", "approved", "changes_requested"]}
+        }
+      }
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sequence", "event_type", "work_item_id", "artifact_types", "label"],
+        "additionalProperties": false,
+        "properties": {
+          "sequence": {"type": "integer", "minimum": 1},
+          "event_type": {"enum": ["work_ready", "work_started", "artifact_produced", "handoff_completed", "review_requested", "review_resolved", "work_completed"]},
+          "work_item_id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "artifact_types": {"type": "array", "items": {"enum": ["analysis", "plan", "draft", "patch", "test_result", "review", "summary"]}, "uniqueItems": true},
+          "label": {"type": "string", "minLength": 1, "maxLength": 160}
+        }
+      }
+    },
+    "operator_actions": {
+      "type": "array",
+      "items": {"enum": ["review_plan", "approve_start", "cancel", "retry", "request_changes", "approve_handoff"]},
+      "uniqueItems": true
+    }
+  }
+}

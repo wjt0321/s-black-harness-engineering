@@ -490,3 +490,40 @@ def test_control_panel_handoff_preserves_dispatch_file() -> None:
     assert payload["source"]["dispatch_file"] == dispatch
     assert payload["snapshot"]["argv"][-3:] == ["--dispatch-file", dispatch, "--json"]
     assert payload["render"]["argv"][-2:] == ["--dispatch-file", dispatch]
+
+
+def test_control_panel_projects_operator_authored_manual_board() -> None:
+    board_file = "adapters/manual-collaboration-board.example.json"
+    payload = build_control_panel_snapshot(ROOT, manual_board_file=board_file).to_dict()
+
+    section = payload["sections"]["manual_board"]
+    assert section["status"] == "pass"
+    assert section["availability"] == "fixture"
+    assert section["guarantees"]["planning_mode"] == "manual"
+    assert section["board"]["planned_by"] == "operator"
+    assert [lane["socket_id"] for lane in section["board"]["lanes"]] == [
+        "kimi-code-acp", "omp-acp", "claude-code-acp"
+    ]
+
+
+def test_control_panel_manual_board_html_keeps_simulation_boundary() -> None:
+    board_file = "adapters/manual-collaboration-board.example.json"
+    payload = build_control_panel_snapshot(ROOT, manual_board_file=board_file).to_dict()
+    rendered = render_control_panel_html(payload)
+
+    assert 'id="manual-board"' in rendered
+    assert "OPERATOR AUTHORED" in rendered
+    assert rendered.count("SIMULATED · NO AGENT TURN") == 3
+    assert rendered.count('class="board-action" disabled') == 6
+    assert "Handoff and artifact timeline" in rendered
+
+
+def test_control_panel_handoff_preserves_manual_board_file() -> None:
+    board_file = "adapters/manual-collaboration-board.example.json"
+    payload = control_panel.build_control_panel_handoff(
+        ROOT, manual_board_file=board_file
+    ).to_dict()
+
+    assert payload["source"]["manual_board_file"] == board_file
+    assert payload["snapshot"]["argv"][-3:] == ["--manual-board-file", board_file, "--json"]
+    assert payload["render"]["argv"][-2:] == ["--manual-board-file", board_file]

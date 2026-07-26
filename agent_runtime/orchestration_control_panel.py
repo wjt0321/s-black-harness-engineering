@@ -13,6 +13,7 @@ from .loader import normalize_path
 from .orchestration_adapter import list_adapters
 from .orchestration_collaboration import inspect_collaboration_plan
 from .orchestration_collaboration_dispatch import inspect_collaboration_dispatch
+from .orchestration_manual_board import inspect_manual_board
 from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
 from .orchestration_artifact import list_artifacts
@@ -285,6 +286,7 @@ def build_control_panel_snapshot(
     envelope_file: str | None = None,
     collaboration_file: str | None = None,
     dispatch_file: str | None = None,
+    manual_board_file: str | None = None,
 ) -> ControlPanelSnapshot:
     """Aggregate existing safe read models without executing or writing."""
     overview = _section(
@@ -399,6 +401,12 @@ def build_control_panel_snapshot(
             scope="file",
             availability="experimental",
         )
+    if manual_board_file is not None:
+        sections["manual_board"] = _section(
+            inspect_manual_board(root, manual_board_file).to_dict(),
+            scope="file",
+            availability="fixture",
+        )
     findings = _deduplicate_findings(sections)
     status = _aggregate_status(sections)
 
@@ -450,6 +458,8 @@ def build_control_panel_snapshot(
         source["collaboration_file"] = _safe_envelope_reference(root, collaboration_file)
     if dispatch_file is not None:
         source["dispatch_file"] = _safe_envelope_reference(root, dispatch_file)
+    if manual_board_file is not None:
+        source["manual_board_file"] = _safe_envelope_reference(root, manual_board_file)
     return ControlPanelSnapshot(
         status=status,
         source=source,
@@ -466,6 +476,7 @@ def build_control_panel_handoff(
     envelope_file: str | None = None,
     collaboration_file: str | None = None,
     dispatch_file: str | None = None,
+    manual_board_file: str | None = None,
 ) -> ControlPanelHandoff:
     """Describe existing panel representations without rendering or executing them."""
     snapshot_payload = build_control_panel_snapshot(
@@ -473,6 +484,7 @@ def build_control_panel_handoff(
         envelope_file=envelope_file,
         collaboration_file=collaboration_file,
         dispatch_file=dispatch_file,
+        manual_board_file=manual_board_file,
     ).to_dict()
     snapshot_argv = [
         "python",
@@ -502,6 +514,10 @@ def build_control_panel_handoff(
     if safe_dispatch_file is not None:
         snapshot_argv.extend(("--dispatch-file", safe_dispatch_file))
         render_argv.extend(("--dispatch-file", safe_dispatch_file))
+    safe_manual_board_file = snapshot_payload["source"].get("manual_board_file")
+    if safe_manual_board_file is not None:
+        snapshot_argv.extend(("--manual-board-file", safe_manual_board_file))
+        render_argv.extend(("--manual-board-file", safe_manual_board_file))
     snapshot_argv.append("--json")
 
     snapshot_id = str(snapshot_payload["snapshot_id"])
@@ -902,6 +918,78 @@ def _dispatch_section_body(section: dict[str, Any]) -> str:
     )
 
 
+def _manual_board_section_body(section: dict[str, Any]) -> str:
+    board = section.get("board")
+    if section.get("status") != "pass" or board is None:
+        return _table(
+            caption="Manual collaboration board findings",
+            columns=(("rule_id", "Rule"), ("severity", "Severity"), ("message", "Message")),
+            rows=section.get("findings", []),
+            empty_message="Manual collaboration board is unavailable.",
+        )
+    lane_html = []
+    for lane in board["lanes"]:
+        lane_html.append(
+            '<article class="work-lane" '
+            f'data-search="{_escape(json.dumps(lane, sort_keys=True))}">'
+            '<div class="work-lane__head">'
+            f'<strong>{_escape(lane["work_item_id"])}</strong>'
+            f'<span class="pill pill--neutral">{_escape(lane["status"])}</span>'
+            '</div>'
+            f'<p class="work-lane__socket">{_escape(lane["socket_id"])} · {_escape(lane["role"])}</p>'
+            f'<p>Depends on: <code>{_escape(lane["depends_on"] or ["none"])}</code></p>'
+            f'<p>Expected: <code>{_escape(lane["expected_artifact_types"])}</code></p>'
+            f'<p>Fixture artifacts: <code>{_escape(lane["artifact_types"] or ["none"])}</code></p>'
+            f'<p>Review: <strong>{_escape(lane["review_state"])}</strong></p>'
+            '<div class="simulation-mark">SIMULATED · NO AGENT TURN</div>'
+            '</article>'
+        )
+    timeline_html = []
+    for event in board["timeline"]:
+        timeline_html.append(
+            '<li class="board-event" '
+            f'data-search="{_escape(json.dumps(event, sort_keys=True))}">'
+            f'<span class="board-event__sequence">{event["sequence"]:02d}</span>'
+            '<div>'
+            f'<strong>{_escape(event["event_type"])}</strong>'
+            f'<p>{_escape(event["label"])}</p>'
+            f'<code>{_escape(event["work_item_id"])} · {_escape(event["artifact_types"] or ["no artifact"])}</code>'
+            '</div></li>'
+        )
+    action_html = []
+    for action in board["operator_actions"]:
+        action_html.append(
+            f'<button type="button" class="board-action" disabled title="Fixture only; no execution authority">'
+            f'{_escape(action["action"])}<span>simulated</span></button>'
+        )
+    summary = board["summary"]
+    return "".join(
+        [
+            '<div class="manual-board-banner">'
+            '<div><span class="eyebrow">OPERATOR AUTHORED</span>'
+            '<h3>Manual task split</h3>'
+            f'<p>{_escape(board["parent_task_ref"])} · {_escape(board["board_state"])}</p></div>'
+            '<div class="manual-board-stats">'
+            f'<strong>{summary["lane_count"]}</strong><span>work items</span>'
+            f'<strong>{summary["timeline_event_count"]}</strong><span>events</span>'
+            f'<strong>{summary["simulated_complete_count"]}</strong><span>fixture complete</span>'
+            '</div></div>',
+            '<div class="work-lanes">',
+            "".join(lane_html),
+            '</div>',
+            '<div class="board-lower">'
+            '<div><h3>Handoff and artifact timeline</h3><ol class="board-timeline">',
+            "".join(timeline_html),
+            '</ol></div>',
+            '<div><h3>Operator controls</h3>'
+            '<p class="board-note">These controls show the intended workflow. They are disabled because this is a fixture-backed walkthrough.</p>'
+            '<div class="board-actions">',
+            "".join(action_html),
+            '</div></div></div>',
+        ]
+    )
+
+
 _CSS = r"""
 :root {
   color-scheme: dark;
@@ -998,9 +1086,28 @@ tbody tr:hover { background: rgba(98,214,199,.05); color: #fff8dc; }
 .collaboration-graph { margin: 1rem; padding: 1rem; border: 1px solid var(--line); background: rgba(7,16,15,.55); overflow-x: auto; }
 .collaboration-graph figcaption { margin-bottom: .75rem; color: var(--amber); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
 .footer { display: grid; grid-template-columns: 1fr auto; gap: 1rem; margin-top: 1rem; padding: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .68rem; }
+.manual-board-banner { display: flex; justify-content: space-between; gap: 1.5rem; align-items: end; padding: 1rem; border: 1px solid var(--line-hot); background: var(--panel-raised); }
+.manual-board-banner h3, .board-lower h3 { margin: .25rem 0 .4rem; font-size: 1rem; }
+.manual-board-banner p, .work-lane p, .board-event p, .board-note { margin: .25rem 0; color: var(--muted); }
+.manual-board-stats { display: grid; grid-template-columns: repeat(3, auto); gap: .25rem 1rem; text-align: right; }
+.manual-board-stats strong { font-size: 1.35rem; color: var(--cyan); }
+.manual-board-stats span { grid-row: 2; color: var(--muted); font-size: .62rem; text-transform: uppercase; }
+.work-lanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: .75rem; margin: .85rem 0; }
+.work-lane { min-width: 0; padding: .85rem; border: 1px solid var(--line); background: var(--panel-raised); }
+.work-lane__head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.work-lane__socket { color: var(--cyan) !important; }
+.work-lane code, .board-event code { overflow-wrap: anywhere; }
+.simulation-mark { margin-top: .75rem; padding-top: .55rem; border-top: 1px solid var(--line); color: var(--amber); font-size: .62rem; font-weight: 700; }
+.board-lower { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(230px, .8fr); gap: 1rem; }
+.board-timeline { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.board-event { display: grid; grid-template-columns: 2.4rem 1fr; gap: .6rem; padding: .65rem 0; border-bottom: 1px solid var(--line); }
+.board-event__sequence { color: var(--cyan); font-family: var(--mono); }
+.board-actions { display: grid; gap: .5rem; }
+.board-action { display: flex; justify-content: space-between; gap: .75rem; padding: .65rem; border: 1px solid var(--line); border-radius: 4px; background: var(--panel-raised); color: var(--muted); text-align: left; }
+.board-action span { color: var(--amber); font-family: var(--mono); font-size: .62rem; text-transform: uppercase; }
 .is-filtered-out { display: none !important; }
-@media (max-width: 1050px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } .hero { grid-template-columns: 1fr; } .toolbar { grid-template-columns: 1fr; } }
-@media (max-width: 640px) { .shell { width: min(100% - 1rem, 1540px); } .summary-grid { grid-template-columns: repeat(2, 1fr); } .hero { padding: 1.5rem; } h1 { font-size: 3.2rem; } .section-heading { grid-template-columns: auto 1fr; } .section-heading .status { grid-column: 2; justify-self: start; } th, td { padding: .65rem; } }
+@media (max-width: 1050px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } .hero { grid-template-columns: 1fr; } .toolbar { grid-template-columns: 1fr; } .board-lower { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .shell { width: min(100% - 1rem, 1540px); } .summary-grid { grid-template-columns: repeat(2, 1fr); } .hero { padding: 1.5rem; } h1 { font-size: 3.2rem; } .section-heading { grid-template-columns: auto 1fr; } .section-heading .status { grid-column: 2; justify-self: start; } th, td { padding: .65rem; } .manual-board-banner { align-items: stretch; flex-direction: column; } .manual-board-stats { text-align: left; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 """
 
@@ -1266,6 +1373,17 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
                 '<section class="panel-section" id="dispatch">',
                 _section_header("10", "Collaboration / Dispatch eligibility", dispatch),
                 _dispatch_section_body(dispatch),
+                "</section>",
+            ]
+        )
+
+    manual_board = sections.get("manual_board")
+    if manual_board is not None:
+        section_html.extend(
+            [
+                '<section class="panel-section" id="manual-board">',
+                _section_header("11", "Collaboration / Manual board", manual_board),
+                _manual_board_section_body(manual_board),
                 "</section>",
             ]
         )
