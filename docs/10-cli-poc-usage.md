@@ -1745,6 +1745,24 @@ python -m agent_runtime.cli orchestration control-panel handoff \
   --json
 ```
 
+Stage 70 passive collaboration projection（可选 `--collaboration-file`，复用 Stage 69 只读验证投影）：
+
+```bash
+python -m agent_runtime.cli orchestration control-panel snapshot \
+  --collaboration-file adapters/collaboration-plan.example.json \
+  --json
+python -m agent_runtime.cli orchestration control-panel render \
+  --collaboration-file adapters/collaboration-plan.example.json \
+  > control-panel.html
+python -m agent_runtime.cli orchestration control-panel handoff \
+  --collaboration-file adapters/collaboration-plan.example.json \
+  --json
+```
+
+- 提供 `--collaboration-file` 时，snapshot 增加 file-scoped `collaboration` 区段，内容与 `orchestration collaboration inspect` 的 safe projection 一致；缺失、非法或越界计划 fail closed，区段只输出 findings。
+- `render` 在同一边界内追加自包含 SVG 协作图（work item 依赖分层、handoff 箭头、review gate 菱形）与 socket/work item/handoff/review gate 转义表格。
+- `handoff` 把归一化后的计划路径写入 snapshot/render 两个 `argv`；不传 `--collaboration-file` 时输出与 Stage 16–18 完全一致。
+
 - `snapshot` 输出 `control-plane/control-panel-snapshot/v1` 与确定性 `snapshot_id`。
 - `render` 只向 stdout 输出自包含 HTML；CLI 自身不创建文件、不启动 service。
 - `handoff` 输出 `control-plane/control-panel-handoff/v1`，声明 JSON/HTML representation、media type、encoding、renderer version、`snapshot_id`、`render_id`、`working_directory=project_root` 与 argv 数组。

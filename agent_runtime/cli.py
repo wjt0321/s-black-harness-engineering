@@ -36,6 +36,7 @@ from .runtime_task_create import TaskCreateDryRunResult, create_task, create_tas
 from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
 from .orchestration_socket import SocketDetailResult, SocketListResult, get_socket, list_sockets
+from .orchestration_collaboration import inspect_collaboration_plan, validate_collaboration_plan
 from .orchestration_contract import build_contract_manifest
 from .orchestration_contract_check import check_contract_requirements
 from .orchestration_execution_readiness import check_execution_readiness
@@ -1550,6 +1551,7 @@ def _cmd_orchestration_control_panel_handoff(args: argparse.Namespace) -> int:
     result = build_control_panel_handoff(
         _root_path(args),
         envelope_file=args.envelope,
+        collaboration_file=args.collaboration_file,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1563,6 +1565,7 @@ def _cmd_orchestration_control_panel_snapshot(args: argparse.Namespace) -> int:
     result = build_control_panel_snapshot(
         _root_path(args),
         envelope_file=args.envelope,
+        collaboration_file=args.collaboration_file,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1576,6 +1579,7 @@ def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
     result = build_control_panel_snapshot(
         _root_path(args),
         envelope_file=args.envelope,
+        collaboration_file=args.collaboration_file,
     )
     print(render_control_panel_html(result.to_dict()))
     return result.exit_code()
@@ -2847,6 +2851,37 @@ def _cmd_orchestration_adapter_list(args: argparse.Namespace) -> int:
     return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
 
 
+def _cmd_orchestration_collaboration(args: argparse.Namespace) -> int:
+    """Render or validate one deterministic read-only collaboration plan."""
+    operation = validate_collaboration_plan if args.collaboration_command == "validate" else inspect_collaboration_plan
+    result = operation(_root_path(args), args.file)
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(f"COLLABORATION PLAN {result.status.upper()}")
+        if result.plan is not None:
+            plan = result.to_dict()["plan"]
+            print(f"plan_id={plan['plan_id']}")
+            print(f"parent_task_ref={plan['parent_task_ref']}")
+            print(
+                "summary: "
+                f"sockets={plan['summary']['socket_count']} "
+                f"work_items={plan['summary']['work_item_count']} "
+                f"handoffs={plan['summary']['handoff_count']} "
+                f"review_gates={plan['summary']['review_gate_count']}"
+            )
+            for item in plan["work_items"]:
+                print(
+                    f"- {item['work_item_id']} socket={item['socket_id']} "
+                    f"role={item['role']} status={item['status']} execution={item['execution']}"
+                )
+        for finding in result.findings:
+            print(f"- {finding.rule_id}: {finding.message}")
+        if result.next_action:
+            print(f"Next: {result.next_action['code']}")
+    return _STATUS_TO_EXIT.get(result.status, EXIT_ERROR)
+
+
 def _cmd_orchestration_socket_list(args: argparse.Namespace) -> int:
     """Render declared Agent sockets without probing their live runtimes."""
     result = list_sockets(_root_path(args), capability_filter=getattr(args, "capability", None))
@@ -3620,6 +3655,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional envelope file shared by snapshot and render representations",
     )
+    orchestration_control_panel_handoff_parser.add_argument(
+        "--collaboration-file",
+        default=None,
+        help="Optional project-local collaboration plan JSON for a passive projection",
+    )
     _add_global_args(orchestration_control_panel_handoff_parser)
     orchestration_control_panel_handoff_parser.set_defaults(
         func=_cmd_orchestration_control_panel_handoff
@@ -3635,6 +3675,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional envelope file for scoped runs, approvals, and artifacts",
     )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--collaboration-file",
+        default=None,
+        help="Optional project-local collaboration plan JSON for a passive projection",
+    )
     _add_global_args(orchestration_control_panel_snapshot_parser)
     orchestration_control_panel_snapshot_parser.set_defaults(
         func=_cmd_orchestration_control_panel_snapshot
@@ -3649,6 +3694,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--envelope",
         default=None,
         help="Optional envelope file for scoped runs, approvals, and artifacts",
+    )
+    orchestration_control_panel_render_parser.add_argument(
+        "--collaboration-file",
+        default=None,
+        help="Optional project-local collaboration plan JSON for a passive projection",
     )
     _add_global_args(orchestration_control_panel_render_parser)
     orchestration_control_panel_render_parser.set_defaults(
@@ -4145,6 +4195,22 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_report_generate_parser.set_defaults(func=_cmd_orchestration_report_generate)
 
     # orchestration adapter list/inspect
+    orchestration_collaboration_parser = orchestration_subparsers.add_parser(
+        "collaboration", help="Validate or inspect a read-only multi-Agent collaboration plan"
+    )
+    orchestration_collaboration_subparsers = orchestration_collaboration_parser.add_subparsers(
+        dest="collaboration_command", required=True
+    )
+    for command, help_text in (
+        ("plan", "Build a validated deterministic collaboration plan projection"),
+        ("validate", "Validate a collaboration plan without execution"),
+        ("inspect", "Inspect a validated collaboration plan for board consumers"),
+    ):
+        command_parser = orchestration_collaboration_subparsers.add_parser(command, help=help_text)
+        command_parser.add_argument("--file", required=True, help="Project-local collaboration plan JSON file")
+        _add_global_args(command_parser)
+        command_parser.set_defaults(func=_cmd_orchestration_collaboration)
+
     orchestration_socket_parser = orchestration_subparsers.add_parser(
         "socket", help="Discover declared Agent sockets without runtime probing"
     )

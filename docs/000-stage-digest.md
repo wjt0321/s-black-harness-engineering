@@ -4,15 +4,15 @@
 
 ## 当前基线
 
-- 里程碑：`v0.18.0-pi-runtime-binding`
-- commit：`pending-amend`
+- 里程碑：`v0.19.0-multi-agent-collaboration-board`
+- commit：见该里程碑标签指向的提交
 - 活跃 `docs/` 只保留当前架构、规范、CLI 和最新事实源；完成阶段已归档。
 
 ## 当前阶段
 
-- **Stage 68 — 已完成 design gate：多 Agent collaboration plan 与可扩展 socket admission；未实现 plan、未调用 Agent**
-- 事实源：`116-multi-agent-collaboration-plan-and-socket-admission.md`
-- 最近完成：**Stage 67 — Socket Registry v1：Pi、Kimi Code、Claude Code、OMP 与 QwenPaw API 统一 Agent socket 只读投影**
+- **Stage 71 — 已完成：socket readiness evidence contract 与 collaboration routing explanations 只读投影；未执行 live probe**
+- 事实源：`119-socket-readiness-evidence-and-routing-explanations.md`
+- 最近完成：**Stage 70 — Control Panel passive collaboration projection**
 - Stage 66 Pi bound runner migration 已冻结为 deferred security work，不是当前产品主线。
 
 ## 当前真实执行能力
@@ -34,14 +34,17 @@
 
 1. `README.md`
 2. `docs/00-index.md`
-3. `docs/116-multi-agent-collaboration-plan-and-socket-admission.md`
-4. `docs/115-agent-socket-registry-v1.md`
-5. `docs/49-capability-routing-model.md`
-6. `docs/48-adapter-runtime-interface.md`
-7. `docs/114-pi-bound-runner-migration-design.md`（deferred security work）
-8. `docs/21-controlled-write-boundaries.md`
-9. `tasks/handoff-2026-07-26.md`
-10. `tasks/progress.md`（只做历史取证，不作为入口）
+3. `docs/119-socket-readiness-evidence-and-routing-explanations.md`
+4. `docs/118-control-panel-collaboration-projection.md`
+5. `docs/117-collaboration-plan-read-model.md`
+6. `docs/116-multi-agent-collaboration-plan-and-socket-admission.md`
+7. `docs/115-agent-socket-registry-v1.md`
+8. `docs/49-capability-routing-model.md`
+9. `docs/48-adapter-runtime-interface.md`
+10. `docs/114-pi-bound-runner-migration-design.md`（deferred security work）
+11. `docs/21-controlled-write-boundaries.md`
+12. `tasks/handoff-2026-07-26.md`
+13. `tasks/progress.md`（只做历史取证，不作为入口）
 
 然后运行：
 
@@ -52,8 +55,7 @@ python -m agent_runtime.cli doctor
 
 ## 下一步做什么
 
-- **Stage 69 collaboration plan read model**：以 declared sockets 实现 deterministic `plan/validate/inspect`，不探测 readiness、不持久化、不调用 Agent；
-- socket-specific readiness 和 capability routing explanation 随后独立推进；
+- **Stage 72 候选**：仅选择一个 socket family 冻结 readiness evidence collection 的 design-only gate；未获单独授权前不实现 live probe、不调用 Agent；
 - Stage 66 Pi bound runner migration 保持 deferred，除非 Pi 成为明确优先执行器且获得单独授权。
 
 ## 验证基线

@@ -18,6 +18,7 @@ EXPECTED_CONTRACT_IDS = [
     "automation_profile_read",
     "automation_workflow_check",
     "automation_workflow_plan",
+    "collaboration_plan_read",
     "contract_discovery",
     "contract_requirement_gate",
     "control_panel_read",
@@ -50,10 +51,10 @@ def test_contract_manifest_freezes_v1_shape_and_availability_counts() -> None:
     assert manifest["schema_version"] == "control-plane/orchestration-contract/v1"
     assert manifest["consumer"] == "cli-automation"
     assert manifest["summary"] == {
-        "total_entries": 31,
+        "total_entries": 32,
         "stable": 11,
         "stable_limited": 9,
-        "preview": 8,
+        "preview": 9,
         "unavailable": 3,
     }
     assert [entry["contract_id"] for entry in manifest["entries"]] == EXPECTED_CONTRACT_IDS
@@ -78,7 +79,7 @@ def test_control_panel_contract_includes_host_handoff_without_new_capability() -
         ["orchestration", "control-panel", "render"],
         ["orchestration", "control-panel", "snapshot"],
     ]
-    assert control_panel["key_flags"] == ["--envelope"]
+    assert control_panel["key_flags"] == ["--collaboration-file", "--envelope"]
     assert "host handoff" in control_panel["boundary"]
 
 
@@ -182,6 +183,6 @@ def test_contract_inspect_human_output_is_compact(capsys) -> None:
     assert code == 0
     assert "ORCHESTRATION CONTRACT" in captured.out
     assert "schema_version=control-plane/orchestration-contract/v1" in captured.out
-    assert "total_entries=31" in captured.out
+    assert "total_entries=32" in captured.out
     assert "run_plan preview read_only orchestration run" in captured.out
     assert "external_execution_service_stack unavailable unavailable -" in captured.out

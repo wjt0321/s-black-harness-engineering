@@ -98,6 +98,21 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Source-backed metadata only; online availability is not probed.",
         ),
         _entry(
+            "collaboration_plan_read",
+            "preview",
+            "read_only",
+            commands=(
+                ("orchestration", "collaboration", "inspect"),
+                ("orchestration", "collaboration", "plan"),
+                ("orchestration", "collaboration", "validate"),
+            ),
+            key_flags=("--file",),
+            boundary=(
+                "Validates a project-local collaboration graph against declared sockets; "
+                "does not persist plans, probe readiness, or contact Agents."
+            ),
+        ),
+        _entry(
             "agent_socket_registry",
             "stable",
             "read_only",
@@ -183,7 +198,7 @@ def build_contract_manifest() -> OrchestrationContractManifest:
                 ("orchestration", "control-panel", "render"),
                 ("orchestration", "control-panel", "snapshot"),
             ),
-            key_flags=("--envelope",),
+            key_flags=("--collaboration-file", "--envelope"),
             boundary=(
                 "Aggregates existing read models into a deterministic local Control "
                 "Panel and host handoff without service, network, or execution."

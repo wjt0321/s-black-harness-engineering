@@ -11,6 +11,7 @@ from typing import Any, Iterable
 
 from .loader import normalize_path
 from .orchestration_adapter import list_adapters
+from .orchestration_collaboration import inspect_collaboration_plan
 from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
 from .orchestration_artifact import list_artifacts
@@ -193,8 +194,8 @@ class ControlPanelSnapshot:
         lines.append(
             "sections: "
             + " ".join(
-                f"{name}={self.sections[name]['status']}"
-                for name in _SECTION_ORDER
+                f"{name}={section['status']}"
+                for name, section in self.sections.items()
             )
         )
         for finding in self.findings:
@@ -281,6 +282,7 @@ def build_control_panel_snapshot(
     root: Path,
     *,
     envelope_file: str | None = None,
+    collaboration_file: str | None = None,
 ) -> ControlPanelSnapshot:
     """Aggregate existing safe read models without executing or writing."""
     overview = _section(
@@ -383,6 +385,12 @@ def build_control_panel_snapshot(
         "artifacts": artifacts,
         "reports": reports,
     }
+    if collaboration_file is not None:
+        sections["collaboration"] = _section(
+            inspect_collaboration_plan(root, collaboration_file).to_dict(),
+            scope="file",
+            availability="stable_limited",
+        )
     findings = _deduplicate_findings(sections)
     status = _aggregate_status(sections)
 
@@ -408,12 +416,12 @@ def build_control_panel_snapshot(
         "artifact_count": len(artifacts.get("artifacts", [])),
         "unavailable_sections": [
             name
-            for name in _SECTION_ORDER
-            if sections[name].get("status") == "unavailable"
+            for name, section in sections.items()
+            if section.get("status") == "unavailable"
         ],
         "section_statuses": {
-            name: sections[name].get("status", "error")
-            for name in _SECTION_ORDER
+            name: section.get("status", "error")
+            for name, section in sections.items()
         },
     }
     next_action = (
@@ -427,11 +435,14 @@ def build_control_panel_snapshot(
             "message": "Fix the failing source read models and rebuild the panel.",
         }
     )
+    source: dict[str, Any] = {
+        "envelope_file": _safe_envelope_reference(root, envelope_file),
+    }
+    if collaboration_file is not None:
+        source["collaboration_file"] = _safe_envelope_reference(root, collaboration_file)
     return ControlPanelSnapshot(
         status=status,
-        source={
-            "envelope_file": _safe_envelope_reference(root, envelope_file),
-        },
+        source=source,
         summary=summary,
         sections=sections,
         findings=findings,
@@ -443,11 +454,13 @@ def build_control_panel_handoff(
     root: Path,
     *,
     envelope_file: str | None = None,
+    collaboration_file: str | None = None,
 ) -> ControlPanelHandoff:
     """Describe existing panel representations without rendering or executing them."""
     snapshot_payload = build_control_panel_snapshot(
         root,
         envelope_file=envelope_file,
+        collaboration_file=collaboration_file,
     ).to_dict()
     snapshot_argv = [
         "python",
@@ -469,6 +482,10 @@ def build_control_panel_handoff(
     if safe_envelope_file is not None:
         snapshot_argv.extend(("--envelope", safe_envelope_file))
         render_argv.extend(("--envelope", safe_envelope_file))
+    safe_collaboration_file = snapshot_payload["source"].get("collaboration_file")
+    if safe_collaboration_file is not None:
+        snapshot_argv.extend(("--collaboration-file", safe_collaboration_file))
+        render_argv.extend(("--collaboration-file", safe_collaboration_file))
     snapshot_argv.append("--json")
 
     snapshot_id = str(snapshot_payload["snapshot_id"])
@@ -607,6 +624,243 @@ def _boundary_callout(section: dict[str, Any]) -> str:
     )
 
 
+_GRAPH_NODE_W = 200
+_GRAPH_NODE_H = 56
+_GRAPH_X_GAP = 90
+_GRAPH_Y_GAP = 24
+_GRAPH_PAD = 20
+
+
+def _collaboration_graph(plan: dict[str, Any]) -> str:
+    """Render one validated plan as a deterministic accessible SVG graph."""
+    work_items = plan["work_items"]
+    handoffs = plan["handoffs"]
+    review_gates = plan["review_gates"]
+    by_id = {item["work_item_id"]: item for item in work_items}
+    levels: dict[str, int] = {}
+
+    def level(item_id: str) -> int:
+        if item_id not in levels:
+            known = [dep for dep in by_id[item_id]["depends_on"] if dep in by_id]
+            levels[item_id] = 1 + max((level(dep) for dep in known), default=-1)
+        return levels[item_id]
+
+    for item in work_items:
+        level(item["work_item_id"])
+
+    column_index: dict[str, int] = {}
+    positions: dict[str, tuple[int, int]] = {}
+    for item in work_items:
+        item_level = levels[item["work_item_id"]]
+        index = column_index.get(item_level, 0)
+        column_index[item_level] = index + 1
+        positions[item["work_item_id"]] = (
+            _GRAPH_PAD + item_level * (_GRAPH_NODE_W + _GRAPH_X_GAP),
+            _GRAPH_PAD + index * (_GRAPH_NODE_H + _GRAPH_Y_GAP),
+        )
+
+    max_work_level = max(levels.values(), default=0)
+    gate_level = max_work_level + 1
+    gate_positions: dict[str, tuple[int, int]] = {}
+    for index, gate in enumerate(review_gates):
+        gate_positions[gate["gate_id"]] = (
+            _GRAPH_PAD + gate_level * (_GRAPH_NODE_W + _GRAPH_X_GAP),
+            _GRAPH_PAD + index * (_GRAPH_NODE_H + _GRAPH_Y_GAP),
+        )
+
+    column_count = gate_level + 1 if review_gates else max_work_level + 1
+    row_count = max(
+        [column_index.get(lvl, 0) for lvl in range(max_work_level + 1)]
+        + [len(review_gates), 1]
+    )
+    width = 2 * _GRAPH_PAD + column_count * _GRAPH_NODE_W + (column_count - 1) * _GRAPH_X_GAP
+    height = 2 * _GRAPH_PAD + row_count * (_GRAPH_NODE_H + _GRAPH_Y_GAP) - _GRAPH_Y_GAP
+
+    parts = [
+        f'<svg viewBox="0 0 {width} {height}" width="{width}" height="{height}" '
+        'aria-hidden="true" focusable="false" role="presentation">',
+        "<defs>"
+        '<marker id="collab-arrow" viewBox="0 0 10 10" refX="9" refY="5" '
+        'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
+        '<path d="M 0 0 L 10 5 L 0 10 z" fill="var(--cyan)"/></marker>'
+        "</defs>",
+    ]
+
+    def right_anchor(item_id: str) -> tuple[int, int]:
+        x, y = positions[item_id]
+        return x + _GRAPH_NODE_W, y + _GRAPH_NODE_H // 2
+
+    def left_anchor(item_id: str) -> tuple[int, int]:
+        x, y = positions[item_id]
+        return x, y + _GRAPH_NODE_H // 2
+
+    for handoff in handoffs:
+        x1, y1 = right_anchor(handoff["from_work_item_id"])
+        x2, y2 = left_anchor(handoff["to_work_item_id"])
+        label = ", ".join(handoff["artifact_types"])
+        parts.append(
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" '
+            'stroke="var(--cyan)" stroke-width="1.5" marker-end="url(#collab-arrow)"/>'
+            f'<text x="{(x1 + x2) // 2}" y="{(y1 + y2) // 2 - 6}" '
+            'text-anchor="middle" font-size="10" fill="var(--muted)">'
+            f"{_escape(label)}</text>"
+        )
+
+    for gate in review_gates:
+        gate_x, gate_y = gate_positions[gate["gate_id"]]
+        gate_cy = gate_y + _GRAPH_NODE_H // 2
+        for after_id in sorted(gate["after_work_item_ids"]):
+            if after_id not in positions:
+                continue
+            x1, y1 = right_anchor(after_id)
+            parts.append(
+                f'<line x1="{x1}" y1="{y1}" x2="{gate_x}" y2="{gate_cy}" '
+                'stroke="var(--amber-soft)" stroke-width="1.5" stroke-dasharray="5 4" '
+                'marker-end="url(#collab-arrow)"/>'
+            )
+
+    for item in work_items:
+        x, y = positions[item["work_item_id"]]
+        subtitle = f"{item['role']} · {item['socket_id']}"
+        if item["review_required"]:
+            subtitle = f"{subtitle} · review"
+        parts.append(
+            f'<rect x="{x}" y="{y}" width="{_GRAPH_NODE_W}" height="{_GRAPH_NODE_H}" '
+            'rx="4" fill="var(--panel-raised)" stroke="var(--line-hot)"/>'
+            f'<text x="{x + 10}" y="{y + 22}" font-size="12" font-weight="700" '
+            f'fill="var(--text)">{_escape(item["work_item_id"])}</text>'
+            f'<text x="{x + 10}" y="{y + 40}" font-size="10" fill="var(--muted)">'
+            f"{_escape(subtitle)}</text>"
+        )
+
+    for gate in review_gates:
+        gate_x, gate_y = gate_positions[gate["gate_id"]]
+        cx = gate_x + _GRAPH_NODE_W // 2
+        cy = gate_y + _GRAPH_NODE_H // 2
+        points = (
+            f"{gate_x},{cy} {cx},{gate_y} "
+            f"{gate_x + _GRAPH_NODE_W},{cy} {cx},{gate_y + _GRAPH_NODE_H}"
+        )
+        parts.append(
+            f'<polygon points="{points}" fill="rgba(245,185,66,.08)" '
+            'stroke="var(--amber)"/>'
+            f'<text x="{cx}" y="{cy - 4}" text-anchor="middle" font-size="11" '
+            f'font-weight="700" fill="var(--amber)">{_escape(gate["gate_id"])}</text>'
+            f'<text x="{cx}" y="{cy + 12}" text-anchor="middle" font-size="10" '
+            f'fill="var(--muted)">{_escape(gate["review_role"])}</text>'
+        )
+
+    parts.append("</svg>")
+    summary = plan["summary"]
+    caption = (
+        "Collaboration plan graph: "
+        f"{summary['socket_count']} sockets, "
+        f"{summary['work_item_count']} work items, "
+        f"{summary['handoff_count']} handoffs, "
+        f"{summary['review_gate_count']} review gates"
+    )
+    return (
+        '<figure class="collaboration-graph" role="img" '
+        'aria-labelledby="collaboration-graph-caption">'
+        f'<figcaption id="collaboration-graph-caption">{_escape(caption)}</figcaption>'
+        f"{''.join(parts)}</figure>"
+    )
+
+
+def _collaboration_section_body(section: dict[str, Any]) -> str:
+    plan = section.get("plan")
+    if section.get("status") != "pass" or plan is None:
+        next_action = section.get("next_action") or {}
+        source_file = section.get("source", {}).get("plan_file")
+        hint = "orchestration collaboration validate --file <path>"
+        if isinstance(source_file, str) and source_file:
+            hint = f"orchestration collaboration validate --file {source_file}"
+        return _boundary_callout(
+            {
+                "message": next_action.get(
+                    "message",
+                    "Collaboration plan projection is unavailable.",
+                ),
+                "command_hint": hint,
+            }
+        ) + _table(
+            caption="Collaboration plan findings",
+            columns=(
+                ("rule_id", "Rule"),
+                ("severity", "Severity"),
+                ("message", "Message"),
+            ),
+            rows=section.get("findings", []),
+            empty_message="No findings reported.",
+        )
+    return "".join(
+        [
+            _collaboration_graph(plan),
+            _table(
+                caption="Collaboration socket bindings",
+                columns=(
+                    ("socket_id", "Socket"),
+                    ("role", "Role"),
+                    ("required_capabilities", "Capabilities"),
+                ),
+                rows=plan["socket_bindings"],
+                empty_message="No socket bindings.",
+            ),
+            _table(
+                caption="Collaboration routing explanations",
+                columns=(
+                    ("socket_id", "Socket"),
+                    ("role", "Role"),
+                    ("selection_basis", "Selection basis"),
+                    ("matched_capabilities", "Matched capabilities"),
+                    ("declared_availability", "Availability"),
+                    ("invocation_mode", "Invocation"),
+                    ("readiness_evidence", "Readiness evidence"),
+                    ("reason", "Reason"),
+                ),
+                rows=plan["routing_explanations"],
+                empty_message="No routing explanations.",
+            ),
+            _table(
+                caption="Collaboration work items",
+                columns=(
+                    ("work_item_id", "Work item"),
+                    ("socket_id", "Socket"),
+                    ("role", "Role"),
+                    ("depends_on", "Depends on"),
+                    ("expected_artifact_types", "Artifacts"),
+                    ("review_required", "Review"),
+                    ("status", "Status"),
+                ),
+                rows=plan["work_items"],
+                empty_message="No work items.",
+            ),
+            _table(
+                caption="Collaboration handoffs",
+                columns=(
+                    ("from_work_item_id", "From"),
+                    ("to_work_item_id", "To"),
+                    ("artifact_types", "Artifacts"),
+                ),
+                rows=plan["handoffs"],
+                empty_message="No handoffs.",
+            ),
+            _table(
+                caption="Collaboration review gates",
+                columns=(
+                    ("gate_id", "Gate"),
+                    ("after_work_item_ids", "After"),
+                    ("review_role", "Role"),
+                    ("decision_options", "Options"),
+                    ("status", "Status"),
+                ),
+                rows=plan["review_gates"],
+                empty_message="No review gates.",
+            ),
+        ]
+    )
+
+
 _CSS = r"""
 :root {
   color-scheme: dark;
@@ -700,6 +954,8 @@ tbody tr:hover { background: rgba(98,214,199,.05); color: #fff8dc; }
 .findings { margin-top: 1rem; padding: 1rem; border: 1px solid rgba(255,117,109,.45); background: rgba(255,117,109,.05); }
 .findings h2 { color: var(--red); }
 .findings li { margin-top: .6rem; color: var(--muted); }
+.collaboration-graph { margin: 1rem; padding: 1rem; border: 1px solid var(--line); background: rgba(7,16,15,.55); overflow-x: auto; }
+.collaboration-graph figcaption { margin-bottom: .75rem; color: var(--amber); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
 .footer { display: grid; grid-template-columns: 1fr auto; gap: 1rem; margin-top: 1rem; padding: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .68rem; }
 .is-filtered-out { display: none !important; }
 @media (max-width: 1050px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } .hero { grid-template-columns: 1fr; } .toolbar { grid-template-columns: 1fr; } }
@@ -759,8 +1015,11 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
         for label, value in metric_specs
     )
 
+    section_names = [name for name in _SECTION_ORDER if name in sections]
+    if "collaboration" in sections:
+        section_names.append("collaboration")
     nav = "".join(
-        f'<a href="#{name}">{_escape(name)}</a>' for name in _SECTION_ORDER
+        f'<a href="#{name}">{_escape(name)}</a>' for name in section_names
     )
 
     overview = sections["overview"]
@@ -945,6 +1204,19 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
             "</section>",
         ]
     )
+
+    collaboration = sections.get("collaboration")
+    if collaboration is not None:
+        section_html.extend(
+            [
+                '<section class="panel-section" id="collaboration">',
+                _section_header(
+                    "09", "Collaboration / Plan projection", collaboration
+                ),
+                _collaboration_section_body(collaboration),
+                "</section>",
+            ]
+        )
 
     findings_html = ""
     findings = payload.get("findings", [])
