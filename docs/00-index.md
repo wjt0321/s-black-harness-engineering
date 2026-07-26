@@ -42,26 +42,13 @@
 - `52-minimal-orchestration-loop.md` — 最小编排闭环。
 - `64-versioning-governance.md` — 版本与阶段治理。
 
-## 当前执行事实源
+## 当前事实源
 
-- `111-pi-controlled-dry-run-print-implementation.md` — fixed Pi print 当前实现、边界和真实 smoke。
-- `116-multi-agent-collaboration-plan-and-socket-admission.md` — 可扩展 socket 准入与协作计划的当前设计事实源。
-- `117-collaboration-plan-read-model.md` — 协作计划只读 read model 的当前实现事实源。
-- `118-control-panel-collaboration-projection.md` — Control Panel passive collaboration projection 的当前实现事实源。
-- `122-acp-readiness-collector-and-dispatch-binding.md` — ACP runner snapshot collector、证据绑定与派发阻塞当前事实源。
-- `121-acp-readiness-collection-design-gate.md` — ACP readiness binding、TTL、哈希与停止线设计事实源。
-- `120-controlled-collaboration-dispatch-foundation.md` — 单 work item dispatch proposal、eligibility 与 blocked reason 基础事实源。
-- `119-socket-readiness-evidence-and-routing-explanations.md` — socket-family readiness evidence 契约与协作路由解释事实源。
-- `115-agent-socket-registry-v1.md` — 多 Agent 插座式中枢的当前实现事实源；只读 socket 投影。
-- `114-pi-bound-runner-migration-design.md` — deferred security work：bound Node + sealed CLI entry 迁移设计门；未改 runner。
-- `113-pi-runtime-binding-implementation.md` — Pi Node/package binding-only 当前实现；未迁移 runner。
-- `archive/release-notes/112-release-notes-stage65-pi-bound-runner-migration-design.md` — Stage 65 design-only 收口记录。
-- `archive/release-notes/111-release-notes-stage63-stage64-pi-runtime-binding.md` — Stage 63–64 commit-level 收口记录。
-- `112-pi-node-runtime-identity-binding-design.md` — Pi Node runtime、CLI entry 与 module closure 的设计契约。
-- `110-pi-controlled-dry-run-adapter-contract.md` — Pi print 当前设计契约。
-- `archive/100-fixed-execution-operational-recovery-implementation.md` — shared lease、trust/recovery 与 audit v2。
-- `archive/98-fixed-git-status-executor-implementation-and-limited-enablement.md` — fixed Git status 实现。
-- `archive/97-execution-lifecycle-audit-writer-design-and-implementation.md` — execution audit writer。
+- `123-multi-agent-control-hub-current-state-and-stage75-gate.md` — 当前产品目标、已有能力、未完成项、Stage 75 结论与方向决策；多 Agent 主线只需先读这一份。
+- `111-pi-controlled-dry-run-print-implementation.md` — 当前唯一 Agent 类真实执行能力及其安全边界。
+- `114-pi-bound-runner-migration-design.md` — deferred 安全工作；不是当前产品主线。
+
+Stage 67-74 的 socket、协作计划、看板、dispatch 与 readiness 详细记录已归档到 `archive/115-*.md` 至 `archive/122-*.md`，仅在追溯设计依据时读取。
 
 ## 历史归档
 

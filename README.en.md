@@ -8,18 +8,21 @@
   <a href="README.md">中文</a> · <strong>English</strong>
 </p>
 
-A lightweight, auditable Agent Runtime / Harness Orchestrator. It separates policy gates, ledgers, capability routing, controlled writes, execution audit, and host integration from the chat host into a testable local control plane.
+An auditable multi-Agent collaboration control hub. Kimi Code, Claude Code, OMP/Pi, and QwenPaw agents are replaceable plugs; the project provides shared sockets, task decomposition, capability routing, handoffs, reviews, evidence, and operator boundaries so their work can ultimately be observed and controlled from one board.
 
 ## Current Status
 
-Stage 62 is complete. The repository exposes exactly two limited real-execution operations on Windows:
+Stage 75 is complete. The repository now provides:
 
-- fixed Git status: only `git status --short --branch`;
-- fixed Pi print: only `pi --print --no-session --no-tools <prompt>`, validated by a real DeepSeek smoke test.
+- a shared Agent socket registry and capability routing;
+- validated multi-Agent collaboration plans with work items, dependencies, handoffs, artifacts, and review gates;
+- a read-only Control Panel that shows collaboration plans, Agent ownership, dispatch eligibility, and blockers;
+- single-work-item dispatch proposals and ACP runner readiness evidence foundations;
+- policy and task/event/run/approval/artifact read models with audit boundaries.
 
-Both require explicit `--commit` and are guarded by a machine-local lease, fixed arguments, bounded validation, started/terminal audit events, and Windows Job Object process-tree cleanup. Pi results expose only digests, byte counts, and audit evidence; prompts, model text, and credentials remain withheld.
+The board cannot yet start a real Kimi, Claude, or OMP collaboration. The next product milestone is a usable collaboration board with a fixture-backed end-to-end walkthrough, rather than deeper probe infrastructure.
 
-The repository also provides policy and registry checks, task/event/run read models, controlled ledger writes with rollback, capability routing, workflow/profile/contract validation, a static read-only Control Panel pipeline, and Pi preflight/approval/postflight host primitives.
+Two limited Windows real-execution operations remain available underneath: fixed Git status and fixed Pi print. Both use explicit authorization, fixed arguments, a machine-local lease, execution audit, and Windows Job Object process-tree cleanup. They are safety infrastructure, not the product direction.
 
 ## Security Boundary
 
@@ -55,6 +58,7 @@ See [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md) for the full CLI refe
 ## Documentation
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current state and recovery order.
+- [`docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md`](docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md): multi-Agent goal, current capabilities, gaps, and direction decision.
 - [`docs/00-index.md`](docs/00-index.md): topic-based navigation.
 - [`docs/02-roadmap.md`](docs/02-roadmap.md): completed capability packages and next candidates.
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md): latest real-execution fact source.

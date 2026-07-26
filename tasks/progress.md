@@ -3004,3 +3004,11 @@
 - collector 最高只产出 `available/runner_listed`，schema 固定 `sufficient_for_dispatch=false`；dispatch 验证 evidence 哈希、socket、runner binding、时间下界与过期时间，阻塞原因升级为 `readiness_insufficient`，真实执行权仍不可用。
 - Control Panel JSON/HTML 展示 evidence status、level、id、expiry 与 blocked reasons；Stage 73-74 聚焦 42 项测试通过。
 - 事实源 `docs/121-acp-readiness-collection-design-gate.md` 与 `docs/122-acp-readiness-collector-and-dispatch-binding.md`；准备完整验收并创建本地 `v0.21.0-acp-readiness-evidence-foundation`，未 push。
+
+## 2026-07-26 Stage 75 - Direction Reset and Documentation Convergence
+
+- 冻结 `session_openable_no_turn` ACP 证据设计：未来探针需证明 transport handshake、无 prompt session 初始化和立即关闭，但本阶段不实现探针、不启动 runner/session、不调用模型。
+- 新增 `docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md`，用一份当前事实源统一说明项目目标、已有能力、未完成项、安全边界和方向判断。
+- 将已完成的 115-122 阶段文档原样移入 `docs/archive/`，不删除历史；索引与 digest 不再要求连续阅读八份底层文档。
+- 方向纠偏：Stage 72-75 的安全基础设施相关但推进过深，下一产品里程碑改为可用协作看板与 fixture-backed 端到端演示；ACP 探针和真实 Agent 派发延期到看板明确操作需求之后。
+- 计划完成完整验收后创建并直接推送 `v0.22.0-stage75-direction-reset-and-docs-convergence`；同时推送尚未发布的 `v0.21.0` 标签与提交。

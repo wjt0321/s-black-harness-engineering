@@ -63,13 +63,16 @@ Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job acc
 - Stage 63–65 的 Pi npm/Node runtime binding 与 runner migration 设计保留为 deferred security work；不再作为当前产品主线。
 - 新增真实 operation、live Agent readiness 或 Agent-to-Agent invocation 必须独立设计、测试和用户授权。
 
-## 下一候选
+## 下一产品里程碑
 
 优先级从高到低：
 
-1. **Stage 75 ACP transport/session-openability design gate**：冻结更强但仍无 prompt 的 evidence 契约；未获独立授权前不启动 runner、不打开 session、不调用 Agent。
-2. **Stage 66 Pi bound runner migration**：保留为 deferred security work；只有 Pi 成为明确优先执行器且获独立授权时再恢复。
-3. **canonical approval binding**：继续作为安全内核的独立强化项，不阻塞协作主线。
+1. **可用协作看板**：任务录入、计划审阅、Agent work-item 泳道、handoff/artifact 时间线、blocked/ready/approval 状态和单一 operator action surface。
+2. **Fixture-backed 端到端演示**：不用真实 Agent，先完整演示一个任务怎样规划、交接、审阅、产出 artifact 和完成。
+3. **无 prompt ACP 探针实现**：只有看板明确需要真实 readiness 时才恢复，并需单独授权启动 runner/session。
+4. **单 work-item 真实派发**：在探针、审批、取消、审阅和 artifact 回收契约齐备后另行授权。
+
+Stage 66 Pi bound runner migration 与 canonical approval binding 保留为安全强化项，不再抢占产品主线。
 
 ## 治理原则
 

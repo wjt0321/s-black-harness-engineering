@@ -4,16 +4,16 @@
 
 ## 当前基线
 
-- 里程碑：`v0.21.0-acp-readiness-evidence-foundation`
+- 里程碑：`v0.22.0-stage75-direction-reset-and-docs-convergence`
 - commit：见该里程碑标签指向的提交
 - 活跃 `docs/` 只保留当前架构、规范、CLI 和最新事实源；完成阶段已归档。
 
 ## 当前阶段
 
-- **Stage 74 — 已完成：ACP runner snapshot collector、readiness evidence 与 dispatch binding；未启动 runner 或执行派发**
-- 事实源：`122-acp-readiness-collector-and-dispatch-binding.md`
-- 最近完成：**Stage 73 — ACP readiness collection design gate**
-- Stage 66 Pi bound runner migration 已冻结为 deferred security work，不是当前产品主线。
+- **Stage 75 — 已完成：无 prompt ACP transport/session-openability 证据设计门；未实现探针、未启动 runner 或 session**
+- 当前唯一主线事实源：`123-multi-agent-control-hub-current-state-and-stage75-gate.md`
+- 方向结论：Stage 67-71 回到了插座式中枢目标；Stage 72-75 的安全基础设施有必要，但连续推进过深，产品可见进展偏慢。下一里程碑回归可用协作看板。
+- Stage 66 Pi bound runner migration 与 Stage 75 探针实现均为 deferred，不是当前产品主线。
 
 ## 当前真实执行能力
 
@@ -34,20 +34,13 @@
 
 1. `README.md`
 2. `docs/00-index.md`
-3. `docs/122-acp-readiness-collector-and-dispatch-binding.md`
-4. `docs/121-acp-readiness-collection-design-gate.md`
-5. `docs/120-controlled-collaboration-dispatch-foundation.md`
-6. `docs/119-socket-readiness-evidence-and-routing-explanations.md`
-7. `docs/118-control-panel-collaboration-projection.md`
-8. `docs/117-collaboration-plan-read-model.md`
-9. `docs/116-multi-agent-collaboration-plan-and-socket-admission.md`
-10. `docs/115-agent-socket-registry-v1.md`
-11. `docs/49-capability-routing-model.md`
-12. `docs/48-adapter-runtime-interface.md`
-13. `docs/114-pi-bound-runner-migration-design.md`（deferred security work）
-14. `docs/21-controlled-write-boundaries.md`
-15. `tasks/handoff-2026-07-26.md`
-16. `tasks/progress.md`（只做历史取证，不作为入口）
+3. `docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md`
+4. `docs/47-orchestration-hub-vision.md`
+5. `docs/48-adapter-runtime-interface.md`
+6. `docs/49-capability-routing-model.md`
+7. `docs/111-pi-controlled-dry-run-print-implementation.md`（仅在核对真实执行边界时读取）
+8. `docs/21-controlled-write-boundaries.md`
+9. `tasks/progress.md`（只做历史取证，不作为入口）
 
 然后运行：
 
@@ -58,8 +51,8 @@ python -m agent_runtime.cli doctor
 
 ## 下一步做什么
 
-- **Stage 75 候选**：冻结更强但仍无 prompt 的 ACP transport/session-openability 证据设计门；未获单独授权前不启动 runner、不打开 session、不调用 Agent；
-- Stage 66 Pi bound runner migration 保持 deferred，除非 Pi 成为明确优先执行器且获得单独授权。
+- **下一产品里程碑**：可用协作看板与 fixture-backed 端到端演示，覆盖任务录入、计划审阅、Agent work-item 泳道、handoff/artifact 时间线、blocked/ready/approval 状态和单一 operator action surface。
+- Stage 75 的无 prompt ACP 探针实现与 Stage 66 Pi bound runner migration 均保持 deferred；只有看板暴露真实操作需求后再恢复。
 
 ## 验证基线
 

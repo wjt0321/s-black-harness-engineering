@@ -8,24 +8,21 @@
   <strong>中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-轻量、可审计的 Agent Runtime / Harness Orchestrator。它把规则门禁、任务账本、能力路由、受控写入、执行审计和宿主适配从聊天应用中抽离，形成可测试的本地控制面。
+一个可审计的多 Agent 协作主控台。Kimi Code、Claude Code、OMP/Pi 和 QwenPaw Agent 是可替换的“插头”；项目提供统一“插座”、任务拆分、能力路由、交接、审阅、证据和操作边界，让用户最终能在一个看板里观察和控制它们协作。
 
 ## 当前状态
 
-项目已完成 Stage 62，并具备两项受限的 Windows 真实执行能力：
+项目已完成 Stage 75，当前具备：
 
-- fixed Git status：仅允许固定 `git status --short --branch`。
-- fixed Pi print：仅允许固定 `pi --print --no-session --no-tools <prompt>`，真实 DeepSeek smoke 已通过。
+- 统一 Agent socket registry 与 capability routing；
+- 可校验的多 Agent collaboration plan，包含 work item、依赖、handoff、artifact 和 review gate；
+- 只读 Control Panel，展示协作计划、Agent 分工、派发资格和阻塞原因；
+- 单 work item dispatch proposal 与 ACP runner readiness evidence 基础；
+- policy、task/event/run/approval/artifact read model 和审计边界。
 
-两者都要求显式 `--commit`，并经过 machine-local lease、固定参数、边界校验、started/terminal audit 和 Windows Job Object 进程树回收。Pi 输出只公开 digest、字节数和审计证据，不公开 prompt、模型原文或凭据。
+目前看板还不能启动真实 Kimi、Claude 或 OMP 协作。下一产品里程碑是可用协作看板与 fixture-backed 端到端演示，而不是继续扩展底层探针。
 
-此外，仓库已具备：
-
-- policy、registry、task/event/run/approval/artifact read model；
-- dry-run、plan hash、受控 ledger 追加与失败回滚；
-- capability routing、workflow/profile/contract 校验；
-- 静态只读 Control Panel 与 one-shot host/consumer 管道；
-- Pi preflight、有限 approval 与 postflight projection 基础设施。
+底层仍保留两项受限 Windows 真实执行能力：fixed Git status 与 fixed Pi print。两者都经过显式授权、固定参数、machine-local lease、执行审计和 Windows Job Object 进程树回收；它们是安全基础设施，不是产品主线。
 
 ## 安全边界
 
@@ -61,6 +58,7 @@ git diff --check
 ## 文档入口
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
+- [`docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md`](docs/123-multi-agent-control-hub-current-state-and-stage75-gate.md)：多 Agent 主控台目标、现状、缺口与方向决策。
 - [`docs/00-index.md`](docs/00-index.md)：按主题导航。
 - [`docs/02-roadmap.md`](docs/02-roadmap.md)：已完成能力包与下一候选。
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md)：当前最新真实执行事实源。
