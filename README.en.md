@@ -10,6 +10,8 @@
 
 An auditable multi-Agent collaboration control hub. Kimi Code, Claude Code, OMP/Pi, and QwenPaw agents are replaceable plugs; the project provides shared sockets, task decomposition, capability routing, handoffs, reviews, evidence, and operator boundaries so their work can ultimately be observed and controlled from one board.
 
+The target product is a GUI-first, local-first control plane for external Agents, not another chat Agent or a CLI/TUI-first tool. The Harness owns plans, state, approvals, handoffs, reviews, artifacts, audit, and recovery, while Claude, Kimi, OMP/Pi, QwenPaw, and future Agents keep ownership of their native models, sessions, and tools.
+
 ## Current Status
 
 Stage 81 is complete. The repository now provides:
@@ -26,7 +28,7 @@ Stage 81 is complete. The repository now provides:
 - Chinese Control Panel run/action/inbox projections with operator controls permanently disabled;
 - single-work-item dispatch proposals, ACP readiness evidence foundations, and audit boundaries.
 
-The board still cannot start a real Kimi, Claude, or OMP collaboration. Even when the current inbox reports `action_eligible=true`, it remains `execution_authorized=false`, `dispatch_eligible=false`, and `execution=not_executed`. The next product milestone is **Stage 82 safety review and read-only contract closure before real approval-ledger integration**: review the authorization boundary between fixture approvals, the current inbox, and any future real binding without reading a real ledger or invoking an Agent.
+The board still cannot start a real Kimi, Claude, or OMP collaboration. Even when the current inbox reports `action_eligible=true`, it remains `execution_authorized=false`, `dispatch_eligible=false`, and `execution=not_executed`. The next product milestone is **Stage 82 External Agent Adapter Contract and MVP Boundary**: freeze the shared identity, capability, readiness, session, dispatch, event, cancellation, artifact, and recovery contract, with approval safety treated as part of real dispatch authority. Stage 82 still does not invoke an Agent, start a session, or add a real operation.
 
 Two limited Windows real-execution operations remain available underneath: fixed Git status and fixed Pi print. Both use explicit authorization, fixed arguments, a machine-local lease, execution audit, and Windows Job Object process-tree containment. They are security infrastructure, not the product mainline.
 
@@ -64,6 +66,7 @@ See [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md) for the full CLI refe
 ## Documentation
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current state and recovery order.
+- [`docs/130-gui-first-external-agent-control-plane-target.md`](docs/130-gui-first-external-agent-control-plane-target.md): durable GUI-first external-Agent target, MVP boundary, and anti-drift checklist.
 - [`docs/129-stage81-current-operator-inbox-and-approval-collection.md`](docs/129-stage81-current-operator-inbox-and-approval-collection.md): current fact source for the operator inbox, approval collection, stale-target blocking, and the read-only control projection.
 - [`docs/00-index.md`](docs/00-index.md): topic-based navigation.
 - [`docs/02-roadmap.md`](docs/02-roadmap.md): completed capability packages and next candidates.

@@ -20,7 +20,7 @@ python -m agent_runtime.cli doctor
 
 ## 当前能力与边界
 
-项目是 Python 3.11+ 的本地 Agent Runtime / Harness 控制面。Stage 81 已完成；当前产品事实源为 `docs/129-stage81-current-operator-inbox-and-approval-collection.md`。
+项目是 Python 3.11+、GUI-first 目标的本地多 Agent Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；Stage 81 已完成，当前实现事实源为 `docs/129-stage81-current-operator-inbox-and-approval-collection.md`。
 
 允许的真实执行仅有：
 
@@ -66,6 +66,7 @@ NEVER：
 | `tests/` | 行为与边界契约 |
 | `docs/10-cli-poc-usage.md` | CLI 参考 |
 | `docs/21-controlled-write-boundaries.md` | 写入边界 |
+| `docs/130-gui-first-external-agent-control-plane-target.md` | 长期产品目标、MVP 边界与反偏航检查 |
 | `docs/111-pi-controlled-dry-run-print-implementation.md` | 当前 Pi 执行事实源 |
 
 ## 验证契约

@@ -7,18 +7,20 @@
 - 里程碑：Stage 81 当前态操作者待办与审批集合
 - commit：以当前 Git HEAD 为准
 - 日期：2026-07-26
-- 活跃 `docs/` 只保留当前架构、规范、CLI 和最新事实源；本次整理后活跃文档为 28 份，完成阶段已归档。
+- 活跃 `docs/` 只保留当前架构、规范、CLI 和最新事实源；本次愿景收口后活跃文档为 29 份，完成阶段已归档。
 
 ## 当前阶段
 
+- **长期目标已冻结：GUI-first 外部 Agent 控制面与真实多 Agent 协同。**
+- 长期产品事实源：`130-gui-first-external-agent-control-plane-target.md`。
 - **Stage 81 — 已完成：current-state、fixture-backed、只读的操作者待办与审批集合投影。**
-- 当前唯一产品主线事实源：`129-stage81-current-operator-inbox-and-approval-collection.md`。
+- 当前实现事实源：`129-stage81-current-operator-inbox-and-approval-collection.md`。
 - 当前待办只接受最新 attempt，以及与最新 attempt 对齐的 review/handoff；历史实体稳定返回 `target_not_current` 或状态阻止原因。
 - 示例 blocked Run 聚合 5 个操作：1 个当前合格 cancel、1 个 pending approval、4 个 blocked/stale action。
 - 合格候选继续使用内容寻址 candidate id 与 idempotency key，并精确绑定 run projection、action、target、expected state 和 fixture approval。
 - Control Panel 新增中文“协作 / 当前待办”区段；所有操作控件仍 disabled。
 - 即使 `action_eligible=true`，仍固定 `execution_authorized=false`、`dispatch_eligible=false`、`execution=not_executed`。
-- 下一断点 Stage 82：真实 approval ledger 接入前的安全审查与只读契约收口；不得读取真实 ledger。
+- 下一断点 Stage 82：External Agent Adapter Contract 与 MVP Boundary；approval safety 是真实 dispatch authority 的子问题。
 - Stage 65 Pi bound runner migration 设计已归档为 `archive/114-pi-bound-runner-migration-design.md`；无 prompt ACP 探针继续 deferred，不是当前产品主线。
 
 ## 当前真实执行能力
@@ -42,15 +44,16 @@
 
 1. `README.md`
 2. `docs/00-index.md`
-3. `docs/129-stage81-current-operator-inbox-and-approval-collection.md`
-4. `docs/47-orchestration-hub-vision.md`
-5. `docs/48-adapter-runtime-interface.md`
-6. `docs/49-capability-routing-model.md`
-7. `docs/111-pi-controlled-dry-run-print-implementation.md`（仅在核对真实执行边界时读取）
-8. `docs/113-pi-runtime-binding-implementation.md`（仅在核对 binding-only review evidence 时读取）
-9. `docs/21-controlled-write-boundaries.md`
-10. `tasks/handoff-2026-07-26.md`（仅需恢复本次实现细节和 Stage82 入口时）
-11. `tasks/progress.md`（只做历史取证，不作为入口）
+3. `docs/130-gui-first-external-agent-control-plane-target.md`
+4. `docs/129-stage81-current-operator-inbox-and-approval-collection.md`
+5. `docs/47-orchestration-hub-vision.md`
+6. `docs/48-adapter-runtime-interface.md`
+7. `docs/49-capability-routing-model.md`
+8. `docs/111-pi-controlled-dry-run-print-implementation.md`（仅在核对真实执行边界时读取）
+9. `docs/113-pi-runtime-binding-implementation.md`（仅在核对 binding-only review evidence 时读取）
+10. `docs/21-controlled-write-boundaries.md`
+11. `tasks/handoff-2026-07-26.md`（仅需恢复本次实现细节和 Stage82 入口时）
+12. `tasks/progress.md`（只做历史取证，不作为入口）
 
 然后运行：
 
@@ -61,11 +64,11 @@ python -m agent_runtime.cli doctor
 
 ## 下一步做什么
 
-- **下一产品里程碑：Stage 82 真实 approval ledger 接入前的安全审查与只读契约收口。**
-- 审查 fixture approval、current inbox、受控写入审计和未来 readiness probe 的字段与授权边界，但不读取或修改真实 ledger。
-- 首个设计输出应是 approval evidence 的身份绑定、状态矩阵、失效/撤销语义和审计字段清单；先做只读 schema 与 deterministic failure matrix，不实现 ledger adapter。
-- 收口标准：不新增真实 operation，不启动 Agent/session，不探测 readiness，不把 `action_eligible` 或 `pending_approval` 解释为执行授权。
-- 无 prompt ACP 探针、session 启动、真实审批绑定和单 work-item 真实派发继续 deferred，必须另行设计、测试和授权。
+- **下一产品里程碑：Stage 82 External Agent Adapter Contract 与 MVP Boundary。**
+- 冻结 Claude、Kimi、OMP/Pi、QwenPaw 等外部 Agent 共用的 identity、capability、readiness、session、dispatch、event、cancel、artifact、recovery contract。
+- approval evidence 的身份绑定、状态矩阵、失效/撤销、idempotency 和审计字段作为真实 dispatch authority 的组成部分一并设计。
+- 输出 transport-neutral schema、failure matrix、测试计划和 GUI 所需最小 live read model；ACP、CLI 和 local process 只能是 transport，不能改变 control-plane 语义。
+- 收口标准：仍不调用 Agent、不启动 session、不实现网络 adapter、不新增真实 operation；下一实现阶段必须再次获得明确授权。
 
 ## 收口验证
 

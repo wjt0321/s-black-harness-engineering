@@ -10,6 +10,8 @@
 
 一个可审计的多 Agent 协作主控台。Kimi Code、Claude Code、OMP/Pi 和 QwenPaw Agent 是可替换的“插头”；项目提供统一“插座”、任务拆分、能力路由、交接、审阅、证据和操作边界，让用户最终能在一个看板里观察和控制它们协作。
 
+最终形态是 GUI-first、本地优先的外部 Agent 控制面，而不是另一个聊天 Agent 或以 CLI/TUI 为主的工具。Harness 统一管理计划、状态、审批、交接、审阅、产物、审计和恢复；Claude、Kimi、OMP/Pi、QwenPaw 等外部 Agent 继续负责各自的模型、session 和工具执行。
+
 ## 当前状态
 
 项目已完成 Stage 81，当前具备：
@@ -26,7 +28,7 @@
 - 中文 Control Panel 运行/操作资格/当前待办投影及固定禁用的操作者控件；
 - 单 work item dispatch proposal、ACP readiness evidence 基础和完整审计边界。
 
-看板仍不能启动真实 Kimi、Claude 或 OMP 协作。即使 current inbox 投影显示 `action_eligible=true`，也固定 `execution_authorized=false`、`dispatch_eligible=false`、`execution=not_executed`。下一产品里程碑是 **Stage 82 真实 approval ledger 接入前的安全审查与只读契约收口**：只审查 fixture approval、当前待办与未来真实绑定的授权边界，仍不读取真实 ledger 或调用 Agent。
+看板仍不能启动真实 Kimi、Claude 或 OMP 协作。即使 current inbox 投影显示 `action_eligible=true`，也固定 `execution_authorized=false`、`dispatch_eligible=false`、`execution=not_executed`。下一产品里程碑是 **Stage 82 External Agent Adapter Contract 与 MVP Boundary**：冻结外部 Agent 的 identity、capability、readiness、session、dispatch、event、cancel、artifact 和 recovery 共同契约，并把 approval safety 纳入真实派发边界；本阶段仍不调用 Agent、不启动 session、不新增真实 operation。
 
 底层仍保留两项受限 Windows 真实执行能力：fixed Git status 与 fixed Pi print。两者都经过显式授权、固定参数、machine-local lease、执行审计和 Windows Job Object 进程树回收；它们是安全基础设施，不是产品主线。
 
@@ -64,6 +66,7 @@ git diff --check
 ## 文档入口
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
+- [`docs/130-gui-first-external-agent-control-plane-target.md`](docs/130-gui-first-external-agent-control-plane-target.md)：GUI-first 外部 Agent 控制面长期目标、MVP 边界和反偏航检查表。
 - [`docs/129-stage81-current-operator-inbox-and-approval-collection.md`](docs/129-stage81-current-operator-inbox-and-approval-collection.md)：当前操作者待办、审批集合、stale target 阻止与只读控制面事实源。
 - [`docs/00-index.md`](docs/00-index.md)：按主题导航。
 - [`docs/02-roadmap.md`](docs/02-roadmap.md)：已完成能力包与下一候选。

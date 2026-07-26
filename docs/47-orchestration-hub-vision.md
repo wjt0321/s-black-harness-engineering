@@ -1,5 +1,7 @@
 # 47 — Orchestration Hub Vision
 
+> 当前长期产品目标以 `130-gui-first-external-agent-control-plane-target.md` 为准；本文保留中枢台分层依据。若二者冲突，以 docs/130 为权威。
+
 ## 阶段定位
 
 本文用于校正 `s-black harness engineering` 的项目定位：它不应只被理解为“规则门禁工具”或“受控写入 Runtime”，而应被定义为一个面向多 Agent、多工具、多渠道的**中枢运行台（Orchestration Hub / Control Plane）**。
@@ -32,15 +34,16 @@
 ## 最终希望形成的结构
 
 ```text
-用户 / CLI / 飞书 / 未来 UI
+用户
+  -> GUI / Desktop Control Panel（默认产品入口）
   -> Orchestration Hub / Control Plane
   -> Capability Routing
   -> Policy Guardrails / Approval / Completion Checks
   -> Agent & Tool Adapters
-       -> QwenPaw
-       -> Kimi Code / WebBridge
+       -> QwenPaw / ACP
+       -> Kimi Code
        -> Claude Code
-       -> OMP / pi
+       -> OMP / Pi
        -> Shell
        -> GitHub
        -> Lark

@@ -1,68 +1,59 @@
 # 01 — 愿景与边界
 
+> 长期产品目标事实源：`130-gui-first-external-agent-control-plane-target.md`
+
 ## 背景问题
 
-QwenPaw 很有用，它提供了聊天入口、Agent 宿主、工具调用、记忆、cron 和飞书等能力。
+Claude、Kimi、OMP/Pi、QwenPaw 等 Agent 工具已经能够完成真实工作，但它们通常拥有不同的入口、session、工具、权限、事件和结果表达。用户需要在多个 CLI、TUI 或聊天窗口之间切换，难以统一观察任务、审批、交接、产物和失败恢复，也很难把宿主内置逻辑变成自己可掌控、可审计的长期系统。
 
-但它也有明显限制：
-
-- Agent 的调度逻辑被宿主框架限制
-- 工具调用、日志、安全、权限和验证不够由我们自己掌控
-- 很多规则写在提示词或记忆里，不能稳定地变成执行前门禁
-- 多 Agent 协作时，缺少一个独立、可审计、可迁移的运行层
-
-所以我们要逐步建设一个独立的 Agent Runtime，让 QwenPaw 变成其中一个可用适配器，而不是唯一的大脑和边界。
+本项目因此建设一个独立的 Agent Harness / Control Plane。QwenPaw、Claude、Kimi、OMP/Pi 和未来 Agent 都是可替换的外部执行节点，不是本项目本身。
 
 ## 项目愿景
 
-最终希望形成这样的结构：
+最终产品是 GUI-first、本地优先的多 Agent 控制台：
 
 ```text
-用户 / 飞书 / CLI
-  -> Agent Runtime
-  -> 规则检查 / 权限门禁
-  -> 任务路由
-  -> 适配器：QwenPaw / Kimi / Claude / OMP / Shell / 飞书
-  -> 执行结果验证
-  -> 记忆、日志、任务账本沉淀
+用户
+  -> GUI / Desktop Control Panel
+  -> Harness Control Plane
+       -> Plan / Work Item / Run / Approval / Handoff / Review / Artifact
+       -> Capability Routing / Policy / Audit / Recovery
+       -> Agent Adapter / Socket
+            -> Claude / Kimi / OMP/Pi / QwenPaw / 未来 Agent
 ```
+
+用户应能够在统一看板中：
+
+- 查看所有 Agent 的身份、能力、状态、session 和当前任务；
+- 创建或确认协作计划，并把 work item 分配给不同 Agent；
+- 处理审批、阻止、retry、cancel、review 和 handoff；
+- 查看真实执行事件、artifact、错误和 recovery；
+- 组织 Planner、Executor、Reviewer 等结构化多 Agent 协同。
+
+CLI 继续服务自动化、诊断、恢复和确定性机器接口，但不是最终用户体验。
 
 ## 核心原则
 
-1. **宿主中立**  
-   QwenPaw 是一个重要入口和适配器，但不是整个架构本身。
-
-2. **规则优先**  
-   高风险动作必须先经过明确规则检查，而不是靠 Agent 临场自觉。
-
-3. **可检查**  
-   每个任务做了什么、谁做的、为什么这么做、结果在哪里，都应该能查到。
-
-4. **渐进建设**  
-   先搭骨架和协议，再逐步实现，不要一口气推翻现有工作流。
-
-5. **不假装自治**  
-   外发、删除、push、权限变更、代理变更等动作仍然需要明确授权。
-
-6. **可复用**  
-   这套 Runtime 不只服务Orchestrator，也应该能让Media Agent、Memory Agent或未来 Agent 复用。
+1. **外部 Agent 中立**：不把单一 Agent 或 ACP transport 写成系统核心。
+2. **GUI-first**：默认以可视化 Control Panel 呈现状态、控制和协同。
+3. **Harness 不重做 Agent**：模型、上下文、记忆和原生工具由外部 Agent 负责。
+4. **结构化协同**：Agent 通过 work item、handoff、artifact 和 review decision 协同，而不是依赖不可审计的自由聊天。
+5. **规则与审批优先**：高风险动作必须经过稳定门禁、身份绑定和显式授权。
+6. **事实权威分离**：Harness 拥有 control-plane 状态；外部 Agent 拥有原生 session 和工具执行事实。
+7. **可审计、可恢复**：真实执行必须有 started/terminal audit、bounded output 和 outcome-unknown recovery。
+8. **积木式接入**：新增 Agent 必须复用统一 adapter/socket contract，不增加专用主流程或 UI 旁路。
 
 ## 当前边界
 
-目前项目只处于规划骨架阶段。
+Stage 81 已完成只读、fixture-backed 的协作计划、运行状态、操作资格、当前待办和静态中文 Control Panel。当前真实执行仍只有 fixed Git status 和 fixed Pi print。
 
-现在不做：
+当前尚未开放：
 
-- 不替代 QwenPaw
-- 不启动后台服务
-- 不接管现有定时任务
-- 不自动执行真实外部操作
-- 不把半成品接进生产流程
+- live external Agent adapter；
+- 真实 Agent readiness/session；
+- approval 到真实 dispatch 的绑定；
+- 多 Agent 的真实 Planner -> Executor -> Reviewer 闭环；
+- 网络 adapter、长期服务、数据库和自动后台执行；
+- 通用 shell、任意 argv/cwd/env 或未经独立设计的第三个真实 operation。
 
-当前目标是先沉淀：
-
-- 通用 policy schema
-- 任务状态模型
-- Agent 注册表草案
-- 工具适配器边界
-- 完成验证流程
+下一阶段必须先冻结统一外部 Agent adapter contract 和 MVP boundary，再讨论真实接入。

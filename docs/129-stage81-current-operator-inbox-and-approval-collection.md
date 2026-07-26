@@ -136,12 +136,14 @@ python -m agent_runtime.cli orchestration control-panel render \
 
 ## 下一阶段断点：Stage 82
 
-下一产品里程碑是“真实 approval ledger 接入前的安全审查与只读契约收口”。在不读取真实 ledger 的前提下，审查 fixture approval、当前待办、受控写入审计和未来 readiness probe 之间的边界，明确哪些字段必须在真实绑定前经过独立授权。
+下一产品里程碑是“External Agent Adapter Contract 与 MVP Boundary”。长期产品目标以 `130-gui-first-external-agent-control-plane-target.md` 为准：统一 GUI 管理 Claude、Kimi、OMP/Pi、QwenPaw 和未来外部 Agent，并通过结构化 plan、work item、handoff、artifact 和 review 完成真实多 Agent 协同。
+
+Stage 82 需要冻结 transport-neutral 的 identity、capability、readiness、session、dispatch、event、cancel、artifact、recovery contract；approval evidence 安全审查是 dispatch authority 的组成部分，不再作为孤立产品方向。
 
 Stage 82 仍必须：
 
-- NEVER 调用 Agent、启动 session 或探测 readiness；
+- NEVER 调用 Agent、启动 session 或探测 live readiness；
 - NEVER 读取或修改真实 approval ledger；
 - NEVER 将 current inbox、fixture approval 或业务资格解释为执行授权；
-- NEVER 新增真实 operation；
-- 单 work-item 真实派发继续等待独立设计、测试和用户授权。
+- NEVER 新增真实 operation、网络 adapter、服务或数据库；
+- 只输出 schema、failure matrix、测试计划和 GUI 最小 live read model；真实接入继续等待独立设计、测试和用户授权。

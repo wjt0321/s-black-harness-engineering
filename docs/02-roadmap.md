@@ -67,10 +67,12 @@ Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job acc
 
 Stage 76-81 已完成人工计划看板、fixture 端到端演示、中文默认 UI/UX、浏览器内存编辑器、候选校验与导出、协作运行事件模型、checkpoint 操作资格，以及只聚合最新状态的操作者待办和审批集合。后续优先级：
 
-1. **Stage 82 真实 approval ledger 接入前的安全审查与只读契约收口**：审查 fixture approval、current inbox、受控写入审计和未来 readiness probe 的字段与授权边界；不读取或修改真实 ledger。
-2. **真实审批绑定设计**：只有 Stage 82 明确独立授权、写入事务、审计和回滚契约后才允许设计；current inbox 仍不得被解释为授权。
-3. **无 prompt ACP 探针实现**：只有当前态资格契约明确需要真实 readiness 时才恢复，并需单独授权启动 runner/session。
-4. **单 work-item 真实派发**：在探针、真实审批绑定、取消、重试、审阅、交接和 artifact 回收契约齐备后另行设计和授权。
+1. **Stage 82 External Agent Adapter Contract 与 MVP Boundary**：冻结统一 identity、capability、readiness、session、dispatch、event、cancel、artifact 和 recovery contract；approval safety 作为真实派发权限的一部分；本阶段 design-only。
+2. **一个外部 Agent 的只读 live status adapter**：先证明 transport-neutral 状态、session 和 event projection，不授予执行权限。
+3. **真实 approval binding 与单 work-item 受控 dispatch**：显式授权后，在统一 contract 下完成一条真实执行链，不增加 Agent-specific 旁路。
+4. **event/artifact/review 回收**：把真实结果接回 run、handoff、review、retry/cancel 和 audit。
+5. **Planner -> Executor -> Reviewer 多 Agent 闭环**：至少跨三类 Agent implementation 验证统一 contract。
+6. **live GUI 与桌面封装**：让当前静态 Control Panel 消费同一 read model 和 command contract，桌面端不拥有执行权限逻辑。
 
 Stage 65 Pi bound runner migration 设计已归档为 `archive/114-pi-bound-runner-migration-design.md`，继续作为 deferred 安全强化项，不抢占产品主线。人工计划“已确认”不得被解释为派发授权。
 
