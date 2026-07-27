@@ -1,3 +1,8 @@
 .pi/extensions/s-black-live-status.ts text eol=lf
 .omp/extensions/s-black-live-status.ts text eol=lf
 integrations/pi_omp_live_status/publisher.cjs text eol=lf
+integrations/pi_omp_live_status/controlled_dispatch.cjs text eol=lf
+adapters/external-agent-live-status-binding.pi-local.json text eol=lf
+adapters/external-agent-live-status-binding.omp-local.json text eol=lf
+adapters/external-agent-dispatch-binding.pi-local.json text eol=lf
+adapters/external-agent-dispatch-binding.omp-local.json text eol=lf

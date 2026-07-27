@@ -60,10 +60,10 @@ FIXED_SNAPSHOT_PATH = FIXED_STATUS_PROFILES["omp-acp"].snapshot_path
 _FILE_ATTRIBUTE_REPARSE_POINT = 0x400
 _REVIEWED_CONTRACT_DIGESTS = {
     _BINDING_SCHEMA_V1_PATH: "sha256:d68fd38cf63aeee074460059e30ea3e6755ad1ef484c9caf8938759d3ace68fd",
-    _BINDING_SCHEMA_V2_PATH: "sha256:884a1284c4fdfef1256bef6cbd11655e29f1facfc2c292a93de7247052b073a0",
+    _BINDING_SCHEMA_V2_PATH: "sha256:790ccba3c84329da2d6a5638a6cae76b868a4d685e34e6069edfdb9c38c59007",
     Path("adapters/external-agent-live-status-binding.json"): "sha256:d2a930dcc452bfcf6624ef115ca8153b12fc0f8a5f0dfbc36a59f34460e2abb7",
-    Path("adapters/external-agent-live-status-binding.pi-local.json"): "sha256:5d03fb65a0fccd82b0b8d938800157b589b84258ab873bec16c7b5db706495c8",
-    Path("adapters/external-agent-live-status-binding.omp-local.json"): "sha256:9c20378a451b38a7fe1a3e74f538168693541b9b992ad904b99e47cfed839cb9",
+    Path("adapters/external-agent-live-status-binding.pi-local.json"): "sha256:e41b42250c41bf88013bcc6c766bc8c3e7df77627ebd1afefb0c18be778ab2ec",
+    Path("adapters/external-agent-live-status-binding.omp-local.json"): "sha256:e0b799c52d9e6f345c9fe8a2b28c1fd0d0ba5e6d13c648fa2cb25395201a023f",
     _SNAPSHOT_SCHEMA_PATH: "sha256:f260aed697f67e4e6f4536c44309affa75d589103a9a7053208cbf53669abf23",
     _EVIDENCE_SCHEMA_PATH: "sha256:423ab29887b225c00441d0b0e64500c5b7e0d6c16b3651c25fc818c221297b95",
     _GUI_SCHEMA_PATH: "sha256:9a5e0fa168b752e2cf4b1436189d397783a046b9dd8408b368bc0029f603c5fa",

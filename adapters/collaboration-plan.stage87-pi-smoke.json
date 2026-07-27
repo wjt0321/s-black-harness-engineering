@@ -1,0 +1,12 @@
+{
+  "parent_task_ref": "task-20260703-001",
+  "revision": 1,
+  "socket_bindings": [
+    {"socket_id": "pi-cli", "role": "implementer", "required_capabilities": ["cli_agent_print"]}
+  ],
+  "work_items": [
+    {"work_item_id": "stage87-pi-smoke", "socket_id": "pi-cli", "role": "implementer", "depends_on": [], "expected_artifact_types": ["test_result"], "review_required": false}
+  ],
+  "handoffs": [],
+  "review_gates": []
+}

@@ -208,6 +208,121 @@ const ctx = { cwd: root, isProjectTrusted() { return true; } };
 
 
 
+def test_publisher_recovers_after_abrupt_restart_lease_becomes_stale(tmp_path: Path) -> None:
+    profile_id = "pi-local"
+    binding_path = live_status.FIXED_STATUS_PROFILES[profile_id].binding_path
+    destination = tmp_path / binding_path
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes((ROOT / binding_path).read_bytes())
+    status_dir = tmp_path / ".runtime/external-agent-status"
+    status_dir.mkdir(parents=True, exist_ok=True)
+    (status_dir / "pi-local.v1.json.lock").write_text('{"profile_id":"pi-local"}\n', encoding="utf-8")
+
+    node_script = r'''
+const path = require("node:path");
+const publisher = require(process.argv[1]);
+const root = process.argv[2];
+const repo = process.argv[3];
+const handlers = new Map();
+const pi = { on(name, handler) { handlers.set(name, handler); } };
+publisher.createLiveStatusExtension(pi, {
+  profileId: "pi-local",
+  bindingRelativePath: "adapters/external-agent-live-status-binding.pi-local.json",
+  extensionFile: path.join(repo, ".pi/extensions/s-black-live-status.ts"),
+  heartbeatMs: 10000,
+  leaseStaleMs: 40,
+  leaseRetryMs: 20,
+});
+const ctx = { cwd: root, isProjectTrusted() { return true; } };
+(async () => {
+  await handlers.get("session_start")({}, ctx);
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  const recovered = publisher.readPublishedSnapshot(root, "pi-local");
+  await handlers.get("session_shutdown")({}, ctx);
+  process.stdout.write(JSON.stringify(recovered));
+})().catch((error) => { console.error(error); process.exit(1); });
+'''
+    completed = subprocess.run(
+        [
+            "node",
+            "-e",
+            node_script,
+            str(ROOT / "integrations/pi_omp_live_status/publisher.cjs"),
+            str(tmp_path),
+            str(ROOT),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=15,
+    )
+    assert completed.returncode == 0, completed.stderr
+    recovered = json.loads(completed.stdout)
+    assert recovered["observation"]["session_state"] == "open"
+    assert recovered["producer"] == _binding(profile_id)["expected_producer"]
+
+
+
+def test_publisher_accepts_only_explicit_previous_binding_during_reviewed_upgrade(tmp_path: Path) -> None:
+    profile_id = "pi-local"
+    binding_path = live_status.FIXED_STATUS_PROFILES[profile_id].binding_path
+    current_binding = _binding(profile_id)
+    previous_binding_id = "sha256:" + "1" * 64
+    current_binding["previous_producer_binding_id"] = previous_binding_id
+    destination = tmp_path / binding_path
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(current_binding, ensure_ascii=False), encoding="utf-8")
+
+    previous_binding = json.loads(json.dumps(current_binding))
+    previous_binding["expected_producer"]["producer_binding_id"] = previous_binding_id
+    previous = _snapshot(previous_binding, observed_at="2026-07-27T12:00:00Z", generation=7)
+    _write_snapshot(tmp_path, profile_id, previous)
+
+    node_script = r'''
+const path = require("node:path");
+const publisher = require(process.argv[1]);
+const root = process.argv[2];
+const repo = process.argv[3];
+const handlers = new Map();
+const pi = { on(name, handler) { handlers.set(name, handler); } };
+publisher.createLiveStatusExtension(pi, {
+  profileId: "pi-local",
+  bindingRelativePath: "adapters/external-agent-live-status-binding.pi-local.json",
+  extensionFile: path.join(repo, ".pi/extensions/s-black-live-status.ts"),
+  heartbeatMs: 10000,
+});
+const ctx = { cwd: root, isProjectTrusted() { return true; } };
+(async () => {
+  await handlers.get("session_start")({}, ctx);
+  const upgraded = publisher.readPublishedSnapshot(root, "pi-local");
+  await handlers.get("session_shutdown")({}, ctx);
+  process.stdout.write(JSON.stringify(upgraded));
+})().catch((error) => { console.error(error); process.exit(1); });
+'''
+    completed = subprocess.run(
+        [
+            "node",
+            "-e",
+            node_script,
+            str(ROOT / "integrations/pi_omp_live_status/publisher.cjs"),
+            str(tmp_path),
+            str(ROOT),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=15,
+    )
+    assert completed.returncode == 0, completed.stderr
+    upgraded = json.loads(completed.stdout)
+    assert upgraded["generation"] == 8
+    assert upgraded["producer"] == current_binding["expected_producer"]
+    assert upgraded["observation"]["session_state"] == "open"
+
+
+
 def test_single_writer_lease_prevents_second_pi_publisher_from_overwriting(tmp_path: Path) -> None:
     binding_path = live_status.FIXED_STATUS_PROFILES["pi-local"].binding_path
     destination = tmp_path / binding_path

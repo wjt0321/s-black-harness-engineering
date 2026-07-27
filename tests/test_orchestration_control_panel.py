@@ -29,9 +29,11 @@ EXPECTED_SECTIONS = [
 
 def _files(root: Path) -> dict[Path, bytes]:
     return {
-        path.relative_to(root): path.read_bytes()
+        relative: path.read_bytes()
         for path in root.rglob("*")
         if path.is_file()
+        for relative in [path.relative_to(root)]
+        if relative.parts[:2] != (".runtime", "external-agent-status")
     }
 
 
@@ -648,3 +650,38 @@ def test_manual_plan_export_uses_existing_contract_and_user_triggered_browser_ap
         "execution:",
     ):
         assert forbidden not in rendered
+
+def test_single_work_item_execution_preview_is_rendered_in_chinese(monkeypatch) -> None:
+    class Preview:
+        def to_dict(self):
+            return {
+                "status": "needs_approval",
+                "schema_version": "control-plane/single-work-item-execution/v1",
+                "approval_binding_id": "sha256:" + "a" * 64,
+                "plan_hash": "sha256:" + "b" * 64,
+                "plan": {
+                    "work_item_id": "implement",
+                    "target_profile": "omp-local",
+                    "instruction_digest": "sha256:" + "c" * 64,
+                    "timeout_seconds": 30,
+                    "result_max_bytes": 8192,
+                },
+                "guarantees": {"writes_files": False, "writes_ledger": False, "sends_prompt": False},
+            }
+
+    monkeypatch.setattr(control_panel, "build_single_work_item_execution_plan", lambda *_args, **_kwargs: Preview())
+    payload = build_control_panel_snapshot(
+        ROOT,
+        external_agent_evaluated_at="2026-07-27T12:00:00Z",
+        single_work_item_request_file="adapters/stage87-request.json",
+    ).to_dict()
+
+    section = payload["sections"]["single_work_item_execution"]
+    assert section["status"] == "pass"
+    assert section["execution_state"] == "needs_approval"
+    assert section["commit_performed"] is False
+    html = render_control_panel_html(payload)
+    assert "单工作项 / 受控执行确认" in html
+    assert "等待一次性人工确认" in html
+    assert "目标智能体：</strong>OMP" in html
+    assert "本页面只生成确认预览，不会自行执行" in html

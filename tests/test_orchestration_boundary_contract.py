@@ -153,6 +153,7 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "pi-print",
         "readiness",
         "recovery",
+        "single-work-item",
         "trust",
     }
     assert _subparser_names(

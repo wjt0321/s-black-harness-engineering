@@ -310,9 +310,11 @@ def _run_main(raw: bytes) -> tuple[int, str]:
 
 def _files(root: Path) -> dict[Path, bytes]:
     return {
-        item.relative_to(root): item.read_bytes()
+        relative: item.read_bytes()
         for item in root.rglob("*")
         if item.is_file()
+        for relative in [item.relative_to(root)]
+        if relative.parts[:2] != (".runtime", "external-agent-status")
     }
 
 

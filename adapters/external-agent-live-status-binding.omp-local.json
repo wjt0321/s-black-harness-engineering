@@ -8,7 +8,7 @@
   "expected_producer": {
     "producer_id": "omp-local-status-extension",
     "producer_version": "1.0.0",
-    "producer_binding_id": "sha256:75e6db0fd55103aa17825231c1c7a0d344a83f0a5ae470e24a05bf8098688124",
+    "producer_binding_id": "sha256:54b62f7a4a8c4d1b972c2251f0386c65d839319bf5b08ac237993ae2fba65034",
     "source_kind": "adapter_owned_atomic_snapshot"
   },
   "expected_target": {
@@ -24,5 +24,6 @@
     "capability_manifest_id": "sha256:c23a16241655422936747dae0ce7dcca5251964c9ffef6d1b6ebfb879444cd79"
   },
   "producer_or_probe_authorized": true,
-  "dispatch_authorized": false
+  "dispatch_authorized": false,
+  "previous_producer_binding_id": "sha256:6c0037c7af1f960d000c1988802f391c6f64774f9884d1f25ed0da2bcf4a99cd"
 }

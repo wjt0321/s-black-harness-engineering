@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "task_id": "task-20260703-001",
+  "request_id": "stage87-omp-smoke-003",
+  "collaboration_file": "adapters/collaboration-plan.stage87-omp-smoke.json",
+  "work_item_id": "stage87-omp-smoke",
+  "target_profile": "omp-local",
+  "instruction": "只回复：OMP 阶段87受控执行验收通过。不要使用工具。",
+  "input_artifacts": [],
+  "timeout_seconds": 60,
+  "result_max_bytes": 8192
+}

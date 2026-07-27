@@ -63,6 +63,7 @@ from .execution_trust import create_execution_trust_binding, inspect_execution_t
 from .pi_runtime_binding import create_pi_runtime_binding, inspect_pi_runtime_binding
 from .orchestration_git_status_execution import execute_fixed_git_status
 from .orchestration_pi_print_execution import execute_fixed_pi_print
+from .orchestration_single_work_item_execution import execute_single_work_item
 from .orchestration_control_panel import (
     build_control_panel_handoff,
     build_control_panel_snapshot,
@@ -1598,6 +1599,7 @@ def _cmd_orchestration_control_panel_snapshot(args: argparse.Namespace) -> int:
         collaboration_action_file=args.collaboration_action_file,
         collaboration_inbox_file=args.collaboration_inbox_file,
         external_agent_evaluated_at=args.external_agent_evaluated_at,
+        single_work_item_request_file=args.single_work_item_request_file,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1618,6 +1620,7 @@ def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
         collaboration_action_file=args.collaboration_action_file,
         collaboration_inbox_file=args.collaboration_inbox_file,
         external_agent_evaluated_at=args.external_agent_evaluated_at,
+        single_work_item_request_file=args.single_work_item_request_file,
     )
     print(render_control_panel_html(result.to_dict()))
     return result.exit_code()
@@ -1737,6 +1740,36 @@ def _cmd_orchestration_execution_pi_print(args: argparse.Namespace) -> int:
         print(result.render_human())
     return result.exit_code()
 
+
+def _cmd_orchestration_execution_single_work_item(args: argparse.Namespace) -> int:
+    """Preview or commit one controlled work item to an already-open Pi/OMP session."""
+    result = execute_single_work_item(
+        _root_path(args),
+        args.request_file,
+        args.evaluated_at,
+        approval_binding_id=args.approval_binding_id,
+        commit=args.commit,
+    )
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"状态：{payload['status']}")
+        if payload.get("target_profile"):
+            label = "Pi" if payload["target_profile"] == "pi-local" else "OMP"
+            print(f"目标智能体：{label}")
+        if payload.get("request_id"):
+            print(f"请求：{payload['request_id']}")
+        if payload.get("approval_binding_id"):
+            print(f"一次性确认摘要：{payload['approval_binding_id']}")
+        if payload.get("output") is not None:
+            print("结果：")
+            print(payload["output"])
+        for finding in payload.get("findings", []):
+            print(f"- {finding['rule_id']}：{finding['message']}")
+        if payload.get("next_action"):
+            print(f"下一步：{payload['next_action']}")
+    return result.exit_code()
 
 def _render_execution_recovery(args: argparse.Namespace, result: Any) -> int:
     if args.json:
@@ -3816,6 +3849,28 @@ def build_parser() -> argparse.ArgumentParser:
         func=_cmd_orchestration_execution_pi_print
     )
 
+    orchestration_execution_single_work_item_parser = (
+        orchestration_execution_subparsers.add_parser(
+            "single-work-item",
+            help="预览或提交一个已打开 Pi/OMP 会话的受控工作项",
+        )
+    )
+    orchestration_execution_single_work_item_parser.add_argument(
+        "--request-file", required=True, help="项目内单工作项执行请求 JSON"
+    )
+    orchestration_execution_single_work_item_parser.add_argument(
+        "--evaluated-at", required=True, help="状态证据评估时间（带时区 ISO-8601）"
+    )
+    orchestration_execution_single_work_item_parser.add_argument(
+        "--approval-binding-id", default=None, help="预览生成的一次性确认摘要"
+    )
+    orchestration_execution_single_work_item_parser.add_argument(
+        "--commit", action="store_true", help="写入开始审计并向已打开的固定目标会话派发一次"
+    )
+    _add_global_args(orchestration_execution_single_work_item_parser)
+    orchestration_execution_single_work_item_parser.set_defaults(
+        func=_cmd_orchestration_execution_single_work_item
+    )
     # orchestration read-only Control Panel snapshot/render
     orchestration_control_panel_parser = orchestration_subparsers.add_parser(
         "control-panel", help="Render the local read-only Control Panel"
@@ -3916,6 +3971,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="可选：显式、带时区的 Pi/OMP 状态评估时间；提供后显示真实只读状态",
     )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--single-work-item-request-file",
+        default=None,
+        help="可选：项目内单工作项执行请求；仅生成中文确认预览，不执行",
+    )
     _add_global_args(orchestration_control_panel_snapshot_parser)
     orchestration_control_panel_snapshot_parser.set_defaults(
         func=_cmd_orchestration_control_panel_snapshot
@@ -3965,6 +4025,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--external-agent-evaluated-at",
         default=None,
         help="可选：显式、带时区的 Pi/OMP 状态评估时间；提供后显示真实只读状态",
+    )
+    orchestration_control_panel_render_parser.add_argument(
+        "--single-work-item-request-file",
+        default=None,
+        help="可选：项目内单工作项执行请求；仅生成中文确认预览，不执行",
     )
     _add_global_args(orchestration_control_panel_render_parser)
     orchestration_control_panel_render_parser.set_defaults(

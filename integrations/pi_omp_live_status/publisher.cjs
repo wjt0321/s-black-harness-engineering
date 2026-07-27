@@ -82,6 +82,12 @@ function validateBinding(binding, profileId, expectedDigest) {
   if (binding.max_bytes !== MAX_BYTES || binding.ttl_seconds !== 15) throw new Error("binding bounds drift");
   if (binding.producer_or_probe_authorized !== true || binding.dispatch_authorized !== false) throw new Error("binding authority drift");
   if (binding.expected_producer?.producer_binding_id !== expectedDigest) throw new Error("producer content drift");
+  const previousDigest = binding.previous_producer_binding_id;
+  if (previousDigest !== undefined) {
+    if (typeof previousDigest !== "string" || !/^sha256:[a-f0-9]{64}$/.test(previousDigest) || previousDigest === expectedDigest) {
+      throw new Error("previous producer binding invalid");
+    }
+  }
   if (binding.expected_producer?.source_kind !== "adapter_owned_atomic_snapshot") throw new Error("producer source drift");
   if (binding.expected_target?.transport?.kind !== "local_process") throw new Error("transport drift");
 }
@@ -116,12 +122,12 @@ function safeRemoveRegular(filePath) {
   }
 }
 
-function acquireLease(paths, profileId) {
+function acquireLease(paths, profileId, staleMs = LEASE_STALE_MS) {
   fs.mkdirSync(paths.directory, { recursive: true, mode: 0o700 });
   assertRealContainment(paths.root, paths.target);
   try {
     const previous = assertRegularPath(paths.lease);
-    if (Date.now() - previous.mtimeMs <= LEASE_STALE_MS) return null;
+    if (Date.now() - previous.mtimeMs <= staleMs) return null;
     safeRemoveRegular(paths.lease);
   } catch (error) {
     if (!error || error.code !== "ENOENT") throw error;
@@ -174,7 +180,19 @@ function validateSnapshot(snapshot, binding) {
 function nextGeneration(paths, binding) {
   try {
     const previous = parseJsonFile(paths.target, binding.max_bytes);
-    validateSnapshot(previous, binding);
+    try {
+      validateSnapshot(previous, binding);
+    } catch (currentError) {
+      if (binding.previous_producer_binding_id === undefined) throw currentError;
+      const previousBinding = {
+        ...binding,
+        expected_producer: {
+          ...binding.expected_producer,
+          producer_binding_id: binding.previous_producer_binding_id,
+        },
+      };
+      validateSnapshot(previous, previousBinding);
+    }
     return previous.generation + 1;
   } catch (error) {
     if (error && error.code === "ENOENT") return 1;
@@ -238,11 +256,26 @@ function createLiveStatusExtension(pi, options) {
   const profileId = options.profileId;
   if (!PROFILE_PATHS[profileId]) throw new Error("unsupported profile");
   const heartbeatMs = options.heartbeatMs || 5000;
+  const leaseStaleMs = options.leaseStaleMs || LEASE_STALE_MS;
+  const leaseRetryMs = options.leaseRetryMs || 5000;
+  if (!Number.isSafeInteger(leaseStaleMs) || leaseStaleMs < 10 || leaseStaleMs > LEASE_STALE_MS) {
+    throw new Error("lease stale bound invalid");
+  }
+  if (!Number.isSafeInteger(leaseRetryMs) || leaseRetryMs < 10 || leaseRetryMs > leaseStaleMs) {
+    throw new Error("lease retry bound invalid");
+  }
   let state = null;
+  let retryTimer = null;
+  let shuttingDown = false;
 
   function stopHeartbeat() {
     if (state?.timer) clearInterval(state.timer);
     if (state) state.timer = null;
+  }
+
+  function stopLeaseRetry() {
+    if (retryTimer) clearTimeout(retryTimer);
+    retryTimer = null;
   }
 
   function publishState(presence, sessionState, summary) {
@@ -251,6 +284,7 @@ function createLiveStatusExtension(pi, options) {
   }
 
   function disablePublisher() {
+    stopLeaseRetry();
     if (!state) return;
     stopHeartbeat();
     const current = state;
@@ -271,23 +305,27 @@ function createLiveStatusExtension(pi, options) {
     }
   }
 
-  pi.on("session_start", async (_event, ctx) => {
-    if (!ctx || typeof ctx.cwd !== "string") return;
-    const trustCheck = ctx.isProjectTrusted;
-    if (typeof trustCheck === "function") {
-      if (trustCheck.call(ctx) !== true) return;
-    } else if (profileId !== "omp-local") {
-      // Pi 必须提供并通过项目信任；OMP 当前没有暴露该方法，只允许固定 OMP 配置。
-      return;
-    }
-    if (state) return;
+  function scheduleLeaseRetry(ctx) {
+    if (retryTimer || shuttingDown || state) return;
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      startPublisher(ctx);
+    }, leaseRetryMs);
+    if (typeof retryTimer.unref === "function") retryTimer.unref();
+  }
+
+  function startPublisher(ctx) {
+    if (state || shuttingDown) return;
     let paths = null;
     let descriptor = null;
     try {
       paths = snapshotPaths(ctx.cwd, profileId);
       const binding = loadBinding(ctx.cwd, options.bindingRelativePath, profileId, options.extensionFile);
-      descriptor = acquireLease(paths, profileId);
-      if (descriptor === null) return;
+      descriptor = acquireLease(paths, profileId, leaseStaleMs);
+      if (descriptor === null) {
+        scheduleLeaseRetry(ctx);
+        return;
+      }
       state = { paths, binding, descriptor, timer: null };
       publishState("listed", "open", "宿主进程内扩展已观察到会话；该证据不授权派发。" );
       state.timer = setInterval(() => {
@@ -309,6 +347,19 @@ function createLiveStatusExtension(pi, options) {
         }
       }
     }
+  }
+
+  pi.on("session_start", async (_event, ctx) => {
+    if (!ctx || typeof ctx.cwd !== "string") return;
+    const trustCheck = ctx.isProjectTrusted;
+    if (typeof trustCheck === "function") {
+      if (trustCheck.call(ctx) !== true) return;
+    } else if (profileId !== "omp-local") {
+      // Pi 必须提供并通过项目信任；OMP 当前没有暴露该方法，只允许固定 OMP 配置。
+      return;
+    }
+    shuttingDown = false;
+    startPublisher(ctx);
   });
 
   pi.on("agent_start", async () => {
@@ -320,6 +371,8 @@ function createLiveStatusExtension(pi, options) {
   });
 
   pi.on("session_shutdown", async () => {
+    shuttingDown = true;
+    stopLeaseRetry();
     if (!state) return;
     stopHeartbeat();
     publishWithoutHostFailure("missing", "closed", "宿主会话已关闭；等待下一次被动观察。" );

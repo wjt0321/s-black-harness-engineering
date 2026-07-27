@@ -4,43 +4,46 @@
 
 ## 当前基线
 
-- 里程碑：阶段 86 Pi/OMP 真实只读状态接入已完成
-- commit：以当前 Git HEAD 为准
+- 里程碑：阶段 87 单工作项受控执行闭环已完成
+- commit：以当前 Git HEAD 为准；阶段 87 工作区尚未提交
 - 日期：2026-07-27
-- 活跃 `docs/` 根目录为 28 份；阶段 86 事实源和实施计划均已归档。
+- 活跃 `docs/` 根目录为 28 份；阶段 87 事实源和实施计划均已归档。
 
 ## 当前阶段
 
-- **阶段 86 — 已完成并归档：Pi 与 OMP 的项目级状态扩展、固定原子快照、安全读取器、中文控制面板和真实连接/关闭验收全部通过。**
-- 归档事实源：`archive/135-stage86-pi-omp-live-status-integration.md`。
-- 归档实施计划：`archive/plans/2026-07-27-stage86-pi-omp-live-status-integration.md`。
-- 本机核验版本：Pi `@earendil-works/pi-coding-agent` 0.82.0；OMP 启动器 1.3.14，当前内置 `@oh-my-pi/pi-coding-agent` 15.12.3。
-- 用户确认本机 QwenPaw 为 2.0.1；旧虚拟环境中的 1.1.12.post3 不再作为依据，QwenPaw 尚未接入。
+- **阶段 87 — 已完成并归档：用户一次性确认后，可向已经打开的 Pi 或 OMP 会话派发一个固定工作项，并回收有界结果与完整审计。**
+- 归档事实源：`archive/136-stage87-single-work-item-controlled-execution.md`。
+- 归档实施计划：`archive/plans/2026-07-27-stage87-single-work-item-controlled-execution.md`。
+- 前序只读状态事实源：`archive/135-stage86-pi-omp-live-status-integration.md`。
 
-## 阶段 86 已完成什么
+## 阶段 87 已完成什么
 
-- Pi/OMP 在用户已启动的宿主进程内每 5 秒发布固定、有界、原子状态快照。
-- 读取器只允许 `omp-acp`、`pi-local`、`omp-local` 三个审阅配置，不接受任意路径。
-- 中文控制面板展示“未连接”“已连接，存在未绑定会话”或“状态已过期”。
-- Pi、OMP 真实连接态均通过，证据有效但始终不可派发。
-- 宿主关闭后均报告 `session_state=closed`，租约释放；超过 15 秒后安全显示“状态已过期”。
-- OMP 缺少 Pi 项目信任接口的兼容问题已修复；Pi 仍必须明确通过项目信任。
-- `.runtime/external-agent-status/` 本机权限已收紧为当前用户、SYSTEM 和 Administrators。
+- 新增 `orchestration execution single-work-item`：预览不执行，提交必须带精确确认摘要和 `--commit`。
+- 只允许 `pi-local`、`omp-local` 两个固定目标、一个工作项、固定项目级信箱和独立派发绑定。
+- 派发前检查状态绑定、活动工具为空和宿主空闲；不满足时失败关闭。
+- started audit 先于派发，每次尝试只有一个 terminal audit；请求不可重放。
+- 结果有界、经过敏感信息扫描；原始信箱内容只存在于 gitignored `.runtime/`。
+- Pi 真实验收：`stage87-pi-smoke-003`，`attempt-20260727-005`，成功闭合。
+- OMP 真实验收：`stage87-omp-smoke-003`，`attempt-20260727-011`，成功闭合。
+- OMP 17.0.8 的跨工具 MCP 自动发现已通过项目本地配置隔离，没有修改 Claude、OpenCode 等全局配置。
 
 ## 当前真实执行能力
 
 1. Windows 固定 Git 状态：固定 `git status --short --branch`。
 2. Windows 固定 Pi 打印：固定 `pi --print --no-session --no-tools <prompt>`。
+3. 单工作项外部智能体派发：只向用户已打开且工具为空、会话空闲的 `pi-local` 或 `omp-local` 派发一次确认后的固定工作项。
 
-阶段 86 没有新增第三个 Harness 真实执行操作。状态扩展不读取提示词、模型、工具输入、原始输出或凭据，也不访问网络。
+三者都要求显式提交，并保持租约、固定输入、审计、输出约束和失败关闭。第三项不启动宿主、不接受任意命令或工具权限。
 
 ## 仍未开放
 
 - 通用 shell、任意适配器执行、POSIX fallback；
 - 网络适配器、服务、数据库、自动后台执行；
-- 由 Harness 启动 Pi、OMP 或 QwenPaw；
-- 创建真实会话、调用模型、派发工作项；
-- 真实审批账本、事件/产物/审阅回收和自动多智能体闭环。
+- 由 Harness 启动、关闭或重启外部 Agent；
+- Pi/OMP 的 read/write/edit/bash 或 MCP 工具权限；
+- 自动重试、并行派发、跨 Agent 转发和自治循环；
+- 真实事件流、产物、审阅结果和多智能体闭环；
+- QwenPaw 2.0.1 接入。
 
 ## 下次恢复顺序
 
@@ -48,7 +51,7 @@
 2. `docs/00-index.md`
 3. `docs/02-roadmap.md`
 4. `docs/130-gui-first-external-agent-control-plane-target.md`
-5. `docs/archive/135-stage86-pi-omp-live-status-integration.md`
+5. `docs/archive/136-stage87-single-work-item-controlled-execution.md`
 6. `docs/10-cli-poc-usage.md`
 7. `tasks/handoff-2026-07-27.md`
 
@@ -61,6 +64,7 @@ python -m agent_runtime.cli doctor
 
 ## 下一步做什么
 
-- 阶段 86 到此结束；当前不自动进入下一阶段。
-- 下一候选由用户选择：真实审批与单工作项受控派发、真实事件/产物/审阅回收、实时中文图形界面，或 QwenPaw 2.0.1 只读状态兼容。
-- 任一候选均需独立边界设计和明确实施授权。
+- 阶段 87 到此结束；当前不自动进入下一阶段。
+- 首选下一候选：真实事件、产物与人工审阅结果回收。
+- 之后再评估规划者 -> 执行者 -> 审阅者闭环、实时中文图形界面和 QwenPaw 2.0.1 兼容。
+- 任一候选仍需独立边界设计和用户授权。

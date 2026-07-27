@@ -2754,3 +2754,47 @@ python -m agent_runtime.cli orchestration control-panel render \
 - 命令不会启动 Pi/OMP、创建会话、发送提示词、调用模型、主动探测 ACP 或派发任务。
 
 当前事实源：`docs/archive/135-stage86-pi-omp-live-status-integration.md`。阶段 84 历史实现见 `docs/archive/133-stage84-bounded-atomic-snapshot-reader-implementation.md`。
+
+### 阶段 87 单工作项受控执行
+
+该入口只允许 `pi-local`、`omp-local` 两个固定目标，并要求目标宿主已由用户打开、活动工具为空且会话空闲。Harness 不启动或关闭 Agent。
+
+先预览：
+
+```bash
+python -m agent_runtime.cli orchestration execution single-work-item \
+  --request-file adapters/single-work-item-execution-request.pi-smoke.json \
+  --evaluated-at 2026-07-27T23:00:00+08:00 \
+  --json
+```
+
+预览返回 `status=needs_approval`、`plan_hash` 和 `approval_binding_id`，不写审计、不发布信箱、不调用模型。CLI 使用稳定的“需要确认”退出码。
+
+核对后显式提交：
+
+```bash
+python -m agent_runtime.cli orchestration execution single-work-item \
+  --request-file adapters/single-work-item-execution-request.pi-smoke.json \
+  --evaluated-at 2026-07-27T23:00:00+08:00 \
+  --approval-binding-id sha256:<预览返回的完整摘要> \
+  --commit \
+  --json
+```
+
+必须复用同一次预览的评估时间和精确确认摘要。任务、协作计划、工作项、指令、输入产物、状态证据、超时或结果上限任何一项变化都会使确认失效。
+
+OMP 17.0.8 在本项目中的启动方式：
+
+```powershell
+omp --no-tools --extension .omp/extensions/s-black-live-status.ts
+```
+
+当前项目通过 gitignored 的 `.runtime/pi-agent/mcp.json` 和 `mcp.enableProjectConfig=false` 隔离 OMP 自动发现的 MCP。不要添加 `--no-extensions`，该版本会同时忽略显式扩展。
+
+固定边界：
+
+- 不接受任意请求/结果路径、argv、cwd 或 env 覆盖；
+- 不允许活动工具，不调用 `exec` 或 `setActiveTools`；
+- 不自动重试、不并行派发、不跨 Agent 转发；
+- started audit 必须先于派发，结束后必须有唯一 terminal audit；
+- 原始结果只存在于 `.runtime/`，公开前执行大小与敏感信息校验。

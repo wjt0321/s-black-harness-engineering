@@ -8,7 +8,7 @@
   "expected_producer": {
     "producer_id": "pi-local-status-extension",
     "producer_version": "1.0.0",
-    "producer_binding_id": "sha256:92d5b35968358a77cd7480b53d739bfc7757a9dd01476ecb64c72765f6855590",
+    "producer_binding_id": "sha256:c37e81a0e6f9d8563b6a57b2ce5d0d0c14f3a155d13565ca43e8477a9f2d8d6d",
     "source_kind": "adapter_owned_atomic_snapshot"
   },
   "expected_target": {
@@ -24,5 +24,6 @@
     "capability_manifest_id": "sha256:1f46327208140c47669fb196c76b7a0ccf69dc9f99d67185ca2ecbf7229480f7"
   },
   "producer_or_probe_authorized": true,
-  "dispatch_authorized": false
+  "dispatch_authorized": false,
+  "previous_producer_binding_id": "sha256:3f8321ba7ba6c9e2d4627504ebc4c5db2c7be6980f99f3fff9bffe9143bac904"
 }

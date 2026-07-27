@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "control-plane/single-work-item-execution-request/v1",
+  "title": "单工作项受控执行请求",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version", "task_id", "request_id", "collaboration_file", "work_item_id",
+    "target_profile", "instruction", "input_artifacts", "timeout_seconds", "result_max_bytes"
+  ],
+  "properties": {
+    "version": {"const": 1},
+    "task_id": {"$ref": "#/$defs/identifier"},
+    "request_id": {"$ref": "#/$defs/identifier"},
+    "collaboration_file": {"type": "string", "minLength": 1, "maxLength": 240, "pattern": "^[^\\r\\n]+\\.json$"},
+    "work_item_id": {"$ref": "#/$defs/identifier"},
+    "target_profile": {"enum": ["pi-local", "omp-local"]},
+    "instruction": {"type": "string", "minLength": 1, "maxLength": 4096, "pattern": "^[^\\u0000]+$"},
+    "input_artifacts": {
+      "type": "array", "maxItems": 8,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["artifact_type", "path", "sha256"],
+        "properties": {
+          "artifact_type": {"enum": ["plan", "patch", "test_result", "review", "report", "log", "document"]},
+          "path": {"type": "string", "minLength": 1, "maxLength": 240, "pattern": "^[^\\r\\n]+$"},
+          "sha256": {"$ref": "#/$defs/hash"}
+        }
+      }
+    },
+    "timeout_seconds": {"type": "integer", "minimum": 5, "maximum": 900},
+    "result_max_bytes": {"type": "integer", "minimum": 256, "maximum": 32768}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 96, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

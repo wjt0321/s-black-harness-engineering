@@ -22,6 +22,7 @@ from .orchestration_collaboration_operator_inbox import (
 )
 from .orchestration_manual_board import inspect_manual_board
 from .orchestration_external_agent_live_status import inspect_external_agent_live_status
+from .orchestration_single_work_item_execution import build_single_work_item_execution_plan
 from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
 from .orchestration_artifact import list_artifacts
@@ -299,6 +300,7 @@ def build_control_panel_snapshot(
     collaboration_action_file: str | None = None,
     collaboration_inbox_file: str | None = None,
     external_agent_evaluated_at: str | None = None,
+    single_work_item_request_file: str | None = None,
 ) -> ControlPanelSnapshot:
     """Aggregate existing safe read models without executing or writing."""
     overview = _section(
@@ -493,6 +495,31 @@ def build_control_panel_snapshot(
             scope="file",
             availability="fixture",
         )
+    if single_work_item_request_file is not None:
+        if external_agent_evaluated_at is None:
+            sections["single_work_item_execution"] = _unavailable_section(
+                scope="runtime",
+                availability="controlled_write_preview",
+                reason="external_agent_evaluated_at_required",
+                message="预览单工作项执行前必须提供实时状态评估时间。",
+                command_hint="orchestration control-panel snapshot --external-agent-evaluated-at <时间> --single-work-item-request-file <路径>",
+            )
+        else:
+            execution_preview = build_single_work_item_execution_plan(
+                root,
+                single_work_item_request_file,
+                external_agent_evaluated_at,
+            ).to_dict()
+            execution_state = execution_preview["status"]
+            sections["single_work_item_execution"] = {
+                **execution_preview,
+                "status": "pass" if execution_state == "needs_approval" else execution_state,
+                "execution_state": execution_state,
+                "scope": "runtime",
+                "availability": "controlled_write_preview",
+                "request_file": single_work_item_request_file,
+                "commit_performed": False,
+            }
     findings = _deduplicate_findings(sections)
     status = _aggregate_status(sections)
 
@@ -566,6 +593,8 @@ def build_control_panel_snapshot(
     }
     if external_agent_evaluated_at is not None:
         source["external_agent_evaluated_at"] = external_agent_evaluated_at
+    if single_work_item_request_file is not None:
+        source["single_work_item_request_file"] = _safe_envelope_reference(root, single_work_item_request_file)
     if collaboration_file is not None:
         source["collaboration_file"] = _safe_envelope_reference(root, collaboration_file)
     if dispatch_file is not None:
@@ -2018,14 +2047,14 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     )
 
     section_names = [name for name in _SECTION_ORDER if name in sections]
-    for optional_section in ("external_agents", "collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
+    for optional_section in ("external_agents", "single_work_item_execution", "collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
         if optional_section in sections:
             section_names.append(optional_section)
     nav_labels = {
         "overview": "总览", "tasks": "任务", "adapters": "适配器", "automation": "自动化",
         "runs": "运行记录", "approvals": "审批", "artifacts": "产物", "reports": "报告",
         "collaboration": "协作计划", "dispatch": "派发资格", "manual_board": "人工看板",
-        "external_agents": "外部智能体", "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
+        "external_agents": "外部智能体", "single_work_item_execution": "单工作项执行", "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
     }
     nav = "".join(
         f'<a href="#{name.replace("_", "-")}">{_escape(nav_labels.get(name, name))}</a>'
@@ -2247,6 +2276,40 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
             ]
         )
 
+    single_execution = sections.get("single_work_item_execution")
+    if single_execution is not None:
+        plan = single_execution.get("plan") or {}
+        target_label = "Pi" if plan.get("target_profile") == "pi-local" else "OMP" if plan.get("target_profile") == "omp-local" else "未确定"
+        approval_id = single_execution.get("approval_binding_id") or "尚未生成"
+        state_labels = {
+            "needs_approval": "等待一次性人工确认",
+            "blocked": "当前不可执行",
+            "validation_failed": "执行请求无效",
+            "error": "执行预览失败",
+        }
+        state_label = state_labels.get(single_execution.get("execution_state"), single_execution.get("execution_state", "未知"))
+        execution_rows = [{
+            "work_item_id": plan.get("work_item_id", "-"),
+            "target": target_label,
+            "instruction_digest": plan.get("instruction_digest", "-"),
+            "timeout_seconds": plan.get("timeout_seconds", "-"),
+            "result_max_bytes": plan.get("result_max_bytes", "-"),
+        }]
+        section_html.append("".join([
+            '<section class="panel-section" id="single-work-item-execution">',
+            _section_header("16", "单工作项 / 受控执行确认", single_execution),
+            '<div class="boundary-callout"><strong>当前状态：</strong>', _escape(state_label),
+            '<br><strong>目标智能体：</strong>', _escape(target_label),
+            '<br><strong>一次性确认摘要：</strong><code>', _escape(approval_id), '</code>',
+            '<br>本页面只生成确认预览，不会自行执行。提交仍须由本地受控入口携带该摘要和 <code>--commit</code> 完成。</div>',
+            _table(
+                caption="一次性确认绑定",
+                columns=(("work_item_id", "工作项"), ("target", "目标智能体"), ("instruction_digest", "指令摘要"), ("timeout_seconds", "超时（秒）"), ("result_max_bytes", "结果上限（字节）")),
+                rows=execution_rows,
+                empty_message="尚无可预览的执行计划。",
+            ),
+            '</section>',
+        ]))
     collaboration = sections.get("collaboration")
     if collaboration is not None:
         section_html.extend(

@@ -131,6 +131,10 @@
     },
     "dispatch_authorized": {
       "const": false
+    },
+    "previous_producer_binding_id": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
     }
   }
 }

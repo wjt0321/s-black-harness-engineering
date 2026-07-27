@@ -1,0 +1,12 @@
+{
+  "parent_task_ref": "task-20260703-001",
+  "revision": 1,
+  "socket_bindings": [
+    {"socket_id": "omp-acp", "role": "implementer", "required_capabilities": ["light_coding"]}
+  ],
+  "work_items": [
+    {"work_item_id": "stage87-omp-smoke", "socket_id": "omp-acp", "role": "implementer", "depends_on": [], "expected_artifact_types": ["test_result"], "review_required": false}
+  ],
+  "handoffs": [],
+  "review_gates": []
+}

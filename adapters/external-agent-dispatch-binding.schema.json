@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "external-agent-dispatch-binding/v1",
+  "title": "Pi/OMP fixed controlled dispatch binding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "contract", "review_status", "target_profile", "request_relative_path", "result_relative_path", "implementation_binding_id", "protocol", "request_ttl_seconds", "max_request_bytes", "max_result_bytes", "poll_interval_ms", "required_active_tools", "allowed_host_action", "dispatch_authorized", "forbidden_capabilities"],
+  "properties": {
+    "version": {"const": 1},
+    "contract": {"const": "external-agent-dispatch-binding/v1"},
+    "review_status": {"const": "reviewed_for_single_work_item_dispatch"},
+    "target_profile": {"enum": ["pi-local", "omp-local"]},
+    "request_relative_path": {"enum": [".runtime/external-agent-dispatch/pi-local.request.v1.json", ".runtime/external-agent-dispatch/omp-local.request.v1.json"]},
+    "result_relative_path": {"enum": [".runtime/external-agent-dispatch/pi-local.result.v1.json", ".runtime/external-agent-dispatch/omp-local.result.v1.json"]},
+    "implementation_binding_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "protocol": {"const": "external-agent-single-work-item-mailbox/v1"},
+    "request_ttl_seconds": {"type": "integer", "minimum": 5, "maximum": 120},
+    "max_request_bytes": {"const": 65536},
+    "max_result_bytes": {"const": 32768},
+    "poll_interval_ms": {"type": "integer", "minimum": 20, "maximum": 1000},
+    "required_active_tools": {"type": "array", "maxItems": 0},
+    "allowed_host_action": {"const": "sendUserMessage"},
+    "dispatch_authorized": {"const": true},
+    "forbidden_capabilities": {
+      "type": "array", "minItems": 5, "uniqueItems": true,
+      "items": {"enum": ["exec", "setActiveTools", "startProcess", "network", "automaticRetry", "parallelDispatch"]}
+    }
+  }
+}

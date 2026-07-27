@@ -12,9 +12,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _files(root: Path) -> dict[Path, bytes]:
     return {
-        path.relative_to(root): path.read_bytes()
+        relative: path.read_bytes()
         for path in root.rglob("*")
         if path.is_file()
+        for relative in [path.relative_to(root)]
+        if relative.parts[:2] != (".runtime", "external-agent-status")
     }
 
 

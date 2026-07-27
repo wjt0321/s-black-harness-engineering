@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "contract": "external-agent-dispatch-binding/v1",
+  "review_status": "reviewed_for_single_work_item_dispatch",
+  "target_profile": "pi-local",
+  "request_relative_path": ".runtime/external-agent-dispatch/pi-local.request.v1.json",
+  "result_relative_path": ".runtime/external-agent-dispatch/pi-local.result.v1.json",
+  "implementation_binding_id": "sha256:2d6e420bfffd234c72ca55001d252b1829559c87b4888ccae01372f433a8aaee",
+  "protocol": "external-agent-single-work-item-mailbox/v1",
+  "request_ttl_seconds": 60,
+  "max_request_bytes": 65536,
+  "max_result_bytes": 32768,
+  "poll_interval_ms": 250,
+  "required_active_tools": [],
+  "allowed_host_action": "sendUserMessage",
+  "dispatch_authorized": true,
+  "forbidden_capabilities": [
+    "exec",
+    "setActiveTools",
+    "startProcess",
+    "network",
+    "automaticRetry",
+    "parallelDispatch"
+  ]
+}
