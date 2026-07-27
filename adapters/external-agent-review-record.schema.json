@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "control-plane/external-agent-human-review/v1",
+  "title": "外部智能体人工审阅记录",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version", "contract", "review_id", "attempt_id", "gate_id", "decision", "comment", "comment_digest",
+    "artifact_id", "artifact_digest", "manifest_digest", "collaboration_plan_id", "approval_binding_id", "committed_at"
+  ],
+  "properties": {
+    "version": {"const": 1},
+    "contract": {"const": "external-agent-human-review/v1"},
+    "review_id": {"$ref": "#/$defs/identifier"},
+    "attempt_id": {"$ref": "#/$defs/identifier"},
+    "gate_id": {"$ref": "#/$defs/identifier"},
+    "decision": {"enum": ["approve", "request_changes"]},
+    "comment": {"type": "string", "minLength": 1, "maxLength": 2000, "pattern": "^[^\\u0000]+$"},
+    "comment_digest": {"$ref": "#/$defs/hash"},
+    "artifact_id": {"$ref": "#/$defs/identifier"},
+    "artifact_digest": {"$ref": "#/$defs/hash"},
+    "manifest_digest": {"$ref": "#/$defs/hash"},
+    "collaboration_plan_id": {"$ref": "#/$defs/hash"},
+    "approval_binding_id": {"$ref": "#/$defs/hash"},
+    "committed_at": {"type": "string", "minLength": 20, "maxLength": 40}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

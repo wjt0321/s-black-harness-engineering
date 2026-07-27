@@ -265,10 +265,54 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             ),
         ),
         _entry(
+            "external_agent_single_work_item_execution",
+            "stable_limited",
+            "controlled_write",
+            commands=(("orchestration", "execution", "single-work-item"),),
+            key_flags=("--request-file", "--evaluated-at", "--approval-binding-id", "--commit"),
+            boundary=(
+                "Dispatches exactly one reviewed work item to an already-open idle tool-free Pi or OMP session; "
+                "uses a fixed mailbox, one-time approval, global lease, bounded result, secret scan, and execution audit."
+            ),
+        ),
+        _entry(
+            "external_agent_evidence_read",
+            "stable_limited",
+            "read_only",
+            commands=(("orchestration", "execution", "single-work-item-evidence"),),
+            key_flags=("--attempt-id", "--include-content"),
+            boundary=(
+                "Reads one immutable machine-local evidence package by execution attempt id; "
+                "does not accept arbitrary paths or call an external agent."
+            ),
+        ),
+        _entry(
+            "external_agent_evidence_recovery",
+            "stable_limited",
+            "controlled_write",
+            commands=(("orchestration", "execution", "single-work-item-evidence-recover"),),
+            key_flags=("--attempt-id", "--approval-binding-id", "--commit"),
+            boundary=(
+                "Finalizes one already-scanned pending evidence transaction without rerunning an agent, "
+                "overwriting historical evidence, or accepting a file path."
+            ),
+        ),
+        _entry(
+            "external_agent_human_review",
+            "stable_limited",
+            "controlled_write",
+            commands=(("orchestration", "execution", "single-work-item-review"),),
+            key_flags=("--attempt-id", "--decision", "--comment", "--evaluated-at", "--approval-binding-id", "--commit"),
+            boundary=(
+                "Records one immutable approve or request-changes decision bound to an exact evidence manifest, "
+                "artifact digest, collaboration plan, review gate, and scanned bounded comment."
+            ),
+        ),
+        _entry(
             "external_execution_service_stack",
             "unavailable",
             "unavailable",
-            boundary="Generic adapter execution, long-running service, auth, database, and interactive write-capable UI are unavailable; the fixed Git status operation and the fixed Pi dry-run print operation are the only limited exceptions.",
+            boundary="Generic adapter execution, long-running service, auth, database, and interactive write-capable UI remain unavailable; only the explicitly listed fixed Git, fixed Pi print, reviewed Pi/OMP single-work-item, immutable evidence, recovery, and human-review operations are limited exceptions.",
         ),
         _entry(
             "fixed_git_status_execution",

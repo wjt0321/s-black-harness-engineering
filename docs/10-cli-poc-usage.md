@@ -2798,3 +2798,75 @@ omp --no-tools --extension .omp/extensions/s-black-live-status.ts
 - 不自动重试、不并行派发、不跨 Agent 转发；
 - started audit 必须先于派发，结束后必须有唯一 terminal audit；
 - 原始结果只存在于 `.runtime/`，公开前执行大小与敏感信息校验。
+
+### 阶段 88 真实执行证据与人工审阅
+
+单工作项成功后会将固定宿主事件、最终文本或 JSON 产物和证据清单归档到 gitignored 的 `.runtime/external-agent-evidence/v1/`。只按 Harness 生成的执行尝试编号读取，不接受任意文件路径。
+
+查看事件、产物和审阅状态：
+
+```bash
+python -m agent_runtime.cli orchestration execution single-work-item-evidence \
+  --attempt-id attempt-20260727-013 \
+  --include-content \
+  --json
+```
+
+`--include-content` 只返回已经过大小限制、摘要校验和敏感信息扫描的固定最终产物；不会读取 Agent 指定的项目文件。
+
+若终态审计已经闭合但证据仍处于 pending，可先预览固定恢复：
+
+```bash
+python -m agent_runtime.cli orchestration execution single-work-item-evidence-recover \
+  --attempt-id attempt-20260727-013 \
+  --json
+```
+
+核对后复用预览返回的 `approval_binding_id` 并显式提交：
+
+```bash
+python -m agent_runtime.cli orchestration execution single-work-item-evidence-recover \
+  --attempt-id attempt-20260727-013 \
+  --approval-binding-id sha256:<预览返回的完整摘要> \
+  --commit \
+  --json
+```
+
+恢复只会归档已有 pending，不会重新调用 Pi/OMP，也不会覆盖既有执行清单、产物或审阅。
+
+人工审阅同样采用预览/确认两步。决定只允许 `approve`（通过）或 `request_changes`（要求修改）：
+
+```bash
+python -m agent_runtime.cli orchestration execution single-work-item-review \
+  --attempt-id attempt-20260727-013 \
+  --decision approve \
+  --comment "真实事件和结果产物核验通过。" \
+  --evaluated-at 2026-07-27T16:45:00Z \
+  --json
+
+python -m agent_runtime.cli orchestration execution single-work-item-review \
+  --attempt-id attempt-20260727-013 \
+  --decision approve \
+  --comment "真实事件和结果产物核验通过。" \
+  --evaluated-at 2026-07-27T16:45:00Z \
+  --approval-binding-id sha256:<预览返回的完整摘要> \
+  --commit \
+  --json
+```
+
+确认摘要精确绑定协作计划、工作项、执行尝试、审阅门禁、产物摘要、证据清单摘要、决定和意见摘要。意见会执行长度与敏感信息校验；重复决定、内容漂移或错误摘要都会失败关闭。
+
+中文控制面板按执行尝试展示证据：
+
+```bash
+python -m agent_runtime.cli orchestration control-panel snapshot \
+  --external-agent-attempt-id attempt-20260727-013 \
+  --json
+```
+
+固定边界：
+
+- 每次成功执行最多一个最终文本或 JSON 产物；
+- 事件只含固定类型、连续序号、UTC 时间和固定失败码，不携带提示词、工具参数或环境变量；
+- 不开放任意项目文件回收、Agent 工具、网络、数据库、自动审阅或自动重试；
+- “要求修改”只保留旧产物并结束当前尝试，不会自动生成修改任务或再次派发。

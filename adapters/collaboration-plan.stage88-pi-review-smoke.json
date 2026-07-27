@@ -1,0 +1,27 @@
+{
+  "parent_task_ref": "task-20260703-001",
+  "revision": 1,
+  "socket_bindings": [
+    {"socket_id": "pi-cli", "role": "implementer", "required_capabilities": ["cli_agent_print"]},
+    {"socket_id": "claude-code-acp", "role": "reviewer", "required_capabilities": ["quality_review"]}
+  ],
+  "work_items": [
+    {
+      "work_item_id": "stage88-pi-evidence",
+      "socket_id": "pi-cli",
+      "role": "implementer",
+      "depends_on": [],
+      "expected_artifact_types": ["test_result"],
+      "review_required": true
+    }
+  ],
+  "handoffs": [],
+  "review_gates": [
+    {
+      "gate_id": "review-stage88-pi-evidence",
+      "after_work_item_ids": ["stage88-pi-evidence"],
+      "review_role": "reviewer",
+      "decision_options": ["approve", "request_changes"]
+    }
+  ]
+}

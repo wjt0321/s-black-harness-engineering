@@ -14,7 +14,7 @@
 
 ## 当前状态
 
-项目已完成并归档阶段 87，当前具备：
+项目已完成并归档阶段 88，当前具备：
 
 - 统一 Agent socket registry、capability routing 与显式角色绑定；
 - 可校验的多 Agent collaboration plan，包含 work item、依赖、handoff、artifact 和 review gate；
@@ -30,11 +30,12 @@
 - transport-neutral 的 External Agent adapter contract、25 项 failure matrix，以及有界的 GUI live read model fixture；
 - `omp-acp` 首个只读实时状态读取器：固定原子快照、15 秒有效期、有界稳定读取、严格身份/生产者绑定、归一化证据与失败关闭界面映射；
 - Pi/OMP 项目级进程内状态扩展、单写者租约、5 秒心跳、原子替换，以及中文控制面板“外部智能体 / 实时状态”区段；
-- 一次性确认后的单工作项受控派发：只面向用户已打开、工具为空且空闲的 Pi/OMP，会回收有界结果并闭合审计。
+- 一次性确认后的单工作项受控派发：只面向用户已打开、工具为空且空闲的 Pi/OMP，会回收有界结果并闭合审计；
+- 固定真实宿主事件、不可变最终文本/JSON 产物、pending 固定恢复，以及人工“通过/要求修改”审阅和中文控制面板投影。
 
-Harness 仍不会启动、关闭或重启 Kimi、Claude、Pi 或 OMP。阶段 87 已真实验收：用户一次性确认后，可向已经打开的 Pi/OMP 会话派发一个固定工作项；活动工具非空、宿主忙碌、状态漂移、超时或结果不安全时都会失败关闭。
+Harness 仍不会启动、关闭或重启 Kimi、Claude、Pi 或 OMP。阶段 88 已真实验收：Pi 路径完成证据归档并由人工审阅通过，OMP 路径完成证据归档并由人工要求修改；活动工具非空、宿主忙碌、状态漂移、事件链无效、结果不安全或审阅绑定漂移时都会失败关闭。
 
-当前有三项受限真实能力：fixed Git status、fixed Pi print，以及 Pi/OMP 单工作项派发。三者都需要显式提交、固定输入、machine-local lease 和执行审计；进程类操作继续使用 Windows Job Object 回收。单工作项派发不开放任意命令或 Agent 工具。
+当前有三项受限真实能力：fixed Git status、fixed Pi print，以及 Pi/OMP 单工作项派发。三者都需要显式提交、固定输入、machine-local lease 和执行审计；进程类操作继续使用 Windows Job Object 回收。单工作项派发不开放任意命令或 Agent 工具；证据恢复和人工审阅不会自动调用 Agent。
 
 ## 安全边界
 
@@ -47,7 +48,8 @@ Harness 仍不会启动、关闭或重启 Kimi、Claude、Pi 或 OMP。阶段 87
 - 静默读取 `.env`、token、keyring 或其他凭据文件；
 - 未经设计和授权的其他真实操作；
 - 由 Harness 启动、关闭或重启外部智能体；
-- 未经一次性确认的派发、多个工作项、自动重试、并行派发或自治循环。
+- 未经一次性确认的派发、多个工作项、自动重试、并行派发或自治循环；
+- 任意项目文件产物回收、自动审阅、自动修改后重试或自动跨 Agent 转发。
 
 ## 快速开始
 
@@ -73,6 +75,7 @@ git diff --check
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
 - [`docs/130-gui-first-external-agent-control-plane-target.md`](docs/130-gui-first-external-agent-control-plane-target.md)：GUI-first 外部 Agent 控制面长期目标、MVP 边界和反偏航检查表。
+- [`docs/archive/137-stage88-external-agent-evidence-and-human-review.md`](docs/archive/137-stage88-external-agent-evidence-and-human-review.md)：阶段 88 归档事实源，记录真实事件、不可变产物、固定恢复与人工审阅。
 - [`docs/archive/136-stage87-single-work-item-controlled-execution.md`](docs/archive/136-stage87-single-work-item-controlled-execution.md)：阶段 87 归档事实源，记录 Pi/OMP 单工作项受控执行与真实验收。
 - [`docs/archive/135-stage86-pi-omp-live-status-integration.md`](docs/archive/135-stage86-pi-omp-live-status-integration.md)：阶段 86 归档事实源，记录 Pi/OMP 真实只读状态接入。
 - [`docs/00-index.md`](docs/00-index.md)：按主题导航。

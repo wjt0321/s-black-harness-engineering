@@ -17,7 +17,13 @@ from agent_runtime.result import CheckResult
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _project(tmp_path: Path, profile: str = "omp-local") -> tuple[Path, Path]:
+def _project(
+    tmp_path: Path,
+    profile: str = "omp-local",
+    *,
+    review_required: bool = False,
+    include_review_gate: bool = True,
+) -> tuple[Path, Path]:
     root = tmp_path / "project"
     root.mkdir()
     shutil.copytree(ROOT / "adapters", root / "adapters")
@@ -36,17 +42,24 @@ def _project(tmp_path: Path, profile: str = "omp-local") -> tuple[Path, Path]:
     plan = {
         "parent_task_ref": "task-stage87",
         "revision": 1,
-        "socket_bindings": [{"socket_id": socket_id, "role": "implementer", "required_capabilities": [capability]}],
+        "socket_bindings": ([{"socket_id": socket_id, "role": "implementer", "required_capabilities": [capability]}]
+                            + ([{"socket_id": "claude-code-acp", "role": "reviewer", "required_capabilities": ["quality_review"]}]
+                               if review_required else [])),
         "work_items": [{
             "work_item_id": "implement",
             "socket_id": socket_id,
             "role": "implementer",
             "depends_on": [],
             "expected_artifact_types": ["test_result"],
-            "review_required": False,
+            "review_required": review_required,
         }],
         "handoffs": [],
-        "review_gates": [],
+        "review_gates": ([{
+            "gate_id": "review-implementation",
+            "after_work_item_ids": ["implement"],
+            "review_role": "reviewer",
+            "decision_options": ["approve", "request_changes"],
+        }] if review_required and include_review_gate else []),
     }
     (root / "adapters/stage87-plan.json").write_text(json.dumps(plan), encoding="utf-8")
     request = {
@@ -81,6 +94,30 @@ def _live_status(profile: str = "omp-local", *, state: str = "open", observation
         },
         findings=(),
     )
+
+
+def _host_success(profile: str = "omp-local", output: str = "阶段87受控执行验收通过。") -> dict[str, object]:
+    encoded = output.encode("utf-8")
+    import hashlib
+
+    return {
+        "version": 2,
+        "contract": "external-agent-single-work-item-result/v2",
+        "status": "succeeded",
+        "request_id": "request-stage87-001",
+        "target_profile": profile,
+        "completed_at": "2026-07-27T12:00:09Z",
+        "output": output,
+        "output_bytes": len(encoded),
+        "output_digest": "sha256:" + hashlib.sha256(encoded).hexdigest(),
+        "events": [
+            {"sequence": 1, "event_type": "request_claimed", "occurred_at": "2026-07-27T12:00:05Z"},
+            {"sequence": 2, "event_type": "host_turn_dispatched", "occurred_at": "2026-07-27T12:00:06Z"},
+            {"sequence": 3, "event_type": "host_turn_started", "occurred_at": "2026-07-27T12:00:07Z"},
+            {"sequence": 4, "event_type": "host_turn_completed", "occurred_at": "2026-07-27T12:00:09Z"},
+        ],
+        "artifacts": [],
+    }
 
 
 def test_preview_returns_stable_one_time_approval_binding(tmp_path: Path) -> None:
@@ -180,14 +217,7 @@ def test_commit_records_started_then_terminal_and_releases_safe_result(tmp_path:
     def exchange(_root, payload, *_args, **_kwargs):
         calls.append("exchange")
         dispatched_payload.update(payload)
-        return {
-            "status": "succeeded",
-            "request_id": "request-stage87-001",
-            "target_profile": "omp-local",
-            "output": "阶段87受控执行验收通过。",
-            "output_bytes": 39,
-            "artifacts": [],
-        }
+        return _host_success()
 
     def terminal(*_args, **kwargs):
         calls.append("terminal")
@@ -225,6 +255,9 @@ def test_commit_records_started_then_terminal_and_releases_safe_result(tmp_path:
     assert terminal_kwargs["direct_child_reaped"] is True
     assert terminal_kwargs["containment_closed"] is True
     assert dispatched_payload["timeout_seconds"] == 30
+    assert result.evidence["status"] == "pass"
+    assert result.evidence["artifact"]["artifact_type"] == "test_result"
+    assert result.evidence["review"]["status"] == "not_required"
 
 
 def test_failed_exchange_uses_schema_compatible_terminal_audit(tmp_path: Path) -> None:
@@ -292,3 +325,132 @@ def test_request_replay_is_blocked_before_started_audit(tmp_path: Path) -> None:
     assert result.status == "blocked"
     assert [item.rule_id for item in result.findings] == ["single-work-item-request-replayed"]
     assert calls == []
+
+
+def test_preview_requires_exactly_one_review_gate_for_reviewed_work_item(tmp_path: Path) -> None:
+    root, request_path = _project(tmp_path, review_required=True, include_review_gate=False)
+    result = build_single_work_item_execution_plan(
+        root,
+        request_path.relative_to(root).as_posix(),
+        "2026-07-27T12:00:05Z",
+        services={"inspect_status": lambda *_args, **_kwargs: _live_status()},
+    )
+
+    assert result.status == "validation_failed"
+    assert [item.rule_id for item in result.findings] in (["single-work-item-collaboration-invalid"], ["single-work-item-review-gate-invalid"])
+
+
+def test_reviewed_execution_is_archived_as_pending_review(tmp_path: Path) -> None:
+    root, request_path = _project(tmp_path, review_required=True)
+    status_service = {"inspect_status": lambda *_args, **_kwargs: _live_status()}
+    preview = build_single_work_item_execution_plan(
+        root, request_path.relative_to(root).as_posix(), "2026-07-27T12:00:05Z", services=status_service
+    )
+    assert preview.plan["review_gate_id"] == "review-implementation"
+    lease = _Lease(status="pass")
+    services = {
+        **status_service,
+        "acquire_lease": lambda *_args, **_kwargs: lease,
+        "record_started": lambda *_args, **_kwargs: SimpleNamespace(
+            status="pass", committed=True, attempt_id="attempt-stage88-review-001", findings=[]
+        ),
+        "exchange": lambda *_args, **_kwargs: _host_success(),
+        "scan_text": lambda *_args, **_kwargs: CheckResult(status="pass"),
+        "record_terminal": lambda *_args, **_kwargs: SimpleNamespace(status="pass", committed=True, findings=[]),
+        "request_already_used": lambda *_args, **_kwargs: False,
+    }
+
+    result = execute_single_work_item(
+        root,
+        request_path.relative_to(root).as_posix(),
+        "2026-07-27T12:00:05Z",
+        approval_binding_id=preview.approval_binding_id,
+        commit=True,
+        services=services,
+    )
+
+    assert result.status == "pass"
+    assert result.evidence["review"] == {
+        "required": True,
+        "gate_id": "review-implementation",
+        "status": "pending",
+    }
+    assert result.next_action == "在中文控制面查看真实事件和结果产物，然后提交人工审阅。"
+
+
+def test_terminal_audit_failure_leaves_recoverable_pending_evidence(tmp_path: Path) -> None:
+    root, request_path = _project(tmp_path)
+    status_service = {"inspect_status": lambda *_args, **_kwargs: _live_status()}
+    preview = build_single_work_item_execution_plan(
+        root, request_path.relative_to(root).as_posix(), "2026-07-27T12:00:05Z", services=status_service
+    )
+    services = {
+        **status_service,
+        "acquire_lease": lambda *_args, **_kwargs: _Lease(status="pass"),
+        "record_started": lambda *_args, **_kwargs: SimpleNamespace(
+            status="pass", committed=True, attempt_id="attempt-stage88-pending-001", findings=[]
+        ),
+        "exchange": lambda *_args, **_kwargs: _host_success(),
+        "scan_text": lambda *_args, **_kwargs: CheckResult(status="pass"),
+        "record_terminal": lambda *_args, **_kwargs: SimpleNamespace(
+            status="error", committed=False, findings=[]
+        ),
+        "request_already_used": lambda *_args, **_kwargs: False,
+    }
+
+    result = execute_single_work_item(
+        root,
+        request_path.relative_to(root).as_posix(),
+        "2026-07-27T12:00:05Z",
+        approval_binding_id=preview.approval_binding_id,
+        commit=True,
+        services=services,
+    )
+
+    assert result.status == "error"
+    pending_files = list((root / ".runtime/external-agent-evidence/v1/pending").glob("*.json"))
+    assert len(pending_files) == 1
+    assert list((root / ".runtime/external-agent-evidence/v1/attempts").glob("*/manifest.json")) == []
+
+
+def test_commit_retries_only_future_snapshot_race_before_dispatch(tmp_path: Path) -> None:
+    root, request_path = _project(tmp_path)
+    calls = {"status": 0, "exchange": 0}
+
+    def status(*_args, **_kwargs):
+        calls["status"] += 1
+        if calls["status"] == 2:
+            from agent_runtime.result import Finding
+            return SimpleNamespace(
+                status="blocked", observation_status="invalid", evidence=None,
+                findings=(Finding(
+                    rule_id="status_observation_from_future", severity="block", action="deny",
+                    message="观察时间晚于评估时间。",
+                ),),
+            )
+        return _live_status()
+
+    preview = build_single_work_item_execution_plan(
+        root, request_path.relative_to(root).as_posix(), "2026-07-27T12:00:05Z",
+        services={"inspect_status": status},
+    )
+    services = {
+        "inspect_status": status,
+        "acquire_lease": lambda *_args, **_kwargs: _Lease(status="pass"),
+        "record_started": lambda *_args, **_kwargs: SimpleNamespace(
+            status="pass", committed=True, attempt_id="attempt-stage88-race-001", findings=[]
+        ),
+        "exchange": lambda *_args, **_kwargs: (calls.__setitem__("exchange", calls["exchange"] + 1) or _host_success()),
+        "scan_text": lambda *_args, **_kwargs: CheckResult(status="pass"),
+        "record_terminal": lambda *_args, **_kwargs: SimpleNamespace(status="pass", committed=True, findings=[]),
+        "request_already_used": lambda *_args, **_kwargs: False,
+    }
+
+    result = execute_single_work_item(
+        root, request_path.relative_to(root).as_posix(), "2026-07-27T12:00:05Z",
+        approval_binding_id=preview.approval_binding_id, commit=True, services=services,
+    )
+
+    assert result.status == "pass"
+    assert calls["status"] == 4
+    assert calls["exchange"] == 1

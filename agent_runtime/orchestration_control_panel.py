@@ -22,6 +22,7 @@ from .orchestration_collaboration_operator_inbox import (
 )
 from .orchestration_manual_board import inspect_manual_board
 from .orchestration_external_agent_live_status import inspect_external_agent_live_status
+from .orchestration_external_agent_evidence import inspect_external_agent_evidence
 from .orchestration_single_work_item_execution import build_single_work_item_execution_plan
 from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
@@ -301,6 +302,7 @@ def build_control_panel_snapshot(
     collaboration_inbox_file: str | None = None,
     external_agent_evaluated_at: str | None = None,
     single_work_item_request_file: str | None = None,
+    external_agent_attempt_id: str | None = None,
 ) -> ControlPanelSnapshot:
     """Aggregate existing safe read models without executing or writing."""
     overview = _section(
@@ -520,6 +522,15 @@ def build_control_panel_snapshot(
                 "request_file": single_work_item_request_file,
                 "commit_performed": False,
             }
+    if external_agent_attempt_id is not None:
+        evidence_payload = inspect_external_agent_evidence(
+            root, external_agent_attempt_id, include_content=True
+        ).to_dict()
+        sections["external_agent_evidence"] = {
+            **evidence_payload,
+            "scope": "runtime",
+            "availability": "stable_read_only",
+        }
     findings = _deduplicate_findings(sections)
     status = _aggregate_status(sections)
 
@@ -595,6 +606,8 @@ def build_control_panel_snapshot(
         source["external_agent_evaluated_at"] = external_agent_evaluated_at
     if single_work_item_request_file is not None:
         source["single_work_item_request_file"] = _safe_envelope_reference(root, single_work_item_request_file)
+    if external_agent_attempt_id is not None:
+        source["external_agent_attempt_id"] = external_agent_attempt_id
     if collaboration_file is not None:
         source["collaboration_file"] = _safe_envelope_reference(root, collaboration_file)
     if dispatch_file is not None:
@@ -2047,14 +2060,14 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     )
 
     section_names = [name for name in _SECTION_ORDER if name in sections]
-    for optional_section in ("external_agents", "single_work_item_execution", "collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
+    for optional_section in ("external_agents", "single_work_item_execution", "external_agent_evidence", "collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
         if optional_section in sections:
             section_names.append(optional_section)
     nav_labels = {
         "overview": "总览", "tasks": "任务", "adapters": "适配器", "automation": "自动化",
         "runs": "运行记录", "approvals": "审批", "artifacts": "产物", "reports": "报告",
         "collaboration": "协作计划", "dispatch": "派发资格", "manual_board": "人工看板",
-        "external_agents": "外部智能体", "single_work_item_execution": "单工作项执行", "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
+        "external_agents": "外部智能体", "single_work_item_execution": "单工作项执行", "external_agent_evidence": "执行证据", "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
     }
     nav = "".join(
         f'<a href="#{name.replace("_", "-")}">{_escape(nav_labels.get(name, name))}</a>'
@@ -2310,6 +2323,49 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
             ),
             '</section>',
         ]))
+    external_evidence = sections.get("external_agent_evidence")
+    if external_evidence is not None:
+        evidence = external_evidence.get("evidence") or {}
+        target_label = "Pi" if evidence.get("target_profile") == "pi-local" else "OMP" if evidence.get("target_profile") == "omp-local" else "未确定"
+        archive_labels = {"archived": "已归档", "recovery_pending": "等待恢复归档"}
+        review_labels = {
+            "not_required": "无需审阅", "pending": "等待人工审阅",
+            "approved": "审阅已通过", "changes_requested": "要求修改",
+        }
+        event_rows = [
+            {
+                "sequence": event.get("sequence"),
+                "label": event.get("label_zh"),
+                "occurred_at": event.get("occurred_at"),
+                "failure_code": event.get("failure_code") or "无",
+            }
+            for event in evidence.get("events", [])
+        ]
+        artifact = evidence.get("artifact", {})
+        content_html = (
+            '<h3>结果产物内容</h3><pre class="payload-preview">' + _escape(artifact.get("content")) + "</pre>"
+            if artifact.get("content") is not None else ""
+        )
+        section_html.append("".join([
+            '<section class="panel-section" id="external-agent-evidence">',
+            _section_header("17", "真实执行证据 / 人工审阅", external_evidence),
+            '<div class="boundary-callout"><strong>执行尝试：</strong>', _escape(evidence.get("attempt_id", "-")),
+            '<br><strong>目标智能体：</strong>', _escape(target_label),
+            '<br><strong>归档状态：</strong>', _escape(archive_labels.get(evidence.get("archive_status"), evidence.get("archive_status", "未知"))),
+            '<br><strong>审阅状态：</strong>', _escape(review_labels.get(evidence.get("review_status"), evidence.get("review_status", "未知"))),
+            '<br><strong>产物类型：</strong>', _escape(artifact.get("artifact_type", "-")),
+            '<br><strong>产物摘要：</strong><code>', _escape(artifact.get("content_hash", "-")), '</code>',
+            '<br>本区域只读取已经归档的安全结果，不会调用或控制外部智能体。</div>',
+            _table(
+                caption="真实宿主事件时间线",
+                columns=(("sequence", "序号"), ("label", "真实事件"), ("occurred_at", "发生时间"), ("failure_code", "失败码")),
+                rows=event_rows,
+                empty_message="尚无可展示的真实宿主事件。",
+            ),
+            content_html,
+            '</section>',
+        ]))
+
     collaboration = sections.get("collaboration")
     if collaboration is not None:
         section_html.extend(

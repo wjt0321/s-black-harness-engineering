@@ -6,6 +6,7 @@
 
 - `../README.md` — 项目定位、当前能力、快速开始。
 - `000-stage-digest.md` — 当前断点和恢复顺序。
+- `archive/137-stage88-external-agent-evidence-and-human-review.md` — 阶段 88 归档事实源：Pi/OMP 真实事件、不可变产物与人工审阅。
 - `archive/136-stage87-single-work-item-controlled-execution.md` — 阶段 87 归档事实源：Pi/OMP 单工作项受控执行与真实验收。
 - `02-roadmap.md` — 能力包、当前里程碑与下一候选。
 - `130-gui-first-external-agent-control-plane-target.md` — 中文图形控制面长期目标、最小可用边界和反偏航检查。
@@ -50,10 +51,11 @@
 ## 当前事实源
 
 - `130-gui-first-external-agent-control-plane-target.md` — 长期产品主线与事实权威边界。
-- `archive/136-stage87-single-work-item-controlled-execution.md` — 阶段 87 的实现、边界和真实验收结果。
+- `archive/137-stage88-external-agent-evidence-and-human-review.md` — 当前实现事实源：真实事件、不可变产物、固定恢复和人工审阅。
+- `archive/136-stage87-single-work-item-controlled-execution.md` — 阶段 87 的单工作项执行实现与边界。
 - `111-pi-controlled-dry-run-print-implementation.md` — 固定 Pi print 的实现与安全边界。
 
-阶段 61、63、65 和 67-87 的已完成或冻结设计、实现与记录已归档。阶段 81-87 可由 `archive/129-*.md`、`archive/131-*.md`、`archive/132-*.md`、`archive/133-*.md`、`archive/134-*.md`、`archive/135-*.md` 和 `archive/136-*.md` 追溯。
+阶段 61、63、65 和 67-88 的已完成或冻结设计、实现与记录已归档。阶段 81-88 可由 `archive/129-*.md`、`archive/131-*.md`、`archive/132-*.md`、`archive/133-*.md`、`archive/134-*.md`、`archive/135-*.md`、`archive/136-*.md` 和 `archive/137-*.md` 追溯。
 
 ## 历史归档
 

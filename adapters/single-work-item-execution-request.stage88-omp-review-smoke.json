@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "task_id": "task-20260703-001",
+  "request_id": "stage88-omp-evidence-001",
+  "collaboration_file": "adapters/collaboration-plan.stage88-omp-review-smoke.json",
+  "work_item_id": "stage88-omp-evidence",
+  "target_profile": "omp-local",
+  "instruction": "只回复：OMP 阶段88真实证据回收验收通过。不要使用工具。",
+  "input_artifacts": [],
+  "timeout_seconds": 120,
+  "result_max_bytes": 8192
+}

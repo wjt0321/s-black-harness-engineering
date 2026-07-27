@@ -5,7 +5,7 @@
   "target_profile": "pi-local",
   "request_relative_path": ".runtime/external-agent-dispatch/pi-local.request.v1.json",
   "result_relative_path": ".runtime/external-agent-dispatch/pi-local.result.v1.json",
-  "implementation_binding_id": "sha256:2d6e420bfffd234c72ca55001d252b1829559c87b4888ccae01372f433a8aaee",
+  "implementation_binding_id": "sha256:f3685d49cf8b6ff4164ae636a0f0c6274947e53d9c12bbfc310fa1f2cdbd6a64",
   "protocol": "external-agent-single-work-item-mailbox/v1",
   "request_ttl_seconds": 60,
   "max_request_bytes": 65536,

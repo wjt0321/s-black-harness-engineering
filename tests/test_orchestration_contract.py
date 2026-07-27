@@ -26,7 +26,11 @@ EXPECTED_CONTRACT_IDS = [
     "execution_recovery_close",
     "execution_recovery_read",
     "execution_trust_binding",
+    "external_agent_evidence_read",
+    "external_agent_evidence_recovery",
+    "external_agent_human_review",
     "external_agent_live_status_read",
+    "external_agent_single_work_item_execution",
     "external_execution_service_stack",
     "fixed_git_status_execution",
     "orchestration_artifact_export",
@@ -52,9 +56,9 @@ def test_contract_manifest_freezes_v1_shape_and_availability_counts() -> None:
     assert manifest["schema_version"] == "control-plane/orchestration-contract/v1"
     assert manifest["consumer"] == "cli-automation"
     assert manifest["summary"] == {
-        "total_entries": 33,
+        "total_entries": 37,
         "stable": 11,
-        "stable_limited": 9,
+        "stable_limited": 13,
         "preview": 10,
         "unavailable": 3,
     }
@@ -184,7 +188,7 @@ def test_contract_inspect_human_output_is_compact(capsys) -> None:
     assert code == 0
     assert "ORCHESTRATION CONTRACT" in captured.out
     assert "schema_version=control-plane/orchestration-contract/v1" in captured.out
-    assert "total_entries=33" in captured.out
+    assert "total_entries=37" in captured.out
     assert "run_plan preview read_only orchestration run" in captured.out
     assert "external_execution_service_stack unavailable unavailable -" in captured.out
 

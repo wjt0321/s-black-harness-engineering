@@ -20,7 +20,7 @@ python -m agent_runtime.cli doctor
 
 ## 当前能力与边界
 
-项目是 Python 3.11+、中文图形界面优先目标的本地多智能体 Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；当前实现事实源为 `docs/archive/136-stage87-single-work-item-controlled-execution.md`。Pi/OMP 已完成只读状态和单工作项受控执行真实验收。
+项目是 Python 3.11+、中文图形界面优先目标的本地多智能体 Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；当前实现事实源为 `docs/archive/137-stage88-external-agent-evidence-and-human-review.md`。Pi/OMP 已完成只读状态、单工作项受控执行、真实事件与结果产物回收，以及人工审阅真实验收。
 
 允许的真实执行仅有：
 
@@ -28,7 +28,7 @@ python -m agent_runtime.cli doctor
 - Windows fixed Pi print：固定 `pi --print --no-session --no-tools <prompt>`；
 - single work item dispatch：一次性确认后，只向用户已打开、工具为空且会话空闲的 `pi-local` 或 `omp-local` 派发一个固定工作项。
 
-三者都必须显式 `--commit`，并保持 lease、固定输入、审计和输出约束。进程类操作继续使用 Windows 进程树回收；单工作项派发不得启动宿主、接受任意 argv/cwd/env、开放 Agent 工具、自动重试或并行。除非用户另行授权且先完成独立设计，禁止新增其他 operation、通用 shell、POSIX fallback、网络 adapter、长期服务或数据库。
+三者都必须显式 `--commit`，并保持 lease、固定输入、审计和输出约束。进程类操作继续使用 Windows 进程树回收；单工作项派发不得启动宿主、接受任意 argv/cwd/env、开放 Agent 工具、自动重试或并行。成功结果可归档为 `.runtime/` 内不可变证据并接受一次人工“通过/要求修改”审阅；证据恢复不得重新调用 Agent，审阅不得自动触发执行。除非用户另行授权且先完成独立设计，禁止新增其他 operation、通用 shell、POSIX fallback、网络 adapter、长期服务或数据库。
 
 MUST：
 
@@ -65,6 +65,9 @@ NEVER：
 | `agent_runtime/orchestration_external_agent_live_status.py` | 固定外部 Agent snapshot 只读 reader |
 | `agent_runtime/execution_*` | lease、trust、audit 与执行基础设施 |
 | `agent_runtime/orchestration_*_execution.py` | 固定 operation 编排 |
+| `agent_runtime/external_agent_evidence_store.py` | 不可变证据、pending 恢复和审阅记录存储 |
+| `agent_runtime/orchestration_external_agent_evidence.py` | 真实证据读取与固定恢复 |
+| `agent_runtime/orchestration_external_agent_review.py` | 人工审阅预览与一次性提交 |
 | `tests/` | 行为与边界契约 |
 | `docs/10-cli-poc-usage.md` | CLI 参考 |
 | `docs/21-controlled-write-boundaries.md` | 写入边界 |
@@ -72,6 +75,7 @@ NEVER：
 | `docs/111-pi-controlled-dry-run-print-implementation.md` | 固定 Pi print 执行事实源 |
 | `docs/archive/135-stage86-pi-omp-live-status-integration.md` | Pi/OMP 只读状态接入归档事实源 |
 | `docs/archive/136-stage87-single-work-item-controlled-execution.md` | Pi/OMP 单工作项受控执行归档事实源 |
+| `docs/archive/137-stage88-external-agent-evidence-and-human-review.md` | 真实事件、不可变产物与人工审阅归档事实源 |
 
 ## 验证契约
 

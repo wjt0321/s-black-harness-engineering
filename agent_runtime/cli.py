@@ -64,6 +64,11 @@ from .pi_runtime_binding import create_pi_runtime_binding, inspect_pi_runtime_bi
 from .orchestration_git_status_execution import execute_fixed_git_status
 from .orchestration_pi_print_execution import execute_fixed_pi_print
 from .orchestration_single_work_item_execution import execute_single_work_item
+from .orchestration_external_agent_evidence import (
+    inspect_external_agent_evidence,
+    recover_external_agent_evidence,
+)
+from .orchestration_external_agent_review import review_external_agent_evidence
 from .orchestration_control_panel import (
     build_control_panel_handoff,
     build_control_panel_snapshot,
@@ -1600,6 +1605,7 @@ def _cmd_orchestration_control_panel_snapshot(args: argparse.Namespace) -> int:
         collaboration_inbox_file=args.collaboration_inbox_file,
         external_agent_evaluated_at=args.external_agent_evaluated_at,
         single_work_item_request_file=args.single_work_item_request_file,
+        external_agent_attempt_id=args.external_agent_attempt_id,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1621,6 +1627,7 @@ def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
         collaboration_inbox_file=args.collaboration_inbox_file,
         external_agent_evaluated_at=args.external_agent_evaluated_at,
         single_work_item_request_file=args.single_work_item_request_file,
+        external_agent_attempt_id=args.external_agent_attempt_id,
     )
     print(render_control_panel_html(result.to_dict()))
     return result.exit_code()
@@ -1770,6 +1777,88 @@ def _cmd_orchestration_execution_single_work_item(args: argparse.Namespace) -> i
         if payload.get("next_action"):
             print(f"下一步：{payload['next_action']}")
     return result.exit_code()
+
+def _render_external_agent_evidence(args: argparse.Namespace, result: Any) -> int:
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"状态：{payload['status']}")
+        print(f"执行尝试：{payload['attempt_id']}")
+        evidence = payload.get("evidence")
+        if evidence is not None:
+            profile = "Pi" if evidence.get("target_profile") == "pi-local" else "OMP"
+            archive_labels = {"archived": "已归档", "recovery_pending": "等待恢复归档"}
+            review_labels = {
+                "not_required": "无需审阅", "pending": "等待人工审阅",
+                "approved": "审阅已通过", "changes_requested": "要求修改",
+            }
+            print(f"目标智能体：{profile}")
+            print(f"归档状态：{archive_labels.get(evidence.get('archive_status'), evidence.get('archive_status'))}")
+            print(f"审阅状态：{review_labels.get(evidence.get('review_status'), evidence.get('review_status'))}")
+            print("真实执行事件：")
+            for event in evidence.get("events", []):
+                print(f"- {event['sequence']}. {event['label_zh']}（{event['occurred_at']}）")
+            artifact = evidence.get("artifact", {})
+            print(f"结果产物：{artifact.get('artifact_type', '-')} · {artifact.get('byte_count', '-')} 字节")
+            print(f"产物摘要：{artifact.get('content_hash', '-')}")
+            if "content" in artifact:
+                print("产物内容：")
+                print(artifact["content"])
+        if payload.get("approval_binding_id"):
+            print(f"一次性确认摘要：{payload['approval_binding_id']}")
+        for finding in payload.get("findings", []):
+            print(f"- {finding['rule_id']}：{finding['message']}")
+        if payload.get("next_action"):
+            print(f"下一步：{payload['next_action']}")
+    return result.exit_code()
+
+
+def _cmd_orchestration_execution_single_work_item_evidence(args: argparse.Namespace) -> int:
+    result = inspect_external_agent_evidence(
+        _root_path(args), args.attempt_id, include_content=args.include_content
+    )
+    return _render_external_agent_evidence(args, result)
+
+
+def _cmd_orchestration_execution_single_work_item_evidence_recover(args: argparse.Namespace) -> int:
+    result = recover_external_agent_evidence(
+        _root_path(args), args.attempt_id,
+        approval_binding_id=args.approval_binding_id, commit=args.commit,
+    )
+    return _render_external_agent_evidence(args, result)
+
+
+def _cmd_orchestration_execution_single_work_item_review(args: argparse.Namespace) -> int:
+    result = review_external_agent_evidence(
+        _root_path(args),
+        attempt_id=args.attempt_id,
+        decision=args.decision,
+        comment=args.comment,
+        evaluated_at=args.evaluated_at,
+        approval_binding_id=args.approval_binding_id,
+        commit=args.commit,
+    )
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        labels = {"approve": "通过", "request_changes": "要求修改"}
+        print(f"状态：{payload['status']}")
+        print(f"执行尝试：{payload['attempt_id']}")
+        print(f"审阅决定：{labels.get(payload['decision'], payload['decision'])}")
+        if payload.get("approval_binding_id"):
+            print(f"一次性确认摘要：{payload['approval_binding_id']}")
+        review = payload.get("review")
+        if review is not None:
+            print(f"审阅结果：{review['status']}")
+            print(f"意见摘要：{review['comment_digest']}")
+        for finding in payload.get("findings", []):
+            print(f"- {finding['rule_id']}：{finding['message']}")
+        if payload.get("next_action"):
+            print(f"下一步：{payload['next_action']}")
+    return result.exit_code()
+
 
 def _render_execution_recovery(args: argparse.Namespace, result: Any) -> int:
     if args.json:
@@ -3871,6 +3960,63 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_execution_single_work_item_parser.set_defaults(
         func=_cmd_orchestration_execution_single_work_item
     )
+
+    orchestration_execution_evidence_parser = orchestration_execution_subparsers.add_parser(
+        "single-work-item-evidence", help="查看一次 Pi/OMP 工作项的真实事件、产物和人工审阅状态"
+    )
+    orchestration_execution_evidence_parser.add_argument(
+        "--attempt-id", required=True, help="执行审计中的尝试编号"
+    )
+    orchestration_execution_evidence_parser.add_argument(
+        "--include-content", action="store_true", help="同时显示已经安全扫描并归档的文本或 JSON 产物内容"
+    )
+    _add_global_args(orchestration_execution_evidence_parser)
+    orchestration_execution_evidence_parser.set_defaults(
+        func=_cmd_orchestration_execution_single_work_item_evidence
+    )
+
+    orchestration_execution_evidence_recover_parser = orchestration_execution_subparsers.add_parser(
+        "single-work-item-evidence-recover", help="预览或提交一次固定的待归档证据恢复"
+    )
+    orchestration_execution_evidence_recover_parser.add_argument(
+        "--attempt-id", required=True, help="存在待恢复证据的执行尝试编号"
+    )
+    orchestration_execution_evidence_recover_parser.add_argument(
+        "--approval-binding-id", default=None, help="预览生成的一次性确认摘要"
+    )
+    orchestration_execution_evidence_recover_parser.add_argument(
+        "--commit", action="store_true", help="不重新调用 Agent，仅完成同一待恢复证据的安全归档"
+    )
+    _add_global_args(orchestration_execution_evidence_recover_parser)
+    orchestration_execution_evidence_recover_parser.set_defaults(
+        func=_cmd_orchestration_execution_single_work_item_evidence_recover
+    )
+
+    orchestration_execution_review_parser = orchestration_execution_subparsers.add_parser(
+        "single-work-item-review", help="预览或提交一次绑定真实产物的人工审阅"
+    )
+    orchestration_execution_review_parser.add_argument(
+        "--attempt-id", required=True, help="等待人工审阅的执行尝试编号"
+    )
+    orchestration_execution_review_parser.add_argument(
+        "--decision", required=True, choices=("approve", "request_changes"), help="通过或要求修改"
+    )
+    orchestration_execution_review_parser.add_argument(
+        "--comment", required=True, help="有界且会执行敏感信息扫描的审阅意见"
+    )
+    orchestration_execution_review_parser.add_argument(
+        "--evaluated-at", required=True, help="带时区的 ISO-8601 审阅时间"
+    )
+    orchestration_execution_review_parser.add_argument(
+        "--approval-binding-id", default=None, help="预览生成的一次性确认摘要"
+    )
+    orchestration_execution_review_parser.add_argument(
+        "--commit", action="store_true", help="写入一次不可变人工审阅记录"
+    )
+    _add_global_args(orchestration_execution_review_parser)
+    orchestration_execution_review_parser.set_defaults(
+        func=_cmd_orchestration_execution_single_work_item_review
+    )
     # orchestration read-only Control Panel snapshot/render
     orchestration_control_panel_parser = orchestration_subparsers.add_parser(
         "control-panel", help="Render the local read-only Control Panel"
@@ -3976,6 +4122,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="可选：项目内单工作项执行请求；仅生成中文确认预览，不执行",
     )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--external-agent-attempt-id",
+        default=None,
+        help="可选：显示指定执行尝试的真实事件、结果产物和人工审阅状态",
+    )
     _add_global_args(orchestration_control_panel_snapshot_parser)
     orchestration_control_panel_snapshot_parser.set_defaults(
         func=_cmd_orchestration_control_panel_snapshot
@@ -4030,6 +4181,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--single-work-item-request-file",
         default=None,
         help="可选：项目内单工作项执行请求；仅生成中文确认预览，不执行",
+    )
+    orchestration_control_panel_render_parser.add_argument(
+        "--external-agent-attempt-id",
+        default=None,
+        help="可选：显示指定执行尝试的真实事件、结果产物和人工审阅状态",
     )
     _add_global_args(orchestration_control_panel_render_parser)
     orchestration_control_panel_render_parser.set_defaults(

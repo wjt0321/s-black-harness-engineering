@@ -104,9 +104,18 @@ def test_valid_fixed_request_sends_exactly_one_user_message_and_collects_result(
     assert result["sent"] == [{
         "text": "只回复：阶段87受控执行验收通过。不要使用工具。",
     }]
+    assert result["result"]["version"] == 2
+    assert result["result"]["contract"] == "external-agent-single-work-item-result/v2"
     assert result["result"]["status"] == "succeeded"
     assert result["result"]["output"] == "阶段87受控执行验收通过。"
     assert result["result"]["artifacts"] == []
+    assert [event["event_type"] for event in result["result"]["events"]] == [
+        "request_claimed",
+        "host_turn_dispatched",
+        "host_turn_started",
+        "host_turn_completed",
+    ]
+    assert [event["sequence"] for event in result["result"]["events"]] == [1, 2, 3, 4]
 
 
 def test_dispatch_is_blocked_when_host_tools_are_active(tmp_path: Path) -> None:
@@ -116,6 +125,11 @@ def test_dispatch_is_blocked_when_host_tools_are_active(tmp_path: Path) -> None:
     assert result["execCalls"] == []
     assert result["result"]["status"] == "blocked"
     assert result["result"]["failure_code"] == "host-tools-active"
+    assert [event["event_type"] for event in result["result"]["events"]] == [
+        "request_claimed",
+        "host_turn_blocked",
+    ]
+    assert result["result"]["events"][-1]["failure_code"] == "host-tools-active"
     assert "output" not in result["result"]
 
 
@@ -126,6 +140,11 @@ def test_dispatch_is_blocked_when_host_session_is_busy(tmp_path: Path) -> None:
     assert result["execCalls"] == []
     assert result["result"]["status"] == "blocked"
     assert result["result"]["failure_code"] == "host-session-busy"
+    assert [event["event_type"] for event in result["result"]["events"]] == [
+        "request_claimed",
+        "host_turn_blocked",
+    ]
+    assert result["result"]["events"][-1]["failure_code"] == "host-session-busy"
     assert "output" not in result["result"]
 
 

@@ -14,7 +14,7 @@ The target product is a GUI-first, local-first control plane for external Agents
 
 ## Current Status
 
-Stage 87 is complete and archived. The repository now provides:
+Stage 88 is complete and archived. The repository now provides:
 
 - a shared Agent socket registry, capability routing, and explicit role bindings;
 - validated multi-Agent collaboration plans with work items, dependencies, handoffs, artifacts, and review gates;
@@ -30,11 +30,12 @@ Stage 87 is complete and archived. The repository now provides:
 - a transport-neutral External Agent adapter contract, a 25-code failure matrix, and a bounded GUI live-read-model fixture;
 - the first `omp-acp` read-only live-status reader, with a fixed atomic snapshot, a 15-second TTL, bounded stable reads, exact identity/producer binding, normalized evidence, and fail-closed GUI mapping;
 - project-local in-process Pi/OMP status extensions, a single-writer lease, atomic publication, and a Chinese Control Panel external-agent live-status section;
-- one-time-approved single-work-item dispatch to an already-open, idle, tool-free Pi/OMP session, with bounded result collection and closed execution audit.
+- one-time-approved single-work-item dispatch to an already-open, idle, tool-free Pi/OMP session, with bounded result collection and closed execution audit;
+- fixed real host events, immutable final text/JSON artifacts, pending-only recovery, human approve/request-changes decisions, and a Chinese read-only Control Panel projection.
 
-The Harness still does not start, stop, or restart Kimi, Claude, Pi, or OMP. Stage 87 has completed real Pi/OMP acceptance for one explicitly approved fixed work item. Dispatch fails closed when tools are active, the host is busy, evidence drifts, the request times out, or the result is unsafe.
+The Harness still does not start, stop, or restart Kimi, Claude, Pi, or OMP. Stage 88 completed real acceptance for both review outcomes: Pi evidence was approved and OMP evidence was marked changes requested. The chain fails closed for active tools, a busy host, state or review-binding drift, invalid host events, timeout, or unsafe output.
 
-Three constrained real capabilities are available: fixed Git status, fixed Pi print, and fixed single-work-item dispatch to Pi/OMP. All require explicit commit, fixed inputs, a machine-local lease, and execution audit. Process-based operations retain Windows Job Object containment; single-work-item dispatch does not expose arbitrary commands or Agent tools.
+Three constrained real capabilities are available: fixed Git status, fixed Pi print, and fixed single-work-item dispatch to Pi/OMP. All require explicit commit, fixed inputs, a machine-local lease, and execution audit. Process-based operations retain Windows Job Object containment; single-work-item dispatch does not expose arbitrary commands or Agent tools, and evidence recovery or human review never calls an Agent automatically.
 
 ## Security Boundary
 
@@ -47,7 +48,8 @@ The project does not currently provide:
 - silent access to `.env`, tokens, keyrings, or credential files;
 - any additional real operation without a separate design gate and authorization;
 - starting, stopping, or restarting external Agents from the Harness;
-- dispatch without one-time approval, multiple work items, automatic retry, parallel dispatch, or autonomous loops.
+- dispatch without one-time approval, multiple work items, automatic retry, parallel dispatch, or autonomous loops;
+- arbitrary project-file artifact collection, automatic review, automatic fix-and-retry, or automatic cross-Agent forwarding.
 
 ## Quick Start
 
@@ -73,6 +75,7 @@ See [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md) for the full CLI refe
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current state and recovery order.
 - [`docs/130-gui-first-external-agent-control-plane-target.md`](docs/130-gui-first-external-agent-control-plane-target.md): durable GUI-first external-Agent target, MVP boundary, and anti-drift checklist.
+- [`docs/archive/137-stage88-external-agent-evidence-and-human-review.md`](docs/archive/137-stage88-external-agent-evidence-and-human-review.md): the archived Stage 88 fact source for real events, immutable artifacts, fixed recovery, and human review.
 - [`docs/archive/136-stage87-single-work-item-controlled-execution.md`](docs/archive/136-stage87-single-work-item-controlled-execution.md): the archived Stage 87 fact source for controlled Pi/OMP single-work-item execution and real acceptance.
 - [`docs/archive/135-stage86-pi-omp-live-status-integration.md`](docs/archive/135-stage86-pi-omp-live-status-integration.md): the archived Stage 86 fact source for read-only Pi/OMP status integration.
 - [`docs/00-index.md`](docs/00-index.md): topic-based navigation.

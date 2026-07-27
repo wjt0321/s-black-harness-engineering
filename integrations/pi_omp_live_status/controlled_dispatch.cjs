@@ -176,6 +176,26 @@ function createControlledDispatchExtension(pi, options) {
   if (!PROFILE_PATHS[profileId]) throw new Error("unsupported profile");
   let state = null;
 
+  function appendEvent(active, eventType, failureCode = null) {
+    if (!active || !Array.isArray(active.events) || active.events.length >= 8) return;
+    const event = {
+      sequence: active.events.length + 1,
+      event_type: eventType,
+      occurred_at: new Date().toISOString(),
+    };
+    if (failureCode) event.failure_code = failureCode;
+    active.events.push(event);
+  }
+
+  function appendTerminalEvent(active, status, failureCode) {
+    const last = active?.events?.[active.events.length - 1]?.event_type;
+    if (status === "blocked" && last !== "host_turn_blocked") appendEvent(active, "host_turn_blocked", failureCode);
+    if (status === "timed_out" && last !== "host_turn_timed_out") appendEvent(active, "host_turn_timed_out", failureCode);
+    if ((status === "failed" || status === "cancelled") && last !== "host_session_closed") {
+      appendEvent(active, "host_session_closed", failureCode);
+    }
+  }
+
   function stop() {
     if (!state) return;
     if (state.pollTimer) clearInterval(state.pollTimer);
@@ -189,15 +209,17 @@ function createControlledDispatchExtension(pi, options) {
     const active = state.active;
     if (active.finished) return;
     active.finished = true;
+    appendTerminalEvent(active, status, failureCode);
     if (state.timeoutTimer) clearTimeout(state.timeoutTimer);
     state.timeoutTimer = null;
     const result = {
-      version: 1,
-      contract: "external-agent-single-work-item-result/v1",
+      version: 2,
+      contract: "external-agent-single-work-item-result/v2",
       request_id: active.request.request_id,
       target_profile: profileId,
       status,
       completed_at: new Date().toISOString(),
+      events: Array.isArray(active.events) ? active.events.slice() : [],
       artifacts: [],
     };
     if (failureCode) result.failure_code = failureCode;
@@ -224,7 +246,8 @@ function createControlledDispatchExtension(pi, options) {
   }
 
   function rejectRequest(request, processingPath, failureCode) {
-    state.active = { request, processingPath, finished: false };
+    state.active = { request, processingPath, finished: false, events: [] };
+    appendEvent(state.active, "request_claimed");
     finish("blocked", failureCode, "");
   }
 
@@ -256,7 +279,9 @@ function createControlledDispatchExtension(pi, options) {
         rejectRequest(request, processingPath, "host-session-busy");
         return;
       }
-      state.active = { request, processingPath, correlated: false, running: false, finished: false };
+      state.active = { request, processingPath, correlated: false, running: false, finished: false, events: [] };
+      appendEvent(state.active, "request_claimed");
+      appendEvent(state.active, "host_turn_dispatched");
       state.timeoutTimer = setTimeout(() => finish("timed_out", "host-turn-timeout", ""), request.timeout_seconds * 1000);
       if (typeof state.timeoutTimer.unref === "function") state.timeoutTimer.unref();
       pi.sendUserMessage(request.instruction);
@@ -266,7 +291,8 @@ function createControlledDispatchExtension(pi, options) {
         target_profile: profileId,
         result_max_bytes: 256,
       };
-      state.active = { request: fallback, processingPath, finished: false };
+      state.active = { request: fallback, processingPath, finished: false, events: [] };
+      appendEvent(state.active, "request_claimed");
       finish("blocked", "mailbox-request-invalid", "");
     }
   }
@@ -316,11 +342,15 @@ function createControlledDispatchExtension(pi, options) {
   });
 
   pi.on("agent_start", async () => {
-    if (state?.active?.correlated) state.active.running = true;
+    if (state?.active?.correlated) {
+      state.active.running = true;
+      appendEvent(state.active, "host_turn_started");
+    }
   });
 
   pi.on("agent_end", async event => {
     if (!state?.active?.correlated || !state.active.running) return;
+    appendEvent(state.active, "host_turn_completed");
     finish("succeeded", null, assistantOutput(event?.messages));
   });
 

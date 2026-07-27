@@ -154,8 +154,30 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "readiness",
         "recovery",
         "single-work-item",
+        "single-work-item-evidence",
+        "single-work-item-evidence-recover",
+        "single-work-item-review",
         "trust",
     }
+    execution = _nested_parser(orchestration, "execution")
+    evidence_options = {
+        option
+        for action in _nested_parser(execution, "single-work-item-evidence")._actions
+        for option in action.option_strings
+    }
+    assert {"--attempt-id", "--include-content"} <= evidence_options
+    recovery_options = {
+        option
+        for action in _nested_parser(execution, "single-work-item-evidence-recover")._actions
+        for option in action.option_strings
+    }
+    assert {"--attempt-id", "--approval-binding-id", "--commit"} <= recovery_options
+    review_options = {
+        option
+        for action in _nested_parser(execution, "single-work-item-review")._actions
+        for option in action.option_strings
+    }
+    assert {"--attempt-id", "--decision", "--comment", "--evaluated-at", "--approval-binding-id", "--commit"} <= review_options
     assert _subparser_names(
         _nested_parser(_nested_parser(orchestration, "execution"), "trust")
     ) == {"bind", "inspect"}

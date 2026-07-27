@@ -685,3 +685,60 @@ def test_single_work_item_execution_preview_is_rendered_in_chinese(monkeypatch) 
     assert "等待一次性人工确认" in html
     assert "目标智能体：</strong>OMP" in html
     assert "本页面只生成确认预览，不会自行执行" in html
+
+
+def test_real_execution_evidence_and_human_review_are_rendered_in_chinese(monkeypatch) -> None:
+    class Evidence:
+        def to_dict(self):
+            return {
+                "status": "pass",
+                "schema_version": "control-plane/external-agent-evidence/v1",
+                "attempt_id": "attempt-stage88-001",
+                "evidence": {
+                    "attempt_id": "attempt-stage88-001",
+                    "task_id": "task-stage88",
+                    "request_id": "request-stage88-001",
+                    "work_item_id": "implement",
+                    "target_profile": "omp-local",
+                    "completed_at": "2026-07-27T12:00:03Z",
+                    "archive_status": "archived",
+                    "manifest_digest": "sha256:" + "1" * 64,
+                    "events": [
+                        {"sequence": 1, "event_type": "request_claimed", "label_zh": "请求已领取", "occurred_at": "2026-07-27T12:00:00Z"},
+                        {"sequence": 2, "event_type": "host_turn_completed", "label_zh": "智能体已结束", "occurred_at": "2026-07-27T12:00:03Z"},
+                    ],
+                    "artifact": {
+                        "artifact_id": "artifact-stage88",
+                        "artifact_type": "test_result",
+                        "media_type": "text/plain",
+                        "content_hash": "sha256:" + "2" * 64,
+                        "byte_count": 24,
+                        "content": "阶段88真实产物。",
+                    },
+                    "review_required": True,
+                    "review_gate_id": "review-implementation",
+                    "review_status": "approved",
+                    "review": {
+                        "review_id": "review-stage88",
+                        "decision": "approve",
+                        "comment_digest": "sha256:" + "3" * 64,
+                        "committed_at": "2026-07-27T12:05:00Z",
+                    },
+                },
+                "guarantees": {"calls_agent": False},
+            }
+
+    monkeypatch.setattr(control_panel, "inspect_external_agent_evidence", lambda *_args, **_kwargs: Evidence())
+    payload = build_control_panel_snapshot(
+        ROOT, external_agent_attempt_id="attempt-stage88-001"
+    ).to_dict()
+
+    section = payload["sections"]["external_agent_evidence"]
+    assert section["status"] == "pass"
+    assert section["evidence"]["review_status"] == "approved"
+    html = render_control_panel_html(payload)
+    assert "真实执行证据 / 人工审阅" in html
+    assert "请求已领取" in html
+    assert "智能体已结束" in html
+    assert "阶段88真实产物。" in html
+    assert "审阅已通过" in html

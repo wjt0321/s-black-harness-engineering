@@ -16,6 +16,12 @@ from jsonschema import Draft202012Validator, SchemaError, ValidationError, valid
 
 from .execution_audit_writer import record_execution_attempt_started, record_execution_terminal
 from .execution_lease import acquire_execution_lease
+from .external_agent_evidence_store import (
+    EvidenceStoreError,
+    finalize_evidence,
+    prepare_evidence,
+    validate_host_result,
+)
 from .loader import normalize_path
 from .orchestration_collaboration import inspect_collaboration_plan
 from .orchestration_external_agent_live_status import inspect_external_agent_live_status
@@ -203,10 +209,43 @@ def _services(overrides: dict[str, Any] | None) -> dict[str, Any]:
         "scan_text": check_text,
         "request_already_used": _request_already_used,
         "exchange": _exchange,
+        "validate_host_result": validate_host_result,
+        "prepare_evidence": prepare_evidence,
+        "finalize_evidence": finalize_evidence,
     }
     if overrides:
         active.update(overrides)
     return active
+
+
+def _future_snapshot_only(status: Any) -> bool:
+    findings = tuple(getattr(status, "findings", ()))
+    return bool(findings) and all(
+        getattr(finding, "rule_id", None) == "status_observation_from_future"
+        for finding in findings
+    )
+
+
+def _inspect_status_with_future_retry(
+    active: dict[str, Any],
+    root: Path,
+    evaluated_at: str,
+    profile_id: str,
+    *,
+    retry_future_race: bool,
+) -> Any:
+    attempts = 3 if retry_future_race else 1
+    current_evaluated_at = evaluated_at
+    for index in range(attempts):
+        try:
+            status = active["inspect_status"](root, current_evaluated_at, profile_id=profile_id)
+        except (OSError, ValueError, TypeError):
+            return None
+        if not retry_future_race or not _future_snapshot_only(status) or index + 1 >= attempts:
+            return status
+        time.sleep(0.01)
+        current_evaluated_at = datetime.now(timezone.utc).isoformat()
+    return None
 
 
 @dataclass(frozen=True)
@@ -264,6 +303,7 @@ class SingleWorkItemExecutionResult:
     output: str | None = None
     output_digest: str | None = None
     artifacts: tuple[dict[str, Any], ...] = ()
+    evidence: dict[str, Any] = field(default_factory=dict)
     audit: dict[str, Any] = field(default_factory=dict)
     findings: tuple[Finding, ...] = ()
     next_action: str | None = None
@@ -295,6 +335,8 @@ class SingleWorkItemExecutionResult:
             payload["output_digest"] = self.output_digest
         if self.artifacts:
             payload["artifacts"] = list(self.artifacts)
+        if self.evidence:
+            payload["evidence"] = dict(self.evidence)
         if self.findings:
             payload["findings"] = [item.to_dict() for item in self.findings]
         if self.next_action:
@@ -308,6 +350,7 @@ def build_single_work_item_execution_plan(
     evaluated_at: str,
     *,
     services: dict[str, Any] | None = None,
+    _retry_future_race: bool = False,
 ) -> SingleWorkItemPlanResult:
     root = root.resolve()
     request, failure = _load_request(root, request_file)
@@ -345,6 +388,16 @@ def build_single_work_item_execution_plan(
             "validation_failed", request_file,
             findings=(_finding("single-work-item-socket-profile-mismatch", "工作项插座与固定 Pi/OMP 目标配置不匹配。", validation=True),),
         )
+    matching_review_gates = [
+        gate for gate in plan.get("review_gates", [])
+        if request["work_item_id"] in gate.get("after_work_item_ids", [])
+    ]
+    if work["review_required"] and len(matching_review_gates) != 1:
+        return SingleWorkItemPlanResult(
+            "validation_failed", request_file,
+            findings=(_finding("single-work-item-review-gate-invalid", "需要人工审阅的工作项必须精确绑定一个审阅门禁。", validation=True),),
+        )
+    review_gate_id = matching_review_gates[0]["gate_id"] if work["review_required"] else None
     dispatch_binding, binding_failure = _load_dispatch_binding(root, request["target_profile"])
     if binding_failure or dispatch_binding is None:
         return SingleWorkItemPlanResult("validation_failed", request_file, findings=(binding_failure,) if binding_failure else ())
@@ -358,10 +411,10 @@ def build_single_work_item_execution_plan(
             findings=(_finding("single-work-item-instruction-secret-scan", "执行指令未通过敏感信息扫描；匹配内容不会回显。"),),
         )
     active = _services(services)
-    try:
-        status = active["inspect_status"](root, evaluated_at, profile_id=request["target_profile"])
-    except (OSError, ValueError, TypeError):
-        status = None
+    status = _inspect_status_with_future_retry(
+        active, root, evaluated_at, request["target_profile"],
+        retry_future_race=_retry_future_race,
+    )
     evidence = getattr(status, "evidence", None)
     if (
         status is None
@@ -394,6 +447,7 @@ def build_single_work_item_execution_plan(
         "input_artifacts": artifacts,
         "expected_artifact_types": work["expected_artifact_types"],
         "review_required": work["review_required"],
+        "review_gate_id": review_gate_id,
         "timeout_seconds": request["timeout_seconds"],
         "result_max_bytes": request["result_max_bytes"],
     }
@@ -525,7 +579,9 @@ def execute_single_work_item(
     commit: bool,
     services: dict[str, Any] | None = None,
 ) -> SingleWorkItemExecutionResult:
-    preview = build_single_work_item_execution_plan(root, request_file, evaluated_at, services=services)
+    preview = build_single_work_item_execution_plan(
+        root, request_file, evaluated_at, services=services, _retry_future_race=commit
+    )
     if preview.status != "needs_approval" or preview.request is None or preview.plan is None:
         return SingleWorkItemExecutionResult(
             preview.status,
@@ -581,14 +637,10 @@ def execute_single_work_item(
                 audit={"state": "not_started", "audit_incomplete": True},
                 next_action="修复执行审计后再派发。",
             )
-        try:
-            live_recheck = active["inspect_status"](
-                root,
-                datetime.now(timezone.utc).isoformat(),
-                profile_id=request["target_profile"],
-            )
-        except (OSError, ValueError, TypeError):
-            live_recheck = None
+        live_recheck = _inspect_status_with_future_retry(
+            active, root, datetime.now(timezone.utc).isoformat(), request["target_profile"],
+            retry_future_race=True,
+        )
         recheck_evidence = getattr(live_recheck, "evidence", None)
         if (
             live_recheck is None
@@ -657,6 +709,17 @@ def execute_single_work_item(
                 result_status, **base, audit=audit,
                 findings=(_finding(failure_code, "外部智能体未完成该受控工作项；原始失败内容已隐藏。"),),
             )
+        try:
+            active["validate_host_result"](root, exchange, result_max_bytes=request["result_max_bytes"])
+        except (EvidenceStoreError, ValidationError, SchemaError, ValueError, TypeError):
+            terminal, audit = _terminal_result(
+                root, plan=preview, started=started, status="failed",
+                failure_code="single-work-item-host-result-invalid", terminal=active["record_terminal"],
+            )
+            return SingleWorkItemExecutionResult(
+                "error", **base, audit=audit,
+                findings=(_finding("single-work-item-host-result-invalid", "外部智能体宿主结果或真实事件链无效。"),),
+            )
         output = exchange.get("output")
         if not isinstance(output, str) or not output.strip() or "\x00" in output:
             terminal, audit = _terminal_result(
@@ -688,6 +751,35 @@ def execute_single_work_item(
                 findings=(_finding("single-work-item-result-secret-scan", "结果未通过敏感信息扫描；匹配内容不会回显。"),),
             )
         output_digest = _digest(encoded)
+        try:
+            prepared_evidence = active["prepare_evidence"](
+                root,
+                attempt_id=started.attempt_id,
+                task_id=request["task_id"],
+                request_id=request["request_id"],
+                collaboration_file=request["collaboration_file"],
+                collaboration_plan_id=preview.plan["collaboration_plan_id"],
+                work_item_id=request["work_item_id"],
+                target_profile=request["target_profile"],
+                plan_hash=preview.plan_hash,
+                approval_binding_id=preview.approval_binding_id,
+                completed_at=exchange["completed_at"],
+                host_events=exchange["events"],
+                output=output,
+                expected_artifact_types=preview.plan["expected_artifact_types"],
+                review_required=preview.plan["review_required"],
+                review_gate_id=preview.plan["review_gate_id"],
+            )
+        except EvidenceStoreError as exc:
+            terminal, audit = _terminal_result(
+                root, plan=preview, started=started, status="failed", failure_code=exc.code,
+                terminal=active["record_terminal"], output_digest=output_digest, output_bytes=len(encoded),
+                phase="post_run_validation",
+            )
+            return SingleWorkItemExecutionResult(
+                "error", **base, audit=audit,
+                findings=(_finding(exc.code, "真实执行证据未能通过安全归档准备。"),),
+            )
         terminal = active["record_terminal"](
             root,
             attempt_id=started.attempt_id,
@@ -714,14 +806,28 @@ def execute_single_work_item(
         }
         if getattr(terminal, "status", None) != "pass" or not getattr(terminal, "committed", False):
             return SingleWorkItemExecutionResult(
-                "error", **base, audit=audit,
+                "error", **base, audit=audit, evidence=prepared_evidence,
                 findings=tuple(getattr(terminal, "findings", ())),
-                next_action="恢复未闭合的终态审计。",
+                next_action="先恢复未闭合的终态审计；安全结果已保留为待恢复证据。",
             )
+        try:
+            archived_evidence = active["finalize_evidence"](root, started.attempt_id)
+        except EvidenceStoreError as exc:
+            return SingleWorkItemExecutionResult(
+                "error", **base, output=output, output_digest=output_digest, audit=audit,
+                evidence=prepared_evidence,
+                findings=(_finding(exc.code, "执行已闭合，但证据仍处于可恢复状态。"),),
+                next_action="使用固定证据恢复入口完成归档；不要重新执行 Agent。",
+            )
+        next_action = (
+            "在中文控制面查看真实事件和结果产物，然后提交人工审阅。"
+            if archived_evidence["review"]["status"] == "pending"
+            else "在中文控制面查看已归档的真实事件和结果产物。"
+        )
         result = SingleWorkItemExecutionResult(
             "pass", **base, output=output, output_digest=output_digest,
-            artifacts=tuple(exchange.get("artifacts", ())), audit=audit,
-            next_action="在中文控制面审阅结果；如工作项要求复核，继续进入人工复核。",
+            artifacts=(archived_evidence["artifact"],), evidence=archived_evidence, audit=audit,
+            next_action=next_action,
         )
         return result
     finally:
