@@ -5,7 +5,7 @@
   "target_profile": "omp-local",
   "request_relative_path": ".runtime/external-agent-dispatch/omp-local.request.v1.json",
   "result_relative_path": ".runtime/external-agent-dispatch/omp-local.result.v1.json",
-  "implementation_binding_id": "sha256:cbe577081a09b0f63d8a8e5bf98451970552d081915ef9a4cea13079208ad0d7",
+  "implementation_binding_id": "sha256:a800a25125e3bcfd311db96c83386034b1defeb1245e7b5e983d3aeb31b05183",
   "protocol": "external-agent-single-work-item-mailbox/v1",
   "request_ttl_seconds": 60,
   "max_request_bytes": 65536,

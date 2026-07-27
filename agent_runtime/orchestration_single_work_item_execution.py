@@ -133,11 +133,19 @@ def _task_exists(root: Path, task_id: str) -> bool:
     return False
 
 
+def _normalized_source_bytes(data: bytes) -> bytes:
+    return data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
 def _implementation_digest(root: Path, wrapper: Path) -> str:
     digest = hashlib.sha256()
-    digest.update(_regular_file(_contained(root, _DISPATCH_IMPLEMENTATION), max_bytes=_MAX_REQUEST_BYTES))
+    digest.update(_normalized_source_bytes(
+        _regular_file(_contained(root, _DISPATCH_IMPLEMENTATION), max_bytes=_MAX_REQUEST_BYTES)
+    ))
     digest.update(bytes([0]))
-    digest.update(_regular_file(_contained(root, wrapper), max_bytes=_MAX_REQUEST_BYTES))
+    digest.update(_normalized_source_bytes(
+        _regular_file(_contained(root, wrapper), max_bytes=_MAX_REQUEST_BYTES)
+    ))
     return "sha256:" + digest.hexdigest()
 
 

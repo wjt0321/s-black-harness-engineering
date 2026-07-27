@@ -29,11 +29,15 @@ function sha256Bytes(value) {
   return "sha256:" + crypto.createHash("sha256").update(value).digest("hex");
 }
 
+function normalizedSourceBytes(filePath) {
+  return Buffer.from(fs.readFileSync(filePath, "utf8").replace(/\r\n?/g, "\n"), "utf8");
+}
+
 function implementationDigest(extensionFile) {
   const hash = crypto.createHash("sha256");
-  hash.update(fs.readFileSync(__filename));
+  hash.update(normalizedSourceBytes(__filename));
   hash.update(Buffer.from([0]));
-  hash.update(fs.readFileSync(extensionFile));
+  hash.update(normalizedSourceBytes(extensionFile));
   return "sha256:" + hash.digest("hex");
 }
 

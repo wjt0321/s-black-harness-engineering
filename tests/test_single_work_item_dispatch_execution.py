@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import pytest
 
 from agent_runtime.orchestration_single_work_item_execution import (
+    _implementation_digest,
     build_single_work_item_execution_plan,
     execute_single_work_item,
 )
@@ -454,3 +455,18 @@ def test_commit_retries_only_future_snapshot_race_before_dispatch(tmp_path: Path
     assert result.status == "pass"
     assert calls["status"] == 4
     assert calls["exchange"] == 1
+
+def test_python_implementation_digest_is_line_ending_stable(tmp_path: Path) -> None:
+    source_dispatcher = (ROOT / "integrations/pi_omp_live_status/controlled_dispatch.cjs").read_bytes().replace(b"\r\n", b"\n")
+    source_extension = (ROOT / ".pi/extensions/s-black-live-status.ts").read_bytes().replace(b"\r\n", b"\n")
+    digests = []
+    for name, newline in (("lf", b"\n"), ("crlf", b"\r\n")):
+        root = tmp_path / name
+        dispatcher = root / "integrations/pi_omp_live_status/controlled_dispatch.cjs"
+        extension = root / ".pi/extensions/s-black-live-status.ts"
+        dispatcher.parent.mkdir(parents=True)
+        extension.parent.mkdir(parents=True)
+        dispatcher.write_bytes(source_dispatcher.replace(b"\n", newline))
+        extension.write_bytes(source_extension.replace(b"\n", newline))
+        digests.append(_implementation_digest(root, Path(".pi/extensions/s-black-live-status.ts")))
+    assert digests[0] == digests[1]

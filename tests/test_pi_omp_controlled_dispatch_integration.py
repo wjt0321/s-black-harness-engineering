@@ -155,3 +155,31 @@ def test_instruction_digest_drift_never_reaches_agent(tmp_path: Path) -> None:
     assert result["execCalls"] == []
     assert result["result"]["status"] == "blocked"
     assert result["result"]["failure_code"] == "instruction-digest-mismatch"
+
+def test_node_implementation_digest_is_line_ending_stable(tmp_path: Path) -> None:
+    source_dispatcher = DISPATCHER.read_bytes().replace(b"\r\n", b"\n")
+    source_extension = (ROOT / ".pi/extensions/s-black-live-status.ts").read_bytes().replace(b"\r\n", b"\n")
+    variants = []
+    for name, newline in (("lf", b"\n"), ("crlf", b"\r\n")):
+        folder = tmp_path / name
+        folder.mkdir()
+        dispatcher = folder / "controlled_dispatch.cjs"
+        extension = folder / "s-black-live-status.ts"
+        dispatcher.write_bytes(source_dispatcher.replace(b"\n", newline))
+        extension.write_bytes(source_extension.replace(b"\n", newline))
+        variants.append((dispatcher, extension))
+    script = (
+        "const first = require(process.argv[1]);"
+        "const second = require(process.argv[3]);"
+        "process.stdout.write(JSON.stringify(["
+        "first.implementationDigest(process.argv[2]),"
+        "second.implementationDigest(process.argv[4])"
+        "]));"
+    )
+    completed = subprocess.run(
+        ["node", "-e", script, str(variants[0][0]), str(variants[0][1]), str(variants[1][0]), str(variants[1][1])],
+        capture_output=True, text=True, encoding="utf-8", timeout=15, check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    first, second = json.loads(completed.stdout)
+    assert first == second
