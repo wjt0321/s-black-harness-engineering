@@ -14,13 +14,13 @@ python -m agent_runtime.cli doctor
 1. `docs/000-stage-digest.md`
 2. `docs/00-index.md`
 3. 当前任务直接相关的 1-2 份事实源
-4. `tasks/handoff-2026-07-26.md`（仅需恢复当前实现细节时）
+4. `tasks/handoff-2026-07-27.md`（仅需恢复当前实现细节时）
 
 不要先遍历整个 `docs/`、`docs/archive/` 或 `tasks/progress.md`。
 
 ## 当前能力与边界
 
-项目是 Python 3.11+、GUI-first 目标的本地多 Agent Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；Stage 81 已完成，当前实现事实源为 `docs/129-stage81-current-operator-inbox-and-approval-collection.md`。
+项目是 Python 3.11+、GUI-first 目标的本地多 Agent Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；阶段 85 已完成并归档；下一里程碑入口为 `docs/135-next-milestone-real-status-integration.md`，尚未授权启动实施。
 
 允许的真实执行仅有：
 
@@ -61,6 +61,7 @@ NEVER：
 |:---|:---|
 | `agent_runtime/cli.py` | CLI 入口 |
 | `agent_runtime/orchestration_contract.py` | 对外能力清单 |
+| `agent_runtime/orchestration_external_agent_live_status.py` | 固定外部 Agent snapshot 只读 reader |
 | `agent_runtime/execution_*` | lease、trust、audit 与执行基础设施 |
 | `agent_runtime/orchestration_*_execution.py` | 固定 operation 编排 |
 | `tests/` | 行为与边界契约 |

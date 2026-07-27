@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "contract": "external-agent-live-status-binding/v1",
+  "review_status": "reviewed_for_read_only",
+  "source_relative_path": ".runtime/external-agent-status/omp-acp.v1.json",
+  "max_bytes": 65536,
+  "ttl_seconds": 15,
+  "expected_producer": {
+    "producer_id": "qwenpaw-acp-status-exporter",
+    "producer_version": "design-unobserved",
+    "producer_binding_id": "sha256:cfae0bc3c985a3583922b7fd7508f9acd51f135296ea0c32d6cd491545d89219",
+    "source_kind": "adapter_owned_atomic_snapshot"
+  },
+  "expected_target": {
+    "agent_id": "omp-pi-acp",
+    "adapter_id": "omp-acp",
+    "implementation_id": "omp-pi",
+    "adapter_version": "1.0.0",
+    "transport": {
+      "transport_id": "qwenpaw-acp-runner-omp",
+      "kind": "acp",
+      "protocol_version": "acp/v1"
+    },
+    "capability_manifest_id": "sha256:483e0081f8e5f376dabd9b2ee2cd4c8bc5ecb4d8d3573b259b217c04024d7eee"
+  },
+  "producer_or_probe_authorized": false,
+  "dispatch_authorized": false
+}

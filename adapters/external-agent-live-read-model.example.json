@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "contract": "external-agent-live-read-model/v1",
+  "mode": "fixture",
+  "generated_at": "2026-07-27T08:30:00Z",
+  "projection_id": "sha256:4883b0199e849e8ad869fca67fd7ccd79b0e09ba09c37d31fe0b987b0e1a6012",
+  "execution_authorized": false,
+  "dispatch_enabled": false,
+  "source": {
+    "contract_example": "adapters/external-agent-adapter-contract.example.json",
+    "live_observation_performed": false,
+    "real_approval_ledger_read": false,
+    "agent_called": false,
+    "session_started": false
+  },
+  "summary": {
+    "agent_count": 3,
+    "ready_count": 1,
+    "busy_count": 1,
+    "blocked_count": 1,
+    "pending_approval_count": 1,
+    "open_recovery_count": 1,
+    "label_zh": "3 个外部 Agent fixture：1 个就绪、1 个忙碌、1 个阻止。"
+  },
+  "agents": [
+    {
+      "agent_id": "claude-code-local",
+      "adapter_id": "claude-cli-adapter",
+      "display_name_zh": "Claude Code 规划 Agent",
+      "status": "ready",
+      "status_label_zh": "就绪（fixture）",
+      "transport": {
+        "transport_id": "claude-cli-local",
+        "kind": "cli",
+        "protocol_version": "cli/v1"
+      },
+      "capabilities": [
+        {
+          "capability_id": "plan.create",
+          "roles": [
+            "planner"
+          ],
+          "label_zh": "生成协作计划"
+        }
+      ],
+      "readiness": {
+        "status": "ready",
+        "status_label_zh": "证据有效（fixture）",
+        "evidence_id": "sha256:394d76de7d94519fae683dcbc1809e4ddc54926dab131ff0a0143214d2d98a01",
+        "expires_at": "2026-07-27T08:31:00Z",
+        "binding_valid": true,
+        "safe_summary_zh": "仅展示 fixture；未执行本机探测。"
+      },
+      "session": null,
+      "current_work_item_id": "work-stage82-example-plan",
+      "blocked_reason_code": null,
+      "safe_summary_zh": "规划任务可见，但 Stage 82 不允许真实派发。"
+    },
+    {
+      "agent_id": "pi-local",
+      "adapter_id": "pi-local-process-adapter",
+      "display_name_zh": "Pi 执行 Agent",
+      "status": "busy",
+      "status_label_zh": "结果待确认（fixture）",
+      "transport": {
+        "transport_id": "pi-local-process",
+        "kind": "local_process",
+        "protocol_version": "process-events/v1"
+      },
+      "capabilities": [
+        {
+          "capability_id": "work.execute",
+          "roles": [
+            "executor"
+          ],
+          "label_zh": "执行结构化 work item"
+        }
+      ],
+      "readiness": {
+        "status": "stale",
+        "status_label_zh": "证据已过期（fixture）",
+        "evidence_id": "sha256:d4adabd3613537dbbc13837358abd77d7c5c380c3feadbaf50a6b35f0ae6c1b4",
+        "expires_at": "2026-07-27T08:01:00Z",
+        "binding_valid": true,
+        "safe_summary_zh": "连接中断后 readiness 不可用于派发。"
+      },
+      "session": {
+        "mapping_id": "session-map-stage82-example",
+        "state": "unknown",
+        "state_label_zh": "会话状态未知",
+        "external_session_ref": "sha256:6165b65ac4237cddba78639fbb699517054285895091ef141449f08277c556d0",
+        "safe_summary_zh": "只保留 opaque reference。"
+      },
+      "current_work_item_id": "work-stage82-example-execute",
+      "blocked_reason_code": "transport_disconnected",
+      "safe_summary_zh": "事件流中断，结果为 outcome unknown。"
+    },
+    {
+      "agent_id": "qwenpaw-acp-local",
+      "adapter_id": "qwenpaw-acp-adapter",
+      "display_name_zh": "QwenPaw 审阅 Agent",
+      "status": "blocked",
+      "status_label_zh": "等待审批",
+      "transport": {
+        "transport_id": "qwenpaw-acp",
+        "kind": "acp",
+        "protocol_version": "acp/v1"
+      },
+      "capabilities": [
+        {
+          "capability_id": "review.evaluate",
+          "roles": [
+            "reviewer"
+          ],
+          "label_zh": "生成结构化审阅结论"
+        }
+      ],
+      "readiness": {
+        "status": "unknown",
+        "status_label_zh": "未探测",
+        "evidence_id": null,
+        "expires_at": null,
+        "binding_valid": false,
+        "safe_summary_zh": "Stage 82 禁止 live readiness 探测。"
+      },
+      "session": null,
+      "current_work_item_id": "work-stage82-example-review",
+      "blocked_reason_code": "approval_not_granted",
+      "safe_summary_zh": "待审批，仅展示 fixture 状态。"
+    }
+  ],
+  "work_items": [
+    {
+      "work_item_id": "work-stage82-example-plan",
+      "run_id": "run-stage82-example",
+      "attempt_id": "attempt-stage82-example-plan-1",
+      "title_zh": "形成结构化协作计划",
+      "role": "planner",
+      "state": "completed",
+      "state_label_zh": "已完成（fixture）",
+      "assigned_agent_id": "claude-code-local",
+      "approval_state": "not_required",
+      "safe_summary_zh": "Fixture 计划已形成。"
+    },
+    {
+      "work_item_id": "work-stage82-example-execute",
+      "run_id": "run-stage82-example",
+      "attempt_id": "attempt-stage82-example-1",
+      "title_zh": "执行受控工作项",
+      "role": "executor",
+      "state": "outcome_unknown",
+      "state_label_zh": "结果未知",
+      "assigned_agent_id": "pi-local",
+      "approval_state": "granted",
+      "safe_summary_zh": "Transport 中断，必须恢复核对。"
+    },
+    {
+      "work_item_id": "work-stage82-example-review",
+      "run_id": "run-stage82-example",
+      "attempt_id": "attempt-stage82-example-review-1",
+      "title_zh": "审阅执行产物",
+      "role": "reviewer",
+      "state": "awaiting_approval",
+      "state_label_zh": "等待审批",
+      "assigned_agent_id": "qwenpaw-acp-local",
+      "approval_state": "pending",
+      "safe_summary_zh": "尚未授予 dispatch authority。"
+    }
+  ],
+  "recent_events": [
+    {
+      "event_id": "external-event-stage82-2",
+      "work_item_id": "work-stage82-example-execute",
+      "sequence": 2,
+      "event_type": "progress",
+      "observed_at": "2026-07-27T08:00:12Z",
+      "safe_summary_zh": "收到有界进度摘要（fixture）。",
+      "terminal": false,
+      "outcome": "none"
+    },
+    {
+      "event_id": "external-event-stage82-4",
+      "work_item_id": "work-stage82-example-execute",
+      "sequence": 4,
+      "event_type": "terminal_outcome_unknown",
+      "observed_at": "2026-07-27T08:00:14Z",
+      "safe_summary_zh": "连接中断，终态暂记结果未知。",
+      "terminal": true,
+      "outcome": "outcome_unknown"
+    }
+  ],
+  "approvals": [
+    {
+      "decision_id": "approval-stage82-review-pending",
+      "work_item_id": "work-stage82-example-review",
+      "attempt_id": "attempt-stage82-example-review-1",
+      "status": "pending",
+      "status_label_zh": "待处理",
+      "expires_at": "2026-07-27T09:00:00Z",
+      "binding_valid": true,
+      "safe_summary_zh": "审批只代表待办，不授权执行。"
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "artifact-stage82-plan",
+      "work_item_id": "work-stage82-example-plan",
+      "artifact_type": "collaboration_plan",
+      "digest": "sha256:a9d581cccbf024c126ad7df06b1e929cd8943a400fb0477bba3c9c255a04624c",
+      "media_type": "application/json",
+      "size_bytes": 4096,
+      "integrity_status": "verified",
+      "safe_summary_zh": "结构化计划摘要（fixture）。"
+    }
+  ],
+  "recovery_items": [
+    {
+      "recovery_id": "recovery-stage82-outcome-unknown",
+      "run_id": "run-stage82-example",
+      "attempt_id": "attempt-stage82-example-1",
+      "reason_code": "transport_disconnected",
+      "state": "open",
+      "state_label_zh": "等待恢复",
+      "historical_result_withheld": true,
+      "safe_summary_zh": "核对外部 Agent 状态后才能重试或关闭。"
+    }
+  ]
+}

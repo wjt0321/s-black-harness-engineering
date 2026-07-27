@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/external-agent-live-status-evidence.schema.json",
+  "title": "External Agent Live Status Evidence",
+  "type": "object",
+  "required": [
+    "version",
+    "contract",
+    "fixture_only",
+    "evidence_id",
+    "source_snapshot_id",
+    "observed_at",
+    "evaluated_at",
+    "expires_at",
+    "target",
+    "observation_status",
+    "readiness_status",
+    "readiness_level",
+    "session_state",
+    "session_binding",
+    "event_cursor",
+    "source_integrity",
+    "sufficient_for_dispatch",
+    "execution_authorized",
+    "safe_summary_zh"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "contract": {
+      "const": "external-agent-live-status-evidence/v1"
+    },
+    "fixture_only": {
+      "type": "boolean"
+    },
+    "evidence_id": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "source_snapshot_id": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "evaluated_at": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "agent_id",
+        "adapter_id",
+        "implementation_id",
+        "adapter_version",
+        "transport",
+        "capability_manifest_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "adapter_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "implementation_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "adapter_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+        },
+        "transport": {
+          "type": "object",
+          "required": [
+            "transport_id",
+            "kind",
+            "protocol_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "transport_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "kind": {
+              "enum": [
+                "acp",
+                "cli",
+                "local_process"
+              ]
+            },
+            "protocol_version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          }
+        },
+        "capability_manifest_id": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "observation_status": {
+      "enum": [
+        "observed",
+        "unavailable",
+        "stale",
+        "blocked"
+      ]
+    },
+    "readiness_status": {
+      "enum": [
+        "unknown",
+        "stale",
+        "blocked"
+      ]
+    },
+    "readiness_level": {
+      "enum": [
+        "runner_listed",
+        "runner_missing",
+        "runner_presence_unknown"
+      ]
+    },
+    "session_state": {
+      "enum": [
+        "closed",
+        "open",
+        "unknown"
+      ]
+    },
+    "session_binding": {
+      "type": "null"
+    },
+    "event_cursor": {
+      "type": "null"
+    },
+    "source_integrity": {
+      "type": "object",
+      "required": [
+        "complete",
+        "generation",
+        "producer_binding_valid",
+        "stable_read"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "complete": {
+          "const": true
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "producer_binding_valid": {
+          "type": "boolean"
+        },
+        "stable_read": {
+          "const": true
+        }
+      }
+    },
+    "sufficient_for_dispatch": {
+      "const": false
+    },
+    "execution_authorized": {
+      "const": false
+    },
+    "safe_summary_zh": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    }
+  }
+}

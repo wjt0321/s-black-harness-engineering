@@ -1,6 +1,9 @@
 """Tests for tools/public_scan.py."""
 
+import os
 from pathlib import Path
+import subprocess
+import sys
 
 from tools.public_scan import scan
 
@@ -97,3 +100,19 @@ def test_scan_reports_line_number(tmp_path):
 def test_scan_on_repository_passes():
     findings, _ = scan(ROOT)
     assert not findings
+
+
+def test_public_scan_script_runs_from_repository_root_without_pythonpath():
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    result = subprocess.run(
+        [sys.executable, "tools/public_scan.py"],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "OK public scan"

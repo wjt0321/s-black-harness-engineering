@@ -7,11 +7,16 @@
 - `../README.md` — 项目定位、当前能力、快速开始。
 - `000-stage-digest.md` — 当前断点和恢复顺序。
 - `02-roadmap.md` — 能力包与下一候选。
+- `135-next-milestone-real-status-integration.md` — 下一里程碑入口：OMP/Pi 真实状态接入与中文控制面板展示。
 - `130-gui-first-external-agent-control-plane-target.md` — GUI-first 外部 Agent 控制面长期目标、MVP 边界和反偏航检查。
 - `10-cli-poc-usage.md` — 完整 CLI 参数和示例。
 - `111-pi-controlled-dry-run-print-implementation.md` — 最新真实执行事实源。
 - `113-pi-runtime-binding-implementation.md` — 当前 binding-only 实现与本地 review evidence 事实源。
 - `MAINTENANCE.md` — 文档治理规则。
+
+## 候选与延后决策
+
+- `../decisions/0002-deferred-shadcn-frontend-direction.md` — 未来 React/Vite/shadcn GUI 技术方向预留；当前不授权实现或扩大执行边界。
 
 ## 核心模型
 
@@ -45,10 +50,10 @@
 ## 当前事实源
 
 - `130-gui-first-external-agent-control-plane-target.md` — 长期产品主线：统一 GUI、外部 Agent adapter/socket、多 Agent 协同与事实权威边界。
-- `129-stage81-current-operator-inbox-and-approval-collection.md` — 当前多 Agent 产品主线：最新状态操作者待办、pending approval 集合、stale target 阻止，以及待办不等于执行授权的边界。
+- `135-next-milestone-real-status-integration.md` — 当前产品主线入口：一次性接通真实状态采集、固定快照、读取器和中文控制面板。
 - `111-pi-controlled-dry-run-print-implementation.md` — 当前唯一 Agent 类真实执行能力及其安全边界。
 
-Stage 61、63、65 和 67-80 的已完成/冻结设计、实现与阶段记录已归档到 `archive/110-*.md`、`archive/112-*.md`、`archive/114-*.md` 与 `archive/115-*.md` 至 `archive/128-*.md`，仅在追溯设计依据时读取。
+阶段 61、63、65 和 67-85 的已完成/冻结设计、实现与阶段记录已归档；阶段 81-85 的归档事实源可由 `archive/129-*.md`、`archive/131-*.md`、`archive/132-*.md`、`archive/133-*.md` 与 `archive/134-*.md` 追溯。
 
 ## 历史归档
 

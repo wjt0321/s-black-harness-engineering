@@ -254,6 +254,17 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             boundary="Creates one machine-local reviewed Git executable binding outside the project; no subprocess is started.",
         ),
         _entry(
+            "external_agent_live_status_read",
+            "preview",
+            "read_only",
+            commands=(("orchestration", "external-agent", "status", "inspect"),),
+            key_flags=("--evaluated-at", "--expected-after-generation"),
+            boundary=(
+                "Reads only the fixed project-local atomic snapshot and produces non-authorizing evidence; "
+                "does not start a producer, probe a process, connect ACP, open sessions, or dispatch work."
+            ),
+        ),
+        _entry(
             "external_execution_service_stack",
             "unavailable",
             "unavailable",

@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "contract": "external-agent-status-collector-design/v1",
+  "design_status": "complete_implementation_blocked",
+  "display_name_zh": "外部智能体状态采集方案",
+  "selected_target": {
+    "agent_id": "omp-pi-acp",
+    "adapter_id": "omp-acp",
+    "implementation_id": "omp-pi",
+    "transport_id": "qwenpaw-acp-runner-omp"
+  },
+  "selected_approach": {
+    "approach_id": "host_owned_passive_atomic_publisher",
+    "owner": "external_agent_host",
+    "host_id": "qwenpaw-host",
+    "source": "existing_in_memory_runner_registry",
+    "trigger": "event_driven_with_bounded_heartbeat",
+    "heartbeat_seconds": 5,
+    "requires_verified_host_hook": true,
+    "active_probe": false,
+    "starts_new_process": false,
+    "opens_new_connection": false
+  },
+  "publication": {
+    "snapshot_relative_path": ".runtime/external-agent-status/omp-acp.v1.json",
+    "temp_relative_path": ".runtime/external-agent-status/.omp-acp.v1.json.tmp",
+    "lease_relative_path": ".runtime/external-agent-status/omp-acp.v1.publisher.lock",
+    "max_bytes": 65536,
+    "ttl_seconds": 15,
+    "single_writer_required": true,
+    "atomic_temp_replace_required": true,
+    "fsync_before_replace": true,
+    "post_replace_validation": true,
+    "overwrite_invalid_existing_snapshot": false,
+    "generation_rule": "previous_valid_generation_plus_one"
+  },
+  "trust": {
+    "current_binding_status": "placeholder_unobserved",
+    "content_binding_is_process_attestation": false,
+    "sufficient_for_dispatch": false,
+    "required_before_implementation": [
+      "verified_host_hook_name_and_version",
+      "observed_publisher_package_version_and_digest",
+      "reviewed_write_directory_acl_and_owner",
+      "crash_recovery_and_atomic_replace_test_harness",
+      "explicit_implementation_authorization"
+    ]
+  },
+  "safety": {
+    "implementation_present": false,
+    "starts_process": false,
+    "connects_acp": false,
+    "opens_session": false,
+    "sends_prompt": false,
+    "invokes_model": false,
+    "reads_credentials": false,
+    "accesses_network": false,
+    "creates_background_service": false,
+    "writes_snapshot_when_implemented": true,
+    "writes_harness_ledger": false,
+    "grants_execution_authority": false,
+    "enables_dispatch": false
+  },
+  "alternatives": [
+    {
+      "approach_id": "host_owned_passive_atomic_publisher",
+      "decision": "selected_but_blocked",
+      "reason_zh": "复用外部智能体宿主已经拥有的内存状态，不由 Harness 启动进程或连接 ACP；但固定宿主接口与实现身份尚未核验。"
+    },
+    {
+      "approach_id": "harness_fixed_cli_status",
+      "decision": "deferred",
+      "reason_zh": "需要新增第三个真实进程操作，并补齐 executable trust、lease、审计、超时和进程树回收。"
+    },
+    {
+      "approach_id": "harness_acp_handshake",
+      "decision": "deferred",
+      "reason_zh": "会主动连接 ACP，且无法在当前证据下排除连接或会话生命周期副作用。"
+    },
+    {
+      "approach_id": "standalone_polling_service",
+      "decision": "rejected",
+      "reason_zh": "会新增长期后台服务和更大的网络、凭据、恢复与运维边界。"
+    }
+  ],
+  "failure_matrix": [
+    {
+      "code": "collector_host_hook_unverified",
+      "phase": "integration",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "尚未确认可安全读取宿主内存状态的固定接口。"
+    },
+    {
+      "code": "collector_identity_unbound",
+      "phase": "trust",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "状态采集器实现尚未完成可信身份绑定。"
+    },
+    {
+      "code": "collector_host_not_running",
+      "phase": "source",
+      "disposition": "unavailable",
+      "retryable": true,
+      "safe_message_zh": "外部智能体宿主未运行。"
+    },
+    {
+      "code": "collector_registry_unavailable",
+      "phase": "source",
+      "disposition": "unavailable",
+      "retryable": true,
+      "safe_message_zh": "宿主当前无法提供 Runner 注册表。"
+    },
+    {
+      "code": "collector_source_ambiguous",
+      "phase": "source",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "状态来源无法唯一绑定到目标 Runner。"
+    },
+    {
+      "code": "collector_lease_unavailable",
+      "phase": "lease",
+      "disposition": "unavailable",
+      "retryable": true,
+      "safe_message_zh": "状态发布单写者租约不可用。"
+    },
+    {
+      "code": "collector_existing_snapshot_invalid",
+      "phase": "generation",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "已有状态快照无效，禁止静默覆盖。"
+    },
+    {
+      "code": "collector_generation_conflict",
+      "phase": "generation",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "状态快照 generation 未能安全前进。"
+    },
+    {
+      "code": "collector_temp_path_unsafe",
+      "phase": "path",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "状态快照临时路径不安全。"
+    },
+    {
+      "code": "collector_snapshot_too_large",
+      "phase": "validation",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "待发布状态快照超过 64 KiB。"
+    },
+    {
+      "code": "collector_snapshot_validation_failed",
+      "phase": "validation",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "待发布状态快照未通过严格校验。"
+    },
+    {
+      "code": "collector_atomic_replace_failed",
+      "phase": "publication",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "状态快照原子替换失败。"
+    },
+    {
+      "code": "collector_postcheck_failed",
+      "phase": "publication",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "状态快照写后校验失败。"
+    },
+    {
+      "code": "collector_cleanup_failed",
+      "phase": "cleanup",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "状态发布清理未完成。"
+    },
+    {
+      "code": "collector_side_effect_boundary_violated",
+      "phase": "safety",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "状态采集触发了未授权副作用。"
+    }
+  ],
+  "implementation_gate": {
+    "design_complete": true,
+    "implementation_authorized": false,
+    "real_observation_authorized": false,
+    "requires_explicit_user_authorization": true,
+    "missing_evidence": [
+      "verified_host_hook_name_and_version",
+      "observed_publisher_package_version_and_digest",
+      "reviewed_write_directory_acl_and_owner",
+      "crash_recovery_and_atomic_replace_test_harness",
+      "explicit_implementation_authorization"
+    ]
+  }
+}

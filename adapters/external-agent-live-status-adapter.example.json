@@ -1,0 +1,259 @@
+{
+  "version": 1,
+  "contract": "external-agent-live-status-adapter/v1",
+  "design_status": "reader_implemented",
+  "selected_target": {
+    "agent_id": "omp-pi-acp",
+    "adapter_id": "omp-acp",
+    "implementation_id": "omp-pi",
+    "adapter_version": "1.0.0",
+    "transport": {
+      "transport_id": "qwenpaw-acp-runner-omp",
+      "kind": "acp",
+      "protocol_version": "acp/v1"
+    },
+    "capability_manifest_id": "sha256:483e0081f8e5f376dabd9b2ee2cd4c8bc5ecb4d8d3573b259b217c04024d7eee"
+  },
+  "observation_surface": {
+    "kind": "adapter_owned_atomic_snapshot",
+    "production_relative_path": ".runtime/external-agent-status/omp-acp.v1.json",
+    "source_contract": "external-agent-status-snapshot/v1",
+    "path_override_allowed": false,
+    "max_bytes": 65536,
+    "ttl_default_seconds": 15,
+    "ttl_max_seconds": 60
+  },
+  "reader_policy": {
+    "project_contained": true,
+    "fixed_path_only": true,
+    "regular_file_required": true,
+    "symlink_allowed": false,
+    "reparse_point_allowed": false,
+    "hardlink_allowed": false,
+    "stable_stat_before_after": true,
+    "strict_utf8_json": true,
+    "writes_files": false
+  },
+  "producer_policy": {
+    "owned_by_harness": false,
+    "reviewed_binding_required": true,
+    "atomic_temp_replace_required": true,
+    "partial_snapshot_accepted": false
+  },
+  "safety": {
+    "starts_process": false,
+    "connects_acp": false,
+    "opens_session": false,
+    "sends_prompt": false,
+    "invokes_model": false,
+    "reads_credentials": false,
+    "accesses_network": false,
+    "writes_files": false,
+    "writes_ledger": false,
+    "grants_execution_authority": false,
+    "enables_dispatch": false
+  },
+  "protocol_example": {
+    "snapshot_file": "adapters/external-agent-status-snapshot.example.json",
+    "normalized_evidence": {
+      "version": 1,
+      "contract": "external-agent-live-status-evidence/v1",
+      "fixture_only": true,
+      "evidence_id": "sha256:f392c52c33aa98c25d01bbc7d3d8a40c02f395a0135bb0ab7308b9982a468b5e",
+      "source_snapshot_id": "sha256:d36a69b564a9bd3e3e6088a17fe6d9db153ff6b6fe84c27aba8ca54a80aa8c2b",
+      "observed_at": "2026-07-27T08:00:00Z",
+      "evaluated_at": "2026-07-27T08:00:05Z",
+      "expires_at": "2026-07-27T08:00:15Z",
+      "target": {
+        "agent_id": "omp-pi-acp",
+        "adapter_id": "omp-acp",
+        "implementation_id": "omp-pi",
+        "adapter_version": "1.0.0",
+        "transport": {
+          "transport_id": "qwenpaw-acp-runner-omp",
+          "kind": "acp",
+          "protocol_version": "acp/v1"
+        },
+        "capability_manifest_id": "sha256:483e0081f8e5f376dabd9b2ee2cd4c8bc5ecb4d8d3573b259b217c04024d7eee"
+      },
+      "observation_status": "observed",
+      "readiness_status": "unknown",
+      "readiness_level": "runner_listed",
+      "session_state": "closed",
+      "session_binding": null,
+      "event_cursor": null,
+      "source_integrity": {
+        "complete": true,
+        "generation": 1,
+        "producer_binding_valid": true,
+        "stable_read": true
+      },
+      "sufficient_for_dispatch": false,
+      "execution_authorized": false,
+      "safe_summary_zh": "Runner 已列出，但该 evidence 不证明 readiness、session openability、模型可用或 dispatch authority。"
+    }
+  },
+  "gui_mapping": [
+    {
+      "observation_status": "observed",
+      "agent_status": "unknown",
+      "readiness_status": "unknown",
+      "session_projection": "none",
+      "blocked_reason_code": null,
+      "status_label_zh": "Runner 已列出，未证明就绪"
+    },
+    {
+      "observation_status": "unavailable",
+      "agent_status": "disconnected",
+      "readiness_status": "unknown",
+      "session_projection": "none",
+      "blocked_reason_code": "transport_unavailable",
+      "status_label_zh": "目标 Runner 未观察到"
+    },
+    {
+      "observation_status": "stale",
+      "agent_status": "stale",
+      "readiness_status": "stale",
+      "session_projection": "none",
+      "blocked_reason_code": "readiness_expired",
+      "status_label_zh": "状态观察已过期"
+    },
+    {
+      "observation_status": "blocked",
+      "agent_status": "blocked",
+      "readiness_status": "blocked",
+      "session_projection": "none",
+      "blocked_reason_code": "readiness_binding_drift",
+      "status_label_zh": "状态证据绑定无效"
+    }
+  ],
+  "failure_matrix": [
+    {
+      "code": "status_source_missing",
+      "phase": "path",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "固定状态快照不存在。"
+    },
+    {
+      "code": "status_source_not_regular",
+      "phase": "path",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "状态源不是普通文件。"
+    },
+    {
+      "code": "status_source_indirection_blocked",
+      "phase": "path",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "状态源包含 symlink、reparse point 或 hardlink。"
+    },
+    {
+      "code": "status_source_too_large",
+      "phase": "read",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "状态源超过 64 KiB。"
+    },
+    {
+      "code": "status_source_unreadable",
+      "phase": "read",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "状态源无法按 UTF-8 单次读取。"
+    },
+    {
+      "code": "status_source_schema_invalid",
+      "phase": "schema",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "状态源不符合严格 schema。"
+    },
+    {
+      "code": "status_snapshot_incomplete",
+      "phase": "schema",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "状态快照未完成原子发布。"
+    },
+    {
+      "code": "status_snapshot_replayed",
+      "phase": "freshness",
+      "disposition": "stale",
+      "retryable": true,
+      "safe_message_zh": "generation 未前进或 snapshot 已重放。"
+    },
+    {
+      "code": "status_observation_from_future",
+      "phase": "freshness",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "观察时间晚于评估时间。"
+    },
+    {
+      "code": "status_observation_expired",
+      "phase": "freshness",
+      "disposition": "stale",
+      "retryable": true,
+      "safe_message_zh": "观察已超过 TTL。"
+    },
+    {
+      "code": "status_identity_binding_mismatch",
+      "phase": "binding",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "Agent、adapter 或 transport identity 漂移。"
+    },
+    {
+      "code": "status_producer_binding_missing",
+      "phase": "binding",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "缺少已审阅 producer binding。"
+    },
+    {
+      "code": "status_producer_binding_drift",
+      "phase": "binding",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "Producer version 或 binding 已漂移。"
+    },
+    {
+      "code": "status_target_not_observed",
+      "phase": "observation",
+      "disposition": "unavailable",
+      "retryable": true,
+      "safe_message_zh": "目标 runner 未出现在快照中。"
+    },
+    {
+      "code": "status_unbound_session_observed",
+      "phase": "observation",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "观察到 open session，但不存在 Harness run/attempt mapping。"
+    },
+    {
+      "code": "status_projection_invalid",
+      "phase": "projection",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "生成的 GUI 投影不符合 Stage 82 contract。"
+    }
+  ],
+  "alternatives": {
+    "fixed_cli_status": {
+      "decision": "deferred",
+      "reason": "会新增第三个真实进程 operation，且副作用、凭据和进程回收尚未完成独立设计。"
+    },
+    "acp_handshake": {
+      "decision": "deferred",
+      "reason": "会连接 ACP transport，并可能改变 session 或连接生命周期。"
+    }
+  },
+  "implementation_gate": {
+    "reader_implementation_authorized": true,
+    "producer_or_probe_authorized": false,
+    "requires_new_user_authorization": true
+  }
+}

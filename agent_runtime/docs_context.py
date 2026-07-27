@@ -82,7 +82,7 @@ def _extract_current_stage(text: str | None) -> dict[str, Any]:
     stages: list[dict[str, Any]] = []
     for line in text.splitlines():
         line = line.strip()
-        match = re.match(r"[-*]\s*([🟡✅⚪])\s*(Stage\s+[\d.]+)\s*[—-]\s*(.+)", line)
+        match = re.match(r"[-*]\s*([🟡✅⚪])\s*((?:Stage|阶段)\s+[\d.]+)\s*[—-]\s*(.+)", line)
         if match:
             emoji, stage, description = match.groups()
             status = {"🟡": "in_progress", "✅": "completed", "⚪": "future"}.get(emoji, "unknown")
@@ -193,11 +193,12 @@ def _extract_next_design_entry(roadmap_text: str | None) -> dict[str, Any]:
     if not roadmap_text:
         return {}
     # Find all Stage headings and the following deliverable bullet.
-    for match in re.finditer(r"##\s*Stage\s+(\d+)\s*[—-]\s*(.+?)\n", roadmap_text):
-        stage_num = int(match.group(1))
+    for match in re.finditer(r"##\s*(Stage|阶段)\s+(\d+)\s*[—-]\s*(.+?)\n", roadmap_text):
+        stage_label = match.group(1)
+        stage_num = int(match.group(2))
         if stage_num < 10:
             continue
-        title = match.group(2).strip()
+        title = match.group(3).strip()
         section_start = match.end()
         section_end = roadmap_text.find("\n## ", section_start)
         if section_end == -1:
@@ -209,7 +210,7 @@ def _extract_next_design_entry(roadmap_text: str | None) -> dict[str, Any]:
         # Also collect concise todo bullets for context.
         todos = [m.group(1).strip("- ") for m in re.finditer(r"[-*]\s*(.+)", section) if m.group(1).strip().startswith(("补", "定义", "设计", "明确", "调整"))]
         return {
-            "stage": f"Stage {stage_num}",
+            "stage": f"{stage_label} {stage_num}",
             "title": title,
             "path": entry_doc,
             "focus": todos[:3] if todos else [],
@@ -269,10 +270,10 @@ def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
 
     stage_lines = section_lines("当前阶段")
     for line in stage_lines:
-        stage_match = re.search(r"\*\*([^*]*Stage\s+[\d.]+[^*]*)\*\*", line)
+        stage_match = re.search(r"\*\*([^*]*(?:Stage|阶段)\s+[\d.]+[^*]*)\*\*", line)
         if stage_match:
             stage_text = stage_match.group(1).strip()
-            m = re.match(r"(?:优先方向[：:]\s*)?(Stage\s+[\d.]+)\s*[—-]\s*(.+)", stage_text)
+            m = re.match(r"(?:优先方向[：:]\s*)?((?:Stage|阶段)\s+[\d.]+)\s*[—-]\s*(.+)", stage_text)
             stage_status = (
                 "completed"
                 if "已完成" in stage_text or "收口完成" in stage_text
@@ -294,7 +295,7 @@ def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
 
     recent: list[dict[str, Any]] = []
     for line in section_lines("最近完成的"):
-        match = re.search(r"\*\*(Stage\s+[\d.]+)\*\*\s*[—-]\s*(.+)", line)
+        match = re.search(r"\*\*((?:Stage|阶段)\s+[\d.]+)\*\*\s*[—-]\s*(.+)", line)
         if match:
             recent.append(
                 {
@@ -328,10 +329,10 @@ def _parse_stage_digest(text: str | None) -> dict[str, Any] | None:
     next_lines = section_lines(["下一步推荐入口", "下一步做什么"])
     next_entry: dict[str, Any] = {}
     for line in next_lines:
-        stage_match = re.search(r"\*\*([^*]*Stage\s+\d+[^*]*)\*\*", line)
+        stage_match = re.search(r"\*\*([^*]*(?:Stage|阶段)\s+\d+[^*]*)\*\*", line)
         if stage_match:
             stage_text = stage_match.group(1).strip()
-            m = re.match(r"(?:优先方向[：:]\s*)?(Stage\s+\d+)\s*[—-]\s*(.+)", stage_text)
+            m = re.match(r"(?:优先方向[：:]\s*)?((?:Stage|阶段)\s+\d+)\s*[—-]\s*(.+)", stage_text)
             if m:
                 next_entry["stage"] = m.group(1).strip()
                 next_entry["title"] = m.group(2).strip()

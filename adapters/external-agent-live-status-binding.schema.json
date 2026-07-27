@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/external-agent-live-status-binding.schema.json",
+  "title": "External Agent Live Status Read Binding",
+  "type": "object",
+  "required": [
+    "version", "contract", "review_status", "source_relative_path",
+    "max_bytes", "ttl_seconds", "expected_producer", "expected_target",
+    "producer_or_probe_authorized", "dispatch_authorized"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"const": 1},
+    "contract": {"const": "external-agent-live-status-binding/v1"},
+    "review_status": {"const": "reviewed_for_read_only"},
+    "source_relative_path": {"const": ".runtime/external-agent-status/omp-acp.v1.json"},
+    "max_bytes": {"const": 65536},
+    "ttl_seconds": {"const": 15},
+    "expected_producer": {
+      "type": "object",
+      "required": ["producer_id", "producer_version", "producer_binding_id", "source_kind"],
+      "additionalProperties": false,
+      "properties": {
+        "producer_id": {"const": "qwenpaw-acp-status-exporter"},
+        "producer_version": {"const": "design-unobserved"},
+        "producer_binding_id": {"const": "sha256:cfae0bc3c985a3583922b7fd7508f9acd51f135296ea0c32d6cd491545d89219"},
+        "source_kind": {"const": "adapter_owned_atomic_snapshot"}
+      }
+    },
+    "expected_target": {
+      "type": "object",
+      "required": ["agent_id", "adapter_id", "implementation_id", "adapter_version", "transport", "capability_manifest_id"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {"const": "omp-pi-acp"},
+        "adapter_id": {"const": "omp-acp"},
+        "implementation_id": {"const": "omp-pi"},
+        "adapter_version": {"const": "1.0.0"},
+        "transport": {
+          "type": "object",
+          "required": ["transport_id", "kind", "protocol_version"],
+          "additionalProperties": false,
+          "properties": {
+            "transport_id": {"const": "qwenpaw-acp-runner-omp"},
+            "kind": {"const": "acp"},
+            "protocol_version": {"const": "acp/v1"}
+          }
+        },
+        "capability_manifest_id": {"const": "sha256:483e0081f8e5f376dabd9b2ee2cd4c8bc5ecb4d8d3573b259b217c04024d7eee"}
+      }
+    },
+    "producer_or_probe_authorized": {"const": false},
+    "dispatch_authorized": {"const": false}
+  }
+}

@@ -2685,3 +2685,35 @@ AGENT_RUNTIME_POSTFLIGHT_MODE=summary
 ```
 
 启用后，extension 在 Pi/OMP 工具执行完成后用当前 `event.input` 重跑 `pi-bridge preflight`，并向 tool result 追加一个 value-free 摘要块。摘要只包含 hashes、decision、block counts、text char count 与原始 `isError`；不包含 path、command、tool output 或 details。不写 ledger、不改 `isError`，也不证明 Harness 执行了工具。事实源为 `docs/archive/103-pi-postflight-audit-projection.md`。
+
+## 外部 Agent 固定 Live Status Reader（Stage 84）
+
+Stage 84 新增一个只读 inspection 命令。它只读取固定 `.runtime/external-agent-status/omp-acp.v1.json`，不接受 snapshot path、TTL、adapter、producer 或 transport override：
+
+```bash
+python -m agent_runtime.cli orchestration external-agent status inspect \
+  --evaluated-at 2026-07-27T08:00:05Z \
+  --json
+```
+
+调用方如果已持有上一代 generation，可显式要求新 snapshot 必须前进；reader 不写 replay state：
+
+```bash
+python -m agent_runtime.cli orchestration external-agent status inspect \
+  --evaluated-at 2026-07-27T08:00:05Z \
+  --expected-after-generation 7 \
+  --json
+```
+
+边界：
+
+- production path 固定，最大 64 KiB，TTL 固定 15 秒；
+- lstat-first，拒绝目录、symlink、Windows reparse point 和 hardlink；
+- descriptor/path identity 与读取前后 size/mtime 必须稳定；
+- strict UTF-8 JSON、无 duplicate key、schema、canonical snapshot digest、producer/target binding 全部 fail closed；
+- runner listed 只生成 `readiness_status=unknown`；missing/unknown 为 unavailable，过期/replay 为 stale；
+- open session 没有 Harness run/attempt mapping 时 blocked，且 GUI session 仍为 `null`；
+- evidence 固定 `sufficient_for_dispatch=false`、`execution_authorized=false`；
+- 当前仓库没有 production snapshot，因此默认会返回 `status_source_missing`（exit 2）；命令不会主动探测 Agent。
+
+事实源：`docs/133-stage84-bounded-atomic-snapshot-reader-implementation.md`。

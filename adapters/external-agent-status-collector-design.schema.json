@@ -1,0 +1,414 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/external-agent-status-collector-design.schema.json",
+  "title": "外部智能体状态采集方案设计评审",
+  "type": "object",
+  "required": [
+    "version",
+    "contract",
+    "design_status",
+    "display_name_zh",
+    "selected_target",
+    "selected_approach",
+    "publication",
+    "trust",
+    "safety",
+    "alternatives",
+    "failure_matrix",
+    "implementation_gate"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "contract": {
+      "const": "external-agent-status-collector-design/v1"
+    },
+    "design_status": {
+      "const": "complete_implementation_blocked"
+    },
+    "display_name_zh": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "selected_target": {
+      "type": "object",
+      "required": [
+        "agent_id",
+        "adapter_id",
+        "implementation_id",
+        "transport_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {
+          "const": "omp-pi-acp"
+        },
+        "adapter_id": {
+          "const": "omp-acp"
+        },
+        "implementation_id": {
+          "const": "omp-pi"
+        },
+        "transport_id": {
+          "const": "qwenpaw-acp-runner-omp"
+        }
+      }
+    },
+    "selected_approach": {
+      "type": "object",
+      "required": [
+        "approach_id",
+        "owner",
+        "host_id",
+        "source",
+        "trigger",
+        "heartbeat_seconds",
+        "requires_verified_host_hook",
+        "active_probe",
+        "starts_new_process",
+        "opens_new_connection"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "approach_id": {
+          "const": "host_owned_passive_atomic_publisher"
+        },
+        "owner": {
+          "const": "external_agent_host"
+        },
+        "host_id": {
+          "const": "qwenpaw-host"
+        },
+        "source": {
+          "const": "existing_in_memory_runner_registry"
+        },
+        "trigger": {
+          "const": "event_driven_with_bounded_heartbeat"
+        },
+        "heartbeat_seconds": {
+          "const": 5
+        },
+        "requires_verified_host_hook": {
+          "const": true
+        },
+        "active_probe": {
+          "const": false
+        },
+        "starts_new_process": {
+          "const": false
+        },
+        "opens_new_connection": {
+          "const": false
+        }
+      }
+    },
+    "publication": {
+      "type": "object",
+      "required": [
+        "snapshot_relative_path",
+        "temp_relative_path",
+        "lease_relative_path",
+        "max_bytes",
+        "ttl_seconds",
+        "single_writer_required",
+        "atomic_temp_replace_required",
+        "fsync_before_replace",
+        "post_replace_validation",
+        "overwrite_invalid_existing_snapshot",
+        "generation_rule"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "snapshot_relative_path": {
+          "const": ".runtime/external-agent-status/omp-acp.v1.json"
+        },
+        "temp_relative_path": {
+          "const": ".runtime/external-agent-status/.omp-acp.v1.json.tmp"
+        },
+        "lease_relative_path": {
+          "const": ".runtime/external-agent-status/omp-acp.v1.publisher.lock"
+        },
+        "max_bytes": {
+          "const": 65536
+        },
+        "ttl_seconds": {
+          "const": 15
+        },
+        "single_writer_required": {
+          "const": true
+        },
+        "atomic_temp_replace_required": {
+          "const": true
+        },
+        "fsync_before_replace": {
+          "const": true
+        },
+        "post_replace_validation": {
+          "const": true
+        },
+        "overwrite_invalid_existing_snapshot": {
+          "const": false
+        },
+        "generation_rule": {
+          "const": "previous_valid_generation_plus_one"
+        }
+      }
+    },
+    "trust": {
+      "type": "object",
+      "required": [
+        "current_binding_status",
+        "content_binding_is_process_attestation",
+        "sufficient_for_dispatch",
+        "required_before_implementation"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "current_binding_status": {
+          "const": "placeholder_unobserved"
+        },
+        "content_binding_is_process_attestation": {
+          "const": false
+        },
+        "sufficient_for_dispatch": {
+          "const": false
+        },
+        "required_before_implementation": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "verified_host_hook_name_and_version"
+            },
+            {
+              "const": "observed_publisher_package_version_and_digest"
+            },
+            {
+              "const": "reviewed_write_directory_acl_and_owner"
+            },
+            {
+              "const": "crash_recovery_and_atomic_replace_test_harness"
+            },
+            {
+              "const": "explicit_implementation_authorization"
+            }
+          ],
+          "items": false,
+          "minItems": 5,
+          "maxItems": 5
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "required": [
+        "implementation_present",
+        "starts_process",
+        "connects_acp",
+        "opens_session",
+        "sends_prompt",
+        "invokes_model",
+        "reads_credentials",
+        "accesses_network",
+        "creates_background_service",
+        "writes_snapshot_when_implemented",
+        "writes_harness_ledger",
+        "grants_execution_authority",
+        "enables_dispatch"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "implementation_present": {
+          "const": false
+        },
+        "starts_process": {
+          "const": false
+        },
+        "connects_acp": {
+          "const": false
+        },
+        "opens_session": {
+          "const": false
+        },
+        "sends_prompt": {
+          "const": false
+        },
+        "invokes_model": {
+          "const": false
+        },
+        "reads_credentials": {
+          "const": false
+        },
+        "accesses_network": {
+          "const": false
+        },
+        "creates_background_service": {
+          "const": false
+        },
+        "writes_snapshot_when_implemented": {
+          "const": true
+        },
+        "writes_harness_ledger": {
+          "const": false
+        },
+        "grants_execution_authority": {
+          "const": false
+        },
+        "enables_dispatch": {
+          "const": false
+        }
+      }
+    },
+    "alternatives": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": [
+          "approach_id",
+          "decision",
+          "reason_zh"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "approach_id": {
+            "enum": [
+              "host_owned_passive_atomic_publisher",
+              "harness_fixed_cli_status",
+              "harness_acp_handshake",
+              "standalone_polling_service"
+            ]
+          },
+          "decision": {
+            "enum": [
+              "selected_but_blocked",
+              "deferred",
+              "rejected"
+            ]
+          },
+          "reason_zh": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        }
+      }
+    },
+    "failure_matrix": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 15,
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "phase",
+          "disposition",
+          "retryable",
+          "safe_message_zh"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "collector_host_hook_unverified",
+              "collector_identity_unbound",
+              "collector_host_not_running",
+              "collector_registry_unavailable",
+              "collector_source_ambiguous",
+              "collector_lease_unavailable",
+              "collector_existing_snapshot_invalid",
+              "collector_generation_conflict",
+              "collector_temp_path_unsafe",
+              "collector_snapshot_too_large",
+              "collector_snapshot_validation_failed",
+              "collector_atomic_replace_failed",
+              "collector_postcheck_failed",
+              "collector_cleanup_failed",
+              "collector_side_effect_boundary_violated"
+            ]
+          },
+          "phase": {
+            "enum": [
+              "integration",
+              "trust",
+              "source",
+              "lease",
+              "generation",
+              "path",
+              "validation",
+              "publication",
+              "cleanup",
+              "safety"
+            ]
+          },
+          "disposition": {
+            "enum": [
+              "blocked",
+              "unavailable"
+            ]
+          },
+          "retryable": {
+            "type": "boolean"
+          },
+          "safe_message_zh": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        }
+      }
+    },
+    "implementation_gate": {
+      "type": "object",
+      "required": [
+        "design_complete",
+        "implementation_authorized",
+        "real_observation_authorized",
+        "requires_explicit_user_authorization",
+        "missing_evidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "design_complete": {
+          "const": true
+        },
+        "implementation_authorized": {
+          "const": false
+        },
+        "real_observation_authorized": {
+          "const": false
+        },
+        "requires_explicit_user_authorization": {
+          "const": true
+        },
+        "missing_evidence": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "verified_host_hook_name_and_version"
+            },
+            {
+              "const": "observed_publisher_package_version_and_digest"
+            },
+            {
+              "const": "reviewed_write_directory_acl_and_owner"
+            },
+            {
+              "const": "crash_recovery_and_atomic_replace_test_harness"
+            },
+            {
+              "const": "explicit_implementation_authorization"
+            }
+          ],
+          "items": false,
+          "minItems": 5,
+          "maxItems": 5
+        }
+      }
+    }
+  }
+}

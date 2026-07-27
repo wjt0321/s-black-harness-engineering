@@ -1,0 +1,673 @@
+{
+  "version": 1,
+  "contract": "external-agent-adapter-contract/v1",
+  "design_status": "design_only",
+  "authority": {
+    "control_plane": "harness",
+    "agent_runtime": "external_agent",
+    "dispatch_authority": "harness_only"
+  },
+  "safety": {
+    "calls_agent": false,
+    "starts_session": false,
+    "probes_live_readiness": false,
+    "reads_real_approval_ledger": false,
+    "writes_ledger": false,
+    "implements_transport": false,
+    "adds_operation": false,
+    "execution_authorized": false
+  },
+  "adapters": [
+    {
+      "identity": {
+        "agent_id": "claude-code-local",
+        "adapter_id": "claude-cli-adapter",
+        "implementation_id": "claude-code",
+        "agent_version": "unobserved",
+        "adapter_version": "1.0.0",
+        "transport": {
+          "transport_id": "claude-cli-local",
+          "kind": "cli",
+          "protocol_version": "cli/v1"
+        }
+      },
+      "capability_manifest": {
+        "manifest_id": "sha256:c934399ba2c68051733dc16ffbd75ca347a32e270f4cf85530ff8c91d5608412",
+        "capabilities": [
+          {
+            "capability_id": "plan.create",
+            "roles": [
+              "planner"
+            ],
+            "work_item_types": [
+              "planning"
+            ],
+            "input_artifact_types": [
+              "goal"
+            ],
+            "output_artifact_types": [
+              "collaboration_plan"
+            ],
+            "supports_streaming": false,
+            "supports_cancel": false,
+            "supports_session_resume": true
+          }
+        ]
+      },
+      "readiness_contract": {
+        "evidence_sources": [
+          "adapter_observation"
+        ],
+        "ttl_seconds": 60,
+        "required_bindings": [
+          "agent_id",
+          "adapter_id",
+          "adapter_version",
+          "transport_id",
+          "protocol_version",
+          "capability_manifest_id",
+          "capability_id"
+        ],
+        "fail_closed": true,
+        "readiness_is_authorization": false,
+        "session_probe_allowed": false
+      },
+      "session_contract": {
+        "supports_create": true,
+        "supports_resume": true,
+        "supports_close": true,
+        "external_identity_form": "opaque_reference",
+        "mapping_scope": "run_attempt",
+        "reuse_across_attempts": false
+      }
+    },
+    {
+      "identity": {
+        "agent_id": "pi-local",
+        "adapter_id": "pi-local-process-adapter",
+        "implementation_id": "omp-pi",
+        "agent_version": "unobserved",
+        "adapter_version": "1.0.0",
+        "transport": {
+          "transport_id": "pi-local-process",
+          "kind": "local_process",
+          "protocol_version": "process-events/v1"
+        }
+      },
+      "capability_manifest": {
+        "manifest_id": "sha256:fc1ef684329181e68acc5d258aaa6a6e2b9d45a8ff34eac3e9a2194d11c716e5",
+        "capabilities": [
+          {
+            "capability_id": "work.execute",
+            "roles": [
+              "executor"
+            ],
+            "work_item_types": [
+              "implementation"
+            ],
+            "input_artifact_types": [
+              "collaboration_plan"
+            ],
+            "output_artifact_types": [
+              "execution_artifact"
+            ],
+            "supports_streaming": true,
+            "supports_cancel": true,
+            "supports_session_resume": false
+          }
+        ]
+      },
+      "readiness_contract": {
+        "evidence_sources": [
+          "adapter_observation"
+        ],
+        "ttl_seconds": 60,
+        "required_bindings": [
+          "agent_id",
+          "adapter_id",
+          "adapter_version",
+          "transport_id",
+          "protocol_version",
+          "capability_manifest_id",
+          "capability_id"
+        ],
+        "fail_closed": true,
+        "readiness_is_authorization": false,
+        "session_probe_allowed": false
+      },
+      "session_contract": {
+        "supports_create": true,
+        "supports_resume": false,
+        "supports_close": true,
+        "external_identity_form": "opaque_reference",
+        "mapping_scope": "run_attempt",
+        "reuse_across_attempts": false
+      }
+    },
+    {
+      "identity": {
+        "agent_id": "qwenpaw-acp-local",
+        "adapter_id": "qwenpaw-acp-adapter",
+        "implementation_id": "qwenpaw",
+        "agent_version": "unobserved",
+        "adapter_version": "1.0.0",
+        "transport": {
+          "transport_id": "qwenpaw-acp",
+          "kind": "acp",
+          "protocol_version": "acp/v1"
+        }
+      },
+      "capability_manifest": {
+        "manifest_id": "sha256:60793bdef7df3c93b28e2f90d5767663a4cda40bb735c78ca9e0ea4c2b8b111b",
+        "capabilities": [
+          {
+            "capability_id": "review.evaluate",
+            "roles": [
+              "reviewer"
+            ],
+            "work_item_types": [
+              "review"
+            ],
+            "input_artifact_types": [
+              "collaboration_plan"
+            ],
+            "output_artifact_types": [
+              "review_decision"
+            ],
+            "supports_streaming": true,
+            "supports_cancel": true,
+            "supports_session_resume": true
+          }
+        ]
+      },
+      "readiness_contract": {
+        "evidence_sources": [
+          "adapter_observation"
+        ],
+        "ttl_seconds": 60,
+        "required_bindings": [
+          "agent_id",
+          "adapter_id",
+          "adapter_version",
+          "transport_id",
+          "protocol_version",
+          "capability_manifest_id",
+          "capability_id"
+        ],
+        "fail_closed": true,
+        "readiness_is_authorization": false,
+        "session_probe_allowed": false
+      },
+      "session_contract": {
+        "supports_create": true,
+        "supports_resume": true,
+        "supports_close": true,
+        "external_identity_form": "opaque_reference",
+        "mapping_scope": "run_attempt",
+        "reuse_across_attempts": false
+      }
+    }
+  ],
+  "shared_contract": {
+    "readiness": {
+      "statuses": [
+        "ready",
+        "blocked",
+        "unknown",
+        "stale"
+      ],
+      "ttl_required": true,
+      "binding_required": true,
+      "expired_status": "stale",
+      "binding_drift_status": "blocked",
+      "is_dispatch_authority": false
+    },
+    "session": {
+      "mapping_scope": "run_attempt",
+      "external_identity": "opaque_reference",
+      "cross_attempt_reuse": false,
+      "unknown_on_disconnect": true
+    },
+    "dispatch": {
+      "envelope_contract": "external-agent-dispatch/v1",
+      "structured_work_item_only": true,
+      "arbitrary_process_parameters": false,
+      "required_authorities": [
+        "identity",
+        "capability",
+        "readiness",
+        "approval",
+        "expected_state",
+        "lease",
+        "idempotency",
+        "started_audit"
+      ]
+    },
+    "events": {
+      "event_contract": "external-agent-event/v1",
+      "ordering": "per_dispatch_sequence",
+      "deduplication": "deduplication_key_and_content_digest",
+      "gap_policy": "recovery_required",
+      "disconnect_policy": "outcome_unknown_until_reconciled",
+      "terminal_count": "exactly_one"
+    },
+    "cancellation": {
+      "support_declared_per_capability": true,
+      "unsupported_policy": "blocked",
+      "timeout_policy": "outcome_unknown"
+    },
+    "artifacts": {
+      "reference_only": true,
+      "digest_required": true,
+      "safe_summary_only": true,
+      "integrity_failure": "withhold_and_fail"
+    },
+    "recovery": {
+      "outcome_unknown_terminal_audit": true,
+      "historical_result_withheld": true,
+      "reconciliation_required": true,
+      "redispatch_without_reconciliation": false
+    },
+    "approval": {
+      "issuers": [
+        "local_operator",
+        "harness_policy"
+      ],
+      "statuses": [
+        "pending",
+        "granted",
+        "denied",
+        "expired",
+        "revoked"
+      ],
+      "exact_binding_required": true,
+      "revocation_checked": true,
+      "expiry_checked": true,
+      "binding_drift_blocks": true,
+      "is_business_eligibility": false
+    },
+    "audit": {
+      "started_before_transport": true,
+      "terminal_count": "exactly_one",
+      "terminal_outcomes": [
+        "succeeded",
+        "failed",
+        "cancelled",
+        "outcome_unknown"
+      ],
+      "reserved_writer_only": true
+    },
+    "mvp_boundary": {
+      "minimum_transport_implementations": 3,
+      "required_roles": [
+        "planner",
+        "executor",
+        "reviewer"
+      ],
+      "real_loop": "planner_executor_reviewer",
+      "agent_specific_main_flow": false
+    }
+  },
+  "protocol_examples": {
+    "dispatch_envelope": {
+      "version": 1,
+      "contract": "external-agent-dispatch/v1",
+      "fixture_only": true,
+      "execution_authorized": false,
+      "authorization_source": "harness_control_plane",
+      "dispatch_id": "dispatch-stage82-example",
+      "plan_id": "plan-stage82-example",
+      "plan_version": 3,
+      "run_id": "run-stage82-example",
+      "attempt_id": "attempt-stage82-example-1",
+      "work_item_id": "work-stage82-example-execute",
+      "target": {
+        "agent_id": "pi-local",
+        "adapter_id": "pi-local-process-adapter",
+        "adapter_version": "1.0.0",
+        "transport_id": "pi-local-process",
+        "protocol_version": "process-events/v1",
+        "capability_manifest_id": "sha256:fc1ef684329181e68acc5d258aaa6a6e2b9d45a8ff34eac3e9a2194d11c716e5",
+        "capability_id": "work.execute"
+      },
+      "expected_state": {
+        "run_projection_id": "sha256:0d4f25fbc2ac2a70344d4ce7eae16b23ea89501aa0518d7430c72b37171ff836",
+        "work_item_state": "awaiting_approval"
+      },
+      "instruction_artifact": {
+        "artifact_id": "artifact-stage82-instruction",
+        "artifact_type": "collaboration_plan",
+        "digest": "sha256:5a92f6f089f63f0d476ba2494aa0848b93dbd0bcb7f058544e10992e67f09c98",
+        "media_type": "application/json",
+        "size_bytes": 2048
+      },
+      "input_artifacts": [
+        {
+          "artifact_id": "artifact-stage82-context",
+          "artifact_type": "goal",
+          "digest": "sha256:ea7792a26f405e2ae9c6f49ca93bbe6076ceac0a1fc53d83426c7d7f2d9377e4",
+          "media_type": "application/json",
+          "size_bytes": 512
+        }
+      ],
+      "readiness_evidence": {
+        "evidence_id": "sha256:0e06b84496798ba899c50de6eb2efc0b92c62a75e5ba69af7a158cba107352bc",
+        "status": "ready",
+        "source": "adapter_observation",
+        "observed_at": "2026-07-27T08:00:00Z",
+        "expires_at": "2026-07-27T08:01:00Z",
+        "agent_id": "pi-local",
+        "adapter_id": "pi-local-process-adapter",
+        "adapter_version": "1.0.0",
+        "transport_id": "pi-local-process",
+        "protocol_version": "process-events/v1",
+        "capability_manifest_id": "sha256:fc1ef684329181e68acc5d258aaa6a6e2b9d45a8ff34eac3e9a2194d11c716e5",
+        "capability_id": "work.execute"
+      },
+      "approval_evidence": {
+        "decision_id": "approval-stage82-fixture",
+        "issuer": {
+          "type": "local_operator",
+          "issuer_id": "local-operator"
+        },
+        "status": "granted",
+        "target": {
+          "plan_id": "plan-stage82-example",
+          "plan_version": 3,
+          "run_id": "run-stage82-example",
+          "run_projection_id": "sha256:0d4f25fbc2ac2a70344d4ce7eae16b23ea89501aa0518d7430c72b37171ff836",
+          "attempt_id": "attempt-stage82-example-1",
+          "work_item_id": "work-stage82-example-execute",
+          "expected_state": "awaiting_approval",
+          "adapter_id": "pi-local-process-adapter",
+          "capability_id": "work.execute"
+        },
+        "issued_at": "2026-07-27T08:00:05Z",
+        "expires_at": "2026-07-27T08:05:00Z",
+        "revoked_at": null,
+        "binding_digest": "sha256:6cfbd47411224afb6ffc0d1db7b9379d6ec50c1ec27c50568aee3efb103f307c",
+        "idempotency_key": "sha256:54723d4d8e42c83328c9a849f45b78f7dceacdca2776c31002b7fb4770a0027f"
+      },
+      "lease": {
+        "lease_id": "lease-stage82-fixture",
+        "scope": "run_attempt",
+        "expires_at": "2026-07-27T08:02:00Z"
+      },
+      "idempotency_key": "sha256:6c3a6aa8ec0001153a1692325d50ca963140f2c60cb6853f84e84f3ec0caca82",
+      "deadline_at": "2026-07-27T08:10:00Z"
+    },
+    "session_mapping": {
+      "version": 1,
+      "contract": "external-agent-session-mapping/v1",
+      "fixture_only": true,
+      "mapping_id": "session-map-stage82-example",
+      "run_id": "run-stage82-example",
+      "attempt_id": "attempt-stage82-example-1",
+      "adapter_id": "pi-local-process-adapter",
+      "external_session_ref": "sha256:6165b65ac4237cddba78639fbb699517054285895091ef141449f08277c556d0",
+      "mapping_state": "unknown",
+      "created_from_event_id": "external-event-stage82-1",
+      "last_confirmed_event_id": "external-event-stage82-2",
+      "reuse_across_attempts": false
+    },
+    "ordered_events": [
+      {
+        "version": 1,
+        "contract": "external-agent-event/v1",
+        "fixture_only": true,
+        "event_id": "external-event-stage82-1",
+        "dispatch_id": "dispatch-stage82-example",
+        "run_id": "run-stage82-example",
+        "attempt_id": "attempt-stage82-example-1",
+        "work_item_id": "work-stage82-example-execute",
+        "sequence": 1,
+        "deduplication_key": "sha256:ce36863f51b6baf9d16397ffb3e9af506b284a816f72d487e55943c1fd974d6d",
+        "previous_event_id": null,
+        "event_type": "dispatch_accepted",
+        "observed_at": "2026-07-27T08:00:11Z",
+        "safe_summary": "Fixture 已接受 work item。",
+        "artifact_refs": [],
+        "terminal": false,
+        "outcome": "none",
+        "reconciliation_required": false
+      },
+      {
+        "version": 1,
+        "contract": "external-agent-event/v1",
+        "fixture_only": true,
+        "event_id": "external-event-stage82-2",
+        "dispatch_id": "dispatch-stage82-example",
+        "run_id": "run-stage82-example",
+        "attempt_id": "attempt-stage82-example-1",
+        "work_item_id": "work-stage82-example-execute",
+        "sequence": 2,
+        "deduplication_key": "sha256:b4e3d14e7519279e6a352f776d75a905a9de9a27efdb6d802fe4e700224ade2e",
+        "previous_event_id": "external-event-stage82-1",
+        "event_type": "progress",
+        "observed_at": "2026-07-27T08:00:12Z",
+        "safe_summary": "收到有界进度摘要。",
+        "artifact_refs": [],
+        "terminal": false,
+        "outcome": "none",
+        "reconciliation_required": false
+      },
+      {
+        "version": 1,
+        "contract": "external-agent-event/v1",
+        "fixture_only": true,
+        "event_id": "external-event-stage82-3",
+        "dispatch_id": "dispatch-stage82-example",
+        "run_id": "run-stage82-example",
+        "attempt_id": "attempt-stage82-example-1",
+        "work_item_id": "work-stage82-example-execute",
+        "sequence": 3,
+        "deduplication_key": "sha256:1441ba5507f9658d9bea29b0d9567e6900468e0153fa990194e0f0f94699694b",
+        "previous_event_id": "external-event-stage82-2",
+        "event_type": "transport_disconnected",
+        "observed_at": "2026-07-27T08:00:13Z",
+        "safe_summary": "Transport 中断。",
+        "artifact_refs": [],
+        "terminal": false,
+        "outcome": "none",
+        "reconciliation_required": true
+      },
+      {
+        "version": 1,
+        "contract": "external-agent-event/v1",
+        "fixture_only": true,
+        "event_id": "external-event-stage82-4",
+        "dispatch_id": "dispatch-stage82-example",
+        "run_id": "run-stage82-example",
+        "attempt_id": "attempt-stage82-example-1",
+        "work_item_id": "work-stage82-example-execute",
+        "sequence": 4,
+        "deduplication_key": "sha256:7867155e59d4840ba0ddc4e8a2105ef5c2da06643a2a0c51891cd41ae063eb97",
+        "previous_event_id": "external-event-stage82-3",
+        "event_type": "terminal_outcome_unknown",
+        "observed_at": "2026-07-27T08:00:14Z",
+        "safe_summary": "结果未知。",
+        "artifact_refs": [],
+        "terminal": true,
+        "outcome": "outcome_unknown",
+        "reconciliation_required": true
+      }
+    ]
+  },
+  "failure_matrix": [
+    {
+      "code": "identity_binding_mismatch",
+      "phase": "binding",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "身份绑定不匹配。"
+    },
+    {
+      "code": "contract_version_unsupported",
+      "phase": "binding",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "契约版本不受支持。"
+    },
+    {
+      "code": "capability_not_declared",
+      "phase": "binding",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "Capability 未声明。"
+    },
+    {
+      "code": "readiness_missing",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "缺少 readiness evidence。"
+    },
+    {
+      "code": "readiness_expired",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "Readiness evidence 已过期。"
+    },
+    {
+      "code": "readiness_binding_drift",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "Readiness binding 已漂移。"
+    },
+    {
+      "code": "session_mapping_conflict",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "Session 映射冲突。"
+    },
+    {
+      "code": "approval_missing",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "缺少审批 evidence。"
+    },
+    {
+      "code": "approval_not_granted",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "审批未授予。"
+    },
+    {
+      "code": "approval_expired",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "审批已过期。"
+    },
+    {
+      "code": "approval_revoked",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "审批已撤销。"
+    },
+    {
+      "code": "approval_binding_drift",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "审批 binding 已漂移。"
+    },
+    {
+      "code": "expected_state_stale",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "Expected state 已过期。"
+    },
+    {
+      "code": "lease_unavailable",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "Lease 不可用。"
+    },
+    {
+      "code": "idempotency_replay",
+      "phase": "pre_dispatch",
+      "disposition": "return_prior_result",
+      "retryable": false,
+      "safe_message_zh": "幂等键已处理。"
+    },
+    {
+      "code": "transport_unavailable",
+      "phase": "pre_dispatch",
+      "disposition": "blocked",
+      "retryable": true,
+      "safe_message_zh": "Transport 不可用。"
+    },
+    {
+      "code": "dispatch_rejected",
+      "phase": "dispatch",
+      "disposition": "failed",
+      "retryable": true,
+      "safe_message_zh": "结构化派发被拒绝。"
+    },
+    {
+      "code": "event_duplicate_conflict",
+      "phase": "event_collection",
+      "disposition": "recovery_required",
+      "retryable": false,
+      "safe_message_zh": "重复事件内容冲突。"
+    },
+    {
+      "code": "event_sequence_gap",
+      "phase": "event_collection",
+      "disposition": "recovery_required",
+      "retryable": true,
+      "safe_message_zh": "事件序列存在缺口。"
+    },
+    {
+      "code": "transport_disconnected",
+      "phase": "event_collection",
+      "disposition": "recovery_required",
+      "retryable": true,
+      "safe_message_zh": "Transport 已中断。"
+    },
+    {
+      "code": "cancel_unsupported",
+      "phase": "cancellation",
+      "disposition": "blocked",
+      "retryable": false,
+      "safe_message_zh": "Capability 不支持取消。"
+    },
+    {
+      "code": "cancel_outcome_unknown",
+      "phase": "cancellation",
+      "disposition": "recovery_required",
+      "retryable": true,
+      "safe_message_zh": "取消结果未知。"
+    },
+    {
+      "code": "artifact_integrity_failed",
+      "phase": "artifact_collection",
+      "disposition": "failed",
+      "retryable": true,
+      "safe_message_zh": "Artifact 完整性失败。"
+    },
+    {
+      "code": "review_contract_invalid",
+      "phase": "review_collection",
+      "disposition": "failed",
+      "retryable": true,
+      "safe_message_zh": "Review contract 无效。"
+    },
+    {
+      "code": "terminal_audit_conflict",
+      "phase": "audit",
+      "disposition": "recovery_required",
+      "retryable": false,
+      "safe_message_zh": "Terminal audit 冲突。"
+    }
+  ]
+}

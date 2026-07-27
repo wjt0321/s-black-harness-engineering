@@ -1,4 +1,4 @@
-<!-- parents: 47-orchestration-hub-vision.md, archive/128-stage80-operator-action-eligibility-and-approval-binding.md -->
+<!-- parents: ../47-orchestration-hub-vision.md, 128-stage80-operator-action-eligibility-and-approval-binding.md -->
 
 # 129 - Stage 81 当前态操作者待办与审批集合
 

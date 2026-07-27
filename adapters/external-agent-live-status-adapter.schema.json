@@ -1,0 +1,642 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/external-agent-live-status-adapter.schema.json",
+  "title": "Stage 83 External Agent Live Status Adapter Design Gate",
+  "type": "object",
+  "required": [
+    "version",
+    "contract",
+    "design_status",
+    "selected_target",
+    "observation_surface",
+    "reader_policy",
+    "producer_policy",
+    "safety",
+    "protocol_example",
+    "gui_mapping",
+    "failure_matrix",
+    "alternatives",
+    "implementation_gate"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "contract": {
+      "const": "external-agent-live-status-adapter/v1"
+    },
+    "design_status": {
+      "const": "reader_implemented"
+    },
+    "selected_target": {
+      "type": "object",
+      "required": [
+        "agent_id",
+        "adapter_id",
+        "implementation_id",
+        "adapter_version",
+        "transport",
+        "capability_manifest_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "adapter_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "implementation_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "adapter_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+        },
+        "transport": {
+          "type": "object",
+          "required": [
+            "transport_id",
+            "kind",
+            "protocol_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "transport_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "kind": {
+              "const": "acp"
+            },
+            "protocol_version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          }
+        },
+        "capability_manifest_id": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "observation_surface": {
+      "type": "object",
+      "required": [
+        "kind",
+        "production_relative_path",
+        "source_contract",
+        "path_override_allowed",
+        "max_bytes",
+        "ttl_default_seconds",
+        "ttl_max_seconds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "adapter_owned_atomic_snapshot"
+        },
+        "production_relative_path": {
+          "const": ".runtime/external-agent-status/omp-acp.v1.json"
+        },
+        "source_contract": {
+          "const": "external-agent-status-snapshot/v1"
+        },
+        "path_override_allowed": {
+          "const": false
+        },
+        "max_bytes": {
+          "const": 65536
+        },
+        "ttl_default_seconds": {
+          "const": 15
+        },
+        "ttl_max_seconds": {
+          "const": 60
+        }
+      }
+    },
+    "reader_policy": {
+      "type": "object",
+      "required": [
+        "project_contained",
+        "fixed_path_only",
+        "regular_file_required",
+        "symlink_allowed",
+        "reparse_point_allowed",
+        "hardlink_allowed",
+        "stable_stat_before_after",
+        "strict_utf8_json",
+        "writes_files"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "project_contained": {
+          "const": true
+        },
+        "fixed_path_only": {
+          "const": true
+        },
+        "regular_file_required": {
+          "const": true
+        },
+        "symlink_allowed": {
+          "const": false
+        },
+        "reparse_point_allowed": {
+          "const": false
+        },
+        "hardlink_allowed": {
+          "const": false
+        },
+        "stable_stat_before_after": {
+          "const": true
+        },
+        "strict_utf8_json": {
+          "const": true
+        },
+        "writes_files": {
+          "const": false
+        }
+      }
+    },
+    "producer_policy": {
+      "type": "object",
+      "required": [
+        "owned_by_harness",
+        "reviewed_binding_required",
+        "atomic_temp_replace_required",
+        "partial_snapshot_accepted"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "owned_by_harness": {
+          "const": false
+        },
+        "reviewed_binding_required": {
+          "const": true
+        },
+        "atomic_temp_replace_required": {
+          "const": true
+        },
+        "partial_snapshot_accepted": {
+          "const": false
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "required": [
+        "starts_process",
+        "connects_acp",
+        "opens_session",
+        "sends_prompt",
+        "invokes_model",
+        "reads_credentials",
+        "accesses_network",
+        "writes_files",
+        "writes_ledger",
+        "grants_execution_authority",
+        "enables_dispatch"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "starts_process": {
+          "const": false
+        },
+        "connects_acp": {
+          "const": false
+        },
+        "opens_session": {
+          "const": false
+        },
+        "sends_prompt": {
+          "const": false
+        },
+        "invokes_model": {
+          "const": false
+        },
+        "reads_credentials": {
+          "const": false
+        },
+        "accesses_network": {
+          "const": false
+        },
+        "writes_files": {
+          "const": false
+        },
+        "writes_ledger": {
+          "const": false
+        },
+        "grants_execution_authority": {
+          "const": false
+        },
+        "enables_dispatch": {
+          "const": false
+        }
+      }
+    },
+    "protocol_example": {
+      "type": "object",
+      "required": [
+        "snapshot_file",
+        "normalized_evidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "snapshot_file": {
+          "const": "adapters/external-agent-status-snapshot.example.json"
+        },
+        "normalized_evidence": {
+          "type": "object",
+          "required": [
+            "version",
+            "contract",
+            "fixture_only",
+            "evidence_id",
+            "source_snapshot_id",
+            "observed_at",
+            "evaluated_at",
+            "expires_at",
+            "target",
+            "observation_status",
+            "readiness_status",
+            "readiness_level",
+            "session_state",
+            "session_binding",
+            "event_cursor",
+            "source_integrity",
+            "sufficient_for_dispatch",
+            "execution_authorized",
+            "safe_summary_zh"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "const": 1
+            },
+            "contract": {
+              "const": "external-agent-live-status-evidence/v1"
+            },
+            "fixture_only": {
+              "const": true
+            },
+            "evidence_id": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "source_snapshot_id": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "observed_at": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 64
+            },
+            "evaluated_at": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 64
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 64
+            },
+            "target": {
+              "type": "object",
+              "required": [
+                "agent_id",
+                "adapter_id",
+                "implementation_id",
+                "adapter_version",
+                "transport",
+                "capability_manifest_id"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "agent_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "adapter_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "implementation_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "adapter_version": {
+                  "type": "string",
+                  "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+                },
+                "transport": {
+                  "type": "object",
+                  "required": [
+                    "transport_id",
+                    "kind",
+                    "protocol_version"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "transport_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    },
+                    "kind": {
+                      "const": "acp"
+                    },
+                    "protocol_version": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  }
+                },
+                "capability_manifest_id": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                }
+              }
+            },
+            "observation_status": {
+              "enum": [
+                "observed",
+                "unavailable",
+                "stale",
+                "blocked",
+                "unknown"
+              ]
+            },
+            "readiness_status": {
+              "enum": [
+                "unknown",
+                "stale",
+                "blocked"
+              ]
+            },
+            "readiness_level": {
+              "enum": [
+                "runner_listed",
+                "runner_missing",
+                "not_observed"
+              ]
+            },
+            "session_state": {
+              "enum": [
+                "closed",
+                "open",
+                "unknown",
+                "not_observed"
+              ]
+            },
+            "session_binding": {
+              "type": "null"
+            },
+            "event_cursor": {
+              "type": "null"
+            },
+            "source_integrity": {
+              "type": "object",
+              "required": [
+                "complete",
+                "generation",
+                "producer_binding_valid",
+                "stable_read"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "complete": {
+                  "const": true
+                },
+                "generation": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "producer_binding_valid": {
+                  "const": true
+                },
+                "stable_read": {
+                  "const": true
+                }
+              }
+            },
+            "sufficient_for_dispatch": {
+              "const": false
+            },
+            "execution_authorized": {
+              "const": false
+            },
+            "safe_summary_zh": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          }
+        }
+      }
+    },
+    "gui_mapping": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": [
+          "observation_status",
+          "agent_status",
+          "readiness_status",
+          "session_projection",
+          "blocked_reason_code",
+          "status_label_zh"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "observation_status": {
+            "enum": [
+              "observed",
+              "unavailable",
+              "stale",
+              "blocked"
+            ]
+          },
+          "agent_status": {
+            "enum": [
+              "unknown",
+              "disconnected",
+              "stale",
+              "blocked"
+            ]
+          },
+          "readiness_status": {
+            "enum": [
+              "unknown",
+              "stale",
+              "blocked"
+            ]
+          },
+          "session_projection": {
+            "const": "none"
+          },
+          "blocked_reason_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "transport_unavailable",
+                  "readiness_expired",
+                  "readiness_binding_drift"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status_label_zh": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        }
+      }
+    },
+    "failure_matrix": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "phase",
+          "disposition",
+          "retryable",
+          "safe_message_zh"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "status_source_missing",
+              "status_source_not_regular",
+              "status_source_indirection_blocked",
+              "status_source_too_large",
+              "status_source_unreadable",
+              "status_source_schema_invalid",
+              "status_snapshot_incomplete",
+              "status_snapshot_replayed",
+              "status_observation_from_future",
+              "status_observation_expired",
+              "status_identity_binding_mismatch",
+              "status_producer_binding_missing",
+              "status_producer_binding_drift",
+              "status_target_not_observed",
+              "status_unbound_session_observed",
+              "status_projection_invalid"
+            ]
+          },
+          "phase": {
+            "enum": [
+              "path",
+              "read",
+              "schema",
+              "freshness",
+              "binding",
+              "observation",
+              "projection"
+            ]
+          },
+          "disposition": {
+            "enum": [
+              "blocked",
+              "stale",
+              "unavailable"
+            ]
+          },
+          "retryable": {
+            "type": "boolean"
+          },
+          "safe_message_zh": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        }
+      }
+    },
+    "alternatives": {
+      "type": "object",
+      "required": [
+        "fixed_cli_status",
+        "acp_handshake"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "fixed_cli_status": {
+          "type": "object",
+          "required": [
+            "decision",
+            "reason"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "decision": {
+              "const": "deferred"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          }
+        },
+        "acp_handshake": {
+          "type": "object",
+          "required": [
+            "decision",
+            "reason"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "decision": {
+              "const": "deferred"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          }
+        }
+      }
+    },
+    "implementation_gate": {
+      "type": "object",
+      "required": [
+        "reader_implementation_authorized",
+        "producer_or_probe_authorized",
+        "requires_new_user_authorization"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "reader_implementation_authorized": {
+          "const": true
+        },
+        "producer_or_probe_authorized": {
+          "const": false
+        },
+        "requires_new_user_authorization": {
+          "const": true
+        }
+      }
+    }
+  }
+}

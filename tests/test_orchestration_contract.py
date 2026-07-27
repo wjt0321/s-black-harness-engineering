@@ -26,6 +26,7 @@ EXPECTED_CONTRACT_IDS = [
     "execution_recovery_close",
     "execution_recovery_read",
     "execution_trust_binding",
+    "external_agent_live_status_read",
     "external_execution_service_stack",
     "fixed_git_status_execution",
     "orchestration_artifact_export",
@@ -51,10 +52,10 @@ def test_contract_manifest_freezes_v1_shape_and_availability_counts() -> None:
     assert manifest["schema_version"] == "control-plane/orchestration-contract/v1"
     assert manifest["consumer"] == "cli-automation"
     assert manifest["summary"] == {
-        "total_entries": 32,
+        "total_entries": 33,
         "stable": 11,
         "stable_limited": 9,
-        "preview": 9,
+        "preview": 10,
         "unavailable": 3,
     }
     assert [entry["contract_id"] for entry in manifest["entries"]] == EXPECTED_CONTRACT_IDS
@@ -183,6 +184,26 @@ def test_contract_inspect_human_output_is_compact(capsys) -> None:
     assert code == 0
     assert "ORCHESTRATION CONTRACT" in captured.out
     assert "schema_version=control-plane/orchestration-contract/v1" in captured.out
-    assert "total_entries=32" in captured.out
+    assert "total_entries=33" in captured.out
     assert "run_plan preview read_only orchestration run" in captured.out
     assert "external_execution_service_stack unavailable unavailable -" in captured.out
+
+
+def test_external_agent_live_status_contract_is_fixed_read_only_preview() -> None:
+    entries = {
+        entry["contract_id"]: entry
+        for entry in build_contract_manifest().to_dict()["entries"]
+    }
+
+    entry = entries["external_agent_live_status_read"]
+    assert entry["availability"] == "preview"
+    assert entry["access"] == "read_only"
+    assert entry["commands"] == [
+        ["orchestration", "external-agent", "status", "inspect"]
+    ]
+    assert entry["key_flags"] == [
+        "--evaluated-at",
+        "--expected-after-generation",
+    ]
+    assert "fixed" in entry["boundary"].lower()
+    assert "does not" in entry["boundary"].lower()

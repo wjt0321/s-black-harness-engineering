@@ -46,6 +46,7 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "workflow",
         "control-panel",
         "execution",
+        "external-agent",
     }
     assert _subparser_names(_nested_parser(orchestration, "route")) == {
         "preview",
@@ -103,6 +104,24 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
     assert _subparser_names(_nested_parser(collaboration, "inbox")) == {
         "inspect",
     }
+    external_agent = _nested_parser(orchestration, "external-agent")
+    assert _subparser_names(external_agent) == {"status"}
+    external_status = _nested_parser(external_agent, "status")
+    assert _subparser_names(external_status) == {"inspect"}
+    external_status_options = {
+        option
+        for action in _nested_parser(external_status, "inspect")._actions
+        for option in action.option_strings
+    }
+    assert {"--evaluated-at", "--expected-after-generation"} <= external_status_options
+    assert {
+        "--snapshot-file",
+        "--ttl-seconds",
+        "--adapter-id",
+        "--producer-id",
+        "--transport-id",
+        "--commit",
+    }.isdisjoint(external_status_options)
     socket = _nested_parser(orchestration, "socket")
     assert _subparser_names(socket) == {
         "list",

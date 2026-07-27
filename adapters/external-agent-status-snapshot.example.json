@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "contract": "external-agent-status-snapshot/v1",
+  "snapshot_id": "sha256:d36a69b564a9bd3e3e6088a17fe6d9db153ff6b6fe84c27aba8ca54a80aa8c2b",
+  "generation": 1,
+  "complete": true,
+  "observed_at": "2026-07-27T08:00:00Z",
+  "producer": {
+    "producer_id": "qwenpaw-acp-status-exporter",
+    "producer_version": "design-unobserved",
+    "producer_binding_id": "sha256:cfae0bc3c985a3583922b7fd7508f9acd51f135296ea0c32d6cd491545d89219",
+    "source_kind": "adapter_owned_atomic_snapshot"
+  },
+  "target": {
+    "agent_id": "omp-pi-acp",
+    "adapter_id": "omp-acp",
+    "implementation_id": "omp-pi",
+    "adapter_version": "1.0.0",
+    "transport": {
+      "transport_id": "qwenpaw-acp-runner-omp",
+      "kind": "acp",
+      "protocol_version": "acp/v1"
+    },
+    "capability_manifest_id": "sha256:483e0081f8e5f376dabd9b2ee2cd4c8bc5ecb4d8d3573b259b217c04024d7eee"
+  },
+  "observation": {
+    "transport_presence": "listed",
+    "runner_alias": "omp",
+    "session_state": "closed",
+    "event_cursor": null,
+    "safe_summary_zh": "OMP/Pi ACP runner 已列出；未证明 session 可创建、模型可用或可派发。"
+  },
+  "producer_attestation": {
+    "started_process": false,
+    "connected_transport": false,
+    "started_runner": false,
+    "opened_session": false,
+    "sent_prompt": false,
+    "invoked_model": false,
+    "read_credentials": false,
+    "accessed_network": false
+  }
+}

@@ -1,4 +1,4 @@
-<!-- parents: 01-vision-and-boundaries.md, 47-orchestration-hub-vision.md, 129-stage81-current-operator-inbox-and-approval-collection.md -->
+<!-- parents: 01-vision-and-boundaries.md, 47-orchestration-hub-vision.md, archive/129-stage81-current-operator-inbox-and-approval-collection.md -->
 
 # 130 — GUI-first 外部 Agent 控制面目标与 MVP 边界
 
@@ -131,11 +131,11 @@ MVP 可以继续限制为单用户、本地运行、显式人工审批、有限�
 
 ## 8. 当前完成度与真实缺口
 
-Stage 81 已完成计划、socket/capability、fixture run、handoff/review/artifact 模型、操作资格、当前待办和静态中文 Control Panel。底层已有 fixed Git status 与 fixed Pi print 两项受控真实 operation。
+阶段 81 已完成计划、插座/能力、样例运行、交接/审阅/产物模型、操作资格、当前待办和静态中文控制面板；阶段 82 已冻结统一外部智能体适配器契约；阶段 83 已选择固定原子快照作为首个只读实时状态观察面；阶段 84 已实现固定快照的有界读取器、归一化证据和界面投影；阶段 85 已选定宿主内被动状态采集方案，但实施仍被阻止。底层已有固定 Git 状态与固定 Pi 打印两项受控真实操作。
 
 当前仍缺少：
 
-- live external Agent adapter；
+- 真实状态采集器与外部智能体实时状态；
 - 真实 Agent readiness/session evidence；
 - approval 到真实 dispatch 的绑定；
 - work item 到外部 Agent 的真实派发；
@@ -148,7 +148,7 @@ Stage 81 已完成计划、socket/capability、fixture run、handoff/review/arti
 
 ## 9. 下一能力包
 
-### Stage 82 — External Agent Adapter Contract 与 MVP Boundary
+### 阶段 82 — 外部智能体适配器契约与最小可用产品边界（仅设计，已完成）
 
 - 冻结 identity、capability、readiness、session、dispatch、event、cancel、artifact、recovery contract；
 - 把 approval evidence 安全审查作为 dispatch authority 的子问题；
@@ -156,15 +156,41 @@ Stage 81 已完成计划、socket/capability、fixture run、handoff/review/arti
 - 输出 schema、failure matrix、测试计划和 GUI 所需最小 live read model；
 - 仍不调用 Agent、不启动 session、不实现网络 adapter、不新增真实 operation。
 
-### 后续候选
+### 阶段 83 — 外部智能体只读实时状态适配器设计评审（已完成）
 
-1. 一个外部 Agent 的只读 live status adapter；
-2. 单 work-item 真实受控 dispatch；
-3. 真实 event/artifact/review 回收；
-4. Planner -> Executor -> Reviewer 多 Agent 闭环；
-5. Claude、Kimi、OMP/Pi、QwenPaw adapter 扩展；
-6. live GUI 和桌面封装；
-7. 并发、恢复和长期稳定性强化。
+- 首个目标为 `omp-acp`，但 snapshot/evidence contract 保持 transport-neutral；
+- production observation surface 固定为 adapter-owned atomic snapshot；
+- Harness 未来只读 `.runtime/external-agent-status/omp-acp.v1.json`，无 production path override；
+- runner listed 只映射为 `readiness=unknown`，不授予 dispatch authority；
+- CLI status 与 ACP handshake 因进程/连接副作用继续 deferred；
+- 本阶段未实现 reader、producer 或真实 observation。
+
+### 阶段 84 — 有界原子快照读取器实现（已完成）
+
+- 只读取固定 `.runtime/external-agent-status/omp-acp.v1.json`；
+- 拒绝 symlink/reparse/hardlink、非普通文件、oversize、partial、schema/content/binding/time drift；
+- 生成 deterministic normalized evidence 与 Stage 82 GUI projection；
+- runner listed 仍为 readiness unknown，证据永不授予 execution/dispatch authority；
+- 未实现 producer、主动 probe、ACP handshake、session mapping 或真实 observation。
+
+### 阶段 85 — 外部智能体状态采集方案设计评审（已完成并归档）
+
+- 选定由已经运行的 QwenPaw 宿主被动读取现有 Runner 注册表；
+- 使用固定临时文件、单写者租约和原子替换发布状态；
+- Harness 不启动进程、不主动连接 ACP、不创建会话；
+- 当前缺少已核验宿主接口、真实采集器身份、目录访问控制和崩溃恢复证据；
+- 设计已完成，但实施与真实观察均未授权。
+
+### 下一里程碑入口
+
+`135-next-milestone-real-status-integration.md` 已准备，目标是一次性让 OMP/Pi 真实观察状态出现在中文控制面板：
+
+1. 核验 QwenPaw 宿主真实状态接口；
+2. 实现宿主内被动状态采集器与固定原子快照；
+3. 接通阶段 84 安全读取器；
+4. 接入中文控制面板并完成真实只读联调。
+
+该里程碑尚未授权启动，不包含会话创建、模型调用、任务派发或第三个真实执行操作。后续候选仍包括单工作项受控派发、真实事件/产物/审阅回收、多智能体闭环、适配器扩展、实时中文界面与桌面封装，以及并发和恢复强化。
 
 ## 10. 反偏航检查表
 

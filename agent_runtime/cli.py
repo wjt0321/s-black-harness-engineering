@@ -37,6 +37,7 @@ from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
 from .orchestration_socket import SocketDetailResult, SocketListResult, get_socket, list_sockets
 from .orchestration_acp_readiness import collect_acp_readiness
+from .orchestration_external_agent_live_status import inspect_external_agent_live_status
 from .orchestration_manual_board import inspect_manual_board
 from .orchestration_collaboration import inspect_collaboration_plan, validate_collaboration_plan
 from .orchestration_collaboration_run_state import inspect_collaboration_run_state
@@ -128,6 +129,13 @@ def _ensure_global_defaults(args: argparse.Namespace) -> None:
     for name, value in defaults.items():
         if not hasattr(args, name):
             setattr(args, name, value)
+
+
+def _non_negative_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("value must be zero or greater")
+    return parsed
 
 
 def _root_path(args: argparse.Namespace) -> Path:
@@ -2997,6 +3005,30 @@ def _cmd_orchestration_collaboration_dispatch(args: argparse.Namespace) -> int:
     return result.exit_code()
 
 
+def _cmd_orchestration_external_agent_status_inspect(args: argparse.Namespace) -> int:
+    """Inspect the fixed external-Agent snapshot without probing its runtime."""
+    result = inspect_external_agent_live_status(
+        _root_path(args),
+        args.evaluated_at,
+        expected_after_generation=args.expected_after_generation,
+    )
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print("外部 Agent 状态")
+        print(f"观察状态={payload['observation_status']}")
+        projection = payload.get("gui_projection") or {}
+        if projection:
+            print(f"状态={projection.get('status_label_zh', '未知')}")
+            readiness = projection.get("readiness") or {}
+            print(f"就绪状态={readiness.get('status', 'unknown')}")
+        for finding in payload.get("findings", []):
+            print(f"- {finding['rule_id']}: {finding['message']}")
+        print("说明=该结果仅供只读展示，不授权启动 Agent、创建 session 或派发任务。")
+    return result.exit_code()
+
+
 def _cmd_orchestration_socket_readiness_collect(args: argparse.Namespace) -> int:
     """Collect bounded runner-list evidence without opening an ACP session."""
     result = collect_acp_readiness(
@@ -4510,6 +4542,32 @@ def build_parser() -> argparse.ArgumentParser:
         command_parser.add_argument("--file", required=True, help="Project-local dispatch proposal JSON file")
         _add_global_args(command_parser)
         command_parser.set_defaults(func=_cmd_orchestration_collaboration_dispatch)
+
+    orchestration_external_agent_parser = orchestration_subparsers.add_parser(
+        "external-agent", help="读取固定外部 Agent 状态快照，不主动探测运行时"
+    )
+    orchestration_external_agent_subparsers = orchestration_external_agent_parser.add_subparsers(
+        dest="external_agent_command", required=True
+    )
+    orchestration_external_agent_status_parser = orchestration_external_agent_subparsers.add_parser(
+        "status", help="读取外部 Agent 只读状态"
+    )
+    orchestration_external_agent_status_subparsers = orchestration_external_agent_status_parser.add_subparsers(
+        dest="external_agent_status_command", required=True
+    )
+    orchestration_external_agent_status_inspect_parser = orchestration_external_agent_status_subparsers.add_parser(
+        "inspect", help="校验并投影固定 atomic snapshot"
+    )
+    orchestration_external_agent_status_inspect_parser.add_argument(
+        "--evaluated-at", required=True, help="显式、带时区的评估时间"
+    )
+    orchestration_external_agent_status_inspect_parser.add_argument(
+        "--expected-after-generation", type=_non_negative_int, default=None, help="可选：要求 generation 严格大于该值"
+    )
+    _add_global_args(orchestration_external_agent_status_inspect_parser)
+    orchestration_external_agent_status_inspect_parser.set_defaults(
+        func=_cmd_orchestration_external_agent_status_inspect
+    )
 
     orchestration_socket_parser = orchestration_subparsers.add_parser(
         "socket", help="Discover declared Agent sockets without runtime probing"

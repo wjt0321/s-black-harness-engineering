@@ -454,3 +454,34 @@ def test_docs_context_latest_handoff_ignores_invalid_calendar_dates(capsys, tmp_
     result = json.loads(captured.out)
 
     assert result["docs_summary"]["latest_handoff"] == "tasks/handoff-2026-07-09-valid.md"
+
+
+def test_docs_context_accepts_chinese_stage_labels(capsys, tmp_path):
+    fake_root = _setup_fake_root(tmp_path)
+    _write_readme(fake_root)
+    _write_index(fake_root)
+    _write_roadmap(fake_root)
+    _write_progress(fake_root)
+    _write_handoff(fake_root)
+    _write_extra_docs(fake_root)
+    digest = fake_root / "docs" / "000-stage-digest.md"
+    digest.write_text(
+        "# 000 — 阶段摘要\n\n"
+        "## 当前基线\n\n"
+        "- 里程碑：阶段 85 外部智能体状态采集方案设计评审\n\n"
+        "## 当前阶段\n\n"
+        "- **阶段 85 — 已完成：冻结状态采集方案与实施停止线。**\n\n"
+        "## 下次恢复顺序\n\n"
+        "1. `docs/000-stage-digest.md`\n\n"
+        "## 下一步做什么\n\n"
+        "- **阶段 86 — 状态采集器实现评审。**\n",
+        encoding="utf-8",
+    )
+
+    code = main(["--root", str(fake_root), "docs", "context", "--json"])
+    result = json.loads(capsys.readouterr().out)
+
+    assert code == 0
+    assert result["current_stage"]["stage"] == "阶段 85"
+    assert result["current_stage"]["status"] == "completed"
+    assert result["next_design_entry"]["stage"] == "阶段 86"

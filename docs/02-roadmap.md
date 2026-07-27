@@ -65,16 +65,22 @@ Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job acc
 
 ## 下一产品里程碑
 
-Stage 76-81 已完成人工计划看板、fixture 端到端演示、中文默认 UI/UX、浏览器内存编辑器、候选校验与导出、协作运行事件模型、checkpoint 操作资格，以及只聚合最新状态的操作者待办和审批集合。后续优先级：
+阶段 76-85 已完成人工计划看板、样例端到端演示、中文默认界面、协作运行与当前待办、统一外部智能体适配器契约、固定状态读取器，以及宿主内被动状态采集方案设计。阶段 85 已归档。
 
-1. **Stage 82 External Agent Adapter Contract 与 MVP Boundary**：冻结统一 identity、capability、readiness、session、dispatch、event、cancel、artifact 和 recovery contract；approval safety 作为真实派发权限的一部分；本阶段 design-only。
-2. **一个外部 Agent 的只读 live status adapter**：先证明 transport-neutral 状态、session 和 event projection，不授予执行权限。
-3. **真实 approval binding 与单 work-item 受控 dispatch**：显式授权后，在统一 contract 下完成一条真实执行链，不增加 Agent-specific 旁路。
-4. **event/artifact/review 回收**：把真实结果接回 run、handoff、review、retry/cancel 和 audit。
-5. **Planner -> Executor -> Reviewer 多 Agent 闭环**：至少跨三类 Agent implementation 验证统一 contract。
-6. **live GUI 与桌面封装**：让当前静态 Control Panel 消费同一 read model 和 command contract，桌面端不拥有执行权限逻辑。
+下一里程碑入口为 `135-next-milestone-real-status-integration.md`，目标不再是继续设计，而是一次性完成：
 
-Stage 65 Pi bound runner migration 设计已归档为 `archive/114-pi-bound-runner-migration-design.md`，继续作为 deferred 安全强化项，不抢占产品主线。人工计划“已确认”不得被解释为派发授权。
+1. 核验 QwenPaw 宿主真实状态接口；
+2. 实现宿主内被动状态采集器；
+3. 发布固定原子状态快照；
+4. 让现有安全读取器消费真实快照；
+5. 在中文控制面板展示 OMP/Pi 的真实观察状态；
+6. 完成真实但只读的联调和故障验收。
+
+该里程碑尚未授权启动。它不包含创建会话、调用模型、派发任务、独立后台服务或第三个 Harness 真实执行操作。
+
+后续候选顺序保持为：真实审批绑定与单工作项受控派发、真实事件/产物/审阅回收、规划者/执行者/审阅者多智能体闭环、实时中文界面与桌面封装。
+
+阶段 65 的 Pi 受信运行器迁移设计已归档为 `archive/114-pi-bound-runner-migration-design.md`，继续作为延后的安全强化项，不抢占产品主线。人工计划“已确认”不得被解释为派发授权。
 
 ## 治理原则
 

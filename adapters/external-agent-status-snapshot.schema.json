@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/external-agent-status-snapshot.schema.json",
+  "title": "External Agent Atomic Status Snapshot",
+  "type": "object",
+  "required": [
+    "version",
+    "contract",
+    "snapshot_id",
+    "generation",
+    "complete",
+    "observed_at",
+    "producer",
+    "target",
+    "observation",
+    "producer_attestation"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "contract": {
+      "const": "external-agent-status-snapshot/v1"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "generation": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9223372036854775807
+    },
+    "complete": {
+      "const": true
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "producer": {
+      "type": "object",
+      "required": [
+        "producer_id",
+        "producer_version",
+        "producer_binding_id",
+        "source_kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "producer_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "producer_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "producer_binding_id": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "source_kind": {
+          "const": "adapter_owned_atomic_snapshot"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "agent_id",
+        "adapter_id",
+        "implementation_id",
+        "adapter_version",
+        "transport",
+        "capability_manifest_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "adapter_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "implementation_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "adapter_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+        },
+        "transport": {
+          "type": "object",
+          "required": [
+            "transport_id",
+            "kind",
+            "protocol_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "transport_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "kind": {
+              "enum": [
+                "acp",
+                "cli",
+                "local_process"
+              ]
+            },
+            "protocol_version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          }
+        },
+        "capability_manifest_id": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "required": [
+        "transport_presence",
+        "runner_alias",
+        "session_state",
+        "event_cursor",
+        "safe_summary_zh"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "transport_presence": {
+          "enum": [
+            "listed",
+            "missing",
+            "unknown"
+          ]
+        },
+        "runner_alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "session_state": {
+          "enum": [
+            "closed",
+            "open",
+            "unknown"
+          ]
+        },
+        "event_cursor": {
+          "type": "null"
+        },
+        "safe_summary_zh": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    },
+    "producer_attestation": {
+      "type": "object",
+      "required": [
+        "started_process",
+        "connected_transport",
+        "started_runner",
+        "opened_session",
+        "sent_prompt",
+        "invoked_model",
+        "read_credentials",
+        "accessed_network"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "started_process": {
+          "const": false
+        },
+        "connected_transport": {
+          "const": false
+        },
+        "started_runner": {
+          "const": false
+        },
+        "opened_session": {
+          "const": false
+        },
+        "sent_prompt": {
+          "const": false
+        },
+        "invoked_model": {
+          "const": false
+        },
+        "read_credentials": {
+          "const": false
+        },
+        "accessed_network": {
+          "const": false
+        }
+      }
+    }
+  }
+}

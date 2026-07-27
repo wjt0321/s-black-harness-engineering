@@ -1,0 +1,1444 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.local/schemas/external-agent-adapter-contract.schema.json",
+  "title": "Stage 82 External Agent Adapter Contract Bundle",
+  "type": "object",
+  "required": [
+    "version",
+    "contract",
+    "design_status",
+    "authority",
+    "safety",
+    "adapters",
+    "shared_contract",
+    "protocol_examples",
+    "failure_matrix"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "contract": {
+      "const": "external-agent-adapter-contract/v1"
+    },
+    "design_status": {
+      "const": "design_only"
+    },
+    "authority": {
+      "type": "object",
+      "required": [
+        "control_plane",
+        "agent_runtime",
+        "dispatch_authority"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "control_plane": {
+          "const": "harness"
+        },
+        "agent_runtime": {
+          "const": "external_agent"
+        },
+        "dispatch_authority": {
+          "const": "harness_only"
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "required": [
+        "calls_agent",
+        "starts_session",
+        "probes_live_readiness",
+        "reads_real_approval_ledger",
+        "writes_ledger",
+        "implements_transport",
+        "adds_operation",
+        "execution_authorized"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "calls_agent": {
+          "const": false
+        },
+        "starts_session": {
+          "const": false
+        },
+        "probes_live_readiness": {
+          "const": false
+        },
+        "reads_real_approval_ledger": {
+          "const": false
+        },
+        "writes_ledger": {
+          "const": false
+        },
+        "implements_transport": {
+          "const": false
+        },
+        "adds_operation": {
+          "const": false
+        },
+        "execution_authorized": {
+          "const": false
+        }
+      }
+    },
+    "adapters": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "required": [
+          "identity",
+          "capability_manifest",
+          "readiness_contract",
+          "session_contract"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "identity": {
+            "type": "object",
+            "required": [
+              "agent_id",
+              "adapter_id",
+              "implementation_id",
+              "agent_version",
+              "adapter_version",
+              "transport"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "agent_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+              },
+              "adapter_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+              },
+              "implementation_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+              },
+              "agent_version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "adapter_version": {
+                "type": "string",
+                "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+              },
+              "transport": {
+                "type": "object",
+                "required": [
+                  "transport_id",
+                  "kind",
+                  "protocol_version"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "transport_id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                  },
+                  "kind": {
+                    "enum": [
+                      "acp",
+                      "cli",
+                      "local_process"
+                    ]
+                  },
+                  "protocol_version": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                }
+              }
+            }
+          },
+          "capability_manifest": {
+            "type": "object",
+            "required": [
+              "manifest_id",
+              "capabilities"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "manifest_id": {
+                "type": "string",
+                "pattern": "^sha256:[a-f0-9]{64}$"
+              },
+              "capabilities": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 32,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "capability_id",
+                    "roles",
+                    "work_item_types",
+                    "input_artifact_types",
+                    "output_artifact_types",
+                    "supports_streaming",
+                    "supports_cancel",
+                    "supports_session_resume"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "capability_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    },
+                    "roles": {
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "uniqueItems": true,
+                      "items": {
+                        "enum": [
+                          "planner",
+                          "executor",
+                          "reviewer"
+                        ]
+                      }
+                    },
+                    "work_item_types": {
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 16,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                      }
+                    },
+                    "input_artifact_types": {
+                      "type": "array",
+                      "maxItems": 16,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                      }
+                    },
+                    "output_artifact_types": {
+                      "type": "array",
+                      "maxItems": 16,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                      }
+                    },
+                    "supports_streaming": {
+                      "type": "boolean"
+                    },
+                    "supports_cancel": {
+                      "type": "boolean"
+                    },
+                    "supports_session_resume": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "readiness_contract": {
+            "type": "object",
+            "required": [
+              "evidence_sources",
+              "ttl_seconds",
+              "required_bindings",
+              "fail_closed",
+              "readiness_is_authorization",
+              "session_probe_allowed"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "evidence_sources": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 3,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "adapter_observation",
+                    "transport_handshake",
+                    "operator_attestation"
+                  ]
+                }
+              },
+              "ttl_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3600
+              },
+              "required_bindings": {
+                "type": "array",
+                "minItems": 7,
+                "maxItems": 7,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "agent_id",
+                    "adapter_id",
+                    "adapter_version",
+                    "transport_id",
+                    "protocol_version",
+                    "capability_manifest_id",
+                    "capability_id"
+                  ]
+                }
+              },
+              "fail_closed": {
+                "const": true
+              },
+              "readiness_is_authorization": {
+                "const": false
+              },
+              "session_probe_allowed": {
+                "const": false
+              }
+            }
+          },
+          "session_contract": {
+            "type": "object",
+            "required": [
+              "supports_create",
+              "supports_resume",
+              "supports_close",
+              "external_identity_form",
+              "mapping_scope",
+              "reuse_across_attempts"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "supports_create": {
+                "type": "boolean"
+              },
+              "supports_resume": {
+                "type": "boolean"
+              },
+              "supports_close": {
+                "type": "boolean"
+              },
+              "external_identity_form": {
+                "const": "opaque_reference"
+              },
+              "mapping_scope": {
+                "const": "run_attempt"
+              },
+              "reuse_across_attempts": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "shared_contract": {
+      "type": "object",
+      "required": [
+        "readiness",
+        "session",
+        "dispatch",
+        "events",
+        "cancellation",
+        "artifacts",
+        "recovery",
+        "approval",
+        "audit",
+        "mvp_boundary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "readiness": {
+          "type": "object",
+          "required": [
+            "statuses",
+            "ttl_required",
+            "binding_required",
+            "expired_status",
+            "binding_drift_status",
+            "is_dispatch_authority"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "statuses": {
+              "const": [
+                "ready",
+                "blocked",
+                "unknown",
+                "stale"
+              ]
+            },
+            "ttl_required": {
+              "const": true
+            },
+            "binding_required": {
+              "const": true
+            },
+            "expired_status": {
+              "const": "stale"
+            },
+            "binding_drift_status": {
+              "const": "blocked"
+            },
+            "is_dispatch_authority": {
+              "const": false
+            }
+          }
+        },
+        "session": {
+          "type": "object",
+          "required": [
+            "mapping_scope",
+            "external_identity",
+            "cross_attempt_reuse",
+            "unknown_on_disconnect"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "mapping_scope": {
+              "const": "run_attempt"
+            },
+            "external_identity": {
+              "const": "opaque_reference"
+            },
+            "cross_attempt_reuse": {
+              "const": false
+            },
+            "unknown_on_disconnect": {
+              "const": true
+            }
+          }
+        },
+        "dispatch": {
+          "type": "object",
+          "required": [
+            "envelope_contract",
+            "structured_work_item_only",
+            "arbitrary_process_parameters",
+            "required_authorities"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "envelope_contract": {
+              "const": "external-agent-dispatch/v1"
+            },
+            "structured_work_item_only": {
+              "const": true
+            },
+            "arbitrary_process_parameters": {
+              "const": false
+            },
+            "required_authorities": {
+              "const": [
+                "identity",
+                "capability",
+                "readiness",
+                "approval",
+                "expected_state",
+                "lease",
+                "idempotency",
+                "started_audit"
+              ]
+            }
+          }
+        },
+        "events": {
+          "type": "object",
+          "required": [
+            "event_contract",
+            "ordering",
+            "deduplication",
+            "gap_policy",
+            "disconnect_policy",
+            "terminal_count"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "event_contract": {
+              "const": "external-agent-event/v1"
+            },
+            "ordering": {
+              "const": "per_dispatch_sequence"
+            },
+            "deduplication": {
+              "const": "deduplication_key_and_content_digest"
+            },
+            "gap_policy": {
+              "const": "recovery_required"
+            },
+            "disconnect_policy": {
+              "const": "outcome_unknown_until_reconciled"
+            },
+            "terminal_count": {
+              "const": "exactly_one"
+            }
+          }
+        },
+        "cancellation": {
+          "type": "object",
+          "required": [
+            "support_declared_per_capability",
+            "unsupported_policy",
+            "timeout_policy"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "support_declared_per_capability": {
+              "const": true
+            },
+            "unsupported_policy": {
+              "const": "blocked"
+            },
+            "timeout_policy": {
+              "const": "outcome_unknown"
+            }
+          }
+        },
+        "artifacts": {
+          "type": "object",
+          "required": [
+            "reference_only",
+            "digest_required",
+            "safe_summary_only",
+            "integrity_failure"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "reference_only": {
+              "const": true
+            },
+            "digest_required": {
+              "const": true
+            },
+            "safe_summary_only": {
+              "const": true
+            },
+            "integrity_failure": {
+              "const": "withhold_and_fail"
+            }
+          }
+        },
+        "recovery": {
+          "type": "object",
+          "required": [
+            "outcome_unknown_terminal_audit",
+            "historical_result_withheld",
+            "reconciliation_required",
+            "redispatch_without_reconciliation"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "outcome_unknown_terminal_audit": {
+              "const": true
+            },
+            "historical_result_withheld": {
+              "const": true
+            },
+            "reconciliation_required": {
+              "const": true
+            },
+            "redispatch_without_reconciliation": {
+              "const": false
+            }
+          }
+        },
+        "approval": {
+          "type": "object",
+          "required": [
+            "issuers",
+            "statuses",
+            "exact_binding_required",
+            "revocation_checked",
+            "expiry_checked",
+            "binding_drift_blocks",
+            "is_business_eligibility"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "issuers": {
+              "const": [
+                "local_operator",
+                "harness_policy"
+              ]
+            },
+            "statuses": {
+              "const": [
+                "pending",
+                "granted",
+                "denied",
+                "expired",
+                "revoked"
+              ]
+            },
+            "exact_binding_required": {
+              "const": true
+            },
+            "revocation_checked": {
+              "const": true
+            },
+            "expiry_checked": {
+              "const": true
+            },
+            "binding_drift_blocks": {
+              "const": true
+            },
+            "is_business_eligibility": {
+              "const": false
+            }
+          }
+        },
+        "audit": {
+          "type": "object",
+          "required": [
+            "started_before_transport",
+            "terminal_count",
+            "terminal_outcomes",
+            "reserved_writer_only"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "started_before_transport": {
+              "const": true
+            },
+            "terminal_count": {
+              "const": "exactly_one"
+            },
+            "terminal_outcomes": {
+              "const": [
+                "succeeded",
+                "failed",
+                "cancelled",
+                "outcome_unknown"
+              ]
+            },
+            "reserved_writer_only": {
+              "const": true
+            }
+          }
+        },
+        "mvp_boundary": {
+          "type": "object",
+          "required": [
+            "minimum_transport_implementations",
+            "required_roles",
+            "real_loop",
+            "agent_specific_main_flow"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "minimum_transport_implementations": {
+              "const": 3
+            },
+            "required_roles": {
+              "const": [
+                "planner",
+                "executor",
+                "reviewer"
+              ]
+            },
+            "real_loop": {
+              "const": "planner_executor_reviewer"
+            },
+            "agent_specific_main_flow": {
+              "const": false
+            }
+          }
+        }
+      }
+    },
+    "protocol_examples": {
+      "type": "object",
+      "required": [
+        "dispatch_envelope",
+        "session_mapping",
+        "ordered_events"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "dispatch_envelope": {
+          "type": "object",
+          "required": [
+            "version",
+            "contract",
+            "fixture_only",
+            "execution_authorized",
+            "authorization_source",
+            "dispatch_id",
+            "plan_id",
+            "plan_version",
+            "run_id",
+            "attempt_id",
+            "work_item_id",
+            "target",
+            "expected_state",
+            "instruction_artifact",
+            "input_artifacts",
+            "readiness_evidence",
+            "approval_evidence",
+            "lease",
+            "idempotency_key",
+            "deadline_at"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "const": 1
+            },
+            "contract": {
+              "const": "external-agent-dispatch/v1"
+            },
+            "fixture_only": {
+              "const": true
+            },
+            "execution_authorized": {
+              "const": false
+            },
+            "authorization_source": {
+              "const": "harness_control_plane"
+            },
+            "dispatch_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "plan_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "plan_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "run_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "attempt_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "work_item_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "target": {
+              "type": "object",
+              "required": [
+                "agent_id",
+                "adapter_id",
+                "adapter_version",
+                "transport_id",
+                "protocol_version",
+                "capability_manifest_id",
+                "capability_id"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "agent_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "adapter_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "adapter_version": {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                "transport_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "protocol_version": {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                "capability_manifest_id": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                },
+                "capability_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                }
+              }
+            },
+            "expected_state": {
+              "type": "object",
+              "required": [
+                "run_projection_id",
+                "work_item_state"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "run_projection_id": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                },
+                "work_item_state": {
+                  "enum": [
+                    "ready",
+                    "awaiting_approval",
+                    "blocked",
+                    "changes_requested",
+                    "failed"
+                  ]
+                }
+              }
+            },
+            "instruction_artifact": {
+              "type": "object",
+              "required": [
+                "artifact_id",
+                "artifact_type",
+                "digest",
+                "media_type",
+                "size_bytes"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "artifact_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "artifact_type": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                },
+                "media_type": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "size_bytes": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1073741824
+                }
+              }
+            },
+            "input_artifacts": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "type": "object",
+                "required": [
+                  "artifact_id",
+                  "artifact_type",
+                  "digest",
+                  "media_type",
+                  "size_bytes"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "artifact_id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                  },
+                  "artifact_type": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                  },
+                  "digest": {
+                    "type": "string",
+                    "pattern": "^sha256:[a-f0-9]{64}$"
+                  },
+                  "media_type": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "size_bytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1073741824
+                  }
+                }
+              }
+            },
+            "readiness_evidence": {
+              "type": "object",
+              "required": [
+                "evidence_id",
+                "status",
+                "source",
+                "observed_at",
+                "expires_at",
+                "agent_id",
+                "adapter_id",
+                "adapter_version",
+                "transport_id",
+                "protocol_version",
+                "capability_manifest_id",
+                "capability_id"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "evidence_id": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                },
+                "status": {
+                  "enum": [
+                    "ready",
+                    "blocked",
+                    "unknown",
+                    "stale"
+                  ]
+                },
+                "source": {
+                  "enum": [
+                    "adapter_observation",
+                    "transport_handshake",
+                    "operator_attestation"
+                  ]
+                },
+                "observed_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "maxLength": 64
+                },
+                "expires_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "maxLength": 64
+                },
+                "agent_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "adapter_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "adapter_version": {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                "transport_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "protocol_version": {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                "capability_manifest_id": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                },
+                "capability_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                }
+              }
+            },
+            "approval_evidence": {
+              "type": "object",
+              "required": [
+                "decision_id",
+                "issuer",
+                "status",
+                "target",
+                "issued_at",
+                "expires_at",
+                "revoked_at",
+                "binding_digest",
+                "idempotency_key"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "decision_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "issuer": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "issuer_id"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "local_operator",
+                        "harness_policy"
+                      ]
+                    },
+                    "issuer_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    }
+                  }
+                },
+                "status": {
+                  "enum": [
+                    "pending",
+                    "granted",
+                    "denied",
+                    "expired",
+                    "revoked"
+                  ]
+                },
+                "target": {
+                  "type": "object",
+                  "required": [
+                    "plan_id",
+                    "plan_version",
+                    "run_id",
+                    "run_projection_id",
+                    "attempt_id",
+                    "work_item_id",
+                    "expected_state",
+                    "adapter_id",
+                    "capability_id"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "plan_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    },
+                    "plan_version": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "run_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    },
+                    "run_projection_id": {
+                      "type": "string",
+                      "pattern": "^sha256:[a-f0-9]{64}$"
+                    },
+                    "attempt_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    },
+                    "work_item_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    },
+                    "expected_state": {
+                      "enum": [
+                        "ready",
+                        "awaiting_approval",
+                        "blocked",
+                        "changes_requested",
+                        "failed"
+                      ]
+                    },
+                    "adapter_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    },
+                    "capability_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    }
+                  }
+                },
+                "issued_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "maxLength": 64
+                },
+                "expires_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "maxLength": 64
+                },
+                "revoked_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "maxLength": 64
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "binding_digest": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                },
+                "idempotency_key": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                }
+              }
+            },
+            "lease": {
+              "type": "object",
+              "required": [
+                "lease_id",
+                "scope",
+                "expires_at"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "lease_id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                "scope": {
+                  "const": "run_attempt"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "maxLength": 64
+                }
+              }
+            },
+            "idempotency_key": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "deadline_at": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 64
+            }
+          }
+        },
+        "session_mapping": {
+          "type": "object",
+          "required": [
+            "version",
+            "contract",
+            "fixture_only",
+            "mapping_id",
+            "run_id",
+            "attempt_id",
+            "adapter_id",
+            "external_session_ref",
+            "mapping_state",
+            "created_from_event_id",
+            "last_confirmed_event_id",
+            "reuse_across_attempts"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "const": 1
+            },
+            "contract": {
+              "const": "external-agent-session-mapping/v1"
+            },
+            "fixture_only": {
+              "const": true
+            },
+            "mapping_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "run_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "attempt_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "adapter_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            "external_session_ref": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "mapping_state": {
+              "enum": [
+                "not_created",
+                "open",
+                "closed",
+                "unknown"
+              ]
+            },
+            "created_from_event_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "last_confirmed_event_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reuse_across_attempts": {
+              "const": false
+            }
+          }
+        },
+        "ordered_events": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "required": [
+              "version",
+              "contract",
+              "fixture_only",
+              "event_id",
+              "dispatch_id",
+              "run_id",
+              "attempt_id",
+              "work_item_id",
+              "sequence",
+              "deduplication_key",
+              "previous_event_id",
+              "event_type",
+              "observed_at",
+              "safe_summary",
+              "artifact_refs",
+              "terminal",
+              "outcome",
+              "reconciliation_required"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "version": {
+                "const": 1
+              },
+              "contract": {
+                "const": "external-agent-event/v1"
+              },
+              "fixture_only": {
+                "const": true
+              },
+              "event_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+              },
+              "dispatch_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+              },
+              "run_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+              },
+              "attempt_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+              },
+              "work_item_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+              },
+              "sequence": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000000
+              },
+              "deduplication_key": {
+                "type": "string",
+                "pattern": "^sha256:[a-f0-9]{64}$"
+              },
+              "previous_event_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "event_type": {
+                "enum": [
+                  "dispatch_accepted",
+                  "session_started",
+                  "progress",
+                  "tool_activity",
+                  "artifact_published",
+                  "review_published",
+                  "cancel_requested",
+                  "cancel_acknowledged",
+                  "transport_disconnected",
+                  "transport_reconnected",
+                  "terminal_succeeded",
+                  "terminal_failed",
+                  "terminal_cancelled",
+                  "terminal_outcome_unknown"
+                ]
+              },
+              "observed_at": {
+                "type": "string",
+                "format": "date-time",
+                "maxLength": 64
+              },
+              "safe_summary": {
+                "type": "string",
+                "maxLength": 512
+              },
+              "artifact_refs": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "artifact_id",
+                    "artifact_type",
+                    "digest",
+                    "media_type",
+                    "size_bytes"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "artifact_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    },
+                    "artifact_type": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+                    },
+                    "digest": {
+                      "type": "string",
+                      "pattern": "^sha256:[a-f0-9]{64}$"
+                    },
+                    "media_type": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128
+                    },
+                    "size_bytes": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1073741824
+                    }
+                  }
+                }
+              },
+              "terminal": {
+                "type": "boolean"
+              },
+              "outcome": {
+                "enum": [
+                  "none",
+                  "succeeded",
+                  "failed",
+                  "cancelled",
+                  "outcome_unknown"
+                ]
+              },
+              "reconciliation_required": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "failure_matrix": {
+      "type": "array",
+      "minItems": 25,
+      "maxItems": 25,
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "phase",
+          "disposition",
+          "retryable",
+          "safe_message_zh"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "identity_binding_mismatch",
+              "contract_version_unsupported",
+              "capability_not_declared",
+              "readiness_missing",
+              "readiness_expired",
+              "readiness_binding_drift",
+              "session_mapping_conflict",
+              "approval_missing",
+              "approval_not_granted",
+              "approval_expired",
+              "approval_revoked",
+              "approval_binding_drift",
+              "expected_state_stale",
+              "lease_unavailable",
+              "idempotency_replay",
+              "transport_unavailable",
+              "dispatch_rejected",
+              "event_duplicate_conflict",
+              "event_sequence_gap",
+              "transport_disconnected",
+              "cancel_unsupported",
+              "cancel_outcome_unknown",
+              "artifact_integrity_failed",
+              "review_contract_invalid",
+              "terminal_audit_conflict"
+            ]
+          },
+          "phase": {
+            "enum": [
+              "binding",
+              "pre_dispatch",
+              "dispatch",
+              "event_collection",
+              "cancellation",
+              "artifact_collection",
+              "review_collection",
+              "audit"
+            ]
+          },
+          "disposition": {
+            "enum": [
+              "blocked",
+              "failed",
+              "recovery_required",
+              "return_prior_result"
+            ]
+          },
+          "retryable": {
+            "type": "boolean"
+          },
+          "safe_message_zh": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        }
+      }
+    }
+  }
+}

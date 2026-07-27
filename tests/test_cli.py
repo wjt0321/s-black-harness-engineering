@@ -351,3 +351,125 @@ def test_cli_task_events_missing(capsys):
     captured = capsys.readouterr()
     assert code == 4
     assert "NEEDS_INPUT" in captured.out
+
+
+def test_cli_external_agent_status_inspect_forwards_only_fixed_reader_inputs(
+    capsys,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[Path, str, int | None]] = []
+
+    class Result:
+        def to_dict(self) -> dict[str, object]:
+            return {
+                "status": "pass",
+                "schema_version": "control-plane/external-agent-live-status-inspection/v1",
+                "observation_status": "observed",
+            }
+
+        def exit_code(self) -> int:
+            return 0
+
+    def inspect(
+        root: Path,
+        evaluated_at: str,
+        *,
+        expected_after_generation: int | None = None,
+    ) -> Result:
+        calls.append((root, evaluated_at, expected_after_generation))
+        return Result()
+
+    monkeypatch.setattr(cli, "inspect_external_agent_live_status", inspect)
+    code = main(
+        [
+            "--root",
+            str(ROOT),
+            "orchestration",
+            "external-agent",
+            "status",
+            "inspect",
+            "--evaluated-at",
+            "2026-07-27T08:00:05Z",
+            "--expected-after-generation",
+            "7",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    assert calls == [(ROOT, "2026-07-27T08:00:05Z", 7)]
+    assert json.loads(capsys.readouterr().out)["observation_status"] == "observed"
+
+
+@pytest.mark.parametrize("override", ["--snapshot-file", "--ttl-seconds", "--adapter-id"])
+def test_cli_external_agent_status_inspect_rejects_boundary_overrides(override: str) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(
+            [
+                "orchestration",
+                "external-agent",
+                "status",
+                "inspect",
+                "--evaluated-at",
+                "2026-07-27T08:00:05Z",
+                override,
+                "unsafe",
+            ]
+        )
+    assert exc.value.code == 2
+
+
+def test_cli_external_agent_status_human_output_is_chinese_first(
+    capsys,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Result:
+        def to_dict(self) -> dict[str, object]:
+            return {
+                "status": "pass",
+                "observation_status": "unavailable",
+                "gui_projection": {
+                    "status_label_zh": "目标 Runner 未观察到",
+                    "readiness": {"status": "unknown"},
+                },
+                "findings": [],
+            }
+
+        def exit_code(self) -> int:
+            return 0
+
+    monkeypatch.setattr(cli, "inspect_external_agent_live_status", lambda *_args, **_kwargs: Result())
+
+    code = main(
+        [
+            "orchestration",
+            "external-agent",
+            "status",
+            "inspect",
+            "--evaluated-at",
+            "2026-07-27T08:00:05Z",
+        ]
+    )
+    output = capsys.readouterr().out
+
+    assert code == 0
+    assert "外部 Agent 状态" in output
+    assert "目标 Runner 未观察到" in output
+    assert "就绪状态=unknown" in output
+
+
+def test_cli_external_agent_status_rejects_negative_previous_generation() -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(
+            [
+                "orchestration",
+                "external-agent",
+                "status",
+                "inspect",
+                "--evaluated-at",
+                "2026-07-27T08:00:05Z",
+                "--expected-after-generation",
+                "-1",
+            ]
+        )
+    assert exc.value.code == 2

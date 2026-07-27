@@ -14,7 +14,7 @@ The target product is a GUI-first, local-first control plane for external Agents
 
 ## Current Status
 
-Stage 81 is complete. The repository now provides:
+Stage 85 is complete and archived. The repository now provides:
 
 - a shared Agent socket registry, capability routing, and explicit role bindings;
 - validated multi-Agent collaboration plans with work items, dependencies, handoffs, artifacts, and review gates;
@@ -26,9 +26,11 @@ Stage 81 is complete. The repository now provides:
 - checkpoint action eligibility, exact fixture approval bindings, and non-executable idempotent command candidates;
 - a current operator inbox that only aggregates latest attempts/reviews/handoffs, pending approvals, and stable stale-target reasons;
 - Chinese Control Panel run/action/inbox projections with operator controls permanently disabled;
-- single-work-item dispatch proposals, ACP readiness evidence foundations, and audit boundaries.
+- single-work-item dispatch proposals, ACP readiness evidence foundations, and audit boundaries;
+- a transport-neutral External Agent adapter contract, a 25-code failure matrix, and a bounded GUI live-read-model fixture;
+- the first `omp-acp` read-only live-status reader, with a fixed atomic snapshot, a 15-second TTL, bounded stable reads, exact identity/producer binding, normalized evidence, and fail-closed GUI mapping.
 
-The board still cannot start a real Kimi, Claude, or OMP collaboration. Even when the current inbox reports `action_eligible=true`, it remains `execution_authorized=false`, `dispatch_eligible=false`, and `execution=not_executed`. The next product milestone is **Stage 82 External Agent Adapter Contract and MVP Boundary**: freeze the shared identity, capability, readiness, session, dispatch, event, cancellation, artifact, and recovery contract, with approval safety treated as part of real dispatch authority. Stage 82 still does not invoke an Agent, start a session, or add a real operation.
+The board still cannot start a real Kimi, Claude, or OMP collaboration. Stage 84 implemented the fixed status reader, and Stage 85 completed the collection design. The next milestone will connect the real OMP/Pi status source through the atomic snapshot reader into the Chinese Control Panel. Its entry is prepared, but implementation has not started.
 
 Two limited Windows real-execution operations remain available underneath: fixed Git status and fixed Pi print. Both use explicit authorization, fixed arguments, a machine-local lease, execution audit, and Windows Job Object process-tree containment. They are security infrastructure, not the product mainline.
 
@@ -67,7 +69,7 @@ See [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md) for the full CLI refe
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current state and recovery order.
 - [`docs/130-gui-first-external-agent-control-plane-target.md`](docs/130-gui-first-external-agent-control-plane-target.md): durable GUI-first external-Agent target, MVP boundary, and anti-drift checklist.
-- [`docs/129-stage81-current-operator-inbox-and-approval-collection.md`](docs/129-stage81-current-operator-inbox-and-approval-collection.md): current fact source for the operator inbox, approval collection, stale-target blocking, and the read-only control projection.
+- [`docs/135-next-milestone-real-status-integration.md`](docs/135-next-milestone-real-status-integration.md): next-milestone entry for connecting real OMP/Pi status to the Chinese Control Panel.
 - [`docs/00-index.md`](docs/00-index.md): topic-based navigation.
 - [`docs/02-roadmap.md`](docs/02-roadmap.md): completed capability packages and next candidates.
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md): latest real-execution fact source.

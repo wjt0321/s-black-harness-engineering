@@ -13,6 +13,13 @@ import re
 import sys
 from pathlib import Path
 
+# Direct script execution places ``tools/`` rather than the repository root on
+# sys.path. Add the root deterministically so the documented command works
+# without requiring an ambient PYTHONPATH or an editable installation.
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPOSITORY_ROOT))
+
 from agent_runtime.loader import is_safe_to_read, normalize_path
 
 
