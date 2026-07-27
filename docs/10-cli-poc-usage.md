@@ -2686,9 +2686,11 @@ AGENT_RUNTIME_POSTFLIGHT_MODE=summary
 
 启用后，extension 在 Pi/OMP 工具执行完成后用当前 `event.input` 重跑 `pi-bridge preflight`，并向 tool result 追加一个 value-free 摘要块。摘要只包含 hashes、decision、block counts、text char count 与原始 `isError`；不包含 path、command、tool output 或 details。不写 ledger、不改 `isError`，也不证明 Harness 执行了工具。事实源为 `docs/archive/103-pi-postflight-audit-projection.md`。
 
-## 外部 Agent 固定 Live Status Reader（Stage 84）
+## 外部智能体固定实时状态读取
 
-Stage 84 新增一个只读 inspection 命令。它只读取固定 `.runtime/external-agent-status/omp-acp.v1.json`，不接受 snapshot path、TTL、adapter、producer 或 transport override：
+### 阶段 84 兼容配置
+
+不指定 `--profile` 时仍读取阶段 84 的固定 `omp-acp` 快照：
 
 ```bash
 python -m agent_runtime.cli orchestration external-agent status inspect \
@@ -2696,24 +2698,59 @@ python -m agent_runtime.cli orchestration external-agent status inspect \
   --json
 ```
 
-调用方如果已持有上一代 generation，可显式要求新 snapshot 必须前进；reader 不写 replay state：
+该兼容配置在快照缺失时继续失败关闭并返回退出码 2。
+
+### 阶段 86 Pi/OMP 固定配置
+
+Pi 与 OMP 只能从经过审阅的固定配置中选择，不能提供任意文件路径、生产者、适配器、传输或有效期覆盖：
 
 ```bash
 python -m agent_runtime.cli orchestration external-agent status inspect \
-  --evaluated-at 2026-07-27T08:00:05Z \
+  --profile pi-local \
+  --evaluated-at 2026-07-27T11:48:18Z \
+  --json
+
+python -m agent_runtime.cli orchestration external-agent status inspect \
+  --profile omp-local \
+  --evaluated-at 2026-07-27T11:48:18Z \
+  --json
+```
+
+如果调用方已持有上一代 `generation`，可要求新快照必须前进：
+
+```bash
+python -m agent_runtime.cli orchestration external-agent status inspect \
+  --profile pi-local \
+  --evaluated-at 2026-07-27T11:48:18Z \
   --expected-after-generation 7 \
   --json
 ```
 
-边界：
+`pi-local` 与 `omp-local` 的快照缺失表示宿主当前未连接，返回通过和退出码 0；有效活动快照显示“已连接，存在未绑定会话”；超过固定 15 秒有效期或任何结构、身份、摘要、文件稳定性异常都会失败关闭。
 
-- production path 固定，最大 64 KiB，TTL 固定 15 秒；
-- lstat-first，拒绝目录、symlink、Windows reparse point 和 hardlink；
-- descriptor/path identity 与读取前后 size/mtime 必须稳定；
-- strict UTF-8 JSON、无 duplicate key、schema、canonical snapshot digest、producer/target binding 全部 fail closed；
-- runner listed 只生成 `readiness_status=unknown`；missing/unknown 为 unavailable，过期/replay 为 stale；
-- open session 没有 Harness run/attempt mapping 时 blocked，且 GUI session 仍为 `null`；
-- evidence 固定 `sufficient_for_dispatch=false`、`execution_authorized=false`；
-- 当前仓库没有 production snapshot，因此默认会返回 `status_source_missing`（exit 2）；命令不会主动探测 Agent。
+### 中文控制面板接入
 
-事实源：`docs/133-stage84-bounded-atomic-snapshot-reader-implementation.md`。
+静态控制面板只有在提供明确评估时间时才读取 Pi/OMP 固定快照：
+
+```bash
+python -m agent_runtime.cli orchestration control-panel snapshot \
+  --external-agent-evaluated-at 2026-07-27T11:48:18Z \
+  --json
+
+python -m agent_runtime.cli orchestration control-panel render \
+  --external-agent-evaluated-at 2026-07-27T11:48:18Z \
+  > .runtime/stage86-control-panel.html
+```
+
+界面新增“外部智能体 / 实时状态”区段，只展示智能体、当前状态、最后观察时间、证据有效性、不可派发原因和安全说明；不显示进程号、会话标识、端点、提示词、模型、工具输入或原始输出。
+
+### 安全边界
+
+- 生产路径固定，单个快照最大 64 KiB，有效期固定 15 秒；
+- 先检查路径属性，拒绝目录、符号链接、Windows 重解析点、硬链接和非普通文件；
+- 文件描述符/路径身份以及读取前后大小、修改时间必须稳定；
+- 严格 UTF-8 JSON、重复键拒绝、结构、规范摘要、生产者和目标绑定全部失败关闭；
+- 状态证据固定 `sufficient_for_dispatch=false`、`execution_authorized=false`；
+- 命令不会启动 Pi/OMP、创建会话、发送提示词、调用模型、主动探测 ACP 或派发任务。
+
+当前事实源：`docs/archive/135-stage86-pi-omp-live-status-integration.md`。阶段 84 历史实现见 `docs/archive/133-stage84-bounded-atomic-snapshot-reader-implementation.md`。

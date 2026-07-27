@@ -37,7 +37,10 @@ from .runtime_report import RuntimeReportResult, check_runtime_report
 from .orchestration_adapter import AdapterDetailResult, AdapterListResult, get_adapter, list_adapters
 from .orchestration_socket import SocketDetailResult, SocketListResult, get_socket, list_sockets
 from .orchestration_acp_readiness import collect_acp_readiness
-from .orchestration_external_agent_live_status import inspect_external_agent_live_status
+from .orchestration_external_agent_live_status import (
+    FIXED_STATUS_PROFILES,
+    inspect_external_agent_live_status,
+)
 from .orchestration_manual_board import inspect_manual_board
 from .orchestration_collaboration import inspect_collaboration_plan, validate_collaboration_plan
 from .orchestration_collaboration_run_state import inspect_collaboration_run_state
@@ -1594,6 +1597,7 @@ def _cmd_orchestration_control_panel_snapshot(args: argparse.Namespace) -> int:
         collaboration_run_file=args.collaboration_run_file,
         collaboration_action_file=args.collaboration_action_file,
         collaboration_inbox_file=args.collaboration_inbox_file,
+        external_agent_evaluated_at=args.external_agent_evaluated_at,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1613,6 +1617,7 @@ def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
         collaboration_run_file=args.collaboration_run_file,
         collaboration_action_file=args.collaboration_action_file,
         collaboration_inbox_file=args.collaboration_inbox_file,
+        external_agent_evaluated_at=args.external_agent_evaluated_at,
     )
     print(render_control_panel_html(result.to_dict()))
     return result.exit_code()
@@ -3011,12 +3016,13 @@ def _cmd_orchestration_external_agent_status_inspect(args: argparse.Namespace) -
         _root_path(args),
         args.evaluated_at,
         expected_after_generation=args.expected_after_generation,
+        profile_id=args.profile,
     )
     payload = result.to_dict()
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
-        print("外部 Agent 状态")
+        print("外部智能体状态")
         print(f"观察状态={payload['observation_status']}")
         projection = payload.get("gui_projection") or {}
         if projection:
@@ -3905,6 +3911,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional fixture-backed current operator inbox JSON",
     )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--external-agent-evaluated-at",
+        default=None,
+        help="可选：显式、带时区的 Pi/OMP 状态评估时间；提供后显示真实只读状态",
+    )
     _add_global_args(orchestration_control_panel_snapshot_parser)
     orchestration_control_panel_snapshot_parser.set_defaults(
         func=_cmd_orchestration_control_panel_snapshot
@@ -3949,6 +3960,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--collaboration-inbox-file",
         default=None,
         help="Optional fixture-backed current operator inbox JSON",
+    )
+    orchestration_control_panel_render_parser.add_argument(
+        "--external-agent-evaluated-at",
+        default=None,
+        help="可选：显式、带时区的 Pi/OMP 状态评估时间；提供后显示真实只读状态",
     )
     _add_global_args(orchestration_control_panel_render_parser)
     orchestration_control_panel_render_parser.set_defaults(
@@ -4544,19 +4560,25 @@ def build_parser() -> argparse.ArgumentParser:
         command_parser.set_defaults(func=_cmd_orchestration_collaboration_dispatch)
 
     orchestration_external_agent_parser = orchestration_subparsers.add_parser(
-        "external-agent", help="读取固定外部 Agent 状态快照，不主动探测运行时"
+        "external-agent", help="读取固定外部智能体状态快照，不主动探测运行时"
     )
     orchestration_external_agent_subparsers = orchestration_external_agent_parser.add_subparsers(
         dest="external_agent_command", required=True
     )
     orchestration_external_agent_status_parser = orchestration_external_agent_subparsers.add_parser(
-        "status", help="读取外部 Agent 只读状态"
+        "status", help="读取外部智能体只读状态"
     )
     orchestration_external_agent_status_subparsers = orchestration_external_agent_status_parser.add_subparsers(
         dest="external_agent_status_command", required=True
     )
     orchestration_external_agent_status_inspect_parser = orchestration_external_agent_status_subparsers.add_parser(
         "inspect", help="校验并投影固定 atomic snapshot"
+    )
+    orchestration_external_agent_status_inspect_parser.add_argument(
+        "--profile",
+        choices=tuple(FIXED_STATUS_PROFILES),
+        default="omp-acp",
+        help="固定已审阅状态目标：omp-acp、pi-local 或 omp-local",
     )
     orchestration_external_agent_status_inspect_parser.add_argument(
         "--evaluated-at", required=True, help="显式、带时区的评估时间"

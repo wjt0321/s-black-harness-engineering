@@ -21,6 +21,7 @@ from .orchestration_collaboration_operator_inbox import (
     inspect_collaboration_operator_inbox,
 )
 from .orchestration_manual_board import inspect_manual_board
+from .orchestration_external_agent_live_status import inspect_external_agent_live_status
 from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
 from .orchestration_artifact import list_artifacts
@@ -297,6 +298,7 @@ def build_control_panel_snapshot(
     collaboration_run_file: str | None = None,
     collaboration_action_file: str | None = None,
     collaboration_inbox_file: str | None = None,
+    external_agent_evaluated_at: str | None = None,
 ) -> ControlPanelSnapshot:
     """Aggregate existing safe read models without executing or writing."""
     overview = _section(
@@ -399,6 +401,60 @@ def build_control_panel_snapshot(
         "artifacts": artifacts,
         "reports": reports,
     }
+    if external_agent_evaluated_at is not None:
+        live_results = [
+            inspect_external_agent_live_status(
+                root,
+                external_agent_evaluated_at,
+                profile_id=profile_id,
+            )
+            for profile_id in ("pi-local", "omp-local")
+        ]
+        live_findings = [
+            finding.to_dict()
+            for result in live_results
+            for finding in result.findings
+        ]
+        live_status = max(
+            (result.status for result in live_results),
+            key=lambda value: _STATUS_RANK.get(value, 4),
+            default="pass",
+        )
+        sections["external_agents"] = {
+            "status": live_status,
+            "scope": "runtime",
+            "availability": "live_read_only",
+            "evaluated_at": external_agent_evaluated_at,
+            "dispatch_authorized": False,
+            "agents": [
+                result.gui_projection
+                for result in live_results
+                if result.gui_projection is not None
+            ],
+            "observations": [
+                {
+                    "profile_id": result.profile_id,
+                    "observed_at": (
+                        result.evidence.get("observed_at")
+                        if result.evidence is not None
+                        else None
+                    ),
+                    "expires_at": (
+                        result.evidence.get("expires_at")
+                        if result.evidence is not None
+                        else None
+                    ),
+                    "evidence_valid": bool(
+                        result.evidence is not None
+                        and result.gui_projection
+                        and result.gui_projection.get("readiness", {}).get("binding_valid")
+                    ),
+                }
+                for result in live_results
+            ],
+            "findings": live_findings,
+            "safe_summary_zh": "仅展示 Pi/OMP 宿主进程内扩展发布的安全状态；不授予派发或执行权限。",
+        }
     if collaboration_file is not None:
         sections["collaboration"] = _section(
             inspect_collaboration_plan(root, collaboration_file).to_dict(),
@@ -508,6 +564,8 @@ def build_control_panel_snapshot(
     source: dict[str, Any] = {
         "envelope_file": _safe_envelope_reference(root, envelope_file),
     }
+    if external_agent_evaluated_at is not None:
+        source["external_agent_evaluated_at"] = external_agent_evaluated_at
     if collaboration_file is not None:
         source["collaboration_file"] = _safe_envelope_reference(root, collaboration_file)
     if dispatch_file is not None:
@@ -1960,14 +2018,14 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     )
 
     section_names = [name for name in _SECTION_ORDER if name in sections]
-    for optional_section in ("collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
+    for optional_section in ("external_agents", "collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
         if optional_section in sections:
             section_names.append(optional_section)
     nav_labels = {
         "overview": "总览", "tasks": "任务", "adapters": "适配器", "automation": "自动化",
         "runs": "运行记录", "approvals": "审批", "artifacts": "产物", "reports": "报告",
         "collaboration": "协作计划", "dispatch": "派发资格", "manual_board": "人工看板",
-        "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
+        "external_agents": "外部智能体", "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
     }
     nav = "".join(
         f'<a href="#{name.replace("_", "-")}">{_escape(nav_labels.get(name, name))}</a>'
@@ -2145,6 +2203,49 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
             "</section>",
         ]
     )
+
+    external_agents = sections.get("external_agents")
+    if external_agents is not None:
+        observations = {
+            item.get("profile_id"): item
+            for item in external_agents.get("observations", [])
+        }
+        live_rows = []
+        for agent in external_agents.get("agents", []):
+            observation = observations.get(agent.get("agent_id"), {})
+            readiness = agent.get("readiness", {})
+            live_rows.append(
+                {
+                    "display_name_zh": agent.get("display_name_zh"),
+                    "status_label_zh": agent.get("status_label_zh"),
+                    "observed_at": observation.get("observed_at") or "尚未观察",
+                    "evidence_valid": "是" if observation.get("evidence_valid") else "否",
+                    "blocked_reason_code": agent.get("blocked_reason_code") or "无",
+                    "dispatch_authorized": "否",
+                    "safe_summary_zh": agent.get("safe_summary_zh"),
+                }
+            )
+        section_html.extend(
+            [
+                '<section class="panel-section" id="external-agents">',
+                _section_header("15", "外部智能体 / 实时状态", external_agents),
+                _table(
+                    caption="Pi/OMP 真实只读状态",
+                    columns=(
+                        ("display_name_zh", "智能体"),
+                        ("status_label_zh", "当前状态"),
+                        ("observed_at", "最后观察时间"),
+                        ("evidence_valid", "证据有效"),
+                        ("blocked_reason_code", "不可派发原因"),
+                        ("dispatch_authorized", "允许派发"),
+                        ("safe_summary_zh", "安全说明"),
+                    ),
+                    rows=live_rows,
+                    empty_message="尚未获得 Pi/OMP 状态。",
+                ),
+                "</section>",
+            ]
+        )
 
     collaboration = sections.get("collaboration")
     if collaboration is not None:

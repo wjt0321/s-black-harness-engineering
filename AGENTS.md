@@ -20,7 +20,7 @@ python -m agent_runtime.cli doctor
 
 ## 当前能力与边界
 
-项目是 Python 3.11+、GUI-first 目标的本地多 Agent Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；阶段 85 已完成并归档；下一里程碑入口为 `docs/135-next-milestone-real-status-integration.md`，尚未授权启动实施。
+项目是 Python 3.11+、中文图形界面优先目标的本地多智能体 Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；阶段 86 已完成并归档，事实源为 `docs/archive/135-stage86-pi-omp-live-status-integration.md`；Pi/OMP 被动状态链路、中文控制面板和真实连接/关闭验收均已通过。
 
 允许的真实执行仅有：
 
@@ -69,6 +69,7 @@ NEVER：
 | `docs/21-controlled-write-boundaries.md` | 写入边界 |
 | `docs/130-gui-first-external-agent-control-plane-target.md` | 长期产品目标、MVP 边界与反偏航检查 |
 | `docs/111-pi-controlled-dry-run-print-implementation.md` | 当前 Pi 执行事实源 |
+| `docs/archive/135-stage86-pi-omp-live-status-integration.md` | Pi/OMP 只读状态接入归档事实源 |
 
 ## 验证契约
 

@@ -357,7 +357,7 @@ def test_cli_external_agent_status_inspect_forwards_only_fixed_reader_inputs(
     capsys,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    calls: list[tuple[Path, str, int | None]] = []
+    calls: list[tuple[Path, str, int | None, str]] = []
 
     class Result:
         def to_dict(self) -> dict[str, object]:
@@ -375,8 +375,9 @@ def test_cli_external_agent_status_inspect_forwards_only_fixed_reader_inputs(
         evaluated_at: str,
         *,
         expected_after_generation: int | None = None,
+        profile_id: str = "omp-acp",
     ) -> Result:
-        calls.append((root, evaluated_at, expected_after_generation))
+        calls.append((root, evaluated_at, expected_after_generation, profile_id))
         return Result()
 
     monkeypatch.setattr(cli, "inspect_external_agent_live_status", inspect)
@@ -397,8 +398,84 @@ def test_cli_external_agent_status_inspect_forwards_only_fixed_reader_inputs(
     )
 
     assert code == 0
-    assert calls == [(ROOT, "2026-07-27T08:00:05Z", 7)]
+    assert calls == [(ROOT, "2026-07-27T08:00:05Z", 7, "omp-acp")]
     assert json.loads(capsys.readouterr().out)["observation_status"] == "observed"
+
+
+
+
+def test_cli_external_agent_status_accepts_only_reviewed_pi_profile(
+    capsys,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+
+    class Result:
+        def to_dict(self) -> dict[str, object]:
+            return {"status": "pass", "observation_status": "unavailable"}
+
+        def exit_code(self) -> int:
+            return 0
+
+    def inspect(*_args, profile_id: str, **_kwargs):
+        calls.append(profile_id)
+        return Result()
+
+    monkeypatch.setattr(cli, "inspect_external_agent_live_status", inspect)
+    code = main(
+        [
+            "orchestration",
+            "external-agent",
+            "status",
+            "inspect",
+            "--profile",
+            "pi-local",
+            "--evaluated-at",
+            "2026-07-27T08:00:05Z",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    assert calls == ["pi-local"]
+    assert json.loads(capsys.readouterr().out)["observation_status"] == "unavailable"
+
+
+def test_cli_control_panel_forwards_explicit_external_agent_evaluation_time(
+    capsys,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str | None] = []
+
+    class Result:
+        def to_dict(self) -> dict[str, object]:
+            return {"status": "pass", "sections": {}, "summary": {}, "source": {}}
+
+        def render_human(self) -> str:
+            return "控制面板"
+
+        def exit_code(self) -> int:
+            return 0
+
+    def build(*_args, external_agent_evaluated_at: str | None = None, **_kwargs):
+        calls.append(external_agent_evaluated_at)
+        return Result()
+
+    monkeypatch.setattr(cli, "build_control_panel_snapshot", build)
+    code = main(
+        [
+            "orchestration",
+            "control-panel",
+            "snapshot",
+            "--external-agent-evaluated-at",
+            "2026-07-27T08:00:05Z",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    assert calls == ["2026-07-27T08:00:05Z"]
+    assert json.loads(capsys.readouterr().out)["status"] == "pass"
 
 
 @pytest.mark.parametrize("override", ["--snapshot-file", "--ttl-seconds", "--adapter-id"])
@@ -453,7 +530,7 @@ def test_cli_external_agent_status_human_output_is_chinese_first(
     output = capsys.readouterr().out
 
     assert code == 0
-    assert "外部 Agent 状态" in output
+    assert "外部智能体状态" in output
     assert "目标 Runner 未观察到" in output
     assert "就绪状态=unknown" in output
 

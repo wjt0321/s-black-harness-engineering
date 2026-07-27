@@ -113,7 +113,7 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         for action in _nested_parser(external_status, "inspect")._actions
         for option in action.option_strings
     }
-    assert {"--evaluated-at", "--expected-after-generation"} <= external_status_options
+    assert {"--profile", "--evaluated-at", "--expected-after-generation"} <= external_status_options
     assert {
         "--snapshot-file",
         "--ttl-seconds",

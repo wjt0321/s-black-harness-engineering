@@ -204,6 +204,7 @@ def test_external_agent_live_status_contract_is_fixed_read_only_preview() -> Non
     assert entry["key_flags"] == [
         "--evaluated-at",
         "--expected-after-generation",
+        "--profile",
     ]
     assert "fixed" in entry["boundary"].lower()
     assert "does not" in entry["boundary"].lower()

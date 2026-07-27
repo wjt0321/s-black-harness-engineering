@@ -16,17 +16,54 @@ from jsonschema import Draft202012Validator, FormatChecker, SchemaError, Validat
 
 from .result import EXIT_BLOCKED, EXIT_ERROR, EXIT_PASS, Finding
 
-SCHEMA_VERSION = "control-plane/external-agent-live-status-inspection/v1"
-FIXED_SNAPSHOT_PATH = Path(".runtime/external-agent-status/omp-acp.v1.json")
-_BINDING_PATH = Path("adapters/external-agent-live-status-binding.json")
-_BINDING_SCHEMA_PATH = Path("adapters/external-agent-live-status-binding.schema.json")
+SCHEMA_VERSION = "control-plane/external-agent-live-status-inspection/v2"
+
+
+@dataclass(frozen=True)
+class FixedStatusProfile:
+    profile_id: str
+    snapshot_path: Path
+    binding_path: Path
+    binding_schema_path: Path
+    display_name_zh: str
+
+
+_BINDING_SCHEMA_V1_PATH = Path("adapters/external-agent-live-status-binding.schema.json")
+_BINDING_SCHEMA_V2_PATH = Path("adapters/external-agent-live-status-binding.v2.schema.json")
 _SNAPSHOT_SCHEMA_PATH = Path("adapters/external-agent-status-snapshot.schema.json")
 _EVIDENCE_SCHEMA_PATH = Path("adapters/external-agent-live-status-evidence.schema.json")
 _GUI_SCHEMA_PATH = Path("adapters/external-agent-live-read-model.schema.json")
+FIXED_STATUS_PROFILES = {
+    "omp-acp": FixedStatusProfile(
+        profile_id="omp-acp",
+        snapshot_path=Path(".runtime/external-agent-status/omp-acp.v1.json"),
+        binding_path=Path("adapters/external-agent-live-status-binding.json"),
+        binding_schema_path=_BINDING_SCHEMA_V1_PATH,
+        display_name_zh="OMP/Pi ACP 外部智能体",
+    ),
+    "pi-local": FixedStatusProfile(
+        profile_id="pi-local",
+        snapshot_path=Path(".runtime/external-agent-status/pi-local.v1.json"),
+        binding_path=Path("adapters/external-agent-live-status-binding.pi-local.json"),
+        binding_schema_path=_BINDING_SCHEMA_V2_PATH,
+        display_name_zh="Pi 编码智能体",
+    ),
+    "omp-local": FixedStatusProfile(
+        profile_id="omp-local",
+        snapshot_path=Path(".runtime/external-agent-status/omp-local.v1.json"),
+        binding_path=Path("adapters/external-agent-live-status-binding.omp-local.json"),
+        binding_schema_path=_BINDING_SCHEMA_V2_PATH,
+        display_name_zh="OMP 编码智能体",
+    ),
+}
+FIXED_SNAPSHOT_PATH = FIXED_STATUS_PROFILES["omp-acp"].snapshot_path
 _FILE_ATTRIBUTE_REPARSE_POINT = 0x400
 _REVIEWED_CONTRACT_DIGESTS = {
-    _BINDING_SCHEMA_PATH: "sha256:d68fd38cf63aeee074460059e30ea3e6755ad1ef484c9caf8938759d3ace68fd",
-    _BINDING_PATH: "sha256:d2a930dcc452bfcf6624ef115ca8153b12fc0f8a5f0dfbc36a59f34460e2abb7",
+    _BINDING_SCHEMA_V1_PATH: "sha256:d68fd38cf63aeee074460059e30ea3e6755ad1ef484c9caf8938759d3ace68fd",
+    _BINDING_SCHEMA_V2_PATH: "sha256:884a1284c4fdfef1256bef6cbd11655e29f1facfc2c292a93de7247052b073a0",
+    Path("adapters/external-agent-live-status-binding.json"): "sha256:d2a930dcc452bfcf6624ef115ca8153b12fc0f8a5f0dfbc36a59f34460e2abb7",
+    Path("adapters/external-agent-live-status-binding.pi-local.json"): "sha256:5d03fb65a0fccd82b0b8d938800157b589b84258ab873bec16c7b5db706495c8",
+    Path("adapters/external-agent-live-status-binding.omp-local.json"): "sha256:9c20378a451b38a7fe1a3e74f538168693541b9b992ad904b99e47cfed839cb9",
     _SNAPSHOT_SCHEMA_PATH: "sha256:f260aed697f67e4e6f4536c44309affa75d589103a9a7053208cbf53669abf23",
     _EVIDENCE_SCHEMA_PATH: "sha256:423ab29887b225c00441d0b0e64500c5b7e0d6c16b3651c25fc818c221297b95",
     _GUI_SCHEMA_PATH: "sha256:9a5e0fa168b752e2cf4b1436189d397783a046b9dd8408b368bc0029f603c5fa",
@@ -63,10 +100,23 @@ class _DuplicateKeyError(ValueError):
 
 
 def _finding(code: str) -> Finding:
+    warning_codes = {
+        "status_source_missing",
+        "status_snapshot_replayed",
+        "status_observation_expired",
+        "status_target_not_observed",
+        "status_unbound_session_observed",
+    }
+    retry_codes = {
+        "status_source_missing",
+        "status_snapshot_replayed",
+        "status_observation_expired",
+        "status_target_not_observed",
+    }
     return Finding(
         rule_id=code,
-        severity="block" if code != "status_snapshot_replayed" and code != "status_observation_expired" and code != "status_target_not_observed" else "warn",
-        action="deny" if code not in {"status_snapshot_replayed", "status_observation_expired", "status_target_not_observed"} else "retry",
+        severity="warn" if code in warning_codes else "block",
+        action="retry" if code in retry_codes else "deny",
         message=_SAFE_MESSAGES[code],
     )
 
@@ -193,9 +243,15 @@ def _open_snapshot(path: Path) -> BinaryIO:
     return os.fdopen(descriptor, "rb", closefd=True)
 
 
-def _read_fixed_snapshot(root: Path, max_bytes: int) -> bytes:
-    base = root.resolve()
-    path = base / FIXED_SNAPSHOT_PATH
+def _read_fixed_snapshot(
+    root: Path,
+    snapshot_path: Path,
+    max_bytes: int,
+    *,
+    snapshot_root: Path | None = None,
+) -> bytes:
+    base = (snapshot_root or root).resolve()
+    path = base / snapshot_path
     if base not in path.parents:
         raise _ReadFailure("status_source_indirection_blocked")
     _check_parent_components(base, path)
@@ -242,35 +298,48 @@ def _load_contract(root: Path, path: Path) -> dict[str, Any]:
     return _strict_json(data)
 
 
-def _load_binding(root: Path) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
-    documents = {
-        path: _load_contract(root, path)
-        for path in _REVIEWED_CONTRACT_DIGESTS
+def _load_binding(
+    root: Path,
+    profile: FixedStatusProfile,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+    paths = {
+        profile.binding_path,
+        profile.binding_schema_path,
+        _SNAPSHOT_SCHEMA_PATH,
+        _EVIDENCE_SCHEMA_PATH,
+        _GUI_SCHEMA_PATH,
     }
-    for path, expected_digest in _REVIEWED_CONTRACT_DIGESTS.items():
+    documents = {path: _load_contract(root, path) for path in paths}
+    for path in paths:
+        expected_digest = _REVIEWED_CONTRACT_DIGESTS[path]
         if _document_digest(documents[path]) != expected_digest:
             raise ValueError("reviewed contract drift")
-    binding = documents[_BINDING_PATH]
-    binding_schema = documents[_BINDING_SCHEMA_PATH]
+    binding = documents[profile.binding_path]
+    binding_schema = documents[profile.binding_schema_path]
     snapshot_schema = documents[_SNAPSHOT_SCHEMA_PATH]
     evidence_schema = documents[_EVIDENCE_SCHEMA_PATH]
     gui_schema = documents[_GUI_SCHEMA_PATH]
     for schema in (binding_schema, snapshot_schema, evidence_schema, gui_schema):
         Draft202012Validator.check_schema(schema)
     validate(binding, binding_schema, format_checker=FormatChecker())
+    if binding["source_relative_path"] != profile.snapshot_path.as_posix():
+        raise ValueError("profile path drift")
     return binding, snapshot_schema, evidence_schema, gui_schema
 
 
-def _blocked_projection(binding: dict[str, Any] | None) -> dict[str, Any]:
+def _blocked_projection(
+    binding: dict[str, Any] | None,
+    profile: FixedStatusProfile,
+) -> dict[str, Any]:
     target = (binding or {}).get("expected_target", {})
     transport = target.get(
         "transport",
-        {"transport_id": "qwenpaw-acp-runner-omp", "kind": "acp", "protocol_version": "acp/v1"},
+        {"transport_id": "unknown", "kind": "local_process", "protocol_version": "unknown"},
     )
     return {
-        "agent_id": target.get("agent_id", "omp-pi-acp"),
-        "adapter_id": target.get("adapter_id", "omp-acp"),
-        "display_name_zh": "OMP/Pi 外部 Agent",
+        "agent_id": target.get("agent_id", profile.profile_id),
+        "adapter_id": target.get("adapter_id", f"{profile.profile_id}-status"),
+        "display_name_zh": profile.display_name_zh,
         "status": "blocked",
         "status_label_zh": "状态证据绑定无效",
         "transport": transport,
@@ -286,23 +355,71 @@ def _blocked_projection(binding: dict[str, Any] | None) -> dict[str, Any]:
         "session": None,
         "current_work_item_id": None,
         "blocked_reason_code": "readiness_binding_drift",
-        "safe_summary_zh": "外部 Agent 状态不可安全投影。",
+        "safe_summary_zh": "外部智能体状态不可安全投影。",
     }
 
 
-def _projection(evidence: dict[str, Any]) -> dict[str, Any]:
+def _missing_projection(binding: dict[str, Any], profile: FixedStatusProfile) -> dict[str, Any]:
+    target = binding["expected_target"]
+    return {
+        "agent_id": target["agent_id"],
+        "adapter_id": target["adapter_id"],
+        "display_name_zh": profile.display_name_zh,
+        "status": "disconnected",
+        "status_label_zh": "未连接",
+        "transport": target["transport"],
+        "capabilities": [{"capability_id": "live_status.observe", "roles": ["executor"], "label_zh": "只读状态观察"}],
+        "readiness": {
+            "status": "unknown",
+            "status_label_zh": "未连接",
+            "evidence_id": None,
+            "expires_at": None,
+            "binding_valid": True,
+            "safe_summary_zh": "尚未收到宿主进程内扩展发布的状态快照。",
+        },
+        "session": None,
+        "current_work_item_id": None,
+        "blocked_reason_code": "transport_unavailable",
+        "safe_summary_zh": "宿主未运行，或尚未在本项目中加载状态扩展。",
+    }
+
+
+def _projection(
+    evidence: dict[str, Any],
+    profile: FixedStatusProfile,
+) -> dict[str, Any]:
     mapping = {
-        "observed": ("unknown", "unknown", None, "Runner 已列出，未证明就绪"),
-        "unavailable": ("disconnected", "unknown", "transport_unavailable", "目标 Runner 未观察到"),
-        "stale": ("stale", "stale", "readiness_expired", "状态观察已过期"),
+        "observed": ("unknown", "unknown", None, "已连接，尚未证明就绪"),
+        "unavailable": ("disconnected", "unknown", "transport_unavailable", "未连接"),
+        "stale": ("stale", "stale", "readiness_expired", "状态已过期"),
         "blocked": ("blocked", "blocked", "readiness_binding_drift", "状态证据绑定无效"),
     }
     agent_status, readiness_status, blocked_reason, label = mapping[evidence["observation_status"]]
     target = evidence["target"]
+    session = None
+    if evidence["session_state"] == "open" and profile.profile_id != "omp-acp":
+        agent_status = "busy"
+        blocked_reason = "session_mapping_conflict"
+        label = "已连接，存在未绑定会话"
+        session = {
+            "mapping_id": f"{profile.profile_id}.unbound",
+            "state": "open",
+            "state_label_zh": "存在未绑定会话",
+            "external_session_ref": None,
+            "safe_summary_zh": "只观察到宿主会话存在；未读取或保存外部会话标识。",
+        }
+    elif evidence["session_state"] == "closed" and profile.profile_id != "omp-acp":
+        session = {
+            "mapping_id": f"{profile.profile_id}.closed",
+            "state": "closed",
+            "state_label_zh": "会话已关闭",
+            "external_session_ref": None,
+            "safe_summary_zh": "宿主报告会话已关闭。",
+        }
     return {
         "agent_id": target["agent_id"],
         "adapter_id": target["adapter_id"],
-        "display_name_zh": "OMP/Pi 外部 Agent",
+        "display_name_zh": profile.display_name_zh,
         "status": agent_status,
         "status_label_zh": label,
         "transport": target["transport"],
@@ -315,7 +432,7 @@ def _projection(evidence: dict[str, Any]) -> dict[str, Any]:
             "binding_valid": evidence["source_integrity"]["producer_binding_valid"],
             "safe_summary_zh": evidence["safe_summary_zh"],
         },
-        "session": None,
+        "session": session,
         "current_work_item_id": None,
         "blocked_reason_code": blocked_reason,
         "safe_summary_zh": evidence["safe_summary_zh"],
@@ -329,6 +446,8 @@ class ExternalAgentLiveStatusResult:
     evidence: dict[str, Any] | None = None
     gui_projection: dict[str, Any] | None = None
     findings: tuple[Finding, ...] = ()
+    profile_id: str = "omp-acp"
+    snapshot_path: Path = FIXED_SNAPSHOT_PATH
 
     def exit_code(self) -> int:
         if self.status == "pass":
@@ -342,7 +461,10 @@ class ExternalAgentLiveStatusResult:
             "status": self.status,
             "schema_version": SCHEMA_VERSION,
             "observation_status": self.observation_status,
-            "source": {"snapshot_file": FIXED_SNAPSHOT_PATH.as_posix()},
+            "source": {
+                "profile_id": self.profile_id,
+                "snapshot_file": self.snapshot_path.as_posix(),
+            },
             "guarantees": {
                 "deterministic": True,
                 "read_only": True,
@@ -373,12 +495,35 @@ class ExternalAgentLiveStatusResult:
         return payload
 
 
-def _failure(code: str, binding: dict[str, Any] | None = None) -> ExternalAgentLiveStatusResult:
+def _failure(
+    code: str,
+    profile: FixedStatusProfile,
+    binding: dict[str, Any] | None = None,
+) -> ExternalAgentLiveStatusResult:
+    if code == "status_source_missing" and binding is not None and profile.profile_id != "omp-acp":
+        return ExternalAgentLiveStatusResult(
+            status="pass",
+            observation_status="unavailable",
+            gui_projection=_missing_projection(binding, profile),
+            findings=(_finding(code),),
+            profile_id=profile.profile_id,
+            snapshot_path=profile.snapshot_path,
+        )
+    finding = _finding(code)
+    if code == "status_source_missing" and profile.profile_id == "omp-acp":
+        finding = Finding(
+            rule_id=code,
+            severity="block",
+            action="deny",
+            message=_SAFE_MESSAGES[code],
+        )
     return ExternalAgentLiveStatusResult(
         status="blocked",
         observation_status="blocked",
-        gui_projection=_blocked_projection(binding),
-        findings=(_finding(code),),
+        gui_projection=_blocked_projection(binding, profile),
+        findings=(finding,),
+        profile_id=profile.profile_id,
+        snapshot_path=profile.snapshot_path,
     )
 
 
@@ -387,45 +532,58 @@ def inspect_external_agent_live_status(
     evaluated_at: str,
     *,
     expected_after_generation: int | None = None,
+    profile_id: str = "omp-acp",
+    snapshot_root: Path | None = None,
 ) -> ExternalAgentLiveStatusResult:
-    """Inspect the fixed snapshot without starting or contacting an external Agent."""
+    """Inspect one reviewed fixed snapshot without starting or contacting an Agent.
+
+    ``snapshot_root`` exists only for in-process tests. CLI callers cannot set it.
+    """
+    profile = FIXED_STATUS_PROFILES.get(profile_id)
+    if profile is None:
+        raise ValueError(f"unsupported fixed status profile: {profile_id}")
     try:
-        binding, snapshot_schema, evidence_schema, gui_schema = _load_binding(root)
+        binding, snapshot_schema, evidence_schema, gui_schema = _load_binding(root, profile)
     except (OSError, ValueError, json.JSONDecodeError, SchemaError, ValidationError):
-        return _failure("status_producer_binding_missing")
+        return _failure("status_producer_binding_missing", profile)
 
     try:
-        raw = _read_fixed_snapshot(root, binding["max_bytes"])
+        raw = _read_fixed_snapshot(
+            root,
+            profile.snapshot_path,
+            binding["max_bytes"],
+            snapshot_root=snapshot_root,
+        )
     except _ReadFailure as exc:
-        return _failure(exc.code, binding)
+        return _failure(exc.code, profile, binding)
 
     try:
         snapshot = _strict_json(raw)
     except (UnicodeDecodeError, json.JSONDecodeError, ValueError, TypeError):
-        return _failure("status_source_unreadable", binding)
+        return _failure("status_source_unreadable", profile, binding)
     if snapshot.get("complete") is not True:
-        return _failure("status_snapshot_incomplete", binding)
+        return _failure("status_snapshot_incomplete", profile, binding)
     try:
         validate(snapshot, snapshot_schema, format_checker=FormatChecker())
     except (SchemaError, ValidationError):
-        return _failure("status_source_schema_invalid", binding)
+        return _failure("status_source_schema_invalid", profile, binding)
     if snapshot["snapshot_id"] != _canonical_digest(snapshot, "snapshot_id"):
-        return _failure("status_source_schema_invalid", binding)
+        return _failure("status_source_schema_invalid", profile, binding)
 
     if snapshot.get("producer") != binding["expected_producer"]:
         if not snapshot.get("producer") or not snapshot.get("producer", {}).get("producer_binding_id"):
-            return _failure("status_producer_binding_missing", binding)
-        return _failure("status_producer_binding_drift", binding)
+            return _failure("status_producer_binding_missing", profile, binding)
+        return _failure("status_producer_binding_drift", profile, binding)
     if snapshot.get("target") != binding["expected_target"]:
-        return _failure("status_identity_binding_mismatch", binding)
+        return _failure("status_identity_binding_mismatch", profile, binding)
 
     try:
         observed = _parse_time(snapshot["observed_at"])
         evaluated = _parse_time(evaluated_at)
     except (TypeError, ValueError):
-        return _failure("status_source_schema_invalid", binding)
+        return _failure("status_source_schema_invalid", profile, binding)
     if observed > evaluated:
-        return _failure("status_observation_from_future", binding)
+        return _failure("status_observation_from_future", profile, binding)
     expires = observed + timedelta(seconds=binding["ttl_seconds"])
 
     code: str | None = None
@@ -433,7 +591,7 @@ def inspect_external_agent_live_status(
     readiness_status = "unknown"
     presence = snapshot["observation"]["transport_presence"]
     level = "runner_listed"
-    summary = "Runner 已列出，但该 evidence 不证明 readiness、session openability、模型可用或 dispatch authority。"
+    summary = "宿主已被动发布运行状态，但该证据不证明模型可用、会话可派发或执行授权。"
     if expected_after_generation is not None and snapshot["generation"] <= expected_after_generation:
         code = "status_snapshot_replayed"
         observation_status = "stale"
@@ -444,16 +602,17 @@ def inspect_external_agent_live_status(
         observation_status = "stale"
         readiness_status = "stale"
         summary = _SAFE_MESSAGES[code]
-    elif snapshot["observation"]["session_state"] == "open":
-        code = "status_unbound_session_observed"
-        observation_status = "blocked"
-        readiness_status = "blocked"
-        summary = _SAFE_MESSAGES[code]
     elif presence != "listed":
         code = "status_target_not_observed"
         observation_status = "unavailable"
         level = "runner_missing" if presence == "missing" else "runner_presence_unknown"
+        summary = snapshot["observation"]["safe_summary_zh"]
+    elif snapshot["observation"]["session_state"] == "open":
+        code = "status_unbound_session_observed"
         summary = _SAFE_MESSAGES[code]
+        if profile.profile_id == "omp-acp":
+            observation_status = "blocked"
+            readiness_status = "blocked"
 
     evidence: dict[str, Any] = {
         "version": 1,
@@ -484,24 +643,18 @@ def inspect_external_agent_live_status(
     evidence["evidence_id"] = _canonical_digest(evidence, "evidence_id")
     try:
         validate(evidence, evidence_schema, format_checker=FormatChecker())
-        projection = _projection(evidence)
+        projection = _projection(evidence, profile)
         validate(projection, gui_schema["properties"]["agents"]["items"], format_checker=FormatChecker())
     except (SchemaError, ValidationError, KeyError, TypeError):
-        return _failure("status_projection_invalid", binding)
+        return _failure("status_projection_invalid", profile, binding)
 
     findings = (_finding(code),) if code else ()
-    if observation_status == "blocked":
-        return ExternalAgentLiveStatusResult(
-            status="blocked",
-            observation_status=observation_status,
-            evidence=evidence,
-            gui_projection=projection,
-            findings=findings,
-        )
     return ExternalAgentLiveStatusResult(
-        status="pass",
+        status="blocked" if observation_status == "blocked" else "pass",
         observation_status=observation_status,
         evidence=evidence,
         gui_projection=projection,
         findings=findings,
+        profile_id=profile.profile_id,
+        snapshot_path=profile.snapshot_path,
     )

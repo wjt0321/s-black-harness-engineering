@@ -14,7 +14,7 @@
 
 ## 当前状态
 
-项目已完成并归档阶段 85，当前具备：
+项目已完成并归档阶段 86，当前具备：
 
 - 统一 Agent socket registry、capability routing 与显式角色绑定；
 - 可校验的多 Agent collaboration plan，包含 work item、依赖、handoff、artifact 和 review gate；
@@ -28,9 +28,10 @@
 - 中文 Control Panel 运行/操作资格/当前待办投影及固定禁用的操作者控件；
 - 单 work item dispatch proposal、ACP readiness evidence 基础和完整审计边界；
 - transport-neutral 的 External Agent adapter contract、25 项 failure matrix，以及有界的 GUI live read model fixture；
-- `omp-acp` 首个只读 live status reader：固定 atomic snapshot、15 秒 TTL、bounded stable read、严格 identity/producer binding、normalized evidence 与 fail-closed GUI 映射。
+- `omp-acp` 首个只读实时状态读取器：固定原子快照、15 秒有效期、有界稳定读取、严格身份/生产者绑定、归一化证据与失败关闭界面映射；
+- Pi/OMP 项目级进程内状态扩展、单写者租约、5 秒心跳、原子替换，以及中文控制面板“外部智能体 / 实时状态”区段。
 
-看板仍不能启动真实 Kimi、Claude 或 OMP 协作。阶段 84 已实现固定状态文件的安全读取器，阶段 85 已完成状态采集方案并归档。下一里程碑将一次性接通 OMP/Pi 真实状态采集、固定快照、安全读取器和中文控制面板展示；当前入口已准备，但尚未授权启动实施。
+看板仍不能启动真实 Kimi、Claude、Pi 或 OMP 协作。阶段 86 已接通并真实验收 Pi/OMP 的被动状态发布、固定快照、安全读取和中文展示；连接态、关闭态、租约释放和过期映射均已通过。状态证据始终不可用于创建会话、调用模型或派发任务。
 
 底层仍保留两项受限 Windows 真实执行能力：fixed Git status 与 fixed Pi print。两者都经过显式授权、固定参数、machine-local lease、执行审计和 Windows Job Object 进程树回收；它们是安全基础设施，不是产品主线。
 
@@ -40,10 +41,11 @@
 
 - 通用 shell 或任意 adapter execution；
 - POSIX 真实执行；
-- 网络 adapter、长期服务、数据库或自动后台任务；
+- 网络适配器、长期服务、数据库或自动后台任务；
 - Pi read/write/edit/bash 工具授权；
 - 静默读取 `.env`、token、keyring 或其他凭据文件；
-- 未经设计和授权的第三个真实 operation。
+- 未经设计和授权的第三个真实操作；
+- 由 Harness 启动外部智能体、创建会话、调用模型或派发任务。
 
 ## 快速开始
 
@@ -69,7 +71,7 @@ git diff --check
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
 - [`docs/130-gui-first-external-agent-control-plane-target.md`](docs/130-gui-first-external-agent-control-plane-target.md)：GUI-first 外部 Agent 控制面长期目标、MVP 边界和反偏航检查表。
-- [`docs/135-next-milestone-real-status-integration.md`](docs/135-next-milestone-real-status-integration.md)：下一里程碑入口，目标是让 OMP/Pi 真实状态出现在中文控制面板上。
+- [`docs/archive/135-stage86-pi-omp-live-status-integration.md`](docs/archive/135-stage86-pi-omp-live-status-integration.md)：阶段 86 归档事实源，记录 Pi/OMP 真实只读状态接入与验收。
 - [`docs/00-index.md`](docs/00-index.md)：按主题导航。
 - [`docs/02-roadmap.md`](docs/02-roadmap.md)：已完成能力包与下一候选。
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md)：当前最新真实执行事实源。

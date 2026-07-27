@@ -258,10 +258,10 @@ def build_contract_manifest() -> OrchestrationContractManifest:
             "preview",
             "read_only",
             commands=(("orchestration", "external-agent", "status", "inspect"),),
-            key_flags=("--evaluated-at", "--expected-after-generation"),
+            key_flags=("--profile", "--evaluated-at", "--expected-after-generation"),
             boundary=(
-                "Reads only the fixed project-local atomic snapshot and produces non-authorizing evidence; "
-                "does not start a producer, probe a process, connect ACP, open sessions, or dispatch work."
+                "Reads only one reviewed fixed project-local atomic snapshot profile and produces non-authorizing evidence; "
+                "does not accept arbitrary paths, start a producer, probe a process, connect ACP, open sessions, or dispatch work."
             ),
         ),
         _entry(

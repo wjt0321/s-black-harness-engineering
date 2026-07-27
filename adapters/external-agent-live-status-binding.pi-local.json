@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "contract": "external-agent-live-status-binding/v2",
+  "review_status": "reviewed_for_passive_production",
+  "source_relative_path": ".runtime/external-agent-status/pi-local.v1.json",
+  "max_bytes": 65536,
+  "ttl_seconds": 15,
+  "expected_producer": {
+    "producer_id": "pi-local-status-extension",
+    "producer_version": "1.0.0",
+    "producer_binding_id": "sha256:92d5b35968358a77cd7480b53d739bfc7757a9dd01476ecb64c72765f6855590",
+    "source_kind": "adapter_owned_atomic_snapshot"
+  },
+  "expected_target": {
+    "agent_id": "pi-local",
+    "adapter_id": "pi-local-status",
+    "implementation_id": "pi-coding-agent",
+    "adapter_version": "1.0.0",
+    "transport": {
+      "transport_id": "pi-project-extension",
+      "kind": "local_process",
+      "protocol_version": "pi-extension-events/v1"
+    },
+    "capability_manifest_id": "sha256:1f46327208140c47669fb196c76b7a0ccf69dc9f99d67185ca2ecbf7229480f7"
+  },
+  "producer_or_probe_authorized": true,
+  "dispatch_authorized": false
+}

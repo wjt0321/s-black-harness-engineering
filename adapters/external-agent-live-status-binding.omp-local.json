@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "contract": "external-agent-live-status-binding/v2",
+  "review_status": "reviewed_for_passive_production",
+  "source_relative_path": ".runtime/external-agent-status/omp-local.v1.json",
+  "max_bytes": 65536,
+  "ttl_seconds": 15,
+  "expected_producer": {
+    "producer_id": "omp-local-status-extension",
+    "producer_version": "1.0.0",
+    "producer_binding_id": "sha256:75e6db0fd55103aa17825231c1c7a0d344a83f0a5ae470e24a05bf8098688124",
+    "source_kind": "adapter_owned_atomic_snapshot"
+  },
+  "expected_target": {
+    "agent_id": "omp-local",
+    "adapter_id": "omp-local-status",
+    "implementation_id": "oh-my-pi",
+    "adapter_version": "1.0.0",
+    "transport": {
+      "transport_id": "omp-project-extension",
+      "kind": "local_process",
+      "protocol_version": "pi-extension-events/v1"
+    },
+    "capability_manifest_id": "sha256:c23a16241655422936747dae0ce7dcca5251964c9ffef6d1b6ebfb879444cd79"
+  },
+  "producer_or_probe_authorized": true,
+  "dispatch_authorized": false
+}

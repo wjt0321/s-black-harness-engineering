@@ -1,90 +1,85 @@
 # 02 — 路线图
 
-> 本页只记录能力包和下一候选。逐 Stage 历史已归档到 `docs/archive/`，治理前长版见 `archive/snapshots/2026-07-26/02-roadmap.md`。
+> 本页只记录能力包、当前里程碑和下一候选。逐阶段历史已归档到 `docs/archive/`。
 
 ## 已完成能力包
 
-### 1. Guardrail 与账本内核
+### 1. 安全边界与账本内核
 
-- Policy/schema、secret scan、路径与 action gate。
-- Task/Event ledger、Runtime report、execution envelope。
-- Dry-run、plan hash、受控追加、写后校验和失败回滚。
+- 策略、结构校验、敏感信息扫描、路径与动作门禁。
+- 任务/事件账本、运行报告、执行信封。
+- 试运行、计划摘要、受控追加、写后校验和失败回滚。
 
-### 2. Orchestration 控制面
+### 2. 编排控制面
 
-- Source-backed agent/adapter registry。
-- Capability routing、decision trace、profile/workflow/contract 校验。
-- Task/Run/Approval/Artifact read model 与 recovery lineage。
-- 静态只读 Control Panel、one-shot producer/consumer/host 管道。
+- 基于事实源的智能体与适配器注册表。
+- 能力路由、决策轨迹、配置/工作流/契约校验。
+- 任务、运行、审批、产物与恢复链路读取模型。
+- 静态只读中文控制面板和一次性生产/消费/宿主管道。
 
 ### 3. 受控执行基础设施
 
-- Machine-local lease 与 executable trust binding。
-- Started/terminal execution audit、open-attempt recovery、audit v2。
-- Windows Job Object tree containment、bounded stdout/stderr、safe projection。
+- 单机租约与可执行文件信任绑定。
+- 开始/终止审计、未闭合尝试恢复、审计第二版。
+- Windows Job Object 进程树约束、有界标准输出/错误输出和安全投影。
 
-### 4. Agent Socket Registry v1 and Collaboration Planning
+### 4. 多智能体插座与协作计划
 
-- Stage 68 freezes socket admission/lifecycle rules and the deterministic multi-Agent collaboration plan contract: roles, work items, handoffs, expected artifacts, and review gates.
-- Future Agent additions must use the shared registry/socket contract; they cannot add custom routing or UI branches.
-- Stage 68 remains design-only: no plan persistence, readiness probe, or Agent invocation.
+- Pi、Kimi Code、Claude Code、OMP 与 QwenPaw 统一投影为智能体插座。
+- 支持角色、工作项、依赖、交接、预期产物和审阅门禁。
+- 人工计划编辑、确认、导出、样例运行、当前待办和不可执行命令候选均已具备。
 
-### 5. Agent Socket Registry v1
+### 5. 外部智能体只读状态基础
 
-- Pi、Kimi Code、Claude Code、OMP 与 QwenPaw Agent API 统一以 Agent socket 投影进入 control plane。
-- 同一 source-backed adapter registry 继续是唯一事实源；socket 显示 declared capability、invocation mode 和边界，不探测在线状态或调用 Agent。
-- `orchestration socket list` / `orchestration socket inspect <socket_id>` 与 Control Panel adapters 区可见插头拓扑。
+- 统一外部智能体适配器契约和失败矩阵。
+- `omp-acp` 固定原子快照读取器、15 秒有效期、严格身份/生产者绑定和失败关闭界面映射。
+- 阶段 85 已冻结宿主内被动采集、单写者租约、generation、原子替换和停止线。
 
-### 6. Controlled Collaboration Dispatch Foundation
+### 6. 当前真实操作
 
-- 单个 collaboration work item 可生成 schema-validated、content-addressed dispatch proposal。
-- CLI 与 Control Panel 只读展示 `plan_eligible`、`dispatch_eligible`、blocked reasons 和 `execution=not_executed`。
-- ACP readiness evidence 仅冻结静态契约；未实现 collector、eligibility binding 或真实派发。
+- 固定 Git 状态：固定 `git status --short --branch`。
+- 固定 Pi 打印：固定 `pi --print --no-session --no-tools <prompt>`。
 
-### 7. ACP Readiness Evidence Foundation
+两项操作均要求显式 `--commit`，并有单机租约、固定参数、执行审计和 Windows 进程树回收。阶段 86 不新增第三个真实操作。
 
-- ACP socket 显式绑定 runner id，并可从项目内受限 runner-list snapshot 生成内容寻址、带 TTL 的 evidence。
-- collector 仅证明 `available/runner_listed`，不启动 runner、不打开 session、不发送 prompt，也不读取凭据。
-- dispatch 校验证据哈希、socket binding 与过期时间；当前仍固定 `sufficient_for_dispatch=false`、`dispatch_eligible=false`。
+## 最近完成里程碑：阶段 86
 
-### 8. 当前真实 operation
+事实源为 `archive/135-stage86-pi-omp-live-status-integration.md`。已完成：
 
-- fixed Git status：固定 `git status --short --branch`。
-- fixed Pi print：固定 `pi --print --no-session --no-tools <prompt>`。
+1. 核验本机 Pi 0.82.0 和 OMP 1.3.14 的项目级扩展加载位置；
+2. 实现 Pi/OMP 进程内被动状态扩展和公共原子发布器；
+3. 建立两个固定生产绑定及内容摘要校验；
+4. 扩展安全读取器，只允许 `omp-acp`、`pi-local`、`omp-local` 三个审阅配置；
+5. 将 Pi/OMP 状态接入中文控制面板；
+6. 完成缺席态、发布器生命周期、租约、绑定失败隔离和 Pi 扩展加载自动验证；
 
-Stage 62 真实 smoke 已通过 DeepSeek：child exit 0、audit closed、Job accounting 与进程回收完整。当前事实源为 `111-pi-controlled-dry-run-print-implementation.md`。
+真实验收已完成：Pi/OMP 均显示“已连接，存在未绑定会话”，证据有效且不可派发；关闭后均报告会话已关闭、租约释放，并在固定有效期后显示“状态已过期”。
+
+QwenPaw 当前不在首轮实现中。用户确认本机版本为 2.0.1；旧虚拟环境中的 1.1.12.post3 已判定为过期线索。只有 Pi/OMP 阶段 86 验收完成后，才考虑 QwenPaw 的独立兼容接入。
 
 ## 当前停止线
 
-- 不开放通用 shell 或任意 adapter execution。
-- 不开放 POSIX fallback。
-- 不开放网络 adapter、服务、数据库或自动后台执行。
-- Pi 不开放 read/write/edit/bash 工具，也不保存 session。
-- Stage 63–65 的 Pi npm/Node runtime binding 与 runner migration 设计保留为 deferred security work；不再作为当前产品主线。
-- 新增真实 operation、live Agent readiness 或 Agent-to-Agent invocation 必须独立设计、测试和用户授权。
+- 不开放通用 shell、任意适配器执行或 POSIX fallback。
+- 不开放网络适配器、服务、数据库或自动后台执行。
+- 不开放 Pi read/write/edit/bash 工具，也不保存会话。
+- 不由 Harness 启动外部智能体、创建会话、发送提示词或调用模型。
+- 状态证据只证明“观察到”，永远不等于就绪、执行授权或派发授权。
 
-## 下一产品里程碑
+## 下一候选（尚未授权）
 
-阶段 76-85 已完成人工计划看板、样例端到端演示、中文默认界面、协作运行与当前待办、统一外部智能体适配器契约、固定状态读取器，以及宿主内被动状态采集方案设计。阶段 85 已归档。
+按产品价值顺序评估：
 
-下一里程碑入口为 `135-next-milestone-real-status-integration.md`，目标不再是继续设计，而是一次性完成：
+1. 真实审批绑定与单工作项受控派发；
+2. 真实事件、产物与审阅结果回收；
+3. 规划者、执行者、审阅者多智能体闭环；
+4. 实时中文图形界面与桌面封装；
+5. QwenPaw 2.0.1 等其他宿主的只读状态接入。
 
-1. 核验 QwenPaw 宿主真实状态接口；
-2. 实现宿主内被动状态采集器；
-3. 发布固定原子状态快照；
-4. 让现有安全读取器消费真实快照；
-5. 在中文控制面板展示 OMP/Pi 的真实观察状态；
-6. 完成真实但只读的联调和故障验收。
-
-该里程碑尚未授权启动。它不包含创建会话、调用模型、派发任务、独立后台服务或第三个 Harness 真实执行操作。
-
-后续候选顺序保持为：真实审批绑定与单工作项受控派发、真实事件/产物/审阅回收、规划者/执行者/审阅者多智能体闭环、实时中文界面与桌面封装。
-
-阶段 65 的 Pi 受信运行器迁移设计已归档为 `archive/114-pi-bound-runner-migration-design.md`，继续作为延后的安全强化项，不抢占产品主线。人工计划“已确认”不得被解释为派发授权。
+任何候选进入实现前仍需独立边界设计和用户授权。人工计划“已确认”不得被解释为派发授权。
 
 ## 治理原则
 
-- 能合并到现有事实源就不新增 Stage 文档。
-- 已完成的 design、implementation、plan、smoke 和 release notes 立即归档。
+- 能合并到现有事实源就不新增阶段文档。
+- 已完成的设计、实施计划、冒烟验证和发布说明立即归档。
 - `README*`、`AGENTS.md`、`00-index`、`000-stage-digest` 保持短小，只描述当前状态。
 - 版本治理详见 `64-versioning-governance.md`。

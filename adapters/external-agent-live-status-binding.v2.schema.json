@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://s-black.local/schemas/external-agent-live-status-binding-v2.schema.json",
+  "title": "External Agent Live Status Binding v2",
+  "type": "object",
+  "required": [
+    "version",
+    "contract",
+    "review_status",
+    "source_relative_path",
+    "max_bytes",
+    "ttl_seconds",
+    "expected_producer",
+    "expected_target",
+    "producer_or_probe_authorized",
+    "dispatch_authorized"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 2
+    },
+    "contract": {
+      "const": "external-agent-live-status-binding/v2"
+    },
+    "review_status": {
+      "const": "reviewed_for_passive_production"
+    },
+    "source_relative_path": {
+      "type": "string",
+      "pattern": "^\\.runtime/external-agent-status/(?:pi|omp)-local\\.v1\\.json$"
+    },
+    "max_bytes": {
+      "const": 65536
+    },
+    "ttl_seconds": {
+      "const": 15
+    },
+    "expected_producer": {
+      "type": "object",
+      "required": [
+        "producer_id",
+        "producer_version",
+        "producer_binding_id",
+        "source_kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "producer_id": {
+          "enum": [
+            "pi-local-status-extension",
+            "omp-local-status-extension"
+          ]
+        },
+        "producer_version": {
+          "const": "1.0.0"
+        },
+        "producer_binding_id": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "source_kind": {
+          "const": "adapter_owned_atomic_snapshot"
+        }
+      }
+    },
+    "expected_target": {
+      "type": "object",
+      "required": [
+        "agent_id",
+        "adapter_id",
+        "implementation_id",
+        "adapter_version",
+        "transport",
+        "capability_manifest_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {
+          "enum": [
+            "pi-local",
+            "omp-local"
+          ]
+        },
+        "adapter_id": {
+          "enum": [
+            "pi-local-status",
+            "omp-local-status"
+          ]
+        },
+        "implementation_id": {
+          "enum": [
+            "pi-coding-agent",
+            "oh-my-pi"
+          ]
+        },
+        "adapter_version": {
+          "const": "1.0.0"
+        },
+        "transport": {
+          "type": "object",
+          "required": [
+            "transport_id",
+            "kind",
+            "protocol_version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "transport_id": {
+              "enum": [
+                "pi-project-extension",
+                "omp-project-extension"
+              ]
+            },
+            "kind": {
+              "const": "local_process"
+            },
+            "protocol_version": {
+              "const": "pi-extension-events/v1"
+            }
+          }
+        },
+        "capability_manifest_id": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "producer_or_probe_authorized": {
+      "const": true
+    },
+    "dispatch_authorized": {
+      "const": false
+    }
+  }
+}

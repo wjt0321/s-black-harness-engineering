@@ -14,7 +14,7 @@ The target product is a GUI-first, local-first control plane for external Agents
 
 ## Current Status
 
-Stage 85 is complete and archived. The repository now provides:
+Stage 86 is complete and archived. The repository now provides:
 
 - a shared Agent socket registry, capability routing, and explicit role bindings;
 - validated multi-Agent collaboration plans with work items, dependencies, handoffs, artifacts, and review gates;
@@ -28,9 +28,10 @@ Stage 85 is complete and archived. The repository now provides:
 - Chinese Control Panel run/action/inbox projections with operator controls permanently disabled;
 - single-work-item dispatch proposals, ACP readiness evidence foundations, and audit boundaries;
 - a transport-neutral External Agent adapter contract, a 25-code failure matrix, and a bounded GUI live-read-model fixture;
-- the first `omp-acp` read-only live-status reader, with a fixed atomic snapshot, a 15-second TTL, bounded stable reads, exact identity/producer binding, normalized evidence, and fail-closed GUI mapping.
+- the first `omp-acp` read-only live-status reader, with a fixed atomic snapshot, a 15-second TTL, bounded stable reads, exact identity/producer binding, normalized evidence, and fail-closed GUI mapping;
+- project-local in-process Pi/OMP status extensions, a single-writer lease, atomic publication, and a Chinese Control Panel external-agent live-status section.
 
-The board still cannot start a real Kimi, Claude, or OMP collaboration. Stage 84 implemented the fixed status reader, and Stage 85 completed the collection design. The next milestone will connect the real OMP/Pi status source through the atomic snapshot reader into the Chinese Control Panel. Its entry is prepared, but implementation has not started.
+The board still cannot start a real Kimi, Claude, Pi, or OMP collaboration. Stage 86 has connected passive Pi/OMP status publication to fixed snapshots, the safe reader, and the Chinese Control Panel. Real connected-state, closed-state, lease-release, and expiry-mapping acceptance checks have passed. Status evidence never authorizes session creation, model calls, or dispatch.
 
 Two limited Windows real-execution operations remain available underneath: fixed Git status and fixed Pi print. Both use explicit authorization, fixed arguments, a machine-local lease, execution audit, and Windows Job Object process-tree containment. They are security infrastructure, not the product mainline.
 
@@ -69,7 +70,7 @@ See [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md) for the full CLI refe
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md): current state and recovery order.
 - [`docs/130-gui-first-external-agent-control-plane-target.md`](docs/130-gui-first-external-agent-control-plane-target.md): durable GUI-first external-Agent target, MVP boundary, and anti-drift checklist.
-- [`docs/135-next-milestone-real-status-integration.md`](docs/135-next-milestone-real-status-integration.md): next-milestone entry for connecting real OMP/Pi status to the Chinese Control Panel.
+- [`docs/archive/135-stage86-pi-omp-live-status-integration.md`](docs/archive/135-stage86-pi-omp-live-status-integration.md): the archived Stage 86 fact source for real read-only Pi/OMP status integration and acceptance results.
 - [`docs/00-index.md`](docs/00-index.md): topic-based navigation.
 - [`docs/02-roadmap.md`](docs/02-roadmap.md): completed capability packages and next candidates.
 - [`docs/111-pi-controlled-dry-run-print-implementation.md`](docs/111-pi-controlled-dry-run-print-implementation.md): latest real-execution fact source.
