@@ -39,7 +39,7 @@ def _digest(value: object) -> str:
 
 
 def _current_utc_evaluated_at() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def _finding(rule_id: str, message: str, *, validation: bool = False) -> Finding:

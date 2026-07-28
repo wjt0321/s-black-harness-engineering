@@ -14,7 +14,7 @@
 
 ## 当前状态
 
-项目已完成并归档阶段 88，当前具备：
+项目已完成并归档阶段 91，当前具备：
 
 - 统一 Agent socket registry、capability routing 与显式角色绑定；
 - 可校验的多 Agent collaboration plan，包含 work item、依赖、handoff、artifact 和 review gate；
@@ -31,11 +31,13 @@
 - `omp-acp` 首个只读实时状态读取器：固定原子快照、15 秒有效期、有界稳定读取、严格身份/生产者绑定、归一化证据与失败关闭界面映射；
 - Pi/OMP 项目级进程内状态扩展、单写者租约、5 秒心跳、原子替换，以及中文控制面板“外部智能体 / 实时状态”区段；
 - 一次性确认后的单工作项受控派发：只面向用户已打开、工具为空且空闲的 Pi/OMP，会回收有界结果并闭合审计；
-- 固定真实宿主事件、不可变最终文本/JSON 产物、pending 固定恢复，以及人工“通过/要求修改”审阅和中文控制面板投影。
+- 固定真实宿主事件、不可变最终文本/JSON 产物、pending 固定恢复，以及人工“通过/要求修改”审阅和中文控制面板投影；
+- 一次启动授权后的有限 `Pi → OMP → Pi` 或反向自动串行闭环，最终业务决定仍独立由人工确认；
+- 前台中文 GUI 的已登记启动入口：不暴露链路 ID、任务 ID、协作计划或目标；中间自动串行完成后自动路由到最终“通过 / 要求修改”决定。
 
-Harness 仍不会启动、关闭或重启 Kimi、Claude、Pi 或 OMP。阶段 88 已真实验收：Pi 路径完成证据归档并由人工审阅通过，OMP 路径完成证据归档并由人工要求修改；活动工具非空、宿主忙碌、状态漂移、事件链无效、结果不安全或审阅绑定漂移时都会失败关闭。
+Harness 仍不会启动、关闭或重启 Kimi、Claude、Pi 或 OMP。阶段 91 已于 2026-07-28 完成真实 GUI 验收：操作者只作启动和最终“通过 / 要求修改”两次决定，真实 `Pi → OMP → Pi` 自动串行完成后自动弹出最终决定页，最终链路为 `approved`；活动工具非空、宿主忙碌、状态漂移、事件链无效、结果不安全或审阅绑定漂移时都会失败关闭。
 
-当前有三项受限真实能力：fixed Git status、fixed Pi print，以及 Pi/OMP 单工作项派发。三者都需要显式提交、固定输入、machine-local lease 和执行审计；进程类操作继续使用 Windows Job Object 回收。单工作项派发不开放任意命令或 Agent 工具；证据恢复和人工审阅不会自动调用 Agent。
+当前有三项受限真实能力：fixed Git status、fixed Pi print，以及 Pi/OMP 单工作项派发（由阶段 89 有限 wrapper 和阶段 91 已登记 GUI 入口复用）。三者都需要显式提交、固定输入、machine-local lease 和执行审计；进程类操作继续使用 Windows Job Object 回收。GUI 不新增 operation 或通用命令；单工作项派发不开放任意命令或 Agent 工具；证据恢复和人工审阅不会自动调用 Agent。
 
 ## 安全边界
 
@@ -75,6 +77,8 @@ git diff --check
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
 - [`docs/130-gui-first-external-agent-control-plane-target.md`](docs/130-gui-first-external-agent-control-plane-target.md)：GUI-first 外部 Agent 控制面长期目标、MVP 边界和反偏航检查表。
+- [`docs/archive/140-stage91-gui-structured-approval-inbox.md`](docs/archive/140-stage91-gui-structured-approval-inbox.md)：阶段 91 归档事实源，记录无内部标识符输入的 GUI 启动、真实自动串行与最终决定验收。
+- [`docs/archive/139-stage90-live-chinese-control-panel-read-model.md`](docs/archive/139-stage90-live-chinese-control-panel-read-model.md)：阶段 90 归档事实源，记录实时中文控制面读取模型与 GUI 验收。
 - [`docs/archive/137-stage88-external-agent-evidence-and-human-review.md`](docs/archive/137-stage88-external-agent-evidence-and-human-review.md)：阶段 88 归档事实源，记录真实事件、不可变产物、固定恢复与人工审阅。
 - [`docs/archive/136-stage87-single-work-item-controlled-execution.md`](docs/archive/136-stage87-single-work-item-controlled-execution.md)：阶段 87 归档事实源，记录 Pi/OMP 单工作项受控执行与真实验收。
 - [`docs/archive/135-stage86-pi-omp-live-status-integration.md`](docs/archive/135-stage86-pi-omp-live-status-integration.md)：阶段 86 归档事实源，记录 Pi/OMP 真实只读状态接入。

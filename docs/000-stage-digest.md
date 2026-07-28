@@ -4,17 +4,17 @@
 
 ## 当前基线
 
-- 里程碑：阶段 90 实时中文控制面读取模型与只读图形面板已完成并归档；2026-07-28 已完成真实 Pi/OMP 图形验收
-- commit：阶段 89 基线为 `e4bd207`；阶段 90 当前变更尚未提交
+- 里程碑：阶段 91 GUI 结构化审批收件箱已完成并归档；2026-07-28 已完成真实 Pi/OMP 自动串行与最终决定验收
+- commit：当前基线为 `ee991ed`（阶段 90）；阶段 91 变更待提交
 - 日期：2026-07-28
-- 活跃 `docs/` 根目录为 28 份；阶段 90 及此前的阶段事实源均已归档
+- 活跃 `docs/` 根目录为 28 份；阶段 91 及此前的已验收阶段均已归档
 
 ## 当前阶段
 
-- **阶段 90 — 已完成：操作者前台启动中文只读窗口，真实验收确认 Pi/OMP 状态、有限链路摘要与 OMP 关闭后的过期投影。**
-- 归档事实源：`archive/139-stage90-live-chinese-control-panel-read-model.md`。
-- 前序事实源：`archive/138-stage89-bounded-planner-executor-review-design.md`、`archive/137-stage88-external-agent-evidence-and-human-review.md`。
-- GUI 没有派发、批准、最终决定、重试、取消、恢复或宿主控制入口；`--json` 仅构建一次确定性快照。
+- **阶段 91 — 已完成：GUI 不暴露内部标识符；一次启动确认后真实 Pi → OMP → Pi 自动串行，随后自动路由到最终人工决定。**
+- 归档事实源：`archive/140-stage91-gui-structured-approval-inbox.md`。
+- 已验收前序事实源：`archive/139-stage90-live-chinese-control-panel-read-model.md`、`archive/138-stage89-bounded-planner-executor-review-design.md`、`archive/137-stage88-external-agent-evidence-and-human-review.md`。
+- GUI 不新增 operation 或 writer；启动自动装配唯一已登记的验收配置和安全链路 ID，最终页只接受业务结论；`--json` 仍仅构建一次确定性快照。
 
 ## 已冻结边界
 
@@ -38,7 +38,7 @@
 - 由 Harness 启动、关闭或重启外部 Agent；
 - Pi/OMP 的 read/write/edit/bash 或 MCP 工具权限；
 - 自动采纳规划者计划、审阅建议、自动修改或自动批准；
-- 任意项目文件产物回收、GUI 结构化命令通道、有限取消/恢复、QwenPaw 2.0.1 接入。
+- 任意项目文件产物回收、通用 GUI 命令通道、有限取消/恢复、QwenPaw 2.0.1 接入。
 
 ## 下次恢复顺序
 
@@ -46,8 +46,9 @@
 2. `docs/00-index.md`
 3. `docs/02-roadmap.md`
 4. `docs/130-gui-first-external-agent-control-plane-target.md`
-5. `docs/archive/139-stage90-live-chinese-control-panel-read-model.md`
-6. `docs/archive/138-stage89-bounded-planner-executor-review-design.md`
+5. `docs/archive/140-stage91-gui-structured-approval-inbox.md`
+6. `docs/archive/139-stage90-live-chinese-control-panel-read-model.md`
+7. `docs/archive/138-stage89-bounded-planner-executor-review-design.md`
 
 然后运行：
 
@@ -58,6 +59,5 @@ python -m agent_runtime.cli doctor
 
 ## 后续候选（尚未授权）
 
-- GUI 承载既有一次性确认的结构化审批收件箱；
 - 有界取消、恢复或有限并发；
 - QwenPaw 2.0.1 等其他宿主兼容。
