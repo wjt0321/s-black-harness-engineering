@@ -2870,3 +2870,61 @@ python -m agent_runtime.cli orchestration control-panel snapshot \
 - 事件只含固定类型、连续序号、UTC 时间和固定失败码，不携带提示词、工具参数或环境变量；
 - 不开放任意项目文件回收、Agent 工具、网络、数据库、自动审阅或自动重试；
 - “要求修改”只保留旧产物并结束当前尝试，不会自动生成修改任务或再次派发。
+
+
+### 阶段 89 有限自动串行链路
+
+该链路是阶段 87 单工作项派发与阶段 88 人工审阅的有限 wrapper。操作者只确认一次启动授权和最终业务决定；Harness 随后自动按固定 `规划者 -> 执行者 -> 审阅者` 顺序运行最多三轮。每轮派发前仍重新检查用户已打开的无工具、空闲宿主、租约、审计、固定输入、大小限制和敏感信息扫描；任一失败立即停止，不会重试或进入下一角色。
+
+先预览稳定的启动授权。确认摘要绑定目标、任务、协作计划摘要、固定 Pi/OMP 拓扑与最大三轮，不绑定 15 秒实时状态快照；实时状态在每次实际派发前独立重新检查：
+
+```bash
+python -m agent_runtime.cli orchestration execution external-agent-chain start \
+  --chain-id chain-20260728-001 \
+  --task-id task-20260728-089 \
+  --collaboration-file .runtime/stage89-real-acceptance/forward-collaboration-plan.json \
+  --goal "生成一个有界、结构化的执行结论。" \
+  --evaluated-at 2026-07-28T12:00:00Z \
+  --json
+```
+
+核对后以同一稳定参数显式提交。该命令会创建不可变 intent，并自动串行派发规划、执行、审阅；不会要求 G2/G3 人工确认，也不会因任何失败自动重试：
+
+```bash
+python -m agent_runtime.cli orchestration execution external-agent-chain start \
+  --chain-id chain-20260728-001 \
+  --task-id task-20260728-089 \
+  --collaboration-file .runtime/stage89-real-acceptance/forward-collaboration-plan.json \
+  --goal "生成一个有界、结构化的执行结论。" \
+  --evaluated-at 2026-07-28T12:00:00Z \
+  --approval-binding-id sha256:<预览返回的完整摘要> \
+  --commit \
+  --json
+```
+
+只读检查会显示当前门禁、候选、执行证据、审阅建议、`stopped` 原因或最终状态：
+
+```bash
+python -m agent_runtime.cli orchestration execution external-agent-chain inspect \
+  --chain-id chain-20260728-001 \
+  --json
+
+python -m agent_runtime.cli orchestration control-panel snapshot \
+  --external-agent-chain-id chain-20260728-001 \
+  --json
+```
+
+规划、执行和审阅都成功后，最终人工决定仍采用 preview / `--commit` 两步。审阅建议不能替代操作者决定：
+
+```bash
+python -m agent_runtime.cli orchestration execution external-agent-chain final-decision \
+  --chain-id chain-20260728-001 \
+  --decision approve \
+  --comment "执行证据和审阅建议已由操作者核对。" \
+  --evaluated-at 2026-07-28T12:15:00Z \
+  --json
+```
+
+如果阶段 88 人工审阅已写入、但阶段 89 完成回执未落盘，不能再次提交决定。只能先预览固定恢复，再核对一次性确认摘要后 `--commit`；恢复只读取既有审阅与执行证据，绝不调用 Pi/OMP。
+
+自动化覆盖了启动授权、自动三轮、失败停止、完成恢复与中文投影。2026-07-28 已由操作者在真实无工具、空闲 Pi/OMP 宿主上完成正反拓扑验收：正向链路最终人工通过，反向链路最终人工要求修改；二者均未自动重试或再派发。

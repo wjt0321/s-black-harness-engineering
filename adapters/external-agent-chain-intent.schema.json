@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "control-plane/external-agent-chain-intent/v1",
+  "title": "有限外部智能体链路意图",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version", "contract", "chain_id", "task_id", "collaboration_file", "collaboration_plan_id",
+    "goal", "goal_digest", "roles", "review_gate_id", "created_at"
+  ],
+  "properties": {
+    "version": {"const": 1},
+    "contract": {"const": "external-agent-chain-intent/v1"},
+    "chain_id": {"$ref": "#/$defs/identifier"},
+    "task_id": {"$ref": "#/$defs/identifier"},
+    "collaboration_file": {"type": "string", "minLength": 1, "maxLength": 240, "pattern": "^[^\\r\\n]+\\.json$"},
+    "collaboration_plan_id": {"$ref": "#/$defs/hash"},
+    "goal": {"type": "string", "minLength": 1, "maxLength": 2000, "pattern": "^[^\\u0000]+$"},
+    "goal_digest": {"$ref": "#/$defs/hash"},
+    "roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["planner", "executor", "reviewer"],
+      "properties": {
+        "planner": {"$ref": "#/$defs/role"},
+        "executor": {"$ref": "#/$defs/role"},
+        "reviewer": {"$ref": "#/$defs/role"}
+      }
+    },
+    "review_gate_id": {"$ref": "#/$defs/identifier"},
+    "created_at": {"type": "string", "minLength": 20, "maxLength": 40}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "role": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile", "work_item_id"],
+      "properties": {
+        "profile": {"enum": ["pi-local", "omp-local"]},
+        "work_item_id": {"$ref": "#/$defs/identifier"}
+      }
+    }
+  }
+}

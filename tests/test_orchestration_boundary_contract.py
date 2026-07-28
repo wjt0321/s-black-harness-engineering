@@ -157,6 +157,7 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "single-work-item-evidence",
         "single-work-item-evidence-recover",
         "single-work-item-review",
+        "external-agent-chain",
         "trust",
     }
     execution = _nested_parser(orchestration, "execution")
@@ -178,6 +179,22 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         for option in action.option_strings
     }
     assert {"--attempt-id", "--decision", "--comment", "--evaluated-at", "--approval-binding-id", "--commit"} <= review_options
+    chain = _nested_parser(execution, "external-agent-chain")
+    assert _subparser_names(chain) == {
+        "inspect", "recover-final-decision", "start", "final-decision",
+    }
+    chain_start_options = {
+        option
+        for action in _nested_parser(chain, "start")._actions
+        for option in action.option_strings
+    }
+    assert {"--chain-id", "--task-id", "--collaboration-file", "--goal", "--evaluated-at", "--approval-binding-id", "--commit"} <= chain_start_options
+    chain_recover_options = {
+        option
+        for action in _nested_parser(chain, "recover-final-decision")._actions
+        for option in action.option_strings
+    }
+    assert {"--chain-id", "--approval-binding-id", "--commit"} <= chain_recover_options
     assert _subparser_names(
         _nested_parser(_nested_parser(orchestration, "execution"), "trust")
     ) == {"bind", "inspect"}

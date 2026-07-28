@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "control-plane/external-agent-chain-review-advice/v1",
+  "title": "外部智能体链路审阅建议",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version", "contract", "chain_id", "planner_candidate_digest", "execution_attempt_id",
+    "execution_manifest_digest", "execution_artifact_digest", "recommendation", "summary", "findings"
+  ],
+  "properties": {
+    "version": {"const": 1},
+    "contract": {"const": "external-agent-chain-review-advice/v1"},
+    "chain_id": {"$ref": "#/$defs/identifier"},
+    "planner_candidate_digest": {"$ref": "#/$defs/hash"},
+    "execution_attempt_id": {"$ref": "#/$defs/identifier"},
+    "execution_manifest_digest": {"$ref": "#/$defs/hash"},
+    "execution_artifact_digest": {"$ref": "#/$defs/hash"},
+    "recommendation": {"enum": ["approve", "request_changes"]},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 1600, "pattern": "^[^\\u0000]+$"},
+    "findings": {"type": "array", "maxItems": 8, "items": {"$ref": "#/$defs/finding"}}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["finding_id", "severity", "message"],
+      "properties": {
+        "finding_id": {"$ref": "#/$defs/identifier"},
+        "severity": {"enum": ["blocker", "major", "minor", "info"]},
+        "message": {"type": "string", "minLength": 1, "maxLength": 400, "pattern": "^[^\\u0000]+$"}
+      }
+    }
+  }
+}

@@ -20,13 +20,13 @@ python -m agent_runtime.cli doctor
 
 ## 当前能力与边界
 
-项目是 Python 3.11+、中文图形界面优先目标的本地多智能体 Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；当前实现事实源为 `docs/archive/137-stage88-external-agent-evidence-and-human-review.md`。Pi/OMP 已完成只读状态、单工作项受控执行、真实事件与结果产物回收，以及人工审阅真实验收。
+项目是 Python 3.11+、中文图形界面优先目标的本地多智能体 Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；当前已验收事实源为 `docs/archive/138-stage89-bounded-planner-executor-review-design.md`；前序事实源为 `docs/archive/137-stage88-external-agent-evidence-and-human-review.md`。Pi/OMP 已完成只读状态、单工作项受控执行、真实事件与结果产物回收，以及人工审阅真实验收。
 
 允许的真实执行仅有：
 
 - Windows fixed Git status：固定 `git status --short --branch`；
 - Windows fixed Pi print：固定 `pi --print --no-session --no-tools <prompt>`；
-- single work item dispatch：一次性确认后，只向用户已打开、工具为空且会话空闲的 `pi-local` 或 `omp-local` 派发一个固定工作项。
+- single work item dispatch：一次性确认后，只向用户已打开、工具为空且会话空闲的 `pi-local` 或 `omp-local` 派发一个固定工作项；阶段 89 wrapper 只能在一次稳定启动确认下，按固定拓扑串行调用三次既有派发；每轮仍需即时状态、租约、审计和输出校验，失败立即停止，最终人工决定独立确认。
 
 三者都必须显式 `--commit`，并保持 lease、固定输入、审计和输出约束。进程类操作继续使用 Windows 进程树回收；单工作项派发不得启动宿主、接受任意 argv/cwd/env、开放 Agent 工具、自动重试或并行。成功结果可归档为 `.runtime/` 内不可变证据并接受一次人工“通过/要求修改”审阅；证据恢复不得重新调用 Agent，审阅不得自动触发执行。除非用户另行授权且先完成独立设计，禁止新增其他 operation、通用 shell、POSIX fallback、网络 adapter、长期服务或数据库。
 

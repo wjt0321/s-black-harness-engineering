@@ -156,3 +156,36 @@ def test_collaboration_plan_rejects_path_escape_and_writes_nothing(tmp_path: Pat
     assert result.findings[0].rule_id == "collaboration-plan-path-escape"
     after = {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file()}
     assert after == before
+
+
+def test_collaboration_plan_allows_serial_reuse_of_one_socket_for_distinct_roles(tmp_path: Path) -> None:
+    data = {
+        "parent_task_ref": "task-stage89",
+        "revision": 1,
+        "socket_bindings": [
+            {"socket_id": "pi-cli", "role": "planner", "required_capabilities": ["cli_agent_print"]},
+            {"socket_id": "omp-acp", "role": "implementer", "required_capabilities": ["light_coding"]},
+            {"socket_id": "pi-cli", "role": "reviewer", "required_capabilities": ["cli_agent_print"]},
+        ],
+        "work_items": [
+            {"work_item_id": "plan", "socket_id": "pi-cli", "role": "planner", "depends_on": [], "expected_artifact_types": ["plan"], "review_required": False},
+            {"work_item_id": "execute", "socket_id": "omp-acp", "role": "implementer", "depends_on": ["plan"], "expected_artifact_types": ["summary"], "review_required": True},
+            {"work_item_id": "review", "socket_id": "pi-cli", "role": "reviewer", "depends_on": ["execute"], "expected_artifact_types": ["review"], "review_required": False},
+        ],
+        "handoffs": [
+            {"from_work_item_id": "plan", "to_work_item_id": "execute", "artifact_types": ["plan"]},
+            {"from_work_item_id": "execute", "to_work_item_id": "review", "artifact_types": ["summary"]},
+        ],
+        "review_gates": [{
+            "gate_id": "review-execute", "after_work_item_ids": ["execute"],
+            "review_role": "reviewer", "decision_options": ["approve", "request_changes"],
+        }],
+    }
+    root = _project_root(tmp_path, data)
+
+    result = inspect_collaboration_plan(root, "plans/collaboration-plan.json")
+
+    assert result.status == "pass"
+    assert [(item["socket_id"], item["role"]) for item in result.plan["socket_bindings"]] == [
+        ("omp-acp", "implementer"), ("pi-cli", "planner"), ("pi-cli", "reviewer"),
+    ]

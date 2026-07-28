@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -69,6 +70,12 @@ from .orchestration_external_agent_evidence import (
     recover_external_agent_evidence,
 )
 from .orchestration_external_agent_review import review_external_agent_evidence
+from .orchestration_external_agent_chain import (
+    commit_chain_final_decision,
+    execute_chain_start,
+    inspect_chain_state,
+    recover_chain_final_decision,
+)
 from .orchestration_control_panel import (
     build_control_panel_handoff,
     build_control_panel_snapshot,
@@ -1606,6 +1613,7 @@ def _cmd_orchestration_control_panel_snapshot(args: argparse.Namespace) -> int:
         external_agent_evaluated_at=args.external_agent_evaluated_at,
         single_work_item_request_file=args.single_work_item_request_file,
         external_agent_attempt_id=args.external_agent_attempt_id,
+        external_agent_chain_id=args.external_agent_chain_id,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
@@ -1628,6 +1636,7 @@ def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
         external_agent_evaluated_at=args.external_agent_evaluated_at,
         single_work_item_request_file=args.single_work_item_request_file,
         external_agent_attempt_id=args.external_agent_attempt_id,
+        external_agent_chain_id=args.external_agent_chain_id,
     )
     print(render_control_panel_html(result.to_dict()))
     return result.exit_code()
@@ -1827,6 +1836,58 @@ def _cmd_orchestration_execution_single_work_item_evidence_recover(args: argpars
         approval_binding_id=args.approval_binding_id, commit=args.commit,
     )
     return _render_external_agent_evidence(args, result)
+
+
+
+def _render_external_agent_chain(args: argparse.Namespace, result: Any) -> int:
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        labels = {
+            "chain_start": "启动链路", "planner": "规划者", "executor": "执行者", "reviewer": "审阅者",
+            "final_human_decision": "最终人工决定",
+        }
+        print(f"状态：{payload['status']}")
+        print(f"链路：{payload['chain_id']}")
+        if payload.get("role"):
+            print(f"当前角色：{labels.get(payload['role'], payload['role'])}")
+        if payload.get("approval_binding_id"):
+            print(f"一次性确认摘要：{payload['approval_binding_id']}")
+        chain = payload.get("chain")
+        if isinstance(chain, dict) and chain.get("status"):
+            print(f"链路状态：{chain['status']}")
+        for finding in payload.get("findings", []):
+            print(f"- {finding['rule_id']}：{finding['message']}")
+        if payload.get("next_action"):
+            print(f"下一步：{payload['next_action']}")
+    return result.exit_code()
+
+
+def _current_utc_evaluated_at() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def _cmd_orchestration_execution_external_agent_chain(args: argparse.Namespace) -> int:
+    root = _root_path(args)
+    if args.chain_command == "inspect":
+        return _render_external_agent_chain(args, inspect_chain_state(root, args.chain_id))
+    if args.chain_command == "recover-final-decision":
+        return _render_external_agent_chain(args, recover_chain_final_decision(root, chain_id=args.chain_id, approval_binding_id=args.approval_binding_id, commit=args.commit))
+    if args.chain_command == "start":
+        result = execute_chain_start(
+            root, chain_id=args.chain_id, task_id=args.task_id,
+            collaboration_file=args.collaboration_file, goal=args.goal,
+            evaluated_at=_current_utc_evaluated_at() if args.commit else args.evaluated_at,
+            approval_binding_id=args.approval_binding_id, commit=args.commit,
+        )
+    else:
+        result = commit_chain_final_decision(
+            root, chain_id=args.chain_id, decision=args.decision, comment=args.comment,
+            evaluated_at=args.evaluated_at, approval_binding_id=args.approval_binding_id,
+            commit=args.commit,
+        )
+    return _render_external_agent_chain(args, result)
 
 
 def _cmd_orchestration_execution_single_work_item_review(args: argparse.Namespace) -> int:
@@ -4017,6 +4078,53 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_execution_review_parser.set_defaults(
         func=_cmd_orchestration_execution_single_work_item_review
     )
+    orchestration_execution_chain_parser = orchestration_execution_subparsers.add_parser(
+        "external-agent-chain", help="有限规划、执行、审阅链路（一次启动授权后自动串行，最终人工决定）"
+    )
+    orchestration_execution_chain_subparsers = orchestration_execution_chain_parser.add_subparsers(
+        dest="chain_command", required=True
+    )
+    orchestration_execution_chain_inspect_parser = orchestration_execution_chain_subparsers.add_parser(
+        "inspect", help="只读查看链路、证据交接与当前人工门禁"
+    )
+    orchestration_execution_chain_inspect_parser.add_argument("--chain-id", required=True, help="链路编号")
+    _add_global_args(orchestration_execution_chain_inspect_parser)
+    orchestration_execution_chain_inspect_parser.set_defaults(func=_cmd_orchestration_execution_external_agent_chain)
+
+    orchestration_execution_chain_recover_parser = orchestration_execution_chain_subparsers.add_parser(
+        "recover-final-decision", help="固定恢复既有人工审阅后的链路完成回执；不会调用智能体或重新提交决定"
+    )
+    orchestration_execution_chain_recover_parser.add_argument("--chain-id", required=True, help="链路编号")
+    orchestration_execution_chain_recover_parser.add_argument("--approval-binding-id", default=None, help="预览返回的一次性确认摘要")
+    orchestration_execution_chain_recover_parser.add_argument("--commit", action="store_true", help="在确认后写入既有人工审阅绑定的完成回执")
+    _add_global_args(orchestration_execution_chain_recover_parser)
+    orchestration_execution_chain_recover_parser.set_defaults(func=_cmd_orchestration_execution_external_agent_chain)
+
+    orchestration_execution_chain_start_parser = orchestration_execution_chain_subparsers.add_parser(
+        "start", help="预览或启动固定三轮链路；提交后自动串行执行规划、执行、审阅"
+    )
+    orchestration_execution_chain_start_parser.add_argument("--chain-id", required=True, help="链路编号")
+    orchestration_execution_chain_start_parser.add_argument("--task-id", required=True, help="既有任务编号")
+    orchestration_execution_chain_start_parser.add_argument("--collaboration-file", required=True, help="项目内三角色协作计划 JSON")
+    orchestration_execution_chain_start_parser.add_argument("--goal", required=True, help="不超过 2000 字符的有界目标")
+    orchestration_execution_chain_start_parser.add_argument("--evaluated-at", required=True, help="ISO-8601 评估时间")
+    orchestration_execution_chain_start_parser.add_argument("--approval-binding-id", default=None, help="预览返回的一次性启动确认摘要")
+    orchestration_execution_chain_start_parser.add_argument("--commit", action="store_true", help="一次确认后自动串行派发固定规划、执行、审阅三轮；失败立即停止")
+    _add_global_args(orchestration_execution_chain_start_parser)
+    orchestration_execution_chain_start_parser.set_defaults(func=_cmd_orchestration_execution_external_agent_chain)
+
+    orchestration_execution_chain_final_parser = orchestration_execution_chain_subparsers.add_parser(
+        "final-decision", help="预览或提交最终人工通过/要求修改，并写入链路完成回执"
+    )
+    orchestration_execution_chain_final_parser.add_argument("--chain-id", required=True, help="链路编号")
+    orchestration_execution_chain_final_parser.add_argument("--decision", required=True, choices=["approve", "request_changes"], help="最终人工决定")
+    orchestration_execution_chain_final_parser.add_argument("--comment", required=True, help="不超过 2000 字符的人工意见")
+    orchestration_execution_chain_final_parser.add_argument("--evaluated-at", required=True, help="ISO-8601 评估时间")
+    orchestration_execution_chain_final_parser.add_argument("--approval-binding-id", default=None, help="预览返回的一次性确认摘要")
+    orchestration_execution_chain_final_parser.add_argument("--commit", action="store_true", help="提交最终人工决定并写入链路完成回执")
+    _add_global_args(orchestration_execution_chain_final_parser)
+    orchestration_execution_chain_final_parser.set_defaults(func=_cmd_orchestration_execution_external_agent_chain)
+
     # orchestration read-only Control Panel snapshot/render
     orchestration_control_panel_parser = orchestration_subparsers.add_parser(
         "control-panel", help="Render the local read-only Control Panel"
@@ -4127,6 +4235,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="可选：显示指定执行尝试的真实事件、结果产物和人工审阅状态",
     )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--external-agent-chain-id",
+        default=None,
+        help="可选：显示指定有限协作链路的角色、门禁与证据交接状态",
+    )
     _add_global_args(orchestration_control_panel_snapshot_parser)
     orchestration_control_panel_snapshot_parser.set_defaults(
         func=_cmd_orchestration_control_panel_snapshot
@@ -4186,6 +4299,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--external-agent-attempt-id",
         default=None,
         help="可选：显示指定执行尝试的真实事件、结果产物和人工审阅状态",
+    )
+    orchestration_control_panel_render_parser.add_argument(
+        "--external-agent-chain-id",
+        default=None,
+        help="可选：显示指定有限协作链路的角色、门禁与证据交接状态",
     )
     _add_global_args(orchestration_control_panel_render_parser)
     orchestration_control_panel_render_parser.set_defaults(

@@ -550,3 +550,48 @@ def test_cli_external_agent_status_rejects_negative_previous_generation() -> Non
             ]
         )
     assert exc.value.code == 2
+
+def test_cli_chain_start_commit_uses_current_runtime_evaluation_time(
+    capsys,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[dict[str, object]] = []
+
+    class Result:
+        def to_dict(self) -> dict[str, object]:
+            return {"status": "pass", "chain_id": "chain-stage89-cli"}
+
+        def exit_code(self) -> int:
+            return 0
+
+    def execute(*_args, **kwargs):
+        calls.append(kwargs)
+        return Result()
+
+    monkeypatch.setattr(cli, "execute_chain_start", execute)
+    monkeypatch.setattr(cli, "_current_utc_evaluated_at", lambda: "2026-07-28T02:50:00Z")
+    code = main(
+        [
+            "orchestration", "execution", "external-agent-chain", "start",
+            "--chain-id", "chain-stage89-cli",
+            "--task-id", "task-stage89-cli",
+            "--collaboration-file", "adapters/stage89-plan.json",
+            "--goal", "生成有界结论。",
+            "--evaluated-at", "2026-07-28T02:40:00Z",
+            "--approval-binding-id", "sha256:" + "a" * 64,
+            "--commit",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    assert calls == [{
+        "chain_id": "chain-stage89-cli",
+        "task_id": "task-stage89-cli",
+        "collaboration_file": "adapters/stage89-plan.json",
+        "goal": "生成有界结论。",
+        "evaluated_at": "2026-07-28T02:50:00Z",
+        "approval_binding_id": "sha256:" + "a" * 64,
+        "commit": True,
+    }]
+    assert json.loads(capsys.readouterr().out)["status"] == "pass"

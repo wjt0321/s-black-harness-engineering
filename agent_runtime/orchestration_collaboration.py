@@ -159,7 +159,7 @@ def _safe_projection(plan: dict[str, Any], source_file: str, socket_registry: di
                 "role": item["role"],
                 "required_capabilities": list(item["required_capabilities"]),
             }
-            for item in sorted(bindings, key=lambda item: item["socket_id"])
+            for item in sorted(bindings, key=lambda item: (item["socket_id"], item["role"]))
         ],
         "routing_explanations": [
             {
@@ -179,7 +179,7 @@ def _safe_projection(plan: dict[str, Any], source_file: str, socket_registry: di
                 },
                 "reason": "Socket was explicitly bound and declares every required capability.",
             }
-            for item in sorted(bindings, key=lambda item: item["socket_id"])
+            for item in sorted(bindings, key=lambda item: (item["socket_id"], item["role"]))
         ],
         "work_items": [
             {
@@ -283,7 +283,20 @@ def validate_collaboration_plan(root: Path, plan_file: str) -> CollaborationPlan
         return CollaborationPlanResult("error", source_file, findings=tuple(sockets_result.findings), next_action={"code": "fix_socket_registry", "message": "Fix the shared socket registry before validating a plan."})
     sockets = {socket["socket_id"]: socket for socket in sockets_result.sockets}
 
-    binding_ids, binding_failures = _unique_ids(bindings, "socket_id")
+    binding_pairs: set[tuple[str, str]] = set()
+    binding_failures: list[Finding] = []
+    for binding in bindings:
+        socket_id = binding.get("socket_id")
+        role = binding.get("role")
+        if not isinstance(socket_id, str) or not socket_id or not isinstance(role, str) or not role:
+            binding_failures.append(_finding("collaboration-plan-binding-id-missing", "Every socket binding requires a socket_id and role."))
+            continue
+        pair = (socket_id, role)
+        if pair in binding_pairs:
+            binding_failures.append(_finding("collaboration-plan-binding-duplicate", "Duplicate socket and role binding."))
+        else:
+            binding_pairs.add(pair)
+    binding_socket_ids = {socket_id for socket_id, _role in binding_pairs}
     work_ids, work_failures = _unique_ids(work_items, "work_item_id")
     _, handoff_failures = _unique_ids(reviews, "gate_id")
     failures.extend(binding_failures + work_failures + handoff_failures)
@@ -296,7 +309,11 @@ def validate_collaboration_plan(root: Path, plan_file: str) -> CollaborationPlan
         if any(set(entry).difference(allowed_fields) for entry in entries):
             failures.append(_finding("collaboration-plan-unsafe-field", "Collaboration plan includes unsupported or unsafe fields."))
 
-    binding_by_socket = {item.get("socket_id"): item for item in bindings if isinstance(item.get("socket_id"), str)}
+    binding_by_socket_role = {
+        (item.get("socket_id"), item.get("role")): item
+        for item in bindings
+        if isinstance(item.get("socket_id"), str) and isinstance(item.get("role"), str)
+    }
     for binding in bindings:
         socket_id = binding.get("socket_id")
         capabilities = _string_list(binding.get("required_capabilities"))
@@ -315,9 +332,9 @@ def validate_collaboration_plan(root: Path, plan_file: str) -> CollaborationPlan
         socket_id = work.get("socket_id")
         dependencies = _string_list(work.get("depends_on"))
         artifact_types = _string_list(work.get("expected_artifact_types"))
-        if socket_id not in binding_ids:
+        if socket_id not in binding_socket_ids:
             failures.append(_finding("collaboration-plan-work-socket", "Every work item must use a declared socket binding."))
-        elif work.get("role") != binding_by_socket[socket_id].get("role"):
+        elif (socket_id, work.get("role")) not in binding_by_socket_role:
             failures.append(_finding("collaboration-plan-work-role", "Work item role must match its socket binding."))
         if dependencies is None or any(item not in work_ids or item == work.get("work_item_id") for item in dependencies):
             failures.append(_finding("collaboration-plan-dependency-invalid", "Work item dependencies must reference other work items."))

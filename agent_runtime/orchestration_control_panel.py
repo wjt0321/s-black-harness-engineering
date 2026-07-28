@@ -23,6 +23,7 @@ from .orchestration_collaboration_operator_inbox import (
 from .orchestration_manual_board import inspect_manual_board
 from .orchestration_external_agent_live_status import inspect_external_agent_live_status
 from .orchestration_external_agent_evidence import inspect_external_agent_evidence
+from .orchestration_external_agent_chain import inspect_chain_state
 from .orchestration_single_work_item_execution import build_single_work_item_execution_plan
 from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
@@ -303,6 +304,7 @@ def build_control_panel_snapshot(
     external_agent_evaluated_at: str | None = None,
     single_work_item_request_file: str | None = None,
     external_agent_attempt_id: str | None = None,
+    external_agent_chain_id: str | None = None,
 ) -> ControlPanelSnapshot:
     """Aggregate existing safe read models without executing or writing."""
     overview = _section(
@@ -528,6 +530,13 @@ def build_control_panel_snapshot(
         ).to_dict()
         sections["external_agent_evidence"] = {
             **evidence_payload,
+            "scope": "runtime",
+            "availability": "stable_read_only",
+        }
+    if external_agent_chain_id is not None:
+        chain_payload = inspect_chain_state(root, external_agent_chain_id).to_dict()
+        sections["external_agent_chain"] = {
+            **chain_payload,
             "scope": "runtime",
             "availability": "stable_read_only",
         }
@@ -2060,14 +2069,14 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     )
 
     section_names = [name for name in _SECTION_ORDER if name in sections]
-    for optional_section in ("external_agents", "single_work_item_execution", "external_agent_evidence", "collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
+    for optional_section in ("external_agents", "single_work_item_execution", "external_agent_evidence", "external_agent_chain", "collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
         if optional_section in sections:
             section_names.append(optional_section)
     nav_labels = {
         "overview": "总览", "tasks": "任务", "adapters": "适配器", "automation": "自动化",
         "runs": "运行记录", "approvals": "审批", "artifacts": "产物", "reports": "报告",
         "collaboration": "协作计划", "dispatch": "派发资格", "manual_board": "人工看板",
-        "external_agents": "外部智能体", "single_work_item_execution": "单工作项执行", "external_agent_evidence": "执行证据", "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
+        "external_agents": "外部智能体", "single_work_item_execution": "单工作项执行", "external_agent_evidence": "执行证据", "external_agent_chain": "有限协作链路", "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
     }
     nav = "".join(
         f'<a href="#{name.replace("_", "-")}">{_escape(nav_labels.get(name, name))}</a>'
@@ -2365,6 +2374,37 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
             content_html,
             '</section>',
         ]))
+
+    external_chain = sections.get("external_agent_chain")
+    if external_chain is not None:
+        chain = external_chain.get("chain") or {}
+        chain_labels = {
+            "awaiting_planner_confirmation": "等待确认规划",
+            "awaiting_executor_confirmation": "等待确认执行",
+            "awaiting_reviewer_confirmation": "等待确认审阅",
+            "awaiting_final_human_decision": "等待最终人工决定",
+            "finalization_pending": "等待恢复最终决定",
+            "stopped": "已停止（需新建链路）",
+            "approved": "审阅已通过",
+            "changes_requested": "要求修改",
+        }
+        intent = chain.get("intent") or {}
+        roles = intent.get("roles") or {}
+        role_rows = [
+            {"role": {"planner": "规划者", "executor": "执行者", "reviewer": "审阅者"}.get(role, role), "profile": item.get("profile", "-"), "work_item_id": item.get("work_item_id", "-")}
+            for role, item in roles.items() if isinstance(item, dict)
+        ]
+        section_html.extend([
+            '<section class="panel-section" id="external-agent-chain">',
+            _section_header("18", "有限协作链路 / 人工门禁", external_chain),
+            '<div class="boundary-callout"><strong>链路：</strong>', _escape(chain.get("chain_id", "-")),
+            '<br><strong>当前状态：</strong>', _escape(chain_labels.get(chain.get("status"), chain.get("status", "未知"))),
+            '<br><strong>规划候选：</strong>', _escape((chain.get("planner_candidate") or {}).get("candidate_digest", "尚未归档")),
+            '<br><strong>审阅建议：</strong>', _escape((chain.get("review_advice") or {}).get("advice_digest", "尚未归档")),
+            '<br>本区域仅展示不可变链路事实与人工门禁；不会派发、重试或批准外部智能体。</div>',
+            _table(caption="角色与固定宿主", columns=(("role", "角色"), ("profile", "固定宿主"), ("work_item_id", "工作项")), rows=role_rows, empty_message="尚无可展示的链路角色。"),
+            '</section>',
+        ])
 
     collaboration = sections.get("collaboration")
     if collaboration is not None:

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "control-plane/external-agent-chain-planner-candidate/v1",
+  "title": "外部智能体链路规划候选",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "contract", "chain_id", "goal_digest", "summary", "execution_instruction", "success_criteria", "review_focus"],
+  "properties": {
+    "version": {"const": 1},
+    "contract": {"const": "external-agent-chain-planner-candidate/v1"},
+    "chain_id": {"$ref": "#/$defs/identifier"},
+    "goal_digest": {"$ref": "#/$defs/hash"},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 1200, "pattern": "^[^\\u0000]+$"},
+    "execution_instruction": {"type": "string", "minLength": 1, "maxLength": 4096, "pattern": "^[^\\u0000]+$"},
+    "success_criteria": {"$ref": "#/$defs/text_list"},
+    "review_focus": {"$ref": "#/$defs/text_list"}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "text_list": {"type": "array", "minItems": 1, "maxItems": 5, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 240, "pattern": "^[^\\u0000]+$"}}
+  }
+}
