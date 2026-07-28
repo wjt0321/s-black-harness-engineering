@@ -1,0 +1,92 @@
+{
+  "parent_task_ref": "task-20260703-001",
+  "revision": 1,
+  "socket_bindings": [
+    {
+      "socket_id": "pi-cli",
+      "role": "planner",
+      "required_capabilities": [
+        "cli_agent_print"
+      ]
+    },
+    {
+      "socket_id": "omp-acp",
+      "role": "implementer",
+      "required_capabilities": [
+        "light_coding"
+      ]
+    },
+    {
+      "socket_id": "pi-cli",
+      "role": "reviewer",
+      "required_capabilities": [
+        "cli_agent_print"
+      ]
+    }
+  ],
+  "work_items": [
+    {
+      "work_item_id": "plan",
+      "socket_id": "pi-cli",
+      "role": "planner",
+      "depends_on": [],
+      "expected_artifact_types": [
+        "plan"
+      ],
+      "review_required": false
+    },
+    {
+      "work_item_id": "execute",
+      "socket_id": "omp-acp",
+      "role": "implementer",
+      "depends_on": [
+        "plan"
+      ],
+      "expected_artifact_types": [
+        "summary"
+      ],
+      "review_required": true
+    },
+    {
+      "work_item_id": "review",
+      "socket_id": "pi-cli",
+      "role": "reviewer",
+      "depends_on": [
+        "execute"
+      ],
+      "expected_artifact_types": [
+        "review"
+      ],
+      "review_required": false
+    }
+  ],
+  "handoffs": [
+    {
+      "from_work_item_id": "plan",
+      "to_work_item_id": "execute",
+      "artifact_types": [
+        "plan"
+      ]
+    },
+    {
+      "from_work_item_id": "execute",
+      "to_work_item_id": "review",
+      "artifact_types": [
+        "summary"
+      ]
+    }
+  ],
+  "review_gates": [
+    {
+      "gate_id": "review-execute",
+      "after_work_item_ids": [
+        "execute"
+      ],
+      "review_role": "reviewer",
+      "decision_options": [
+        "approve",
+        "request_changes"
+      ]
+    }
+  ]
+}

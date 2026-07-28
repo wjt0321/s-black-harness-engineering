@@ -529,9 +529,26 @@ def _exchange(root: Path, payload: dict[str, Any], timeout_seconds: int, result_
     try:
         while time.monotonic() < deadline:
             if result_path.exists():
-                result = json.loads(_regular_file(result_path, max_bytes=result_max_bytes + 4096).decode("utf-8"))
+                try:
+                    result = json.loads(_regular_file(result_path, max_bytes=result_max_bytes + 4096).decode("utf-8"))
+                except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError, TypeError):
+                    return {
+                        "status": "failed",
+                        "failure_code": "single-work-item-mailbox-result-invalid",
+                        "artifacts": [],
+                    }
+                if not isinstance(result, dict):
+                    return {
+                        "status": "failed",
+                        "failure_code": "single-work-item-mailbox-result-invalid",
+                        "artifacts": [],
+                    }
                 if result.get("request_id") != payload["request_id"] or result.get("target_profile") != payload["target_profile"]:
-                    raise ValueError("result identity mismatch")
+                    return {
+                        "status": "failed",
+                        "failure_code": "single-work-item-mailbox-identity-mismatch",
+                        "artifacts": [],
+                    }
                 return result
             time.sleep(0.1)
         return {

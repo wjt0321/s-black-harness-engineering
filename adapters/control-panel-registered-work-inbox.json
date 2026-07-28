@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "contract": "control-panel-registered-work-inbox/v1",
+  "cards": [
+    {
+      "card_id": "acceptance-forward",
+      "title_zh": "正向自动验收",
+      "summary_zh": "Pi 规划、OMP 执行、Pi 审阅；全程无工具，最终结论由操作者决定。",
+      "task_id": "task-20260703-001",
+      "collaboration_file": "adapters/collaboration-plan.stage92-forward.json",
+      "goal": "请仅输出一个 JSON 对象，字段 summary 为不超过 80 个中文字符的阶段92正向已登记工作验收结论；不要执行命令、不要使用工具。",
+      "topology": [
+        "pi-local",
+        "omp-local",
+        "pi-local"
+      ]
+    },
+    {
+      "card_id": "acceptance-reverse",
+      "title_zh": "反向自动验收",
+      "summary_zh": "OMP 规划、Pi 执行、OMP 审阅；全程无工具，最终结论由操作者决定。",
+      "task_id": "task-20260703-001",
+      "collaboration_file": "adapters/collaboration-plan.stage92-reverse.json",
+      "goal": "请仅输出一个 JSON 对象，字段 summary 为不超过 80 个中文字符的阶段92反向已登记工作验收结论；不要执行命令、不要使用工具。",
+      "topology": [
+        "omp-local",
+        "pi-local",
+        "omp-local"
+      ]
+    }
+  ]
+}

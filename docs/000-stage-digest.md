@@ -4,17 +4,17 @@
 
 ## 当前基线
 
-- 里程碑：阶段 91 GUI 结构化审批收件箱已完成并归档；2026-07-28 已完成真实 Pi/OMP 自动串行与最终决定验收
-- commit：当前基线为 `ee991ed`（阶段 90）；阶段 91 变更待提交
+- 里程碑：阶段 92 已于 2026-07-28 完成正向与反向真实 Pi/OMP GUI 自动串行和最终决定验收
+- commit：当前工作树包含已验证、待提交的阶段 92 变更
 - 日期：2026-07-28
-- 活跃 `docs/` 根目录为 28 份；阶段 91 及此前的已验收阶段均已归档
+- 活跃 `docs/` 根目录为 28 份；阶段 92 及此前的已验收阶段均已归档
 
 ## 当前阶段
 
-- **阶段 91 — 已完成：GUI 不暴露内部标识符；一次启动确认后真实 Pi → OMP → Pi 自动串行，随后自动路由到最终人工决定。**
-- 归档事实源：`archive/140-stage91-gui-structured-approval-inbox.md`。
-- 已验收前序事实源：`archive/139-stage90-live-chinese-control-panel-read-model.md`、`archive/138-stage89-bounded-planner-executor-review-design.md`、`archive/137-stage88-external-agent-evidence-and-human-review.md`。
-- GUI 不新增 operation 或 writer；启动自动装配唯一已登记的验收配置和安全链路 ID，最终页只接受业务结论；`--json` 仍仅构建一次确定性快照。
+- **阶段 92 — 已完成：GUI 从固定、只读的已登记工作收件箱展示多张安全工作卡；操作者只选择工作、确认启动并最终决定。真实 `Pi → OMP → Pi` 与 `OMP → Pi → OMP` 都完成并以 `approved` 收束；全角色预检、无冻结确认页和安全邮箱诊断均已验收。**
+- 已验收事实源：`archive/141-stage92-registered-work-inbox.md`。
+- 已验收前序事实源：`archive/140-stage91-gui-structured-approval-inbox.md`、`archive/139-stage90-live-chinese-control-panel-read-model.md`、`archive/138-stage89-bounded-planner-executor-review-design.md`。
+- GUI 不新增 operation 或 writer；启动仅从已校验工作卡装配任务、计划、目标和安全链路 ID，并在预览和提交前对卡片涉及的全部宿主作只读就绪预检；最终页只接受业务结论；`--json` 仍仅构建一次确定性快照。
 
 ## 已冻结边界
 
@@ -43,7 +43,7 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/00-index.md`
+2. `docs/archive/141-stage92-registered-work-inbox.md`
 3. `docs/02-roadmap.md`
 4. `docs/130-gui-first-external-agent-control-plane-target.md`
 5. `docs/archive/140-stage91-gui-structured-approval-inbox.md`

@@ -5,25 +5,27 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from queue import Empty, Queue
+from threading import Thread
 from typing import Any, Callable
 
 from .orchestration_control_panel import ControlPanelSnapshot, build_control_panel_snapshot
+from .orchestration_external_agent_chain import ExternalAgentChainResult
+from .orchestration_external_agent_live_status import inspect_external_agent_live_status
+from .result import Finding
 from .orchestration_control_panel_approval import (
     commit_control_panel_approval,
     preview_control_panel_approval,
+)
+from .orchestration_control_panel_registered_work import (
+    RegisteredWorkCard,
+    load_registered_work_inbox,
 )
 
 _MIN_REFRESH_SECONDS = 2
 _MAX_REFRESH_SECONDS = 60
 _MIN_CHAIN_LIMIT = 1
 _MAX_CHAIN_LIMIT = 20
-_REGISTERED_START_TASK_ID = "task-20260703-001"
-_REGISTERED_START_COLLABORATION_FILE = "adapters/collaboration-plan.stage91-gui-acceptance.json"
-_REGISTERED_START_GOAL = (
-    "请仅输出一个 JSON 对象，字段 summary 为不超过 80 个中文字符的阶段91 GUI 自动串行验收结论；"
-    "不要执行命令、不要使用工具。"
-)
-
 
 @dataclass(frozen=True)
 class LiveControlPanelError(ValueError):
@@ -91,18 +93,19 @@ def build_start_chain_approval_command(
     }
 
 
-def build_registered_start_chain_approval_command() -> dict[str, object]:
-    """Build the only GUI-startable registered chain; the operator supplies no identifiers."""
+def build_registered_start_chain_approval_command(card: RegisteredWorkCard) -> dict[str, object]:
+    """Build one selected registered card; the operator supplies no internal identifiers."""
     issued_at = datetime.now(UTC)
-    chain_id = "chain-{}-gui-forward-{}".format(
+    chain_id = "chain-{}-{}-{}".format(
         issued_at.strftime("%Y%m%d"),
+        card.card_id,
         issued_at.strftime("%H%M%S%f")[:9],
     )
     return build_start_chain_approval_command(
         chain_id=chain_id,
-        task_id=_REGISTERED_START_TASK_ID,
-        collaboration_file=_REGISTERED_START_COLLABORATION_FILE,
-        goal=_REGISTERED_START_GOAL,
+        task_id=card.task_id,
+        collaboration_file=card.collaboration_file,
+        goal=card.goal,
     )
 
 
@@ -142,6 +145,58 @@ def format_approval_confirmation(result: Any) -> str:
         if key in plan:
             lines.append(f"{label}：{plan[key]}")
     return "\n".join(lines)
+
+def registered_card_preflight_failure(
+    root: Path,
+    card: RegisteredWorkCard,
+    *,
+    evaluated_at: str,
+) -> str | None:
+    """Check each host required by a selected card before it may start a serial chain."""
+    labels = {"pi-local": "Pi", "omp-local": "OMP"}
+    for profile_id in dict.fromkeys(card.topology):
+        try:
+            status = inspect_external_agent_live_status(
+                root.resolve(),
+                evaluated_at,
+                profile_id=profile_id,
+            )
+        except Exception:
+            status = None
+        evidence = getattr(status, "evidence", None) if status is not None else None
+        if (
+            getattr(status, "status", None) == "pass"
+            and getattr(status, "observation_status", None) == "observed"
+            and isinstance(evidence, dict)
+            and evidence.get("session_state") == "open"
+        ):
+            continue
+        label = labels.get(profile_id, "目标")
+        return f"{label} 宿主未处于可受控派发的已打开、空闲且证据有效状态；未启动链路。"
+    return None
+
+
+def _preflight_blocked_result(command: dict[str, object], message: str) -> ExternalAgentChainResult:
+    return ExternalAgentChainResult(
+        "blocked",
+        str(command.get("chain_id", "")),
+        findings=(Finding("control-panel-registered-work-host-not-ready", "warn", "deny", message),),
+    )
+
+
+def _start_approval_commit_worker(commit: Callable[[], Any]) -> Queue[tuple[str, Any | None]]:
+    """Run one already-confirmed operation off the Tk event loop and return a single safe outcome."""
+    outcomes: Queue[tuple[str, Any | None]] = Queue(maxsize=1)
+
+    def run() -> None:
+        try:
+            outcomes.put(("result", commit()))
+        except Exception:
+            outcomes.put(("error", None))
+
+    Thread(target=run, name="agent-runtime-control-panel-approval", daemon=False).start()
+    return outcomes
+
 
 def _agent_rows(payload: dict[str, Any]) -> list[tuple[str, str, str, str]]:
     section = payload.get("sections", {}).get("external_agents", {})
@@ -210,6 +265,18 @@ def pending_final_decision_chain_id(payload: dict[str, Any]) -> str | None:
     return candidates[0] if len(candidates) == 1 else None
 
 
+def _registered_work_rows(cards: tuple[RegisteredWorkCard, ...]) -> list[tuple[str, str, str, str]]:
+    return [
+        (
+            card.card_id,
+            card.title_zh,
+            card.summary_zh,
+            " → ".join(card.topology),
+        )
+        for card in cards
+    ]
+
+
 class _LiveControlPanelWindow:
     """A small, foreground-only Tk window that owns no operation authority."""
 
@@ -234,7 +301,9 @@ class _LiveControlPanelWindow:
         self._chain_limit = chain_limit
         self._snapshot_builder = snapshot_builder
         self._closed = False
+        self._registered_cards: dict[str, RegisteredWorkCard] = {}
         self._auto_prompted_final_chain_ids: set[str] = set()
+        self._approval_commit_in_flight = False
 
         self.window = tk.Tk()
         self.window.title("Agent Runtime — 实时控制面（只读）")
@@ -246,7 +315,7 @@ class _LiveControlPanelWindow:
         ttk.Label(container, text="实时中文控制面", font=("Microsoft YaHei UI", 18, "bold")).pack(anchor="w")
         ttk.Label(
             container,
-            text="操作者只作启动授权与最终决定；链路编号、任务、计划和中间串行均由已登记边界自动处理。",
+            text="操作者选择已登记工作后只作启动授权与最终决定；内部标识符、计划和中间串行均自动处理。",
         ).pack(anchor="w", pady=(2, 10))
 
         self._status = tk.StringVar(value="正在读取本地安全快照…")
@@ -256,6 +325,11 @@ class _LiveControlPanelWindow:
             container,
             title="Pi / OMP 真实状态",
             columns=(("agent", "智能体", 160), ("status", "当前状态", 180), ("observed", "最后观察", 220), ("reason", "阻止原因", 340)),
+        )
+        self._work_table = self._table(
+            container,
+            title="已登记待启动工作（安全摘要）",
+            columns=(("card", "工作卡", 180), ("title", "工作", 180), ("summary", "摘要", 360), ("topology", "角色拓扑", 260)),
         )
         self._chain_table = self._table(
             container,
@@ -267,10 +341,20 @@ class _LiveControlPanelWindow:
         approvals.pack(fill="x", pady=(0, 12))
         ttk.Label(
             approvals,
-            text="启动使用唯一已登记的有限链路；中间自动串行，只有最终业务结论仍由操作者决定。",
+            text="选中工作后生成一次性确认摘要；中间自动串行，只有最终业务结论仍由操作者决定。",
         ).pack(side="left")
-        ttk.Button(approvals, text="启动已登记链路…", command=self._start_registered_chain).pack(side="right", padx=(8, 0))
-        ttk.Button(approvals, text="为选中链路提交最终决定…", command=self._open_final_decision_dialog).pack(side="right")
+        self._start_work_button = ttk.Button(
+            approvals,
+            text="启动选中工作…",
+            command=self._start_selected_registered_work,
+        )
+        self._start_work_button.pack(side="right", padx=(8, 0))
+        self._final_decision_button = ttk.Button(
+            approvals,
+            text="为选中链路提交最终决定…",
+            command=self._open_final_decision_dialog,
+        )
+        self._final_decision_button.pack(side="right")
 
         controls = ttk.Frame(container)
         controls.pack(fill="x", pady=(0, 0))
@@ -301,10 +385,32 @@ class _LiveControlPanelWindow:
 
     @staticmethod
     def _replace_rows(table: Any, rows: list[tuple[str, ...]]) -> None:
+        selected_keys = {
+            str(values[0])
+            for item in table.selection()
+            if (values := table.item(item, "values"))
+        }
         for item in table.get_children():
             table.delete(item)
+        restored_items: list[Any] = []
         for row in rows:
-            table.insert("", "end", values=row)
+            item = table.insert("", "end", values=row)
+            if row and str(row[0]) in selected_keys:
+                restored_items.append(item)
+        if restored_items:
+            table.selection_set(*restored_items)
+
+    def _set_approval_controls_enabled(self, enabled: bool) -> None:
+        state = "normal" if enabled else "disabled"
+        self._start_work_button.configure(state=state)
+        self._final_decision_button.configure(state=state)
+
+    def _selected_registered_card_id(self) -> str | None:
+        selected = self._work_table.selection()
+        if not selected:
+            return None
+        values = self._work_table.item(selected[0], "values")
+        return str(values[0]) if values else None
 
     def _selected_chain_id(self) -> str | None:
         selected = self._chain_table.selection()
@@ -313,10 +419,37 @@ class _LiveControlPanelWindow:
         values = self._chain_table.item(selected[0], "values")
         return str(values[0]) if values else None
 
-    def _start_registered_chain(self) -> None:
-        self._preview_approval(None, build_registered_start_chain_approval_command())
+    def _start_selected_registered_work(self) -> None:
+        if self._approval_commit_in_flight:
+            self._messagebox.showwarning("正在执行", "已有一条受控操作正在串行执行，请等待它完成。")
+            return
+        card_id = self._selected_registered_card_id()
+        card = self._registered_cards.get(card_id or "")
+        if card is None:
+            self._messagebox.showwarning("需要选择工作", "请先在“已登记待启动工作”中选择一张工作卡。")
+            return
+
+        def preflight() -> str | None:
+            return registered_card_preflight_failure(
+                self._root_path,
+                card,
+                evaluated_at=_current_utc_evaluated_at(),
+            )
+
+        failure = preflight()
+        if failure is not None:
+            self._messagebox.showwarning("宿主状态未就绪", failure)
+            return
+        self._preview_approval(
+            None,
+            build_registered_start_chain_approval_command(card),
+            preflight=preflight,
+        )
 
     def _open_final_decision_dialog(self, chain_id: str | None = None) -> None:
+        if self._approval_commit_in_flight:
+            self._messagebox.showwarning("正在执行", "已有一条受控操作正在串行执行，请等待它完成。")
+            return
         chain_id = chain_id or self._selected_chain_id()
         if chain_id is None:
             self._messagebox.showwarning("需要选择链路", "请先在有限自动串行链路表格中选择一条等待最终人工决定的链路。")
@@ -359,7 +492,13 @@ class _LiveControlPanelWindow:
 
         self._ttk.Button(body, text="生成一次性确认摘要", command=preview).grid(row=3, column=1, sticky="e", pady=(10, 0))
 
-    def _preview_approval(self, source_dialog: Any | None, command: dict[str, object]) -> None:
+    def _preview_approval(
+        self,
+        source_dialog: Any | None,
+        command: dict[str, object],
+        *,
+        preflight: Callable[[], str | None] | None = None,
+    ) -> None:
         try:
             result = preview_control_panel_approval(
                 self._root_path,
@@ -374,9 +513,15 @@ class _LiveControlPanelWindow:
             return
         if source_dialog is not None:
             source_dialog.destroy()
-        self._open_confirmation_dialog(command, result)
+        self._open_confirmation_dialog(command, result, preflight=preflight)
 
-    def _open_confirmation_dialog(self, command: dict[str, object], preview: Any) -> None:
+    def _open_confirmation_dialog(
+        self,
+        command: dict[str, object],
+        preview: Any,
+        *,
+        preflight: Callable[[], str | None] | None = None,
+    ) -> None:
         dialog = self._tk.Toplevel(self.window)
         dialog.title("确认既有受控操作")
         dialog.transient(self.window)
@@ -396,20 +541,34 @@ class _LiveControlPanelWindow:
         actions.pack(fill="x", pady=(10, 0))
         confirm = self._ttk.Button(actions, text="确认并提交既有受控操作")
         confirm.pack(side="right")
-        self._ttk.Button(actions, text="取消", command=dialog.destroy).pack(side="right", padx=(0, 8))
+        cancel = self._ttk.Button(actions, text="取消", command=dialog.destroy)
+        cancel.pack(side="right", padx=(0, 8))
 
-        def commit() -> None:
-            confirm.configure(state="disabled")
+        waiting = self._ttk.Label(
+            body,
+            text="",
+            foreground="#1f5f8b",
+            wraplength=620,
+        )
+        waiting.pack(anchor="w", pady=(8, 0))
+        progress = self._ttk.Progressbar(body, mode="indeterminate")
+
+        def finish(outcomes: Queue[tuple[str, Any | None]]) -> None:
             try:
-                result = commit_control_panel_approval(
-                    self._root_path,
-                    command=command,
-                    approval_binding_id=preview.approval_binding_id,
-                    evaluated_at=_current_utc_evaluated_at(),
-                )
-            except Exception:
+                outcome, result = outcomes.get_nowait()
+            except Empty:
+                if not self._closed:
+                    self.window.after(120, lambda: finish(outcomes))
+                return
+            progress.stop()
+            progress.pack_forget()
+            self._approval_commit_in_flight = False
+            self._set_approval_controls_enabled(True)
+            if outcome != "result":
+                waiting.configure(text="固定操作提交失败；未自动重试或继续派发。")
                 self._messagebox.showerror("提交失败", "固定操作无法确认完成；不会自动重试或继续派发。")
                 confirm.configure(state="normal")
+                cancel.configure(state="normal")
                 return
             self._show_approval_result(result, title="既有受控操作结果")
             if result.status == "pass":
@@ -417,6 +576,29 @@ class _LiveControlPanelWindow:
                 self._refresh()
             else:
                 confirm.configure(state="normal")
+                cancel.configure(state="normal")
+
+        def commit() -> None:
+            confirm.configure(state="disabled")
+            cancel.configure(state="disabled")
+            self._approval_commit_in_flight = True
+            self._set_approval_controls_enabled(False)
+            waiting.configure(text="正在受控串行执行：窗口会继续刷新状态；不会自动重试、并行或扩大权限。")
+            progress.pack(fill="x", pady=(4, 0))
+            progress.start(80)
+            def execute_confirmed_operation() -> ExternalAgentChainResult:
+                failure = preflight() if preflight is not None else None
+                if failure is not None:
+                    return _preflight_blocked_result(command, failure)
+                return commit_control_panel_approval(
+                    self._root_path,
+                    command=command,
+                    approval_binding_id=preview.approval_binding_id,
+                    evaluated_at=_current_utc_evaluated_at(),
+                )
+
+            outcomes = _start_approval_commit_worker(execute_confirmed_operation)
+            self.window.after(120, lambda: finish(outcomes))
 
         confirm.configure(command=commit)
 
@@ -443,11 +625,14 @@ class _LiveControlPanelWindow:
                 chain_limit=self._chain_limit,
             )
             payload = snapshot.to_dict()
+            inbox = load_registered_work_inbox(self._root_path)
+            self._registered_cards = {card.card_id: card for card in inbox.cards} if inbox.status == "pass" else {}
             self._replace_rows(self._agent_table, _agent_rows(payload))
+            self._replace_rows(self._work_table, _registered_work_rows(inbox.cards))
             self._replace_rows(self._chain_table, _chain_rows(payload))
             observed = payload.get("source", {}).get("external_agent_evaluated_at", "未知")
             self._status.set(
-                f"最新读取：{observed}；总体状态：{payload.get('status', '未知')}；仅展示安全摘要。"
+                f"最新读取：{observed}；总体状态：{payload.get('status', '未知')}；已登记工作：{inbox.status}。"
             )
             pending_chain_id = pending_final_decision_chain_id(payload)
             if pending_chain_id is not None and pending_chain_id not in self._auto_prompted_final_chain_ids:
@@ -459,6 +644,9 @@ class _LiveControlPanelWindow:
             self.window.after(self._refresh_seconds * 1000, self._refresh)
 
     def _close(self) -> None:
+        if self._approval_commit_in_flight:
+            self._messagebox.showwarning("正在执行", "受控操作仍在串行执行。为保证审计终态完整，请等待完成后再关闭窗口。")
+            return
         self._closed = True
         self.window.destroy()
 

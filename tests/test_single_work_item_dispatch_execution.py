@@ -470,3 +470,36 @@ def test_python_implementation_digest_is_line_ending_stable(tmp_path: Path) -> N
         extension.write_bytes(source_extension.replace(b"\n", newline))
         digests.append(_implementation_digest(root, Path(".pi/extensions/s-black-live-status.ts")))
     assert digests[0] == digests[1]
+
+
+def test_exchange_returns_a_safe_failure_code_for_result_identity_drift(monkeypatch, tmp_path: Path) -> None:
+    from agent_runtime import orchestration_single_work_item_execution as execution
+
+    root = tmp_path
+    request_path = root / ".runtime/external-agent-dispatch/omp-local.request.v1.json"
+    result_path = root / ".runtime/external-agent-dispatch/omp-local.result.v1.json"
+    original_atomic_write = execution._atomic_write
+
+    def write_mismatched_result(path: Path, payload: dict[str, object], max_bytes: int) -> None:
+        original_atomic_write(path, payload, max_bytes)
+        if path == request_path:
+            original_atomic_write(
+                result_path,
+                {"request_id": "wrong-request", "target_profile": "omp-local", "status": "failed", "artifacts": []},
+                max_bytes=4096,
+            )
+
+    monkeypatch.setattr(execution, "_atomic_write", write_mismatched_result)
+
+    result = execution._exchange(
+        root,
+        {"target_profile": "omp-local", "request_id": "request-stage92-diagnostic-001"},
+        timeout_seconds=1,
+        result_max_bytes=1024,
+    )
+
+    assert result == {
+        "status": "failed",
+        "failure_code": "single-work-item-mailbox-identity-mismatch",
+        "artifacts": [],
+    }

@@ -6,6 +6,7 @@
 
 - `../README.md` — 项目定位、当前能力、快速开始。
 - `000-stage-digest.md` — 当前断点和恢复顺序。
+- `archive/141-stage92-registered-work-inbox.md` — 阶段 92 已验收事实源：固定只读工作收件箱、全角色只读预检、无冻结确认页与正反真实 Pi/OMP 自动串行。
 - `archive/140-stage91-gui-structured-approval-inbox.md` — 阶段 91 已验收事实源：无需填写内部标识符的 GUI 启动授权、真实自动串行与自动路由的最终人工决定。
 - `archive/139-stage90-live-chinese-control-panel-read-model.md` — 阶段 90 已验收事实源：实时中文只读图形面板、聚合读取模型与真实 Pi/OMP 图形验收。
 - `archive/138-stage89-bounded-planner-executor-review-design.md` — 阶段 89 已验收事实源：一次启动授权后的有限自动串行规划者—执行者—审阅者闭环。
@@ -53,6 +54,7 @@
 
 ## 当前事实源
 
+- `archive/141-stage92-registered-work-inbox.md` — 已验收实现：固定只读工作收件箱、工作卡选择、全角色只读预检和正反真实 Pi/OMP 自动串行。
 - `archive/140-stage91-gui-structured-approval-inbox.md` — 已验收实现：GUI 自动装配登记配置、真实自动串行并在完成后自动路由最终人工决定。
 - `archive/139-stage90-live-chinese-control-panel-read-model.md` — 已验收实现：前台中文只读 GUI、Pi/OMP 安全状态、有限链路摘要与关闭后的过期投影。
 - `archive/138-stage89-bounded-planner-executor-review-design.md` — 已验收实现：有限自动串行闭环的目标、冻结边界、契约、CLI 与真实 Pi/OMP 验收。

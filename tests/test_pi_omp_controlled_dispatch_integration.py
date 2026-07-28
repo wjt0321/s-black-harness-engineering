@@ -183,3 +183,87 @@ def test_node_implementation_digest_is_line_ending_stable(tmp_path: Path) -> Non
     assert completed.returncode == 0, completed.stderr
     first, second = json.loads(completed.stdout)
     assert first == second
+
+
+
+def test_two_same_profile_hosts_do_not_overwrite_each_others_claimed_request(tmp_path: Path) -> None:
+    _copy_bindings(tmp_path)
+    script = r'''
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const dispatcher = require(process.argv[1]);
+const root = process.argv[2];
+const repo = process.argv[3];
+const profile = "omp-local";
+const sent = [];
+function install() {
+  const handlers = {};
+  const pi = {
+    on(name, handler) { handlers[name] = handler; },
+    sendUserMessage(text, options) { sent.push({ text, options, handlers }); },
+    getActiveTools() { return []; },
+  };
+  dispatcher.createControlledDispatchExtension(pi, {
+    profileId: profile,
+    bindingRelativePath: `adapters/external-agent-dispatch-binding.${profile}.json`,
+    extensionFile: path.join(repo, ".omp/extensions/s-black-live-status.ts"),
+    pollMs: 20,
+  });
+  return handlers;
+}
+(async () => {
+  const first = install();
+  const second = install();
+  for (const handlers of [first, second]) {
+    await handlers.session_start({}, { cwd: root, isProjectTrusted: () => true, isIdle: () => true });
+  }
+  const instruction = "只回复：阶段87受控执行验收通过。不要使用工具。";
+  const request = {
+    version: 1,
+    contract: "external-agent-single-work-item-mailbox/v1",
+    request_id: "request-stage87-duplicate-001",
+    task_id: "task-stage87",
+    work_item_id: "implement",
+    target_profile: profile,
+    approval_binding_id: "sha256:" + "a".repeat(64),
+    plan_hash: "sha256:" + "b".repeat(64),
+    instruction,
+    instruction_digest: "sha256:" + crypto.createHash("sha256").update(Buffer.from(instruction, "utf8")).digest("hex"),
+    input_artifacts: [],
+    timeout_seconds: 30,
+    result_max_bytes: 8192,
+    issued_at: new Date().toISOString(),
+  };
+  const requestPath = path.join(root, ".runtime/external-agent-dispatch", `${profile}.request.v1.json`);
+  fs.mkdirSync(path.dirname(requestPath), { recursive: true });
+  fs.writeFileSync(requestPath, JSON.stringify(request));
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const resultPath = path.join(root, ".runtime/external-agent-dispatch", `${profile}.result.v1.json`);
+  const premature = fs.existsSync(resultPath) ? JSON.parse(fs.readFileSync(resultPath, "utf8")) : null;
+  for (const handlers of [first, second]) {
+    await handlers.before_agent_start({ prompt: instruction }, {});
+    await handlers.agent_start({}, {});
+    await handlers.agent_end({ messages: [{ role: "assistant", content: [{ type: "text", text: "阶段87受控执行验收通过。" }] }] }, {});
+  }
+  await new Promise(resolve => setTimeout(resolve, 40));
+  const result = fs.existsSync(resultPath) ? JSON.parse(fs.readFileSync(resultPath, "utf8")) : null;
+  for (const handlers of [first, second]) await handlers.session_shutdown({}, {});
+  process.stdout.write(JSON.stringify({ sent, premature, result }));
+})().catch(error => { console.error(error); process.exit(1); });
+'''
+    completed = subprocess.run(
+        ["node", "-e", script, str(DISPATCHER), str(tmp_path), str(ROOT)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=15,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    result = json.loads(completed.stdout)
+
+    assert len(result["sent"]) == 1
+    assert result["premature"] is None
+    assert result["result"]["request_id"] == "request-stage87-duplicate-001"
+    assert result["result"]["status"] == "succeeded"
