@@ -252,3 +252,53 @@ def test_chain_store_stops_immutably_and_rejects_later_handoffs(tmp_path: Path) 
             source_manifest_digest="sha256:" + "5" * 64,
             source_artifact_digest="sha256:" + "6" * 64,
         )
+
+def test_chain_store_lists_bounded_safe_summaries_in_stable_order(tmp_path: Path) -> None:
+    from agent_runtime.external_agent_chain_store import (
+        create_chain_intent,
+        list_external_agent_chains,
+        write_chain_stop,
+    )
+
+    root = _root(tmp_path)
+    later = _intent()
+    later["chain_id"] = "chain-stage90-002"
+    earlier = _intent()
+    earlier["chain_id"] = "chain-stage90-001"
+    create_chain_intent(root, later)
+    create_chain_intent(root, earlier)
+    write_chain_stop(
+        root,
+        "chain-stage90-002",
+        role="planner",
+        failure_code="external-agent-chain-planner-output-json-invalid",
+    )
+
+    chains = list_external_agent_chains(root, limit=10)
+
+    assert chains == [
+        {
+            "chain_id": "chain-stage90-001",
+            "status": "awaiting_planner_confirmation",
+            "task_id": "task-stage89",
+            "roles": {
+                "planner": "pi-local",
+                "executor": "omp-local",
+                "reviewer": "pi-local",
+            },
+            "created_at": "2026-07-28T12:00:00Z",
+        },
+        {
+            "chain_id": "chain-stage90-002",
+            "status": "stopped",
+            "task_id": "task-stage89",
+            "roles": {
+                "planner": "pi-local",
+                "executor": "omp-local",
+                "reviewer": "pi-local",
+            },
+            "created_at": "2026-07-28T12:00:00Z",
+        },
+    ]
+    assert all("goal" not in item for item in chains)
+    assert list_external_agent_chains(root, limit=1) == chains[:1]

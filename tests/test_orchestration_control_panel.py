@@ -742,3 +742,43 @@ def test_real_execution_evidence_and_human_review_are_rendered_in_chinese(monkey
     assert "智能体已结束" in html
     assert "阶段88真实产物。" in html
     assert "审阅已通过" in html
+
+def test_live_snapshot_projects_bounded_safe_chain_collection_in_chinese(monkeypatch) -> None:
+    chains = [
+        {
+            "chain_id": "chain-stage90-001",
+            "status": "approved",
+            "task_id": "task-stage90",
+            "roles": {
+                "planner": "pi-local",
+                "executor": "omp-local",
+                "reviewer": "pi-local",
+            },
+            "created_at": "2026-07-28T12:00:00Z",
+        }
+    ]
+    monkeypatch.setattr(
+        control_panel,
+        "list_external_agent_chains",
+        lambda *_args, **_kwargs: chains,
+    )
+
+    snapshot = build_control_panel_snapshot(
+        ROOT,
+        external_agent_evaluated_at="2026-07-28T12:00:05Z",
+        external_agent_chain_limit=5,
+    ).to_dict()
+
+    section = snapshot["sections"]["external_agent_chains"]
+    assert section == {
+        "status": "pass",
+        "scope": "runtime",
+        "availability": "live_read_only",
+        "chain_limit": 5,
+        "chains": chains,
+        "safe_summary_zh": "仅展示有限链路的安全摘要；不会读取或展示目标、指令或原始产物内容。",
+    }
+    rendered = render_control_panel_html(snapshot)
+    assert "有限自动串行链路" in rendered
+    assert "chain-stage90-001" in rendered
+    assert "目标、指令或原始产物内容" in rendered

@@ -81,6 +81,12 @@ from .orchestration_control_panel import (
     build_control_panel_snapshot,
     render_control_panel_html,
 )
+from .control_panel_live_gui import (
+    LiveControlPanelError,
+    build_live_control_panel_snapshot,
+    launch_live_control_panel,
+    validate_live_control_panel_options,
+)
 from .orchestration_overview import OverviewSummary, check_overview
 from .orchestration_profile import (
     check_automation_profile,
@@ -1614,12 +1620,56 @@ def _cmd_orchestration_control_panel_snapshot(args: argparse.Namespace) -> int:
         single_work_item_request_file=args.single_work_item_request_file,
         external_agent_attempt_id=args.external_agent_attempt_id,
         external_agent_chain_id=args.external_agent_chain_id,
+        external_agent_chain_limit=args.external_agent_chain_limit,
     )
     if args.json:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
         print(result.render_human())
     return result.exit_code()
+
+
+def _cmd_orchestration_control_panel_live(args: argparse.Namespace) -> int:
+    """Open the foreground-only Chinese live Control Panel or emit one JSON snapshot."""
+    try:
+        refresh_seconds, chain_limit = validate_live_control_panel_options(
+            refresh_seconds=args.refresh_seconds,
+            chain_limit=args.chain_limit,
+        )
+    except LiveControlPanelError as exc:
+        return emit(
+            CheckResult(
+                "validation_failed",
+                findings=[Finding(exc.code, "block", "fix", exc.message)],
+                next_action="修正实时只读面板参数后重试；该入口不会执行或控制外部智能体。",
+            ),
+            json_output=args.json,
+            no_color=args.no_color,
+        )
+    if args.json:
+        result = build_live_control_panel_snapshot(
+            _root_path(args),
+            chain_limit=chain_limit,
+        )
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+        return result.exit_code()
+    try:
+        launch_live_control_panel(
+            _root_path(args),
+            refresh_seconds=refresh_seconds,
+            chain_limit=chain_limit,
+        )
+    except LiveControlPanelError as exc:
+        return emit(
+            CheckResult(
+                "blocked",
+                findings=[Finding(exc.code, "block", "inspect", exc.message)],
+                next_action="确认本机图形界面组件可用后重试；该入口不会执行或控制外部智能体。",
+            ),
+            json_output=False,
+            no_color=args.no_color,
+        )
+    return EXIT_PASS
 
 
 def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
@@ -1637,6 +1687,7 @@ def _cmd_orchestration_control_panel_render(args: argparse.Namespace) -> int:
         single_work_item_request_file=args.single_work_item_request_file,
         external_agent_attempt_id=args.external_agent_attempt_id,
         external_agent_chain_id=args.external_agent_chain_id,
+        external_agent_chain_limit=args.external_agent_chain_limit,
     )
     print(render_control_panel_html(result.to_dict()))
     return result.exit_code()
@@ -4240,6 +4291,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="可选：显示指定有限协作链路的角色、门禁与证据交接状态",
     )
+    orchestration_control_panel_snapshot_parser.add_argument(
+        "--external-agent-chain-limit",
+        type=int,
+        default=None,
+        help="可选：展示最多 1 到 20 条有限链路安全摘要",
+    )
     _add_global_args(orchestration_control_panel_snapshot_parser)
     orchestration_control_panel_snapshot_parser.set_defaults(
         func=_cmd_orchestration_control_panel_snapshot
@@ -4305,9 +4362,37 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="可选：显示指定有限协作链路的角色、门禁与证据交接状态",
     )
+    orchestration_control_panel_render_parser.add_argument(
+        "--external-agent-chain-limit",
+        type=int,
+        default=None,
+        help="可选：展示最多 1 到 20 条有限链路安全摘要",
+    )
     _add_global_args(orchestration_control_panel_render_parser)
     orchestration_control_panel_render_parser.set_defaults(
         func=_cmd_orchestration_control_panel_render
+    )
+
+    orchestration_control_panel_live_parser = (
+        orchestration_control_panel_subparsers.add_parser(
+            "live", help="Open the foreground-only Chinese live read-only Control Panel"
+        )
+    )
+    orchestration_control_panel_live_parser.add_argument(
+        "--refresh-seconds",
+        type=int,
+        default=5,
+        help="刷新间隔：2 到 60 秒；仅在前台窗口存活期间轮询",
+    )
+    orchestration_control_panel_live_parser.add_argument(
+        "--chain-limit",
+        type=int,
+        default=20,
+        help="展示有限链路安全摘要的上限：1 到 20 条",
+    )
+    _add_global_args(orchestration_control_panel_live_parser)
+    orchestration_control_panel_live_parser.set_defaults(
+        func=_cmd_orchestration_control_panel_live
     )
 
     # orchestration profile list/inspect/check

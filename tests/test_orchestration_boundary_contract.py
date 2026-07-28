@@ -142,11 +142,20 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         "plan",
         "check",
     }
-    assert _subparser_names(_nested_parser(orchestration, "control-panel")) == {
+    control_panel = _nested_parser(orchestration, "control-panel")
+    assert _subparser_names(control_panel) == {
         "handoff",
         "snapshot",
         "render",
+        "live",
     }
+    live_options = {
+        option
+        for action in _nested_parser(control_panel, "live")._actions
+        for option in action.option_strings
+    }
+    assert {"--refresh-seconds", "--chain-limit"} <= live_options
+    assert {"--commit", "--approval-binding-id", "--decision"}.isdisjoint(live_options)
     assert _subparser_names(_nested_parser(orchestration, "execution")) == {
         "git-status",
         "pi-binding",

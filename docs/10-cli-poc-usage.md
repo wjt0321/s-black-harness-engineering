@@ -2928,3 +2928,26 @@ python -m agent_runtime.cli orchestration execution external-agent-chain final-d
 如果阶段 88 人工审阅已写入、但阶段 89 完成回执未落盘，不能再次提交决定。只能先预览固定恢复，再核对一次性确认摘要后 `--commit`；恢复只读取既有审阅与执行证据，绝不调用 Pi/OMP。
 
 自动化覆盖了启动授权、自动三轮、失败停止、完成恢复与中文投影。2026-07-28 已由操作者在真实无工具、空闲 Pi/OMP 宿主上完成正反拓扑验收：正向链路最终人工通过，反向链路最终人工要求修改；二者均未自动重试或再派发。
+
+### 阶段 90 实时中文只读图形面板
+
+前台窗口只聚合既有 Pi/OMP 安全状态和阶段 89 有限链路的安全摘要；它不监听端口、不启动服务，也没有派发、审批、最终决定、重试、取消、恢复或宿主控制入口。关闭窗口即停止轮询。
+
+```powershell
+python -m agent_runtime.cli orchestration control-panel live
+
+python -m agent_runtime.cli orchestration control-panel live `
+  --refresh-seconds 5 `
+  --chain-limit 20
+
+# 只构建一次确定性快照，不打开窗口
+python -m agent_runtime.cli orchestration control-panel live --chain-limit 20 --json
+
+# 既有静态读取模型也可展示同一份有限链路安全摘要
+python -m agent_runtime.cli orchestration control-panel snapshot `
+  --external-agent-evaluated-at 2026-07-28T12:00:05Z `
+  --external-agent-chain-limit 20 `
+  --json
+```
+
+参数严格有界：刷新间隔为 2–60 秒，链路摘要为 1–20 条。链路列表只显示 ID、状态、任务 ID、固定角色宿主和创建时间；不会读取或展示链路目标、指令、未扫描原文、原始产物或任意项目文件内容。真实 GUI 验收已于 2026-07-28 在操作者实际打开 Pi/OMP 后完成：窗口显示两个真实宿主、既有“通过 / 要求修改”链路摘要，并在关闭 OMP 后投影为“状态已过期”；fixture 只能覆盖投影逻辑。

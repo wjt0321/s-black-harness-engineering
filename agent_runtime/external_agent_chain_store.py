@@ -589,6 +589,57 @@ def _load_completion(root: Path, chain_id: str) -> dict[str, Any] | None:
     return record
 
 
+
+def list_external_agent_chains(root: Path, *, limit: int = 20) -> list[dict[str, Any]]:
+    """Return bounded, safe chain summaries without exposing chain content."""
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 20:
+        raise ChainStoreError(
+            "external-agent-chain-list-limit-invalid",
+            "链路列表上限必须是 1 到 20 之间的整数。",
+        )
+    root = root.resolve()
+    intents = _contained(root, _BASE / "intents")
+    if not intents.exists():
+        return []
+    try:
+        info = intents.lstat()
+        if not stat.S_ISDIR(info.st_mode) or stat.S_ISLNK(info.st_mode):
+            raise ChainStoreError(
+                "external-agent-chain-directory-unsafe",
+                "链路意图目录不安全。",
+            )
+        chain_ids = sorted(
+            _key(path.stem)
+            for path in intents.iterdir()
+            if path.suffix == ".json" and path.is_file()
+        )
+    except ChainStoreError:
+        raise
+    except OSError as exc:
+        raise ChainStoreError(
+            "external-agent-chain-read-io-failed",
+            "链路意图目录读取失败。",
+        ) from exc
+
+    summaries: list[dict[str, Any]] = []
+    for chain_id in chain_ids[:limit]:
+        chain = inspect_external_agent_chain(root, chain_id)
+        intent = chain["intent"]
+        roles = intent["roles"]
+        summaries.append(
+            {
+                "chain_id": chain_id,
+                "status": chain["status"],
+                "task_id": intent["task_id"],
+                "roles": {
+                    role: roles[role]["profile"]
+                    for role in ("planner", "executor", "reviewer")
+                },
+                "created_at": intent["created_at"],
+            }
+        )
+    return summaries
+
 def inspect_external_agent_chain(root: Path, chain_id: str) -> dict[str, Any]:
     root = root.resolve()
     intent = _load_intent(root, chain_id)

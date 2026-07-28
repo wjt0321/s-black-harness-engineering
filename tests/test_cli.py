@@ -595,3 +595,38 @@ def test_cli_chain_start_commit_uses_current_runtime_evaluation_time(
         "commit": True,
     }]
     assert json.loads(capsys.readouterr().out)["status"] == "pass"
+
+def test_cli_live_control_panel_json_builds_one_fresh_bounded_snapshot(
+    capsys,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[dict[str, object]] = []
+
+    class Result:
+        def to_dict(self) -> dict[str, object]:
+            return {"status": "pass", "sections": {}, "summary": {}, "source": {}}
+
+        def exit_code(self) -> int:
+            return 0
+
+    def build(root: Path, **kwargs: object) -> Result:
+        calls.append({"root": root, **kwargs})
+        return Result()
+
+    monkeypatch.setattr(cli, "build_live_control_panel_snapshot", build)
+    code = main(
+        [
+            "--root",
+            str(ROOT),
+            "orchestration",
+            "control-panel",
+            "live",
+            "--chain-limit",
+            "4",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    assert calls == [{"root": ROOT.resolve(), "chain_limit": 4}]
+    assert json.loads(capsys.readouterr().out)["status"] == "pass"

@@ -20,7 +20,7 @@ python -m agent_runtime.cli doctor
 
 ## 当前能力与边界
 
-项目是 Python 3.11+、中文图形界面优先目标的本地多智能体 Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；当前已验收事实源为 `docs/archive/138-stage89-bounded-planner-executor-review-design.md`；前序事实源为 `docs/archive/137-stage88-external-agent-evidence-and-human-review.md`。Pi/OMP 已完成只读状态、单工作项受控执行、真实事件与结果产物回收，以及人工审阅真实验收。
+项目是 Python 3.11+、中文图形界面优先目标的本地多智能体 Harness / Control Plane。长期产品目标事实源为 `docs/130-gui-first-external-agent-control-plane-target.md`；当前已验收事实源为 `docs/archive/139-stage90-live-chinese-control-panel-read-model.md`；前序事实源为 `docs/archive/138-stage89-bounded-planner-executor-review-design.md` 和 `docs/archive/137-stage88-external-agent-evidence-and-human-review.md`。Pi/OMP 已完成只读状态、单工作项受控执行、真实事件与结果产物回收，以及人工审阅真实验收。
 
 允许的真实执行仅有：
 
@@ -75,6 +75,7 @@ NEVER：
 | `docs/111-pi-controlled-dry-run-print-implementation.md` | 固定 Pi print 执行事实源 |
 | `docs/archive/135-stage86-pi-omp-live-status-integration.md` | Pi/OMP 只读状态接入归档事实源 |
 | `docs/archive/136-stage87-single-work-item-controlled-execution.md` | Pi/OMP 单工作项受控执行归档事实源 |
+| `docs/archive/139-stage90-live-chinese-control-panel-read-model.md` | 实时中文只读图形面板与真实 Pi/OMP GUI 验收归档事实源 |
 | `docs/archive/137-stage88-external-agent-evidence-and-human-review.md` | 真实事件、不可变产物与人工审阅归档事实源 |
 
 ## 验证契约

@@ -24,6 +24,7 @@ from .orchestration_manual_board import inspect_manual_board
 from .orchestration_external_agent_live_status import inspect_external_agent_live_status
 from .orchestration_external_agent_evidence import inspect_external_agent_evidence
 from .orchestration_external_agent_chain import inspect_chain_state
+from .external_agent_chain_store import ChainStoreError, list_external_agent_chains
 from .orchestration_single_work_item_execution import build_single_work_item_execution_plan
 from .orchestration_socket import list_sockets
 from .orchestration_approval import list_approvals
@@ -305,6 +306,7 @@ def build_control_panel_snapshot(
     single_work_item_request_file: str | None = None,
     external_agent_attempt_id: str | None = None,
     external_agent_chain_id: str | None = None,
+    external_agent_chain_limit: int | None = None,
 ) -> ControlPanelSnapshot:
     """Aggregate existing safe read models without executing or writing."""
     overview = _section(
@@ -540,6 +542,32 @@ def build_control_panel_snapshot(
             "scope": "runtime",
             "availability": "stable_read_only",
         }
+    if external_agent_chain_limit is not None:
+        try:
+            chains = list_external_agent_chains(root, limit=external_agent_chain_limit)
+        except ChainStoreError as exc:
+            sections["external_agent_chains"] = {
+                "status": "blocked",
+                "scope": "runtime",
+                "availability": "live_read_only",
+                "chain_limit": external_agent_chain_limit,
+                "chains": [],
+                "findings": [{
+                    "rule_id": exc.code,
+                    "severity": "error",
+                    "message": exc.message,
+                }],
+                "safe_summary_zh": "有限链路摘要不可用；不会改写链路记录或调用外部智能体。",
+            }
+        else:
+            sections["external_agent_chains"] = {
+                "status": "pass",
+                "scope": "runtime",
+                "availability": "live_read_only",
+                "chain_limit": external_agent_chain_limit,
+                "chains": chains,
+                "safe_summary_zh": "仅展示有限链路的安全摘要；不会读取或展示目标、指令或原始产物内容。",
+            }
     findings = _deduplicate_findings(sections)
     status = _aggregate_status(sections)
 
@@ -573,6 +601,10 @@ def build_control_panel_snapshot(
             for name, section in sections.items()
         },
     }
+    external_agent_chains = sections.get("external_agent_chains")
+    if external_agent_chains is not None:
+        summary["external_agent_chain_count"] = len(external_agent_chains.get("chains", []))
+
     collaboration_run = sections.get("collaboration_run")
     if collaboration_run is not None:
         summary["collaboration_run_status"] = collaboration_run.get("run", {}).get("status")
@@ -617,6 +649,10 @@ def build_control_panel_snapshot(
         source["single_work_item_request_file"] = _safe_envelope_reference(root, single_work_item_request_file)
     if external_agent_attempt_id is not None:
         source["external_agent_attempt_id"] = external_agent_attempt_id
+    if external_agent_chain_id is not None:
+        source["external_agent_chain_id"] = external_agent_chain_id
+    if external_agent_chain_limit is not None:
+        source["external_agent_chain_limit"] = external_agent_chain_limit
     if collaboration_file is not None:
         source["collaboration_file"] = _safe_envelope_reference(root, collaboration_file)
     if dispatch_file is not None:
@@ -2069,14 +2105,14 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
     )
 
     section_names = [name for name in _SECTION_ORDER if name in sections]
-    for optional_section in ("external_agents", "single_work_item_execution", "external_agent_evidence", "external_agent_chain", "collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
+    for optional_section in ("external_agents", "external_agent_chains", "single_work_item_execution", "external_agent_evidence", "external_agent_chain", "collaboration", "dispatch", "manual_board", "collaboration_run", "collaboration_actions", "collaboration_inbox"):
         if optional_section in sections:
             section_names.append(optional_section)
     nav_labels = {
         "overview": "总览", "tasks": "任务", "adapters": "适配器", "automation": "自动化",
         "runs": "运行记录", "approvals": "审批", "artifacts": "产物", "reports": "报告",
         "collaboration": "协作计划", "dispatch": "派发资格", "manual_board": "人工看板",
-        "external_agents": "外部智能体", "single_work_item_execution": "单工作项执行", "external_agent_evidence": "执行证据", "external_agent_chain": "有限协作链路", "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
+        "external_agents": "外部智能体", "external_agent_chains": "有限自动串行链路", "single_work_item_execution": "单工作项执行", "external_agent_evidence": "执行证据", "external_agent_chain": "有限协作链路", "collaboration_run": "协作运行", "collaboration_actions": "操作资格", "collaboration_inbox": "当前待办",
     }
     nav = "".join(
         f'<a href="#{name.replace("_", "-")}">{_escape(nav_labels.get(name, name))}</a>'
@@ -2293,6 +2329,50 @@ def render_control_panel_html(payload: dict[str, Any]) -> str:
                     ),
                     rows=live_rows,
                     empty_message="尚未获得 Pi/OMP 状态。",
+                ),
+                "</section>",
+            ]
+        )
+
+    external_agent_chains = sections.get("external_agent_chains")
+    if external_agent_chains is not None:
+        chain_labels = {
+            "awaiting_planner_confirmation": "等待确认规划",
+            "awaiting_executor_confirmation": "等待确认执行",
+            "awaiting_reviewer_confirmation": "等待确认审阅",
+            "awaiting_final_human_decision": "等待最终人工决定",
+            "finalization_pending": "等待恢复最终决定",
+            "stopped": "已停止",
+            "approved": "审阅已通过",
+            "changes_requested": "要求修改",
+        }
+        chain_rows = [
+            {
+                "chain_id": item.get("chain_id", "-"),
+                "status": chain_labels.get(item.get("status"), item.get("status", "未知")),
+                "task_id": item.get("task_id", "-"),
+                "topology": " → ".join(
+                    item.get("roles", {}).get(role, "-")
+                    for role in ("planner", "executor", "reviewer")
+                ),
+                "created_at": item.get("created_at", "-"),
+            }
+            for item in external_agent_chains.get("chains", [])
+        ]
+        section_html.extend(
+            [
+                '<section class="panel-section" id="external-agent-chains">',
+                _section_header("16", "有限自动串行链路 / 安全摘要", external_agent_chains),
+                '<div class="boundary-callout">',
+                _escape(external_agent_chains.get("safe_summary_zh", "")),
+                '<br><strong>最多展示：</strong>',
+                _escape(external_agent_chains.get("chain_limit", "-")),
+                ' 条；本区域没有派发、批准、重试或宿主控制入口。</div>',
+                _table(
+                    caption="最近有限链路",
+                    columns=(("chain_id", "链路 ID"), ("status", "状态"), ("task_id", "任务 ID"), ("topology", "角色拓扑"), ("created_at", "创建时间")),
+                    rows=chain_rows,
+                    empty_message="尚无可展示的有限链路。",
                 ),
                 "</section>",
             ]

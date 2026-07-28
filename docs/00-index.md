@@ -6,6 +6,7 @@
 
 - `../README.md` — 项目定位、当前能力、快速开始。
 - `000-stage-digest.md` — 当前断点和恢复顺序。
+- `archive/139-stage90-live-chinese-control-panel-read-model.md` — 阶段 90 已验收事实源：实时中文只读图形面板、聚合读取模型与真实 Pi/OMP 图形验收。
 - `archive/138-stage89-bounded-planner-executor-review-design.md` — 阶段 89 已验收事实源：一次启动授权后的有限自动串行规划者—执行者—审阅者闭环。
 - `archive/137-stage88-external-agent-evidence-and-human-review.md` — 已完成实现事实源：Pi/OMP 真实事件、不可变产物与人工审阅。
 - `archive/136-stage87-single-work-item-controlled-execution.md` — 阶段 87 归档事实源：Pi/OMP 单工作项受控执行与真实验收。
@@ -51,6 +52,7 @@
 
 ## 当前事实源
 
+- `archive/139-stage90-live-chinese-control-panel-read-model.md` — 已验收实现：前台中文只读 GUI、Pi/OMP 安全状态、有限链路摘要与关闭后的过期投影。
 - `archive/138-stage89-bounded-planner-executor-review-design.md` — 已验收实现：有限自动串行闭环的目标、冻结边界、契约、CLI 与真实 Pi/OMP 验收。
 - `130-gui-first-external-agent-control-plane-target.md` — 长期产品主线与事实权威边界。
 - `archive/137-stage88-external-agent-evidence-and-human-review.md` — 当前实现事实源：真实事件、不可变产物、固定恢复和人工审阅。
