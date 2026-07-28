@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -196,6 +197,37 @@ def test_fixed_source_file_failures_are_stable(
 
     assert payload["status"] == "blocked"
     assert payload["findings"][0]["rule_id"] == expected_code
+
+
+def test_directory_with_posix_link_count_is_reported_as_not_regular(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _project(tmp_path)
+    target = root / FIXED_SNAPSHOT_PATH
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.mkdir()
+    original_lstat = Path.lstat
+
+    def posix_directory_lstat(path: Path) -> os.stat_result:
+        info = original_lstat(path)
+        if path == target:
+            return SimpleNamespace(
+                st_mode=info.st_mode,
+                st_nlink=2,
+                st_size=info.st_size,
+                st_mtime_ns=info.st_mtime_ns,
+                st_dev=info.st_dev,
+                st_ino=info.st_ino,
+            )
+        return info
+
+    monkeypatch.setattr(Path, "lstat", posix_directory_lstat)
+
+    payload = inspect_external_agent_live_status(root, EVALUATED).to_dict()
+
+    assert payload["status"] == "blocked"
+    assert payload["findings"][0]["rule_id"] == "status_source_not_regular"
 
 
 def test_symlink_snapshot_is_blocked_when_supported(tmp_path: Path) -> None:

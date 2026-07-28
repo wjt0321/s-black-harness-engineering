@@ -198,6 +198,15 @@ def _is_reparse(info: os.stat_result) -> bool:
     return bool(getattr(info, "st_file_attributes", 0) & _FILE_ATTRIBUTE_REPARSE_POINT)
 
 
+def _check_regular_source(info: os.stat_result) -> None:
+    if stat.S_ISLNK(info.st_mode) or _is_reparse(info):
+        raise _ReadFailure("status_source_indirection_blocked")
+    if not stat.S_ISREG(info.st_mode):
+        raise _ReadFailure("status_source_not_regular")
+    if info.st_nlink != 1:
+        raise _ReadFailure("status_source_indirection_blocked")
+
+
 def _check_parent_components(root: Path, path: Path) -> None:
     current = root
     for part in path.relative_to(root).parts[:-1]:
@@ -221,10 +230,7 @@ def _verify_path_identity(path: Path, expected: os.stat_result) -> os.stat_resul
         raise _ReadFailure("status_source_unreadable") from exc
     except OSError as exc:
         raise _ReadFailure("status_source_unreadable") from exc
-    if stat.S_ISLNK(current.st_mode) or _is_reparse(current) or current.st_nlink != 1:
-        raise _ReadFailure("status_source_indirection_blocked")
-    if not stat.S_ISREG(current.st_mode):
-        raise _ReadFailure("status_source_not_regular")
+    _check_regular_source(current)
     if _identity(current) != _identity(expected):
         raise _ReadFailure("status_source_unreadable")
     return current
@@ -261,18 +267,14 @@ def _read_fixed_snapshot(
         raise _ReadFailure("status_source_missing") from exc
     except OSError as exc:
         raise _ReadFailure("status_source_unreadable") from exc
-    if stat.S_ISLNK(before.st_mode) or _is_reparse(before) or before.st_nlink != 1:
-        raise _ReadFailure("status_source_indirection_blocked")
-    if not stat.S_ISREG(before.st_mode):
-        raise _ReadFailure("status_source_not_regular")
+    _check_regular_source(before)
     if before.st_size > max_bytes:
         raise _ReadFailure("status_source_too_large")
 
     try:
         with _open_snapshot(path) as handle:
             opened = os.fstat(handle.fileno())
-            if not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1 or _is_reparse(opened):
-                raise _ReadFailure("status_source_indirection_blocked")
+            _check_regular_source(opened)
             if _identity(opened) != _identity(before):
                 raise _ReadFailure("status_source_unreadable")
             _verify_path_identity(path, opened)
