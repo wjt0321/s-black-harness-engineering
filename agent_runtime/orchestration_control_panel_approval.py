@@ -7,8 +7,10 @@ from typing import Any
 
 from .orchestration_external_agent_chain import (
     ExternalAgentChainResult,
+    abandon_chain_final_decision,
     commit_chain_final_decision,
     execute_chain_start,
+    preview_abandon_chain_final_decision,
     preview_chain_final_decision,
     preview_chain_start,
 )
@@ -59,6 +61,26 @@ def _start_fields(command: object) -> tuple[str, str, str, str] | None:
     if not all(isinstance(value, str) and value and "\x00" not in value for value in fields):
         return None
     return fields  # type: ignore[return-value]
+
+
+def _abandon_final_fields(command: object) -> str | None:
+    if not isinstance(command, dict) or set(command) != {
+        "version",
+        "contract",
+        "operation",
+        "chain_id",
+    }:
+        return None
+    if (
+        command.get("version") != 1
+        or command.get("contract") != SCHEMA_VERSION
+        or command.get("operation") != "abandon_final_decision"
+    ):
+        return None
+    chain_id = command.get("chain_id")
+    if not isinstance(chain_id, str) or not chain_id or "\x00" in chain_id:
+        return None
+    return chain_id
 
 
 def _final_fields(command: object) -> tuple[str, str, str] | None:
@@ -114,6 +136,9 @@ def preview_control_panel_approval(
             goal=goal,
             evaluated_at=evaluated_at,
         )
+    abandon_chain_id = _abandon_final_fields(command)
+    if abandon_chain_id is not None:
+        return preview_abandon_chain_final_decision(root.resolve(), chain_id=abandon_chain_id)
     final = _final_fields(command)
     if final is not None:
         chain_id, decision, comment = final
@@ -147,6 +172,14 @@ def commit_control_panel_approval(
             collaboration_file=collaboration_file,
             goal=goal,
             evaluated_at=evaluated_at,
+            approval_binding_id=approval_binding_id,
+            commit=True,
+        )
+    abandon_chain_id = _abandon_final_fields(command)
+    if abandon_chain_id is not None:
+        return abandon_chain_final_decision(
+            root.resolve(),
+            chain_id=abandon_chain_id,
             approval_binding_id=approval_binding_id,
             commit=True,
         )

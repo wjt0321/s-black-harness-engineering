@@ -190,7 +190,7 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
     assert {"--attempt-id", "--decision", "--comment", "--evaluated-at", "--approval-binding-id", "--commit"} <= review_options
     chain = _nested_parser(execution, "external-agent-chain")
     assert _subparser_names(chain) == {
-        "inspect", "recover-final-decision", "start", "final-decision",
+        "inspect", "recover-final-decision", "abandon-final-decision", "start", "final-decision",
     }
     chain_start_options = {
         option
@@ -204,6 +204,13 @@ def test_orchestration_surface_matches_reconciliation_contract() -> None:
         for option in action.option_strings
     }
     assert {"--chain-id", "--approval-binding-id", "--commit"} <= chain_recover_options
+    chain_abandon_options = {
+        option
+        for action in _nested_parser(chain, "abandon-final-decision")._actions
+        for option in action.option_strings
+    }
+    assert {"--chain-id", "--approval-binding-id", "--commit"} <= chain_abandon_options
+    assert {"--decision", "--comment", "--evaluated-at", "--goal", "--task-id"}.isdisjoint(chain_abandon_options)
     assert _subparser_names(
         _nested_parser(_nested_parser(orchestration, "execution"), "trust")
     ) == {"bind", "inspect"}

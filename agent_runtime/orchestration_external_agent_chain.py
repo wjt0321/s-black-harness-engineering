@@ -1040,6 +1040,146 @@ def commit_chain_final_decision(
     return ExternalAgentChainResult("pass", chain_id, role="final_human_decision", plan_hash=preview.plan_hash, approval_binding_id=preview.approval_binding_id, chain={"status": status, "completion": completion}, next_action="链路已结束；不会自动生成修改指令、重试或派发新的工作项。")
 
 
+
+def preview_abandon_chain_final_decision(
+    root: Path,
+    *,
+    chain_id: str,
+    services: dict[str, Any] | None = None,
+) -> ExternalAgentChainResult:
+    """Preview the sole bounded operator abandonment of a pending final decision.
+
+    This operation intentionally applies only after all three external roles have
+    finished and before a human final decision has started.  It cannot interrupt
+    a host process, recover a failed role, retry, or alter evidence.
+    """
+    del services  # Kept for the same override shape as the other fixed chain operations.
+    root = root.resolve()
+    try:
+        chain = inspect_external_agent_chain(root, chain_id)
+    except ChainStoreError as exc:
+        return ExternalAgentChainResult(
+            "blocked", chain_id, role="final_human_decision", findings=(_finding(exc.code, exc.message),)
+        )
+    if chain["status"] != "awaiting_final_human_decision":
+        return ExternalAgentChainResult(
+            "blocked",
+            chain_id,
+            role="final_human_decision",
+            chain=chain,
+            findings=(_finding(
+                "external-agent-chain-abandon-not-eligible",
+                "仅可放弃等待最终人工决定的已完成链路；不会中断智能体、重试或修改证据。",
+            ),),
+        )
+    execution = chain.get("execution")
+    advice = chain.get("review_advice")
+    if not isinstance(execution, dict) or not isinstance(advice, dict):
+        return ExternalAgentChainResult(
+            "blocked",
+            chain_id,
+            role="final_human_decision",
+            chain=chain,
+            findings=(_finding(
+                "external-agent-chain-abandon-evidence-invalid",
+                "待最终决定链路缺少可绑定的执行证据或审阅建议；不会写入放弃记录。",
+            ),),
+        )
+    stable = {
+        "operation": "external-agent-chain.abandon-final-decision",
+        "chain_id": chain_id,
+        "execution_attempt_id": execution.get("attempt_id"),
+        "execution_manifest_digest": execution.get("manifest_digest"),
+        "execution_artifact_digest": execution.get("artifact_digest"),
+        "review_advice_digest": advice.get("advice_digest"),
+        "review_recommendation": advice.get("advice", {}).get("recommendation") if isinstance(advice.get("advice"), dict) else None,
+        "stop_role": "final_human_decision",
+        "stop_failure_code": "external-agent-chain-operator-abandoned",
+    }
+    if not all(isinstance(stable[key], str) and stable[key] for key in (
+        "execution_attempt_id", "execution_manifest_digest", "execution_artifact_digest", "review_advice_digest", "review_recommendation"
+    )):
+        return ExternalAgentChainResult(
+            "blocked",
+            chain_id,
+            role="final_human_decision",
+            chain=chain,
+            findings=(_finding(
+                "external-agent-chain-abandon-evidence-invalid",
+                "待最终决定链路的证据绑定不完整；不会写入放弃记录。",
+            ),),
+        )
+    plan_hash = _digest(stable)
+    return ExternalAgentChainResult(
+        "needs_approval",
+        chain_id,
+        role="final_human_decision",
+        plan_hash=plan_hash,
+        approval_binding_id=_digest({"kind": "one-time-chain-abandon-approval", "plan_hash": plan_hash}),
+        plan=stable,
+        chain=chain,
+        next_action="核对执行证据与审阅建议摘要后，携带一次性确认摘要并显式使用 --commit 放弃该待决链路。此操作不可撤销，且不会中断或控制外部智能体。",
+    )
+
+
+def abandon_chain_final_decision(
+    root: Path,
+    *,
+    chain_id: str,
+    approval_binding_id: str | None,
+    commit: bool,
+    services: dict[str, Any] | None = None,
+) -> ExternalAgentChainResult:
+    """Commit the fixed, immutable stop for one pending final decision."""
+    preview = preview_abandon_chain_final_decision(root, chain_id=chain_id, services=services)
+    if preview.status != "needs_approval" or preview.plan is None or preview.chain is None:
+        return preview
+    if not commit:
+        return preview
+    if approval_binding_id != preview.approval_binding_id:
+        return ExternalAgentChainResult(
+            "blocked",
+            chain_id,
+            role="final_human_decision",
+            plan_hash=preview.plan_hash,
+            approval_binding_id=preview.approval_binding_id,
+            plan=preview.plan,
+            chain=preview.chain,
+            findings=(_finding(
+                "external-agent-chain-approval-binding-mismatch",
+                "提交的确认摘要与当前待决链路放弃计划不一致。",
+            ),),
+        )
+    try:
+        write_chain_stop(
+            root.resolve(),
+            chain_id,
+            role="final_human_decision",
+            failure_code="external-agent-chain-operator-abandoned",
+        )
+        chain = inspect_external_agent_chain(root.resolve(), chain_id)
+    except ChainStoreError as exc:
+        return ExternalAgentChainResult(
+            "error",
+            chain_id,
+            role="final_human_decision",
+            plan_hash=preview.plan_hash,
+            approval_binding_id=preview.approval_binding_id,
+            plan=preview.plan,
+            findings=(_finding(exc.code, exc.message),),
+            next_action="待决链路放弃记录未能完成写后校验；不得重试或继续提交最终决定。",
+        )
+    return ExternalAgentChainResult(
+        "pass",
+        chain_id,
+        role="final_human_decision",
+        plan_hash=preview.plan_hash,
+        approval_binding_id=preview.approval_binding_id,
+        chain=chain,
+        next_action="链路已不可变放弃并停止；既有候选、执行证据和审阅建议仅可读取，不能自动恢复、重试或再次派发。",
+    )
+
+
 def inspect_chain_state(root: Path, chain_id: str) -> ExternalAgentChainResult:
     try:
         chain = inspect_external_agent_chain(root.resolve(), chain_id)

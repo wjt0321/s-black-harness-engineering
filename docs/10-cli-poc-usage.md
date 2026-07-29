@@ -2929,6 +2929,19 @@ python -m agent_runtime.cli orchestration execution external-agent-chain final-d
 
 自动化覆盖了启动授权、自动三轮、失败停止、完成恢复与中文投影。2026-07-28 已由操作者在真实无工具、空闲 Pi/OMP 宿主上完成正反拓扑验收：正向链路最终人工通过，反向链路最终人工要求修改；二者均未自动重试或再派发。
 
+### 阶段 93 待决最终决定有限放弃
+
+仅当链路状态为 `awaiting_final_human_decision` 时，操作者可以放弃最终业务决定。它不会中断外部智能体、终止进程、恢复执行、重试或修改已归档证据；预览和提交均不接受额外原因、argv、cwd 或环境变量：
+
+```powershell
+python -m agent_runtime.cli orchestration execution external-agent-chain abandon-final-decision   --chain-id chain-20260728-example-001   --json
+
+# 核对预览中的 approval_binding_id 与执行/审阅摘要后：
+python -m agent_runtime.cli orchestration execution external-agent-chain abandon-final-decision   --chain-id chain-20260728-example-001   --approval-binding-id sha256:<preview-returned-binding>   --commit   --json
+```
+
+成功仅写入固定的不可变停止记录 `external-agent-chain-operator-abandoned`；最终人工决定与完成恢复入口随后失败关闭。阶段 93 的自动化验证已完成，真实 Pi/OMP GUI 验收尚待操作者执行。
+
 ### 阶段 90–91 实时中文图形控制面
 
 前台窗口聚合既有 Pi/OMP 安全状态和阶段 89 有限链路的安全摘要；关闭窗口即停止轮询，不监听端口、不启动服务。阶段 92 GUI 显示固定只读的已登记工作收件箱：操作者只选择一张中文工作卡，不输入链路 ID、任务、计划或目标；系统从已校验卡片自动装配绑定内容和安全链路 ID。随后仍遵循阶段 91 的一次启动确认、自动串行和自动路由最终“通过 / 要求修改”。不提供任意命令、重试、取消、恢复、宿主控制或新的 CLI 执行参数。

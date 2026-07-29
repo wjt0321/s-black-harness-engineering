@@ -249,3 +249,52 @@ def test_chain_role_time_keeps_millisecond_precision(monkeypatch) -> None:
     monkeypatch.setattr(chain, "datetime", FixedDatetime)
 
     assert chain._current_utc_evaluated_at() == "2026-07-28T07:31:43.987Z"
+
+
+
+def test_control_panel_abandon_uses_the_single_fixed_pending_final_decision_envelope(monkeypatch, tmp_path: Path) -> None:
+    from agent_runtime import orchestration_control_panel_approval as approval
+    from agent_runtime.orchestration_external_agent_chain import ExternalAgentChainResult
+
+    command = {
+        "version": 1,
+        "contract": "control-panel-approval/v1",
+        "operation": "abandon_final_decision",
+        "chain_id": "chain-stage93-001",
+    }
+    calls: list[tuple[str, object]] = []
+
+    def preview(root: Path, *, chain_id: str):
+        calls.append(("preview", (root, chain_id)))
+        return ExternalAgentChainResult(
+            "needs_approval",
+            chain_id,
+            approval_binding_id="sha256:" + "a" * 64,
+            plan={"operation": "external-agent-chain.abandon-final-decision"},
+        )
+
+    def commit(root: Path, *, chain_id: str, approval_binding_id: str | None, commit: bool):
+        calls.append(("commit", (root, chain_id, approval_binding_id, commit)))
+        return ExternalAgentChainResult("pass", chain_id)
+
+    monkeypatch.setattr(approval, "preview_abandon_chain_final_decision", preview)
+    monkeypatch.setattr(approval, "abandon_chain_final_decision", commit)
+
+    previewed = approval.preview_control_panel_approval(
+        tmp_path,
+        command=command,
+        evaluated_at="2026-07-28T12:04:00.000Z",
+    )
+    committed = approval.commit_control_panel_approval(
+        tmp_path,
+        command=command,
+        approval_binding_id="sha256:" + "a" * 64,
+        evaluated_at="2026-07-28T12:04:01.000Z",
+    )
+
+    assert previewed.status == "needs_approval"
+    assert committed.status == "pass"
+    assert calls == [
+        ("preview", (tmp_path.resolve(), "chain-stage93-001")),
+        ("commit", (tmp_path.resolve(), "chain-stage93-001", "sha256:" + "a" * 64, True)),
+    ]

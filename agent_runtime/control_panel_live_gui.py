@@ -109,6 +109,16 @@ def build_registered_start_chain_approval_command(card: RegisteredWorkCard) -> d
     )
 
 
+def build_abandon_final_decision_approval_command(*, chain_id: str) -> dict[str, object]:
+    """Build the sole fixed GUI envelope that abandons one pending final decision."""
+    return {
+        "version": 1,
+        "contract": "control-panel-approval/v1",
+        "operation": "abandon_final_decision",
+        "chain_id": chain_id,
+    }
+
+
 def build_final_decision_approval_command(
     *,
     chain_id: str,
@@ -141,6 +151,7 @@ def format_approval_confirmation(result: Any) -> str:
         ("human_decision", "最终决定"),
         ("human_comment_digest", "意见摘要"),
         ("review_recommendation", "审阅建议"),
+        ("stop_failure_code", "停止原因"),
     ):
         if key in plan:
             lines.append(f"{label}：{plan[key]}")
@@ -355,6 +366,12 @@ class _LiveControlPanelWindow:
             command=self._open_final_decision_dialog,
         )
         self._final_decision_button.pack(side="right")
+        self._abandon_final_button = ttk.Button(
+            approvals,
+            text="放弃选中待决链路…",
+            command=self._open_abandon_final_decision_dialog,
+        )
+        self._abandon_final_button.pack(side="right", padx=(0, 8))
 
         controls = ttk.Frame(container)
         controls.pack(fill="x", pady=(0, 0))
@@ -404,6 +421,7 @@ class _LiveControlPanelWindow:
         state = "normal" if enabled else "disabled"
         self._start_work_button.configure(state=state)
         self._final_decision_button.configure(state=state)
+        self._abandon_final_button.configure(state=state)
 
     def _selected_registered_card_id(self) -> str | None:
         selected = self._work_table.selection()
@@ -492,6 +510,25 @@ class _LiveControlPanelWindow:
 
         self._ttk.Button(body, text="生成一次性确认摘要", command=preview).grid(row=3, column=1, sticky="e", pady=(10, 0))
 
+    def _open_abandon_final_decision_dialog(self) -> None:
+        if self._approval_commit_in_flight:
+            self._messagebox.showwarning("正在执行", "已有一条受控操作正在串行执行，请等待它完成。")
+            return
+        chain_id = self._selected_chain_id()
+        if chain_id is None:
+            self._messagebox.showwarning("需要选择链路", "请先在有限自动串行链路表格中选择一条等待最终人工决定的链路。")
+            return
+        confirmed = self._messagebox.askyesno(
+            "放弃待决链路",
+            "仅当该链路已等待最终人工决定时，才可生成放弃确认摘要。放弃不可撤销，不会中断智能体、重试或修改证据。是否继续？",
+        )
+        if not confirmed:
+            return
+        self._preview_approval(
+            None,
+            build_abandon_final_decision_approval_command(chain_id=chain_id),
+        )
+
     def _preview_approval(
         self,
         source_dialog: Any | None,
@@ -530,7 +567,7 @@ class _LiveControlPanelWindow:
         body.pack(fill="both", expand=True)
         self._ttk.Label(
             body,
-            text="请核对以下不可变摘要。确认后仅调用既有固定 operation；状态漂移或摘要不匹配将失败关闭。",
+            text="请核对以下不可变摘要。确认后仅调用固定受控 operation；状态漂移或摘要不匹配将失败关闭。",
             wraplength=620,
         ).pack(anchor="w", pady=(0, 8))
         summary = self._tk.Text(body, width=82, height=10, wrap="word")

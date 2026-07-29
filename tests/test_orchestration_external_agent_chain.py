@@ -486,3 +486,110 @@ def test_role_instructions_embed_complete_schema_shaped_json_templates() -> None
     assert "不能有顶层包装对象" in reviewer_instruction
     assert content_digest in reviewer_instruction
     assert unsafe_output not in reviewer_instruction
+
+
+
+def test_operator_can_abandon_only_an_awaiting_final_decision_with_one_time_binding(tmp_path: Path) -> None:
+    from agent_runtime.external_agent_chain_store import (
+        create_chain_intent,
+        inspect_external_agent_chain,
+        write_execution_receipt,
+        write_planner_candidate,
+        write_review_advice,
+    )
+    from agent_runtime.orchestration_external_agent_chain import (
+        abandon_chain_final_decision,
+        preview_abandon_chain_final_decision,
+        preview_chain_final_decision,
+        preview_chain_planner,
+    )
+
+    root = _project(tmp_path)
+    planner = preview_chain_planner(
+        root,
+        chain_id="chain-stage93-001",
+        task_id="task-stage89",
+        collaboration_file="adapters/stage89-plan.json",
+        goal="生成一个有界的结论。",
+        evaluated_at="2026-07-28T12:00:00Z",
+        services={"scan_text": _pass_scan, "inspect_status": _open_status},
+    )
+    create_chain_intent(root, planner.plan["intent"])
+    assert preview_abandon_chain_final_decision(root, chain_id="chain-stage93-001").status == "blocked"
+    candidate = write_planner_candidate(root, "chain-stage93-001", {
+        "version": 1, "contract": "external-agent-chain-planner-candidate/v1", "chain_id": "chain-stage93-001",
+        "goal_digest": planner.plan["intent"]["goal_digest"], "summary": "计划。", "execution_instruction": "输出结论。",
+        "success_criteria": ["输出结论。"], "review_focus": ["检查结论。"],
+    }, source_attempt_id="attempt-plan", source_manifest_digest="sha256:" + "5" * 64, source_artifact_digest="sha256:" + "6" * 64)
+    write_execution_receipt(root, "chain-stage93-001", attempt_id="attempt-execute", manifest_digest="sha256:" + "3" * 64, artifact_digest="sha256:" + "4" * 64)
+    write_review_advice(root, "chain-stage93-001", {
+        "version": 1, "contract": "external-agent-chain-review-advice/v1", "chain_id": "chain-stage93-001",
+        "planner_candidate_digest": candidate["candidate_digest"], "execution_attempt_id": "attempt-execute",
+        "execution_manifest_digest": "sha256:" + "3" * 64, "execution_artifact_digest": "sha256:" + "4" * 64,
+        "recommendation": "request_changes", "summary": "建议修改。", "findings": [],
+    })
+    before = {item.relative_to(root): item.read_bytes() for item in root.rglob("*") if item.is_file()}
+
+    preview = preview_abandon_chain_final_decision(root, chain_id="chain-stage93-001")
+
+    assert preview.status == "needs_approval"
+    assert preview.plan["operation"] == "external-agent-chain.abandon-final-decision"
+    assert preview.plan["review_advice_digest"].startswith("sha256:")
+    assert before == {item.relative_to(root): item.read_bytes() for item in root.rglob("*") if item.is_file()}
+
+    mismatch = abandon_chain_final_decision(
+        root,
+        chain_id="chain-stage93-001",
+        approval_binding_id="sha256:" + "0" * 64,
+        commit=True,
+    )
+    assert mismatch.status == "blocked"
+    assert inspect_external_agent_chain(root, "chain-stage93-001")["status"] == "awaiting_final_human_decision"
+
+    committed = abandon_chain_final_decision(
+        root,
+        chain_id="chain-stage93-001",
+        approval_binding_id=preview.approval_binding_id,
+        commit=True,
+    )
+
+    assert committed.status == "pass"
+    stopped = inspect_external_agent_chain(root, "chain-stage93-001")
+    assert stopped["status"] == "stopped"
+    assert stopped["stop"] == {
+        "chain_id": "chain-stage93-001",
+        "role": "final_human_decision",
+        "failure_code": "external-agent-chain-operator-abandoned",
+    }
+    assert preview_chain_final_decision(
+        root,
+        chain_id="chain-stage93-001",
+        decision="approve",
+        comment="不应再提交。",
+        evaluated_at="2026-07-28T12:04:00Z",
+    ).status == "blocked"
+
+
+def test_operator_abandon_cli_is_preview_first_and_json_deterministic(capsys, tmp_path: Path) -> None:
+    from agent_runtime.cli import main
+    from agent_runtime.external_agent_chain_store import create_chain_intent, write_execution_receipt, write_planner_candidate, write_review_advice
+    from agent_runtime.orchestration_external_agent_chain import preview_abandon_chain_final_decision, preview_chain_planner
+
+    root = _project(tmp_path)
+    planner = preview_chain_planner(root, chain_id="chain-stage93-cli", task_id="task-stage89", collaboration_file="adapters/stage89-plan.json", goal="生成一个有界的结论。", evaluated_at="2026-07-28T12:00:00Z", services={"scan_text": _pass_scan, "inspect_status": _open_status})
+    create_chain_intent(root, planner.plan["intent"])
+    candidate = write_planner_candidate(root, "chain-stage93-cli", {"version": 1, "contract": "external-agent-chain-planner-candidate/v1", "chain_id": "chain-stage93-cli", "goal_digest": planner.plan["intent"]["goal_digest"], "summary": "计划。", "execution_instruction": "输出结论。", "success_criteria": ["输出结论。"], "review_focus": ["检查结论。"]}, source_attempt_id="attempt-plan", source_manifest_digest="sha256:" + "5" * 64, source_artifact_digest="sha256:" + "6" * 64)
+    write_execution_receipt(root, "chain-stage93-cli", attempt_id="attempt-execute", manifest_digest="sha256:" + "3" * 64, artifact_digest="sha256:" + "4" * 64)
+    write_review_advice(root, "chain-stage93-cli", {"version": 1, "contract": "external-agent-chain-review-advice/v1", "chain_id": "chain-stage93-cli", "planner_candidate_digest": candidate["candidate_digest"], "execution_attempt_id": "attempt-execute", "execution_manifest_digest": "sha256:" + "3" * 64, "execution_artifact_digest": "sha256:" + "4" * 64, "recommendation": "request_changes", "summary": "建议修改。", "findings": []})
+
+    code = main(["--root", str(root), "orchestration", "execution", "external-agent-chain", "abandon-final-decision", "--chain-id", "chain-stage93-cli", "--json"])
+    payload = json.loads(capsys.readouterr().out)
+
+    assert code != 0
+    assert payload["status"] == "needs_approval"
+    assert payload["plan"]["operation"] == "external-agent-chain.abandon-final-decision"
+    preview = preview_abandon_chain_final_decision(root, chain_id="chain-stage93-cli")
+    committed = main(["--root", str(root), "orchestration", "execution", "external-agent-chain", "abandon-final-decision", "--chain-id", "chain-stage93-cli", "--approval-binding-id", preview.approval_binding_id, "--commit", "--json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert committed == 0
+    assert payload["chain"]["status"] == "stopped"

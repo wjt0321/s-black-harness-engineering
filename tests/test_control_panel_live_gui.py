@@ -53,8 +53,9 @@ def test_live_panel_rejects_out_of_bound_refresh_and_chain_limits() -> None:
             continue
         raise AssertionError("invalid live panel options must fail closed")
 
-def test_live_gui_builds_only_fixed_stage89_approval_command_shapes() -> None:
+def test_live_gui_builds_only_fixed_approval_command_shapes() -> None:
     from agent_runtime.control_panel_live_gui import (
+        build_abandon_final_decision_approval_command,
         build_final_decision_approval_command,
         build_start_chain_approval_command,
     )
@@ -84,6 +85,14 @@ def test_live_gui_builds_only_fixed_stage89_approval_command_shapes() -> None:
         "chain_id": "chain-stage91-001",
         "decision": "approve",
         "comment": "证据已由操作者核对。",
+    }
+    assert build_abandon_final_decision_approval_command(
+        chain_id="chain-stage93-001",
+    ) == {
+        "version": 1,
+        "contract": "control-panel-approval/v1",
+        "operation": "abandon_final_decision",
+        "chain_id": "chain-stage93-001",
     }
 
 def test_live_gui_confirmation_summary_shows_only_bound_safe_fields() -> None:

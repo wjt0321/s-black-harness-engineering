@@ -71,6 +71,7 @@ from .orchestration_external_agent_evidence import (
 )
 from .orchestration_external_agent_review import review_external_agent_evidence
 from .orchestration_external_agent_chain import (
+    abandon_chain_final_decision,
     commit_chain_final_decision,
     execute_chain_start,
     inspect_chain_state,
@@ -1925,6 +1926,8 @@ def _cmd_orchestration_execution_external_agent_chain(args: argparse.Namespace) 
         return _render_external_agent_chain(args, inspect_chain_state(root, args.chain_id))
     if args.chain_command == "recover-final-decision":
         return _render_external_agent_chain(args, recover_chain_final_decision(root, chain_id=args.chain_id, approval_binding_id=args.approval_binding_id, commit=args.commit))
+    if args.chain_command == "abandon-final-decision":
+        return _render_external_agent_chain(args, abandon_chain_final_decision(root, chain_id=args.chain_id, approval_binding_id=args.approval_binding_id, commit=args.commit))
     if args.chain_command == "start":
         result = execute_chain_start(
             root, chain_id=args.chain_id, task_id=args.task_id,
@@ -4150,6 +4153,15 @@ def build_parser() -> argparse.ArgumentParser:
     orchestration_execution_chain_recover_parser.add_argument("--commit", action="store_true", help="在确认后写入既有人工审阅绑定的完成回执")
     _add_global_args(orchestration_execution_chain_recover_parser)
     orchestration_execution_chain_recover_parser.set_defaults(func=_cmd_orchestration_execution_external_agent_chain)
+
+    orchestration_execution_chain_abandon_parser = orchestration_execution_chain_subparsers.add_parser(
+        "abandon-final-decision", help="预览或不可变放弃等待最终人工决定的链路；不会中断智能体、重试或修改证据"
+    )
+    orchestration_execution_chain_abandon_parser.add_argument("--chain-id", required=True, help="链路编号")
+    orchestration_execution_chain_abandon_parser.add_argument("--approval-binding-id", default=None, help="预览返回的一次性确认摘要")
+    orchestration_execution_chain_abandon_parser.add_argument("--commit", action="store_true", help="确认后不可变放弃等待最终人工决定的链路")
+    _add_global_args(orchestration_execution_chain_abandon_parser)
+    orchestration_execution_chain_abandon_parser.set_defaults(func=_cmd_orchestration_execution_external_agent_chain)
 
     orchestration_execution_chain_start_parser = orchestration_execution_chain_subparsers.add_parser(
         "start", help="预览或启动固定三轮链路；提交后自动串行执行规划、执行、审阅"
