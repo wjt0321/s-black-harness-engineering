@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,8 @@ from .result import EXIT_ERROR, EXIT_PASS, Finding
 
 AGENT_DECK_SCHEMA_VERSION = "agent-deck/read-model/v1"
 MAX_CHAIN_LIMIT = 20
+SNAPSHOT_RELATIVE_PATH = Path(".runtime/agent-deck/v1/agent-deck.snapshot.json")
+MAX_SNAPSHOT_BYTES = 131_072
 _PENDING_AGENTS = (
     ("codex-cli", "Codex CLI"),
     ("claude-code", "Claude Code"),
@@ -155,3 +158,52 @@ def build_agent_deck_snapshot(root: Path, *, evaluated_at: str, chain_limit: int
     }
     payload["snapshot_id"] = _snapshot_id(payload)
     return AgentDeckSnapshot(str(payload["status"]), payload)
+
+def _valid_evaluated_at(value: str) -> bool:
+    if not isinstance(value, str) or not value.endswith("Z"):
+        return False
+    try:
+        datetime.fromisoformat(value[:-1] + "+00:00")
+    except ValueError:
+        return False
+    return True
+
+
+def _fixed_snapshot_path(root: Path) -> Path:
+    resolved_root = root.resolve()
+    target = (resolved_root / SNAPSHOT_RELATIVE_PATH).resolve()
+    if resolved_root != target and resolved_root not in target.parents:
+        raise ValueError("fixed snapshot path escaped project root")
+    return target
+
+
+def export_agent_deck_snapshot(root: Path, *, evaluated_at: str, commit: bool) -> AgentDeckSnapshot:
+    """Preview or atomically export one fixed safe Agent Deck snapshot."""
+    if not _valid_evaluated_at(evaluated_at):
+        return _invalid(evaluated_at if isinstance(evaluated_at, str) else "", "agent-deck-evaluated-at-invalid", "评估时间必须是 RFC3339 UTC 时间。")
+    snapshot = build_agent_deck_snapshot(root.resolve(), evaluated_at=evaluated_at)
+    payload = dict(snapshot.to_dict())
+    try:
+        encoded = (json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    except (TypeError, ValueError):
+        return _invalid(evaluated_at, "agent-deck-snapshot-serialize-failed", "安全快照无法序列化；不会写入文件。")
+    if len(encoded) > MAX_SNAPSHOT_BYTES:
+        return _invalid(evaluated_at, "agent-deck-snapshot-too-large", "安全快照超过固定大小上限；不会写入文件。")
+    if not commit:
+        payload["export"] = {"path": SNAPSHOT_RELATIVE_PATH.as_posix(), "would_write": True}
+        return AgentDeckSnapshot(snapshot.status, payload)
+    try:
+        target = _fixed_snapshot_path(root)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary = target.with_suffix(target.suffix + ".tmp")
+        temporary.write_bytes(encoded)
+        temporary.replace(target)
+    except OSError:
+        try:
+            if "temporary" in locals() and temporary.exists():
+                temporary.unlink()
+        except OSError:
+            pass
+        return _invalid(evaluated_at, "agent-deck-snapshot-write-failed", "安全快照写入失败；既有快照保持不变。")
+    payload["export"] = {"path": SNAPSHOT_RELATIVE_PATH.as_posix(), "written": True, "atomic": True}
+    return AgentDeckSnapshot(snapshot.status, payload)
