@@ -26,6 +26,8 @@ React + TypeScript + Vite + Tailwind CSS + shadcn/ui
 
 这只是候选方向，不表示已完成技术选型。实施前仍需根据当时的维护状态、供应链风险、构建可复现性和桌面封装需求重新评审。
 
+视觉与体验层应遵循 `docs/130-gui-first-external-agent-control-plane-target.md` 的“未来体验与视觉方向预留”：参考高完成度消费级 Agent 产品的克制、清晰和协作可视化品质；静态产品叙事页与权威运行时控制面分层；不复制任何第三方的品牌、代码、素材或具体信息架构。
+
 ## 推荐的未来分层
 
 ```text
