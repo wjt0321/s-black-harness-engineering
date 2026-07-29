@@ -14,7 +14,7 @@
 
 ## 当前状态
 
-项目已完成并归档阶段 92；阶段 93 的待决最终决定有限放弃已完成实现与自动化验证，真实 GUI 验收待进行。当前具备：
+项目已完成并归档阶段 93；当前具备：
 
 - 统一 Agent socket registry、capability routing 与显式角色绑定；
 - 可校验的多 Agent collaboration plan，包含 work item、依赖、handoff、artifact 和 review gate；

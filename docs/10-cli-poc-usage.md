@@ -2940,7 +2940,7 @@ python -m agent_runtime.cli orchestration execution external-agent-chain abandon
 python -m agent_runtime.cli orchestration execution external-agent-chain abandon-final-decision   --chain-id chain-20260728-example-001   --approval-binding-id sha256:<preview-returned-binding>   --commit   --json
 ```
 
-成功仅写入固定的不可变停止记录 `external-agent-chain-operator-abandoned`；最终人工决定与完成恢复入口随后失败关闭。阶段 93 的自动化验证已完成，真实 Pi/OMP GUI 验收尚待操作者执行。
+成功仅写入固定的不可变停止记录 `external-agent-chain-operator-abandoned`；最终人工决定与完成恢复入口随后失败关闭。阶段 93 的自动化验证与真实 Pi/OMP GUI 点击验收均已于 2026-07-29 完成；真实链路以固定停止码收束，证据保留，最终决定与恢复失败关闭。
 
 ### 阶段 90–91 实时中文图形控制面
 

@@ -1,6 +1,6 @@
 # 142 — 阶段 93：待决最终决定的有限放弃
 
-> 状态：实现与自动化验证已完成；尚未进行真实 Pi/OMP GUI 验收。
+> 状态：已验收并归档（2026-07-29）。
 
 ## 目标
 
@@ -30,19 +30,17 @@
 - 停止后最终人工决定被拒绝；不增加执行尝试、lease、Agent 调用或审阅写入。
 - CLI JSON 保持 preview-first、确定性和固定 failure code；GUI 仅能构造严格的四字段放弃信封。
 
-## 已完成的真实运行态验证（2026-07-29）
+## 真实 Pi/OMP GUI 验收（2026-07-29）
 
-已观察到由 GUI 启动的真实正向链路 `chain-20260729-acceptance-forward-074416191` 完成三轮并停在 `awaiting_final_human_decision`。在操作者授权下，Harness 以同一固定放弃 operation 完成 preview、一次性确认和 `--commit`：链路收束为 `stopped`，停止码为 `external-agent-chain-operator-abandoned`。
+操作者保持无工具、空闲的 Pi 与 OMP 打开。Harness 自动建立正向 `Pi → OMP → Pi` 链路 `chain-20260729-stage93-gui-abandon-084220441`；三轮真实角色完成后，链路进入 `awaiting_final_human_decision`。
 
-新 CLI 进程确认三轮真实证据 `attempt-20260729-001`、`attempt-20260729-003`、`attempt-20260729-005` 均可读；既有最终决定与完成恢复入口都返回 `blocked`，且 `doctor` 通过。该验证不替代下节所述的 GUI 写入按钮真实点击验收。
+操作者在 GUI 中关闭自动弹出的最终人工决定窗口，选中该链路，实际点击“放弃选中待决链路…”，确认不可逆提示并提交一次性确认摘要。新 CLI 进程随后确认：
 
-## 待进行的真实 GUI 验收
+- 链路为 `stopped`，停止码为 `external-agent-chain-operator-abandoned`；
+- 规划、执行与审阅证据仍可读；规划与执行尝试为 `attempt-20260729-013`、`attempt-20260729-015`；
+- 最终人工决定与完成恢复均返回 `blocked`；
+- `doctor` 通过，未观察到未闭合 lease 或自动重试。
 
-由操作者打开无工具且空闲的 Pi/OMP，会话完成一条已登记三轮链路后，在**不提交最终人工决定**的前提下：
+此前 `chain-20260729-acceptance-forward-074416191` 的真实运行态放弃也已验证证据保留与失败关闭；该次 CLI 复用固定 operation 的验证不替代本节的 GUI 点击验收。
 
-1. 选中“等待最终人工决定”的链路；
-2. 选择“放弃选中待决链路…”，核对提示与一次性确认摘要，再确认提交；
-3. 在新 CLI 进程只读检查链路为 `stopped`，停止码为 `external-agent-chain-operator-abandoned`；
-4. 确认既有候选、执行证据和审阅建议仍可读，最终决定和恢复均失败关闭，且没有新增 attempt、未闭合 audit 或 lease。
-
-真实验收成功前，不得称其为 Pi/OMP 真实验收或将本阶段归档。
+本阶段验收完成后，后续能力必须另行授权。

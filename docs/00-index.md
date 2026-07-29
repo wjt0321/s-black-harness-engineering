@@ -6,7 +6,7 @@
 
 - `../README.md` — 项目定位、当前能力、快速开始。
 - `000-stage-digest.md` — 当前断点和恢复顺序。
-- `142-stage93-pending-final-decision-abandonment.md` — 当前阶段事实源：待决最终人工决定的唯一、不可逆、确认绑定的有限放弃；实现已验证，真实 GUI 验收待进行。
+- `archive/142-stage93-pending-final-decision-abandonment.md` — 阶段 93 已验收事实源：真实 GUI 点击有限放弃、不可变停止、证据保留与最终决定/恢复失败关闭。
 - `archive/141-stage92-registered-work-inbox.md` — 阶段 92 已验收事实源：固定只读工作收件箱、全角色只读预检、无冻结确认页与正反真实 Pi/OMP 自动串行。
 - `archive/140-stage91-gui-structured-approval-inbox.md` — 阶段 91 已验收事实源：无需填写内部标识符的 GUI 启动授权、真实自动串行与自动路由的最终人工决定。
 - `archive/139-stage90-live-chinese-control-panel-read-model.md` — 阶段 90 已验收事实源：实时中文只读图形面板、聚合读取模型与真实 Pi/OMP 图形验收。
@@ -55,7 +55,7 @@
 
 ## 当前事实源
 
-- `142-stage93-pending-final-decision-abandonment.md` — 当前实现：仅在三轮完成且等待最终决定时，操作者可通过一次性确认不可逆放弃链路；不提供运行中取消。
+- `archive/142-stage93-pending-final-decision-abandonment.md` — 已验收实现：仅在三轮完成且等待最终决定时，操作者可通过 GUI 一次性确认不可逆放弃链路；不提供运行中取消。
 - `archive/141-stage92-registered-work-inbox.md` — 已验收实现：固定只读工作收件箱、工作卡选择、全角色只读预检和正反真实 Pi/OMP 自动串行。
 - `archive/140-stage91-gui-structured-approval-inbox.md` — 已验收实现：GUI 自动装配登记配置、真实自动串行并在完成后自动路由最终人工决定。
 - `archive/139-stage90-live-chinese-control-panel-read-model.md` — 已验收实现：前台中文只读 GUI、Pi/OMP 安全状态、有限链路摘要与关闭后的过期投影。

@@ -111,13 +111,13 @@
 - 每张卡精确绑定任务、协作计划、有界目标和 Pi/OMP 交替拓扑；启动自动生成安全链路 ID，仍复用阶段 89/91 preview、commit、audit、证据和最终决定。
 - 没有自由文本任务创建、任意路径、CLI 执行参数、真实 operation、服务、网络、自动重试、并行或自动批准。
 
-## 阶段 93 待决最终决定有限放弃（实现与自动化验证完成，待真实 GUI 验收）
+## 阶段 93 待决最终决定有限放弃（已完成并归档）
 
-- 当前事实源：`142-stage93-pending-final-decision-abandonment.md`。
+- 归档事实源：`archive/142-stage93-pending-final-decision-abandonment.md`。
 - 只允许操作者放弃一条已经完成三轮且处于 `awaiting_final_human_decision` 的链路；预览、一次性确认摘要和显式 `--commit` 均不可省略。
 - 提交复用既有不可变 `stop` 记录并固定绑定执行尝试、manifest/artifact 摘要及审阅建议摘要；既有候选、证据和建议保留只读。
 - 不实现运行中 Agent 取消、进程终止、恢复执行、重试、并发、宿主控制或自由文本操作。
-- 自动化覆盖资格、确认摘要漂移、CLI JSON、GUI 严格信封及最终决定失败关闭；尚未完成真实 Pi/OMP GUI 验收，故本阶段尚未归档。
+- 自动化覆盖资格、确认摘要漂移、CLI JSON、GUI 严格信封及最终决定失败关闭；2026-07-29 已完成真实 `Pi → OMP → Pi` GUI 点击验收，链路以固定停止码收束。
 
 ## 后续候选（尚未授权）
 

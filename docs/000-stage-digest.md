@@ -4,17 +4,16 @@
 
 ## 当前基线
 
-- 里程碑：阶段 92 已于 2026-07-28 完成正向与反向真实 Pi/OMP GUI 自动串行和最终决定验收
-- commit：当前工作树包含阶段 93 已验证、待提交的实现与自动化测试变更；未获得本次 commit/push 授权
-- 日期：2026-07-28
-- 活跃 `docs/` 根目录为 29 份；阶段 92 及此前的已验收阶段均已归档
+- 里程碑：阶段 93 已于 2026-07-29 完成真实 Pi/OMP GUI 有限放弃验收
+- commit：阶段 93 已完成实现与真实验收记录；具体提交以 Git 历史为准
+- 日期：2026-07-29
+- 活跃 `docs/` 根目录为 28 份；阶段 93 及此前的已验收阶段均已归档
 
 ## 当前阶段
 
-- **阶段 93 — 实现与自动化验证完成，待真实 GUI 验收：仅允许操作者不可逆地放弃一条已等待最终人工决定的链路。** 它不取消运行中 Agent、不终止进程、不重试、不恢复失败角色，也不修改既有证据或人工审阅。
-- 当前事实源：`142-stage93-pending-final-decision-abandonment.md`。
+- **阶段 93 — 已完成：操作者可从 GUI 对已等待最终人工决定的真实链路执行一次不可逆、确认绑定的有限放弃。** 2026-07-29 已完成真实 `Pi → OMP → Pi` GUI 点击验收；链路以固定停止码收束，证据保留，最终决定与恢复失败关闭。
+- 已验收事实源：`archive/142-stage93-pending-final-decision-abandonment.md`。
 - 已验收基线：`archive/141-stage92-registered-work-inbox.md`；前序事实源：`archive/140-stage91-gui-structured-approval-inbox.md`、`archive/139-stage90-live-chinese-control-panel-read-model.md`、`archive/138-stage89-bounded-planner-executor-review-design.md`。
-- 仅对 `awaiting_final_human_decision` 提供 preview / 一次性确认 / `--commit` 的固定放弃；提交复用不可变 `stop` 记录并精确绑定执行和审阅摘要。任意其他状态、漂移或确认不匹配均失败关闭。
 
 ## 已冻结边界
 
@@ -22,7 +21,7 @@
 - 启动确认只绑定稳定业务范围；每个角色前固定等待两秒状态稳定窗口后，只读取一次新鲜 `observed/open` 宿主状态。任何失败写入不可变 `stop` 并结束当前链路。
 - 规划候选和审阅建议为严格、有界、已扫描 JSON；审阅提示只绑定执行产物摘要和既有证据，不拼接原始执行文本。
 - 最终人工决定与阶段 88 审阅记录精确绑定；`finalization_pending` 的恢复不重新调用 Agent。
-- 阶段 93 放弃只在三轮结束、最终人工决定尚未开始时写固定 `stop`；不具备运行中取消或恢复执行能力。
+- 阶段 93 放弃只在三轮结束、最终人工决定尚未开始时写固定 `stop`；不具备运行中取消或恢复执行能力；2026-07-29 已完成真实 GUI 点击验收。
 
 ## 当前真实执行能力
 
@@ -44,12 +43,11 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/142-stage93-pending-final-decision-abandonment.md`
-3. `docs/archive/141-stage92-registered-work-inbox.md`
-4. `docs/02-roadmap.md`
-5. `docs/130-gui-first-external-agent-control-plane-target.md`
-6. `docs/archive/140-stage91-gui-structured-approval-inbox.md`
-7. `docs/archive/138-stage89-bounded-planner-executor-review-design.md`
+2. `docs/archive/142-stage93-pending-final-decision-abandonment.md`
+3. `docs/02-roadmap.md`
+4. `docs/130-gui-first-external-agent-control-plane-target.md`
+5. `docs/archive/141-stage92-registered-work-inbox.md`
+6. `docs/archive/138-stage89-bounded-planner-executor-review-design.md`
 
 然后运行：
 
@@ -58,10 +56,9 @@ python -m agent_runtime.cli docs context --json
 python -m agent_runtime.cli doctor
 ```
 
-## 下一步推荐入口
+## 后续候选（尚未授权）
 
-- **阶段 93 — 真实 GUI 验收与归档**
-  - 入口文档：`docs/142-stage93-pending-final-decision-abandonment.md`
-  - 重点：仅验收待决最终决定的固定放弃；不得把它解释为运行中 Agent 取消、自动恢复或重试。
+- 运行中取消、恢复执行或有限并发；
+- QwenPaw 2.0.1 等其他宿主兼容。
 
-后续能力仍未授权：运行中取消、恢复执行、有限并发，以及 QwenPaw 2.0.1 等其他宿主兼容。
+阶段 93 已完成后，任何扩展都必须另行设计与授权；不得把有限放弃解释为运行中 Agent 取消。
