@@ -1,8 +1,8 @@
 # 0002 — 延后采用 shadcn 的前端方向预留
 
-> 状态：Deferred / Reserved（延后、仅预留）
-> 日期：2026-07-27
-> 约束：本文不授权实现、不改变当前 Stage、不扩大执行边界
+> 状态：Reserved / P0 Candidate（正式候选，实施待设计审阅）
+> 日期：2026-07-29
+> 约束：阶段 94 已将本方向纳入 Agent Deck P0 候选；本文本身不授权扩大执行边界
 
 ## 背景
 
@@ -83,4 +83,4 @@ shadcn / React 展示层
 
 ## 当前结论
 
-保留 shadcn/ui 作为未来 GUI 的优先候选，但当前不创建 `frontend/`、不安装 npm 依赖、不改变静态 Control Panel、不启动服务，也不调整 Stage 82 的优先级。
+阶段 94 已将 React/Vite/shadcn/ui 升级为 Agent Deck P0 的正式展示层候选，详见 `../docs/143-agent-deck-platform-mvp.md` 与完整设计稿。用户审阅设计并确认实施计划前，仍不创建 `frontend/`、不安装 npm 依赖、不启动服务，也不扩大任何真实执行边界。

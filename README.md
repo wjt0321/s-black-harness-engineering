@@ -14,7 +14,7 @@
 
 ## 当前状态
 
-项目已完成并归档阶段 93；当前具备：
+项目已完成并归档阶段 93；产品主线已调整为聚合式 Agent 工作台（Agent Deck），当前正在完成 P0 设计审阅；现有 Harness 作为可信底层。当前具备：
 
 - 统一 Agent socket registry、capability routing 与显式角色绑定；
 - 可校验的多 Agent collaboration plan，包含 work item、依赖、handoff、artifact 和 review gate；
@@ -77,6 +77,8 @@ git diff --check
 ## 文档入口
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
+- [`docs/143-agent-deck-platform-mvp.md`](docs/143-agent-deck-platform-mvp.md)：当前 Agent Deck 平台主线与 P0 边界。
+- [`docs/superpowers/specs/2026-07-29-agent-deck-platform-mvp-design.md`](docs/superpowers/specs/2026-07-29-agent-deck-platform-mvp-design.md)：完整产品设计稿，待用户审阅后进入实施计划。
 - [`docs/130-gui-first-external-agent-control-plane-target.md`](docs/130-gui-first-external-agent-control-plane-target.md)：GUI-first 外部 Agent 控制面长期目标、MVP 边界和反偏航检查表。
 - [`docs/archive/140-stage91-gui-structured-approval-inbox.md`](docs/archive/140-stage91-gui-structured-approval-inbox.md)：阶段 91 归档事实源，记录无内部标识符输入的 GUI 启动、真实自动串行与最终决定验收。
 - [`docs/archive/139-stage90-live-chinese-control-panel-read-model.md`](docs/archive/139-stage90-live-chinese-control-panel-read-model.md)：阶段 90 归档事实源，记录实时中文控制面读取模型与 GUI 验收。
