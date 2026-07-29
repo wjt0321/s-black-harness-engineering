@@ -119,15 +119,19 @@
 - 不实现运行中 Agent 取消、进程终止、恢复执行、重试、并发、宿主控制或自由文本操作。
 - 自动化覆盖资格、确认摘要漂移、CLI JSON、GUI 严格信封及最终决定失败关闭；2026-07-29 已完成真实 `Pi → OMP → Pi` GUI 点击验收，链路以固定停止码收束。
 
-## 当前主线：阶段 94 Agent Deck 工作台基础（设计已获范围确认）
+## 最近完成里程碑：阶段 94 Agent Deck 工作台 P0
 
-当前事实源：`143-agent-deck-platform-mvp.md`；完整设计稿：`superpowers/specs/2026-07-29-agent-deck-platform-mvp-design.md`。
+归档事实源：`archive/144-stage94-agent-deck-pilot-acceptance.md`。
 
-- 产品主线从“继续增加单一 Pi/OMP 控制操作”调整为“聚合式 Agent 平台”：用户发布目标、观察团队协作、验收结果；Harness 作为安全、可信、可追溯的底层。
-- P0 优先建设中文项目工作台、自然语言任务入口、Agent 团队、协作时间线、结果与验收，并以 Pi/OMP 为首批真实试运行成员。
-- React + TypeScript + Vite + Tailwind + shadcn/ui 是正式候选展示层；实施前先完成版本锁定、供应链、构建可复现和只读 read model 边界设计。
-- Codex CLI、Claude Code、Kimi Code 等先使用统一的待接入 Agent 卡片模型；不得伪造其状态、session、模型或执行能力。
-- P0 继续复用固定协作计划、单工作项派发、不可变证据和人工审阅；不新增自由真实执行、服务、网络、凭据管理、自动重试、并发、运行中取消或完全自治。
+- 产品主线已从“继续增加单一 Pi/OMP 控制操作”调整为“聚合式 Agent 平台”：用户发布目标、观察团队协作、验收结果；Harness 作为安全、可信、可追溯的底层。
+- 中文项目工作台、自然语言任务入口、Agent 团队、协作时间线、结果与验收已经交付；Pi/OMP 完成真实 `Pi → OMP → Pi` 试运行并由操作者提交最终通过。
+- React + TypeScript + Vite + Tailwind + shadcn/ui 已作为 P0 只读展示层完成验证；其只读取 `agent-deck/read-model/v1`，不含前台派发。
+- Codex CLI、Claude Code、Kimi Code 等仍使用统一的待接入 Agent 卡片模型；不得伪造其状态、session、模型或执行能力。
+- P0 继续复用固定协作计划、单工作项派发、不可变证据和人工审阅；没有新增自由真实执行、服务、网络、凭据管理、自动重试、并发、运行中取消或完全自治。
+
+## 下一候选：阶段 95 Agent Deck 协作交互扩展（待用户授权）
+
+下一阶段必须先完成独立产品设计和安全审查；不得直接把 P0 的安全投影改造成自由执行入口，也不得扩大 Pi/OMP 已验收试运行的权限。
 
 后续候选的顺序调整为：P1 统一任务收件箱与更多 CLI 的只读发现/状态接入；P2 受限主 Agent 协作提议；之后才在独立设计与授权下评估运行中取消、恢复、并发、QwenPaw 兼容等能力。
 

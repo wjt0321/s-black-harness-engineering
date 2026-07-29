@@ -6,9 +6,7 @@
 
 - `../README.md` — 项目定位、当前能力、快速开始。
 - `000-stage-digest.md` — 当前断点和恢复顺序。
-- `143-agent-deck-platform-mvp.md` — 当前阶段事实源：聚合式 Agent Deck 工作台 P0、Pi/OMP 真实试运行与 Harness 前后台边界。
-- `superpowers/specs/2026-07-29-agent-deck-platform-mvp-design.md` — 当前 P0 完整设计稿：产品路径、页面架构、read model、Pi/OMP 试运行与验收标准。
-- `superpowers/plans/2026-07-29-agent-deck-p0-implementation-plan.md` — 已确认的 P0 实施计划：安全快照、React 工作台和 Pi/OMP 试运行。
+- `archive/144-stage94-agent-deck-pilot-acceptance.md` — 最近验收事实源：Agent Deck P0、真实 Pi/OMP 试运行、前台安全投影与最终人工通过。
 - `archive/142-stage93-pending-final-decision-abandonment.md` — 阶段 93 已验收事实源：真实 GUI 点击有限放弃、不可变停止、证据保留与最终决定/恢复失败关闭。
 - `archive/141-stage92-registered-work-inbox.md` — 阶段 92 已验收事实源：固定只读工作收件箱、全角色只读预检、无冻结确认页与正反真实 Pi/OMP 自动串行。
 - `archive/140-stage91-gui-structured-approval-inbox.md` — 阶段 91 已验收事实源：无需填写内部标识符的 GUI 启动授权、真实自动串行与自动路由的最终人工决定。
@@ -57,6 +55,8 @@
 - `64-versioning-governance.md` — 版本与阶段治理。
 
 ## 当前事实源
+
+- `archive/144-stage94-agent-deck-pilot-acceptance.md` — 已验收实现：Agent Deck P0 安全工作台、Pi/OMP `Pi → OMP → Pi` 真实试运行与操作者最终通过。
 
 - `archive/142-stage93-pending-final-decision-abandonment.md` — 已验收实现：仅在三轮完成且等待最终决定时，操作者可通过 GUI 一次性确认不可逆放弃链路；不提供运行中取消。
 - `archive/141-stage92-registered-work-inbox.md` — 已验收实现：固定只读工作收件箱、工作卡选择、全角色只读预检和正反真实 Pi/OMP 自动串行。

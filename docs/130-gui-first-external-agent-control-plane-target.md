@@ -132,7 +132,7 @@ Agent-to-Agent 通信通过 work item、handoff、artifact、review decision 和
 
 2026-07-29 起，产品主线以 Agent Deck 为准：Harness 继续提供唯一可信的审批、租约、审计、证据和受控派发，但产品默认路径改为“用户给出目标 → 团队协作 → 主摘要与验收”。
 
-P0 先完成：中文应用壳、项目空间、自然语言任务入口、统一 Agent 团队卡片、协作时间线、结果与验收视图，以及 Pi/OMP 的真实试运行投影。Codex CLI、Claude Code、Kimi Code 等先以统一待接入模型出现；不得声称已获得真实状态或执行能力。完整范围见 `143-agent-deck-platform-mvp.md` 与 `superpowers/specs/2026-07-29-agent-deck-platform-mvp-design.md`。
+P0 先完成：中文应用壳、项目空间、自然语言任务入口、统一 Agent 团队卡片、协作时间线、结果与验收视图，以及 Pi/OMP 的真实试运行投影。Codex CLI、Claude Code、Kimi Code 等先以统一待接入模型出现；不得声称已获得真实状态或执行能力。阶段 94 的验收范围与证据见 `archive/144-stage94-agent-deck-pilot-acceptance.md`。
 
 Cindy 及类似产品仅作为任务入口、设置层级、成员协作感和产品完成度的交互参考；不得复制任何第三方品牌、素材、代码、文案或信息架构。shadcn/ui 是受控展示层候选，不持有执行 authority。
 
@@ -216,7 +216,7 @@ MVP 可以继续限制为单用户、本地运行、显式人工审批、有限�
 
 ### 后续候选
 
-阶段 90 至 93 已完成 Pi/OMP 的实时状态、受控串行、GUI 启动/最终决定与有限放弃，并继续作为可信底层。2026-07-29 起，下一主线是阶段 94 Agent Deck 工作台：先让用户在项目、任务、团队、协作和验收的统一界面中使用 Pi/OMP 试运行，并为 Codex CLI、Claude Code、Kimi Code 等建立统一接入位置；完整设计见 `143-agent-deck-platform-mvp.md`。运行中取消、恢复执行、有限并发与 QwenPaw 兼容不再是当前产品主线，需在平台 P0/P1 后另行设计和授权。
+阶段 90 至 93 已完成 Pi/OMP 的实时状态、受控串行、GUI 启动/最终决定与有限放弃，并继续作为可信底层。2026-07-29，阶段 94 Agent Deck 工作台 P0 已完成：用户可在项目、任务、团队、协作和验收的统一界面中观察 Pi/OMP 真实试运行，Codex CLI、Claude Code、Kimi Code 等保留统一待接入位置；验收事实见 `archive/144-stage94-agent-deck-pilot-acceptance.md`。运行中取消、恢复执行、有限并发与 QwenPaw 兼容不再是当前产品主线，需在阶段 95 或后续平台切片中另行设计和授权。
 
 ## 10. 反偏航检查表
 

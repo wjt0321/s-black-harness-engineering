@@ -3,7 +3,7 @@
 > 状态：范围与第一段设计已获用户确认；实施前须由用户审阅本文件并确认实施计划。
 >
 > 日期：2026-07-29
-> 关联当前阶段：[`../../143-agent-deck-platform-mvp.md`](../../143-agent-deck-platform-mvp.md)
+> 关联当前阶段：[`../../archive/144-stage94-agent-deck-pilot-acceptance.md`](../../archive/144-stage94-agent-deck-pilot-acceptance.md)
 
 ## 1. 目标与产品重置
 
