@@ -127,6 +127,12 @@ React + TypeScript + Vite + Tailwind + shadcn/ui（展示与本地视图状态�
 
 第一实现切片可以先采用确定性 snapshot 与 fixture，随后接入已有 Pi/OMP 只读实时状态。引入服务、桌面容器或持续监听前，必须单独设计并获得授权；不可为了“实时”而静默开放端口或后台服务。
 
+## 7.1 P0 前端数据交接
+
+Python 只通过 `agent-deck/read-model/v1` 生成安全只读投影。显式 `--commit` 仅原子写入固定文件 `.runtime/agent-deck/v1/agent-deck.snapshot.json`；不接受输出路径，不启动服务，不开放 UI dispatch。React 开发工作台只读取该固定安全快照；当前真实 Pi/OMP 启动和最终决定继续由既有 Tk GUI 严格结构化信封完成。
+
+固定快照只释放已有安全 read model 中的项目、成员状态、已登记工作卡、链路状态和证据摘要。它不包含原始 prompt、stdout/stderr、会话引用、绝对路径、凭据或未受信事件文本。
+
 ## 8. 统一 Agent Adapter 展示模型
 
 平台层统一使用以下概念，具体 transport 由 adapter 解释：

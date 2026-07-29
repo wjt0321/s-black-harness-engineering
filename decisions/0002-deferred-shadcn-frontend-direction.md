@@ -83,4 +83,4 @@ shadcn / React 展示层
 
 ## 当前结论
 
-阶段 94 已将 React/Vite/shadcn/ui 升级为 Agent Deck P0 的正式展示层候选，详见 `../docs/143-agent-deck-platform-mvp.md` 与完整设计稿。用户审阅设计并确认实施计划前，仍不创建 `frontend/`、不安装 npm 依赖、不启动服务，也不扩大任何真实执行边界。
+阶段 94 已将 React/Vite/shadcn/ui 升级为 Agent Deck P0 的正式展示层候选，详见 `../docs/143-agent-deck-platform-mvp.md` 与完整设计稿。实施使用 React 19.2.8、React DOM 19.2.8、TypeScript 7.0.2、Vite 8.1.5、Tailwind CSS 4.3.3、`@tailwindcss/vite` 4.3.3、`@vitejs/plugin-react` 6.0.4 与 shadcn CLI 4.16.0；`frontend/package-lock.json` 必须提交。展示层只读取固定 `agent-deck/read-model/v1` 快照，不扩大任何真实执行边界。

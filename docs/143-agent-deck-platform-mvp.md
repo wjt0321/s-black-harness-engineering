@@ -16,6 +16,7 @@
 - Pi/OMP 作为首批真实试运行成员：规划、执行、审阅角色仍复用既有受控链路；
 - Codex CLI、Claude Code、Kimi Code 先使用统一的待接入 Agent 卡片模型；
 - React + TypeScript + Vite + Tailwind + shadcn/ui 为正式候选展示层；
+- **P0 不新增 UI dispatch**：React 只读取固定的 `agent-deck/read-model/v1` 安全快照；Pi/OMP 的真实启动与最终决定继续复用既有 Tk GUI 严格结构化信封。
 - 使用版本化只读 Agent Deck Read Model，Harness 继续唯一持有真实 command authority。
 
 ## 硬边界
