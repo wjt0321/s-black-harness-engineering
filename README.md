@@ -73,11 +73,13 @@ python -m agent_runtime.cli doctor
 git diff --check
 ```
 
-完整 CLI 参数见 [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md)。
+当前 CLI 恢复、登记和验证入口见 [`docs/10-cli-poc-usage.md`](docs/10-cli-poc-usage.md)；历史完整命令册已归档。
 
 ## 文档入口
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
+- [`tasks/handoff-2026-07-29-stage97.md`](tasks/handoff-2026-07-29-stage97.md)：下一阶段的唯一恢复包、设计问题与停止线。
+- [`docs/archive/147-documentation-consolidation-2026-07-29.md`](docs/archive/147-documentation-consolidation-2026-07-29.md)：文档收敛、归档和上下文治理记录。
 - [`docs/archive/146-stage96-controlled-mission-intake.md`](docs/archive/146-stage96-controlled-mission-intake.md)：受控正式任务登记、规划收件箱和安全看板投影的验收事实源。
 - [`docs/archive/145-stage95-agent-deck-mission-workspace.md`](docs/archive/145-stage95-agent-deck-mission-workspace.md)：任务草案、协作建议与真实安全任务队列的验收事实源。
 - [`docs/archive/144-stage94-agent-deck-pilot-acceptance.md`](docs/archive/144-stage94-agent-deck-pilot-acceptance.md)：Agent Deck P0、真实 Pi/OMP 试运行与最终人工通过的验收事实源。

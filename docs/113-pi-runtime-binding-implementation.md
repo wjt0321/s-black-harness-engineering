@@ -3,7 +3,7 @@
 
 # 113 — Pi Runtime Binding Implementation (Stage 64)
 
-> Status: **Stage 64 binding-only implementation complete; no Pi runner migration or execution authority**
+> 状态：历史 binding-only 实现事实源；不改变当前 Pi print 权限，当前产品路线见 `000-stage-digest.md` 与 `02-roadmap.md`。
 > Date: 2026-07-26
 > Prerequisite: Stage 63 review-bound Node/Pi identity design gate.
 
@@ -55,9 +55,9 @@ trusted_executable_chain=false
 
 Required final verification is the full pytest suite, public scan, doctor, docs context, diff check, and pre-commit hook.
 
-## 4. Next Candidate
+## 4. 当前定位
 
-A future **bound runner migration gate** may allow `pi_cli_print` to launch direct reviewed Node + CLI-entry argv. It requires a separate authorization, post-run identity validation, exact integration tests, and a new real smoke. Until then, Stage 64 is evidence collection only and does not change execution authority.
+本文件只说明 Pi runtime binding 的历史审阅证据能力。它不授予 runner migration、额外执行权限或主控规划权限；是否调整 Pi 执行链必须以独立设计、授权和当前阶段事实源为准。
 
 <!-- stage64-implementation-status: complete-binding-only -->
 <!-- execution-status: no-runner-migration -->

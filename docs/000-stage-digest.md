@@ -7,7 +7,7 @@
 - 里程碑：阶段 96 已于 2026-07-29 完成受控任务登记与规划收件箱：正式目标可安全进入真实任务账本并在 Deck 显示等待规划；阶段 94 的 Pi/OMP 真实链路保持已通过。
 - 产品主线：本地优先的聚合式 Agent 平台（Agent Deck）；Harness 作为可信、安全、可追溯的底层。
 - 当前状态：阶段 96 已归档；下一候选为受限主控 Agent 结构化规划提议。
-- 活跃 `docs/` 根目录为 28 份；阶段 96 及此前的已验收阶段均在 `docs/archive/` 保留事实源。
+- 活跃 `docs/` 根目录为 28 份；阶段 96 及此前的已验收阶段均在 `docs/archive/` 保留事实源；最新文档收敛记录为 `archive/147-documentation-consolidation-2026-07-29.md`。
 
 ## 当前阶段
 
@@ -34,12 +34,11 @@
 ## 下次恢复顺序
 
 1. `docs/000-stage-digest.md`
-2. `docs/archive/146-stage96-controlled-mission-intake.md`
-3. `docs/archive/145-stage95-agent-deck-mission-workspace.md`
-4. `docs/archive/144-stage94-agent-deck-pilot-acceptance.md`
-5. `docs/130-gui-first-external-agent-control-plane-target.md`
-6. `decisions/0002-deferred-shadcn-frontend-direction.md`
-7. 当前获授权阶段的独立设计稿（如有）
+2. `docs/00-index.md`
+3. `docs/130-gui-first-external-agent-control-plane-target.md`
+4. `docs/archive/146-stage96-controlled-mission-intake.md`
+5. `tasks/handoff-2026-07-29-stage97.md`
+6. 当前任务直接相关的 1–2 份事实源或独立设计稿
 
 然后运行：
 
@@ -50,5 +49,5 @@ python -m agent_runtime.cli doctor
 
 ## 下一步推荐入口
 
-- **不要直接实施阶段 97。** 它必须先完成受限主控 Agent 结构化规划的独立设计，不能把浏览器草案或已登记任务当作执行授权。
+- **不要直接实施阶段 97。** 先读取 `tasks/handoff-2026-07-29-stage97.md` 并完成受限主控 Agent 结构化规划的独立设计；浏览器草案或已登记任务都不是执行授权。
 - 不得回到以取消、恢复或单一底层控制能力为主线，也不得让 React 派发任何 Agent。

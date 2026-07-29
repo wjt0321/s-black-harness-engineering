@@ -6,6 +6,7 @@
 
 - `../README.md` — 项目定位、当前能力、快速开始。
 - `000-stage-digest.md` — 当前断点和恢复顺序。
+- `../tasks/handoff-2026-07-29-stage97.md` — 下一阶段唯一恢复包、设计问题与停止线。
 - `archive/146-stage96-controlled-mission-intake.md` — 最近验收事实源：受控正式任务登记、等待主控规划状态与安全看板投影。
 - `archive/145-stage95-agent-deck-mission-workspace.md` — 前序验收事实源：任务草案、Pi→OMP→Pi 协作建议和真实安全任务队列。
 - `archive/144-stage94-agent-deck-pilot-acceptance.md` — 最近验收事实源：Agent Deck P0、真实 Pi/OMP 试运行、前台安全投影与最终人工通过。
@@ -18,10 +19,14 @@
 - `archive/136-stage87-single-work-item-controlled-execution.md` — 阶段 87 归档事实源：Pi/OMP 单工作项受控执行与真实验收。
 - `02-roadmap.md` — 能力包、当前里程碑与下一候选。
 - `130-gui-first-external-agent-control-plane-target.md` — 中文图形控制面长期目标、最小可用边界和反偏航检查。
-- `10-cli-poc-usage.md` — 完整命令行参数和示例。
+- `10-cli-poc-usage.md` — 当前 CLI 恢复、登记与验证入口；历史完整命令册见 `archive/10-cli-poc-usage-legacy-2026-07-29.md`。
 - `111-pi-controlled-dry-run-print-implementation.md` — 最新真实执行事实源。
 - `113-pi-runtime-binding-implementation.md` — 当前仅绑定审阅证据事实源。
 - `MAINTENANCE.md` — 文档治理规则。
+
+## 文档治理
+
+- `archive/147-documentation-consolidation-2026-07-29.md` — 本次文档盘点、归档与阶段 97 恢复包治理记录。
 
 ## 候选与延后决策
 

@@ -3,7 +3,7 @@
 
 # 111 — Pi Controlled Dry-run Print Implementation (Stage 62)
 
-> 状态：**Stage 62 已按 TDD 实现并完成真实 smoke；lease/audit/Windows Job containment 与 DeepSeek 纯文本调用全部闭合**
+> 状态：历史实现事实源；固定 Pi print 仍是当前三项受限真实操作之一，产品下一候选见 `000-stage-digest.md` 与 `02-roadmap.md`。
 > 日期：2026-07-25
 > 前置：Stage 61 design gate（docs/archive/110）已冻结；用户明确授权本实现与一次受控真实 DeepSeek smoke
 > 本阶段新增第二个真实 operation：`pi_cli_print`（Windows-only，显式 `--commit`）
@@ -71,11 +71,9 @@ ready 结果只包含：status、plan_hash、provider/model（settings 钉住值
 - 真实 smoke 已证明 lease、started/terminal audit、Windows Job containment 与 DeepSeek 模型响应链端到端可闭合；公开投影仍仅包含 digest/计数，不释放 prompt 或模型原文。
 - 未 commit/push/tag。
 
-## 7. 下一候选
+## 7. 当前定位
 
-1. 真实终端人工 TUI 会话验收（Stage 59 遗留 operator 步骤）；
-2. read 工具 roundtrip / npm identity binding / canonical approval binding 均需独立 design gate 与用户明确授权；
-3. Stage 62 代码与文档提交/push 需独立外部发布授权。
+本文件保留 Stage 62 的实现与真实 smoke 事实，不定义当前产品路线。固定 Pi print 继续受原有显式 `--commit`、lease、audit、固定 argv、无工具和原文脱敏边界约束。当前 Agent Deck 产品进度与下一阶段入口以 `000-stage-digest.md`、`02-roadmap.md` 和 `tasks/handoff-2026-07-29-stage97.md` 为准。
 
 <!-- stage62-implementation-status: complete -->
 <!-- execution-status: windows-fixed-git-status-and-pi-print-only -->
