@@ -1,6 +1,6 @@
 # 143 — Agent Deck 聚合式 Agent 平台 MVP
 
-> 状态：**P0 前台真实投影已验收；Pi/OMP 受控链路的继续试运行等待新鲜宿主状态。**
+> 状态：**P0 前台真实投影和一次 Pi/OMP 真实受控链路已完成；最终人工业务决定与该链路的前台复核待完成。**
 > 日期：2026-07-29
 > 主线：聚合式 Agent 平台；Harness 为可信、安全、可追溯的底层，而非前台产品主角。
 
@@ -39,8 +39,10 @@
 - 已实现 `agent-deck/read-model/v1` 安全 read model、固定快照导出命令、React/Vite/Tailwind/shadcn 工作台、显式演示数据入口、浏览器会话草稿、Pi/OMP 团队卡片、协作时间线和交付/验收视图；React 不包含派发、批准、取消、恢复或命令桥接。
 - 2026-07-29T10:24:13Z 已用真实项目运行态写出固定安全快照；它如实投影 Pi 为“已连接，存在未绑定会话”、OMP 为“状态已过期”，两者 readiness 都是 `stale`。前台不得把这类状态改标为空闲、就绪或可执行。
 - 2026-07-29T10:51:10Z 已在浏览器前台核验真实快照投影：Pi 的“已连接，存在未绑定会话”、OMP 的“状态已过期”、两张已登记工作项卡及安全时间线均按快照展示；React 没有派发、批准、取消或恢复入口。
-- 这不等于 Pi/OMP 受控链路的继续试运行已通过：两宿主观察仍为 `stale`，因此不得启动已登记链路。任何真实链路启动和最终业务决定仍只经既有受控 GUI。
+- 2026-07-29T11:15:19Z 至 `2026-07-29T11:16:43Z`，用户重新打开 Pi 与 OMP 后，已只通过既有受控链路完成 `chain-20260729-acceptance-forward-111423627`：Pi 规划 `attempt-20260729-019`、OMP 执行 `attempt-20260729-021`、Pi 审阅 `attempt-20260729-023` 均成功。三次均已写入 started/terminal audit、回收不可变证据和确认进程树活动数为零；审阅建议为 `approve`，无 findings。
+- 这不等于最终业务验收已通过：该链路当前严格停在 `awaiting_final_human_decision`。最终“通过 / 要求修改”仍只能由操作者在既有受控 GUI 中核对证据后提交；不得由 React、Harness 自动化或本阶段 Agent 代替决定。
+- 本次链路已通过 `agent-deck snapshot --commit` 写入固定安全快照并出现在安全时间线中。快照生成时 Pi/OMP 的宿主观察已经超过 TTL，故前台必须如实显示为过期/未绑定状态；这不改变已归档证据和等待中的最终人工决定。当前链路的浏览器前台复核仍待补做。
 
 ## 下一步
 
-实施计划已保存为 [`superpowers/plans/2026-07-29-agent-deck-p0-implementation-plan.md`](superpowers/plans/2026-07-29-agent-deck-p0-implementation-plan.md)。前台安全投影已完成；当前只剩 Pi/OMP 发布新鲜宿主状态后的既有 GUI 受控链路试运行、重导安全快照及最终人工业务决定。不得为了推进试运行而扩大 Harness 权限。
+实施计划已保存为 [`superpowers/plans/2026-07-29-agent-deck-p0-implementation-plan.md`](superpowers/plans/2026-07-29-agent-deck-p0-implementation-plan.md)。当前只剩：操作者对 `chain-20260729-acceptance-forward-111423627` 提交最终业务决定，以及用该链路已导出的安全快照补做前台浏览器复核；两者完成前不得归档阶段 94、再次派发或扩大 Harness 权限。
