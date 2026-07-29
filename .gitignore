@@ -35,3 +35,5 @@ logs/*.log
 .runtime/agent-deck/
 frontend/dist/
 frontend/coverage/
+
+frontend/*.tsbuildinfo
