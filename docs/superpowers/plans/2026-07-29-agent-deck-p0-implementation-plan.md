@@ -6,7 +6,7 @@
 
 **Architecture:** Add a Python `agent_deck_projection` read model that narrows the existing `control-panel-snapshot/v1` and registered-work inbox into a stable `agent-deck/read-model/v1` document. A fixed, atomic `.runtime/agent-deck/v1/agent-deck.snapshot.json` export is the only P0 frontend data handoff; it is generated only by an explicit `--commit` CLI action. A Vite/React/Tailwind/shadcn frontend reads that safe static document in foreground development mode and contains no process, credential, filesystem, or command authority.
 
-**Tech Stack:** Python 3.11+ and pytest; React 19.2.8; React DOM 19.2.8; TypeScript 7.0.2; Vite 8.1.5; `@vitejs/plugin-react` 6.0.4; Tailwind CSS 4.3.3; `@tailwindcss/vite` 4.3.3; shadcn CLI 4.16.0; lucide-react 1.27.0; Vitest 4.1.10; Testing Library React 16.3.2; Testing Library user-event 14.6.1; jsdom 30.0.1.
+**Tech Stack:** Python 3.11+ and pytest; React 19.2.8; React DOM 19.2.8; TypeScript 7.0.2; Vite 8.1.5; `@vitejs/plugin-react` 6.0.4; Tailwind CSS 4.3.3; `@tailwindcss/vite` 4.3.3; shadcn CLI 4.16.0; lucide-react 1.27.0; Vitest 4.1.10; Testing Library React 16.3.2; Testing Library user-event 14.6.1; jsdom 29.0.1.
 
 ## Global Constraints
 
@@ -239,7 +239,7 @@ From `frontend`, run `npm ci` and `npm run test`. Expected: fail because the Vit
 
 - [ ] **Step 3: Create pinned Vite/Tailwind/shadcn configuration**
 
-Use this exact package policy: React/React DOM `19.2.8`, TypeScript `7.0.2`, Vite `8.1.5`, `@vitejs/plugin-react` `6.0.4`, Tailwind and `@tailwindcss/vite` `4.3.3`, lucide-react `1.27.0`, Vitest `4.1.10`, Testing Library React `16.3.2`, jest-dom `7.0.0`, jsdom `30.0.1`, plus shadcn-required `@radix-ui/react-slot` `1.3.3`, class-variance-authority `0.7.1`, clsx `2.1.1`, tailwind-merge `3.6.0`, and sonner `2.0.7`. Use exact versions with no `^` or `~`, Node `>=24.11.1 <25`, and npm `>=11.12.1 <12`.
+Use this exact package policy: React/React DOM `19.2.8`, TypeScript `7.0.2`, Vite `8.1.5`, `@vitejs/plugin-react` `6.0.4`, Tailwind and `@tailwindcss/vite` `4.3.3`, lucide-react `1.27.0`, Vitest `4.1.10`, Testing Library React `16.3.2`, jest-dom `7.0.0`, jsdom `29.0.1`, plus shadcn-required `@radix-ui/react-slot` `1.3.3`, class-variance-authority `0.7.1`, clsx `2.1.1`, tailwind-merge `3.6.0`, and sonner `2.0.7`. Use exact versions with no `^` or `~`, Node `>=24.11.1 <25`, and npm `>=11.12.1 <12`.
 
 Use the official alias and Tailwind plugin setup:
 

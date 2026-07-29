@@ -1,0 +1,2 @@
+@import "tailwindcss";
+:root{font-family:Inter,"Microsoft YaHei",sans-serif;color:#f1f0f2;background:#1d1b20}body{margin:0;min-width:320px;background:#1d1b20}*{box-sizing:border-box}button:focus-visible,textarea:focus-visible{outline:2px solid #e8bd58;outline-offset:2px}
