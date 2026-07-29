@@ -1,1 +1,30 @@
-export type DeckAgent={id:string;name_zh:string;role_zh:string;integration_status:string;status:string;status_label_zh:string;safe_summary_zh:string;readiness_status?:string};export type AgentDeckSnapshot={schema_version:"agent-deck/read-model/v1";source_mode:"runtime"|"fixture";project:{id:string;name_zh:string};agents:DeckAgent[];registered_work:Array<{card_id:string;title_zh:string;summary_zh:string;topology:string[]}>;timeline:Array<{chain_id:string;status:string;status_label_zh?:string;safe_summary_zh?:string}>;delivery:{summary_zh:string};guarantees:{read_only:boolean;ui_dispatch:boolean}};export function isAgentDeckSnapshot(v:unknown):v is AgentDeckSnapshot{return !!v&&typeof v==='object'&&(v as {schema_version?:unknown}).schema_version==='agent-deck/read-model/v1'&&Array.isArray((v as {agents?:unknown}).agents)}
+export type DeckAgent = {
+  id: string
+  name_zh: string
+  role_zh: string
+  integration_status: string
+  status: string
+  status_label_zh: string
+  safe_summary_zh: string
+  readiness_status?: string
+}
+
+export type AgentDeckSnapshot = {
+  schema_version: "agent-deck/read-model/v1"
+  source_mode: "runtime" | "fixture"
+  project: { id: string; name_zh: string }
+  agents: DeckAgent[]
+  registered_work: Array<{ card_id: string; title_zh: string; summary_zh: string; topology: string[] }>
+  timeline: Array<{ chain_id: string; status: string; status_label_zh?: string; safe_summary_zh?: string }>
+  delivery: { summary_zh: string }
+  guarantees: { read_only: boolean; ui_dispatch: boolean }
+}
+
+export function isAgentDeckSnapshot(value: unknown): value is AgentDeckSnapshot {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      (value as { schema_version?: unknown }).schema_version === "agent-deck/read-model/v1" &&
+      Array.isArray((value as { agents?: unknown }).agents),
+  )
+}

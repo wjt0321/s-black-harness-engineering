@@ -1,9 +1,65 @@
 import { useEffect, useState } from "react"
-import { LayoutDashboard, ListTodo, Users, PackageCheck, Settings } from "lucide-react"
-import { TaskComposer } from "@/components/task-composer"
+import fixture from "@/fixtures/agent-deck.fixture.json"
+import { AppSidebar } from "@/components/app-sidebar"
 import { AgentTeam } from "@/components/agent-team"
 import { CollaborationTimeline } from "@/components/collaboration-timeline"
+import { DeliveryPanel } from "@/components/delivery-panel"
+import { RuntimeStatePanel } from "@/components/runtime-state"
+import { TaskComposer } from "@/components/task-composer"
+import type { AgentDeckSnapshot } from "@/lib/agent-deck-types"
 import { loadAgentDeckSnapshot, type RuntimeState } from "@/lib/load-agent-deck-snapshot"
 
-const navigation=[['新建任务',ListTodo],['任务看板',LayoutDashboard],['Agent 团队',Users],['交付与验收',PackageCheck],['设置',Settings]] as const
-export default function App(){const [runtime,setRuntime]=useState<RuntimeState>({kind:'loading'});useEffect(()=>{void loadAgentDeckSnapshot().then(setRuntime)},[]);const snapshot=runtime.kind==='live'?runtime.snapshot:null;return <div className="min-h-screen bg-zinc-950 text-zinc-100 md:grid md:grid-cols-[260px_1fr]"><aside className="border-r border-zinc-800 bg-zinc-900 p-5"><h1 className="text-xl font-semibold tracking-tight">Agent Deck<span className="text-amber-300">.</span></h1><p className="mt-1 text-sm text-zinc-500">聚合式 Agent 工作台</p><nav aria-label="主导航" className="mt-8 space-y-1">{navigation.map(([label,Icon],i)=><button key={label} className={'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm '+(i===0?'bg-zinc-800 text-white':'text-zinc-400 hover:bg-zinc-800')}><Icon className="size-4"/>{label}</button>)}</nav><div className="mt-10 border-t border-zinc-800 pt-5"><p className="text-xs uppercase tracking-wider text-zinc-500">项目</p><p className="mt-2 rounded-lg bg-zinc-800 px-3 py-2 text-sm">Agent Runtime</p></div></aside><main aria-label="Agent Deck 工作台" className="p-5 md:p-8"><header className="mb-7"><p className="text-sm text-amber-200">本地优先 · Harness 受控底座</p><h2 className="mt-1 text-3xl font-semibold">把目标交给团队</h2><p className="mt-2 text-zinc-400">发布目标、观察协作、验收结果。P0 不会从此界面直接派发任何 Agent。</p></header><TaskComposer/>{runtime.kind!=='live'&&<div className="mt-5 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">{runtime.kind==='loading'?'正在读取安全快照…':runtime.message}</div>}{snapshot&&<><div className="mt-5 flex items-center gap-2 text-sm"><span className="rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-300">实时快照</span><span className="text-zinc-500">{snapshot.project.name_zh}</span></div><div className="mt-5"><AgentTeam agents={snapshot.agents}/></div><div className="mt-5 grid gap-5 xl:grid-cols-2"><CollaborationTimeline snapshot={snapshot}/><section className="rounded-xl border border-zinc-800 bg-zinc-900 p-4"><h2 className="text-lg font-semibold">交付与验收</h2><p className="mt-3 text-sm text-zinc-300">{snapshot.delivery.summary_zh}</p><p className="mt-4 text-sm text-zinc-500">已登记试运行：{snapshot.registered_work.length} 项。最终通过、要求修改与有限放弃仍在既有受控 GUI 中完成。</p></section></div></>}</main></div>}
+type WorkbenchState = RuntimeState | { kind: "fixture"; snapshot: AgentDeckSnapshot }
+const demoSnapshot = fixture as AgentDeckSnapshot
+
+function initialWorkbenchState(): WorkbenchState {
+  return new URLSearchParams(window.location.search).has("demo")
+    ? { kind: "fixture", snapshot: demoSnapshot }
+    : { kind: "loading" }
+}
+
+export default function App() {
+  const [runtime, setRuntime] = useState<WorkbenchState>(initialWorkbenchState)
+
+  useEffect(() => {
+    if (runtime.kind === "fixture") return
+    void loadAgentDeckSnapshot().then(setRuntime)
+  }, [runtime.kind])
+
+  const snapshot = runtime.kind === "live" || runtime.kind === "fixture" ? runtime.snapshot : null
+  const isFixture = runtime.kind === "fixture"
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 md:grid md:grid-cols-[260px_1fr]">
+      <AppSidebar />
+      <main aria-label="Agent Deck 工作台" className="p-5 md:p-8">
+        <header className="mb-7">
+          <p className="text-sm text-amber-200">本地优先 · Harness 受控底座</p>
+          <h2 className="mt-1 text-3xl font-semibold">把目标交给团队</h2>
+          <p className="mt-2 text-zinc-400">发布目标、观察协作、验收结果。P0 不会从此界面直接派发任何 Agent。</p>
+        </header>
+
+        <TaskComposer />
+        {runtime.kind !== "live" && runtime.kind !== "fixture" && <RuntimeStatePanel state={runtime} />}
+        {snapshot && (
+          <>
+            <div className="mt-5 flex items-center gap-2 text-sm">
+              <span className={`rounded-full px-3 py-1 ${isFixture ? "bg-sky-400/15 text-sky-200" : "bg-emerald-400/15 text-emerald-300"}`}>
+                {isFixture ? "演示数据" : "实时快照"}
+              </span>
+              <span className="text-zinc-500">{snapshot.project.name_zh}</span>
+            </div>
+            <div className="mt-5"><AgentTeam agents={snapshot.agents} /></div>
+            <div className="mt-5 grid gap-5 xl:grid-cols-2">
+              <CollaborationTimeline snapshot={snapshot} />
+              <DeliveryPanel
+                registeredWorkCount={snapshot.registered_work.length}
+                summary={snapshot.delivery.summary_zh}
+              />
+            </div>
+          </>
+        )}
+      </main>
+    </div>
+  )
+}

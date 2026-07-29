@@ -1,0 +1,58 @@
+{
+  "schema_version": "agent-deck/read-model/v1",
+  "source_mode": "fixture",
+  "project": { "id": "agent-runtime", "name_zh": "Agent Runtime" },
+  "agents": [
+    {
+      "id": "pi-local",
+      "name_zh": "Pi",
+      "role_zh": "执行 Agent（试运行）",
+      "integration_status": "pilot",
+      "status": "idle",
+      "status_label_zh": "空闲",
+      "safe_summary_zh": "已登记为只读状态投影试运行成员。",
+      "readiness_status": "ready"
+    },
+    {
+      "id": "omp-local",
+      "name_zh": "OMP",
+      "role_zh": "协作 Agent（试运行）",
+      "integration_status": "pilot",
+      "status": "idle",
+      "status_label_zh": "空闲",
+      "safe_summary_zh": "已登记为只读状态投影试运行成员。",
+      "readiness_status": "ready"
+    },
+    {
+      "id": "codex-cli",
+      "name_zh": "Codex CLI",
+      "role_zh": "代码 Agent",
+      "integration_status": "not_integrated",
+      "status": "pending",
+      "status_label_zh": "待接入",
+      "safe_summary_zh": "尚未接入真实状态或执行能力。"
+    },
+    {
+      "id": "claude-code",
+      "name_zh": "Claude Code",
+      "role_zh": "代码 Agent",
+      "integration_status": "not_integrated",
+      "status": "pending",
+      "status_label_zh": "待接入",
+      "safe_summary_zh": "尚未接入真实状态或执行能力。"
+    },
+    {
+      "id": "kimi-code",
+      "name_zh": "Kimi Code",
+      "role_zh": "代码 Agent",
+      "integration_status": "not_integrated",
+      "status": "pending",
+      "status_label_zh": "待接入",
+      "safe_summary_zh": "尚未接入真实状态或执行能力。"
+    }
+  ],
+  "registered_work": [],
+  "timeline": [],
+  "delivery": { "summary_zh": "演示数据；未触发任何真实执行。" },
+  "guarantees": { "read_only": true, "ui_dispatch": false }
+}

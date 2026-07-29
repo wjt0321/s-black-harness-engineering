@@ -6,12 +6,12 @@
 
 - 里程碑：阶段 93 已于 2026-07-29 完成真实 Pi/OMP GUI 有限放弃验收
 - 产品主线：2026-07-29 已重置为聚合式 Agent 平台（Agent Deck）；Harness 作为可信底层
-- 当前状态：阶段 94 的 Agent Deck P0 设计与实施计划均已获确认，等待实施授权
+- 当前状态：阶段 94 的 P0 工作台基础已实现并提交；真实 Pi/OMP 前台试运行等待新鲜宿主状态与浏览器验收
 - 活跃 `docs/` 根目录为 29 份；阶段 93 及此前的已验收阶段均已归档
 
 ## 当前阶段
 
-- **阶段 94 — Agent Deck 工作台基础（设计中）。** 建设项目、任务、Agent 团队、协作时间线和交付/验收的产品主路径；Pi/OMP 先作为真实试运行团队，Codex CLI、Claude Code、Kimi Code 等以统一待接入模型出现。
+- **阶段 94 — Agent Deck 工作台基础（实施中）。** 已建设项目、任务、Agent 团队、协作时间线和交付/验收的产品主路径；Pi/OMP 先作为真实试运行团队，Codex CLI、Claude Code、Kimi Code 等以统一待接入模型出现。
 - 当前事实源：`143-agent-deck-platform-mvp.md`；完整设计稿：`superpowers/specs/2026-07-29-agent-deck-platform-mvp-design.md`。
 - 阶段 93 已验收基线：`archive/142-stage93-pending-final-decision-abandonment.md`；Pi/OMP 的固定受控链路、证据与最终决定继续作为 P0 的底层试运行能力。
 
@@ -50,6 +50,7 @@ python -m agent_runtime.cli doctor
 
 ## 下一步推荐入口
 
-- **阶段 94 — 按 P0 实施计划开始 Agent Deck 工作台基础。**
+- **阶段 94 — 完成 Pi/OMP 前台真实试运行。**
   - 实施计划：`docs/superpowers/plans/2026-07-29-agent-deck-p0-implementation-plan.md`
-  - 重点：先完成安全 read model 与固定快照，再做工作台；Pi/OMP 只作为真实只读投影和既有 GUI 试运行，不回到以取消、恢复或单一底层控制能力为主线。
+  - 2026-07-29T10:24:13Z 的真实安全快照已如实显示 Pi 的未绑定会话与 OMP 的过期状态；等待新鲜观察后重新导出，并在浏览器前台核验真实状态、已登记工作项和安全时间线。
+  - 不得回到以取消、恢复或单一底层控制能力为主线，也不得让 React 派发任何 Agent。
