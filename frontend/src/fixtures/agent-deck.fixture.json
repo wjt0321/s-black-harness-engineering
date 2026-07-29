@@ -52,6 +52,16 @@
     }
   ],
   "registered_work": [],
+  "task_queue": [
+    {
+      "task_id": "task-20260729-001",
+      "title_zh": "梳理 Agent Deck 任务工作区",
+      "status": "in_progress",
+      "status_label_zh": "进行中",
+      "assignee_label_zh": "已分配",
+      "updated_at": "2026-07-29T11:30:00Z"
+    }
+  ],
   "timeline": [],
   "delivery": { "summary_zh": "演示数据；未触发任何真实执行。" },
   "guarantees": { "read_only": true, "ui_dispatch": false }

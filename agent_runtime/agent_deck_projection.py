@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,10 +12,14 @@ from typing import Any
 
 from .control_panel_live_gui import build_live_control_panel_snapshot
 from .orchestration_control_panel_registered_work import load_registered_work_inbox
+from .policy import check_text
+from .tasks import load_tasks
 from .result import EXIT_ERROR, EXIT_PASS, Finding
 
 AGENT_DECK_SCHEMA_VERSION = "agent-deck/read-model/v1"
 MAX_CHAIN_LIMIT = 20
+MAX_TASK_QUEUE_LIMIT = 12
+MAX_TASK_TITLE_LENGTH = 120
 SNAPSHOT_RELATIVE_PATH = Path(".runtime/agent-deck/v1/agent-deck.snapshot.json")
 MAX_SNAPSHOT_BYTES = 131_072
 _PENDING_AGENTS = (
@@ -108,6 +113,63 @@ def _safe_timeline(value: object) -> list[dict[str, object]]:
     return sorted(records, key=lambda item: str(item["chain_id"]))[:MAX_CHAIN_LIMIT]
 
 
+_TASK_ID_RE = re.compile(r"^task-[0-9]{8}-[0-9]{3,}$")
+_TASK_STATUS_LABELS = {
+    "created": "已创建",
+    "pending": "待处理",
+    "in_progress": "进行中",
+    "blocked": "已阻塞",
+    "finished": "已完成",
+    "failed": "失败",
+}
+
+
+def _safe_task_title(root: Path, value: object) -> str:
+    if not isinstance(value, str):
+        return "任务内容已隐藏"
+    normalized = value.strip()
+    if not normalized or len(normalized) > MAX_TASK_TITLE_LENGTH or "\n" in normalized or "\r" in normalized:
+        return "任务内容已隐藏"
+    if check_text(root, normalized).status != "pass":
+        return "任务内容已隐藏"
+    return normalized
+
+
+def _safe_task_queue(root: Path) -> list[dict[str, str]]:
+    records: list[dict[str, str]] = []
+    try:
+        source = load_tasks(root)
+    except (OSError, ValueError):
+        return records
+    if not isinstance(source, list):
+        return records
+    candidates = [item for item in source if isinstance(item, dict)]
+    candidates.sort(key=lambda item: str(item.get("updated_at", "")), reverse=True)
+    for item in candidates:
+        task_id = item.get("id")
+        status = item.get("status")
+        updated_at = item.get("updated_at")
+        if not isinstance(task_id, str) or not _TASK_ID_RE.fullmatch(task_id):
+            continue
+        if not isinstance(status, str) or status not in _TASK_STATUS_LABELS:
+            continue
+        if not isinstance(updated_at, str) or len(updated_at) > 40:
+            continue
+        records.append(
+            {
+                "task_id": task_id,
+                "title_zh": _safe_task_title(root, item.get("title")),
+                "status": status,
+                "status_label_zh": _TASK_STATUS_LABELS[status],
+                "assignee_label_zh": "已分配" if isinstance(item.get("assignee"), str) and bool(item.get("assignee").strip()) else "未分配",
+                "updated_at": updated_at,
+            }
+        )
+        if len(records) >= MAX_TASK_QUEUE_LIMIT:
+            break
+    return records
+
+
 def _invalid(evaluated_at: str, code: str, message: str) -> AgentDeckSnapshot:
     payload: dict[str, Any] = {
         "status": "validation_failed",
@@ -151,8 +213,9 @@ def build_agent_deck_snapshot(root: Path, *, evaluated_at: str, chain_limit: int
         "agents": agents,
         "registered_work": sorted(cards, key=lambda item: str(item.get("card_id", "")) if isinstance(item, dict) else ""),
         "tasks": [],
+        "task_queue": _safe_task_queue(root.resolve()),
         "timeline": _safe_timeline(chains),
-        "delivery": {"summary_zh": "P0 仅展示安全摘要；最终业务决定仍由既有受控 GUI 完成。"},
+        "delivery": {"summary_zh": "任务草案与真实任务队列分开展示；最终业务决定仍由既有受控 GUI 完成。"},
         "findings": list(live.get("findings", [])) if isinstance(live, dict) and isinstance(live.get("findings"), list) else [],
         "guarantees": {"read_only": True, "accesses_network": False, "executes_commands": False, "ui_dispatch": False},
     }

@@ -6,6 +6,7 @@ import { CollaborationTimeline } from "@/components/collaboration-timeline"
 import { DeliveryPanel } from "@/components/delivery-panel"
 import { RuntimeStatePanel } from "@/components/runtime-state"
 import { TaskComposer } from "@/components/task-composer"
+import { TaskWorkspace } from "@/components/task-workspace"
 import type { AgentDeckSnapshot } from "@/lib/agent-deck-types"
 import { loadAgentDeckSnapshot, type RuntimeState } from "@/lib/load-agent-deck-snapshot"
 
@@ -20,6 +21,7 @@ function initialWorkbenchState(): WorkbenchState {
 
 export default function App() {
   const [runtime, setRuntime] = useState<WorkbenchState>(initialWorkbenchState)
+  const [draftGoal, setDraftGoal] = useState<string | null>(null)
 
   useEffect(() => {
     if (runtime.kind === "fixture") return
@@ -39,7 +41,7 @@ export default function App() {
           <p className="mt-2 text-zinc-400">发布目标、观察协作、验收结果。P0 不会从此界面直接派发任何 Agent。</p>
         </header>
 
-        <TaskComposer />
+        <TaskComposer onProposalChange={setDraftGoal} />
         {runtime.kind !== "live" && runtime.kind !== "fixture" && <RuntimeStatePanel state={runtime} />}
         {snapshot && (
           <>
@@ -49,6 +51,7 @@ export default function App() {
               </span>
               <span className="text-zinc-500">{snapshot.project.name_zh}</span>
             </div>
+            <div className="mt-5"><TaskWorkspace draftGoal={draftGoal} tasks={snapshot.task_queue ?? []} /></div>
             <div className="mt-5"><AgentTeam agents={snapshot.agents} /></div>
             <div className="mt-5 grid gap-5 xl:grid-cols-2">
               <CollaborationTimeline snapshot={snapshot} />

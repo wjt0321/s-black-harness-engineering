@@ -23,7 +23,7 @@ describe("Agent Deck application shell", () => {
     render(<App />)
 
     expect(screen.getByText("演示数据")).toBeInTheDocument()
-    expect(screen.getAllByText("Pi")).toHaveLength(2)
+    expect(screen.getAllByText("Pi")).toHaveLength(1)
     expect(screen.queryByText("实时快照")).not.toBeInTheDocument()
   })
 })

@@ -94,3 +94,76 @@ def test_agent_deck_snapshot_marks_missing_live_member_unavailable(monkeypatch, 
     agents = projection.build_agent_deck_snapshot(tmp_path, evaluated_at="2026-07-29T09:00:00Z").to_dict()["agents"]
     assert agents[0]["status"] == "unavailable"
     assert agents[0]["status_label_zh"] == "不可用"
+
+def test_agent_deck_snapshot_projects_a_bounded_safe_task_queue(monkeypatch, tmp_path: Path) -> None:
+    from agent_runtime import agent_deck_projection as projection
+
+    class FakePanel:
+        status = "pass"
+
+        def to_dict(self):
+            return {
+                "status": "pass",
+                "snapshot_id": "sha256:" + "c" * 64,
+                "sections": {
+                    "external_agents": {"agents": []},
+                    "external_agent_chains": {"chains": []},
+                },
+                "guarantees": {"read_only": True, "accesses_network": False},
+            }
+
+    class Inbox:
+        def to_safe_dict(self):
+            return {"status": "pass", "cards": []}
+
+    tasks = [
+        {
+            "id": "task-20260729-001",
+            "title": "实现任务工作区",
+            "status": "in_progress",
+            "assignee": "orchestrator",
+            "updated_at": "2026-07-29T11:30:00Z",
+            "summary": "must not project",
+            "artifacts": ["must-not-project.py"],
+            "evidence": [{"description": "must not project"}],
+        },
+        {
+            "id": "task-20260729-002",
+            "title": "sensitive-title",
+            "status": "finished",
+            "assignee": "",
+            "updated_at": "2026-07-29T11:31:00Z",
+        },
+    ] + [
+        {
+            "id": f"task-20260728-{index:03d}",
+            "title": f"历史任务 {index}",
+            "status": "finished",
+            "assignee": "orchestrator",
+            "updated_at": "2026-07-28T11:00:00Z",
+        }
+        for index in range(3, 16)
+    ]
+    monkeypatch.setattr(projection, "build_live_control_panel_snapshot", lambda *_args, **_kwargs: FakePanel())
+    class ScanResult:
+        def __init__(self, status: str):
+            self.status = status
+
+    monkeypatch.setattr(projection, "load_registered_work_inbox", lambda *_args, **_kwargs: Inbox())
+    monkeypatch.setattr(projection, "load_tasks", lambda *_args, **_kwargs: tasks)
+    monkeypatch.setattr(projection, "check_text", lambda _root, value: ScanResult("blocked" if value.startswith("sensitive-") else "pass"))
+
+    payload = projection.build_agent_deck_snapshot(tmp_path, evaluated_at="2026-07-29T12:00:00Z").to_dict()
+
+    assert len(payload["task_queue"]) == 12
+    assert payload["task_queue"][0]["title_zh"] == "任务内容已隐藏"
+    assert next(item for item in payload["task_queue"] if item["task_id"] == "task-20260729-001") == {
+        "task_id": "task-20260729-001",
+        "title_zh": "实现任务工作区",
+        "status": "in_progress",
+        "status_label_zh": "进行中",
+        "assignee_label_zh": "已分配",
+        "updated_at": "2026-07-29T11:30:00Z",
+    }
+    assert "must not project" not in str(payload)
+    assert "must-not-project.py" not in str(payload)
