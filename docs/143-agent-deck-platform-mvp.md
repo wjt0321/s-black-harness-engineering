@@ -1,6 +1,6 @@
 # 143 — Agent Deck 聚合式 Agent 平台 MVP
 
-> 状态：**P0 工作台基础已实现并已提交；Pi/OMP 前台真实试运行等待新鲜宿主状态与浏览器验收。**
+> 状态：**P0 前台真实投影已验收；Pi/OMP 受控链路的继续试运行等待新鲜宿主状态。**
 > 日期：2026-07-29
 > 主线：聚合式 Agent 平台；Harness 为可信、安全、可追溯的底层，而非前台产品主角。
 
@@ -38,8 +38,9 @@
 
 - 已实现 `agent-deck/read-model/v1` 安全 read model、固定快照导出命令、React/Vite/Tailwind/shadcn 工作台、显式演示数据入口、浏览器会话草稿、Pi/OMP 团队卡片、协作时间线和交付/验收视图；React 不包含派发、批准、取消、恢复或命令桥接。
 - 2026-07-29T10:24:13Z 已用真实项目运行态写出固定安全快照；它如实投影 Pi 为“已连接，存在未绑定会话”、OMP 为“状态已过期”，两者 readiness 都是 `stale`。前台不得把这类状态改标为空闲、就绪或可执行。
-- 真实快照的导出成功不等于 P0 试运行验收完成：仍需在 Pi/OMP 发布新鲜观察后，于浏览器前台确认其状态、已登记工作项和安全时间线的投影；任何真实链路启动和最终业务决定仍只经既有受控 GUI。
+- 2026-07-29T10:51:10Z 已在浏览器前台核验真实快照投影：Pi 的“已连接，存在未绑定会话”、OMP 的“状态已过期”、两张已登记工作项卡及安全时间线均按快照展示；React 没有派发、批准、取消或恢复入口。
+- 这不等于 Pi/OMP 受控链路的继续试运行已通过：两宿主观察仍为 `stale`，因此不得启动已登记链路。任何真实链路启动和最终业务决定仍只经既有受控 GUI。
 
 ## 下一步
 
-实施计划已保存为 [`superpowers/plans/2026-07-29-agent-deck-p0-implementation-plan.md`](superpowers/plans/2026-07-29-agent-deck-p0-implementation-plan.md)。当前只剩 Pi/OMP 的前台真实试运行：等待新鲜宿主状态后，重新固定导出安全快照并核验浏览器投影。不得为了推进试运行而扩大 Harness 权限。
+实施计划已保存为 [`superpowers/plans/2026-07-29-agent-deck-p0-implementation-plan.md`](superpowers/plans/2026-07-29-agent-deck-p0-implementation-plan.md)。前台安全投影已完成；当前只剩 Pi/OMP 发布新鲜宿主状态后的既有 GUI 受控链路试运行、重导安全快照及最终人工业务决定。不得为了推进试运行而扩大 Harness 权限。
