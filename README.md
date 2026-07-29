@@ -14,7 +14,7 @@
 
 ## 当前状态
 
-项目已完成并归档阶段 95；产品主线为聚合式 Agent 工作台（Agent Deck），已交付 P0 安全工作台、真实 Pi/OMP 试运行以及任务草案/真实任务队列工作区；现有 Harness 作为可信底层。当前具备：
+项目已完成并归档阶段 96；产品主线为聚合式 Agent 工作台（Agent Deck），已交付 P0 安全工作台、真实 Pi/OMP 试运行、任务草案/真实任务队列工作区，以及受控正式任务登记收件箱；现有 Harness 作为可信底层。当前具备：
 
 - 统一 Agent socket registry、capability routing 与显式角色绑定；
 - 可校验的多 Agent collaboration plan，包含 work item、依赖、handoff、artifact 和 review gate；
@@ -35,6 +35,7 @@
 - 一次启动授权后的有限 `Pi → OMP → Pi` 或反向自动串行闭环，最终业务决定仍独立由人工确认；
 - 前台中文 GUI 的已登记启动入口：不暴露链路 ID、任务 ID、协作计划或目标；中间自动串行完成后自动路由到最终“通过 / 要求修改”决定；
 - 固定只读的已登记工作收件箱：从多张安全工作卡选择启动范围，不开放自由任务输入；正向与反向真实 Pi/OMP 链路均已完成。
+- 受控 Agent Deck 任务登记：有界自然语言目标可经显式 `--commit` 写入既有任务账本并显示“等待主控 Agent 规划”；这不会启动任何 Agent 或执行链路。
 
 Harness 仍不会启动、关闭或重启 Kimi、Claude、Pi 或 OMP。阶段 92 已于 2026-07-28 完成真实 GUI 验收：操作者只选择已登记工作卡、作一次启动确认与最终“通过 / 要求修改”决定；真实 `Pi → OMP → Pi` 和 `OMP → Pi → OMP` 自动串行均完成并以 `approved` 终态收束。活动工具非空、宿主忙碌、状态漂移、事件链无效、结果不安全或审阅绑定漂移时都会失败关闭。
 
@@ -77,6 +78,7 @@ git diff --check
 ## 文档入口
 
 - [`docs/000-stage-digest.md`](docs/000-stage-digest.md)：当前状态和恢复顺序。
+- [`docs/archive/146-stage96-controlled-mission-intake.md`](docs/archive/146-stage96-controlled-mission-intake.md)：受控正式任务登记、规划收件箱和安全看板投影的验收事实源。
 - [`docs/archive/145-stage95-agent-deck-mission-workspace.md`](docs/archive/145-stage95-agent-deck-mission-workspace.md)：任务草案、协作建议与真实安全任务队列的验收事实源。
 - [`docs/archive/144-stage94-agent-deck-pilot-acceptance.md`](docs/archive/144-stage94-agent-deck-pilot-acceptance.md)：Agent Deck P0、真实 Pi/OMP 试运行与最终人工通过的验收事实源。
 - [`docs/130-gui-first-external-agent-control-plane-target.md`](docs/130-gui-first-external-agent-control-plane-target.md)：GUI-first 外部 Agent 控制面长期目标、MVP 边界和反偏航检查表。

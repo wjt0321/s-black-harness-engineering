@@ -14,6 +14,7 @@ export type DeckTask = {
   title_zh: string
   status: string
   status_label_zh: string
+  planning_state_zh?: string
   assignee_label_zh: string
   updated_at: string
 }

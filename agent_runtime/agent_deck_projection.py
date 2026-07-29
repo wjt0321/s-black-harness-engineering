@@ -116,6 +116,7 @@ def _safe_timeline(value: object) -> list[dict[str, object]]:
 _TASK_ID_RE = re.compile(r"^task-[0-9]{8}-[0-9]{3,}$")
 _TASK_STATUS_LABELS = {
     "created": "已创建",
+    "planned": "等待规划",
     "pending": "待处理",
     "in_progress": "进行中",
     "blocked": "已阻塞",
@@ -155,16 +156,22 @@ def _safe_task_queue(root: Path) -> list[dict[str, str]]:
             continue
         if not isinstance(updated_at, str) or len(updated_at) > 40:
             continue
-        records.append(
-            {
-                "task_id": task_id,
-                "title_zh": _safe_task_title(root, item.get("title")),
-                "status": status,
-                "status_label_zh": _TASK_STATUS_LABELS[status],
-                "assignee_label_zh": "已分配" if isinstance(item.get("assignee"), str) and bool(item.get("assignee").strip()) else "未分配",
-                "updated_at": updated_at,
-            }
-        )
+        record = {
+            "task_id": task_id,
+            "title_zh": _safe_task_title(root, item.get("title")),
+            "status": status,
+            "status_label_zh": _TASK_STATUS_LABELS[status],
+            "assignee_label_zh": "已分配" if isinstance(item.get("assignee"), str) and bool(item.get("assignee").strip()) else "未分配",
+            "updated_at": updated_at,
+        }
+        if (
+            status == "planned"
+            and item.get("source") == "agent-deck"
+            and item.get("created_by") == "agent-deck-user"
+            and item.get("current_step") == "等待主控 Agent 规划"
+        ):
+            record["planning_state_zh"] = "等待主控 Agent 规划"
+        records.append(record)
         if len(records) >= MAX_TASK_QUEUE_LIMIT:
             break
     return records

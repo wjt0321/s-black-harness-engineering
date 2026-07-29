@@ -30,3 +30,26 @@ describe("TaskWorkspace", () => {
     expect(screen.queryByText("立即执行")).not.toBeInTheDocument()
   })
 })
+
+  it("shows a formally registered task as waiting for main-agent planning", () => {
+    render(
+      <TaskWorkspace
+        draftGoal={null}
+        tasks={[
+          {
+            task_id: "task-20260729-003",
+            title_zh: "正式登记的平台任务",
+            status: "planned",
+            status_label_zh: "等待规划",
+            planning_state_zh: "等待主控 Agent 规划",
+            assignee_label_zh: "已分配",
+            updated_at: "2026-07-29T12:00:00Z",
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText("正式登记的平台任务")).toBeInTheDocument()
+    expect(screen.getByText("等待主控 Agent 规划")).toBeInTheDocument()
+    expect(screen.queryByText("启动主控 Agent")).not.toBeInTheDocument()
+  })

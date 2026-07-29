@@ -167,3 +167,33 @@ def test_agent_deck_snapshot_projects_a_bounded_safe_task_queue(monkeypatch, tmp
     }
     assert "must not project" not in str(payload)
     assert "must-not-project.py" not in str(payload)
+
+def test_agent_deck_snapshot_marks_formally_registered_mission_waiting_for_main_plan(monkeypatch, tmp_path: Path) -> None:
+    from agent_runtime import agent_deck_projection as projection
+
+    class FakePanel:
+        status = "pass"
+        def to_dict(self):
+            return {"status": "pass", "snapshot_id": "sha256:" + "d" * 64, "sections": {"external_agents": {"agents": []}, "external_agent_chains": {"chains": []}}, "guarantees": {"read_only": True, "accesses_network": False}}
+
+    class Inbox:
+        def to_safe_dict(self):
+            return {"status": "pass", "cards": []}
+
+    monkeypatch.setattr(projection, "build_live_control_panel_snapshot", lambda *_args, **_kwargs: FakePanel())
+    monkeypatch.setattr(projection, "load_registered_work_inbox", lambda *_args, **_kwargs: Inbox())
+    monkeypatch.setattr(projection, "load_tasks", lambda *_args, **_kwargs: [{
+        "id": "task-20260729-003",
+        "title": "正式登记的平台任务",
+        "status": "planned",
+        "assignee": "main-agent",
+        "source": "agent-deck",
+        "created_by": "agent-deck-user",
+        "current_step": "等待主控 Agent 规划",
+        "updated_at": "2026-07-29T12:00:00Z",
+    }])
+
+    item = projection.build_agent_deck_snapshot(tmp_path, evaluated_at="2026-07-29T12:10:00Z").to_dict()["task_queue"][0]
+    assert item["status_label_zh"] == "等待规划"
+    assert item["planning_state_zh"] == "等待主控 Agent 规划"
+    assert "main-agent" not in str(item)

@@ -6,7 +6,8 @@
 
 - `../README.md` — 项目定位、当前能力、快速开始。
 - `000-stage-digest.md` — 当前断点和恢复顺序。
-- `archive/145-stage95-agent-deck-mission-workspace.md` — 最近验收事实源：任务草案、Pi→OMP→Pi 协作建议和真实安全任务队列。
+- `archive/146-stage96-controlled-mission-intake.md` — 最近验收事实源：受控正式任务登记、等待主控规划状态与安全看板投影。
+- `archive/145-stage95-agent-deck-mission-workspace.md` — 前序验收事实源：任务草案、Pi→OMP→Pi 协作建议和真实安全任务队列。
 - `archive/144-stage94-agent-deck-pilot-acceptance.md` — 最近验收事实源：Agent Deck P0、真实 Pi/OMP 试运行、前台安全投影与最终人工通过。
 - `archive/142-stage93-pending-final-decision-abandonment.md` — 阶段 93 已验收事实源：真实 GUI 点击有限放弃、不可变停止、证据保留与最终决定/恢复失败关闭。
 - `archive/141-stage92-registered-work-inbox.md` — 阶段 92 已验收事实源：固定只读工作收件箱、全角色只读预检、无冻结确认页与正反真实 Pi/OMP 自动串行。
@@ -57,6 +58,7 @@
 
 ## 当前事实源
 
+- `archive/146-stage96-controlled-mission-intake.md` — 已验收实现：有界目标的受控账本登记与“等待主控 Agent 规划”安全投影；无网页写入或 Agent 启动。
 - `archive/145-stage95-agent-deck-mission-workspace.md` — 已验收实现：浏览器协作草案与 Harness 安全任务队列；无网页派发。
 
 - `archive/144-stage94-agent-deck-pilot-acceptance.md` — 已验收实现：Agent Deck P0 安全工作台、Pi/OMP `Pi → OMP → Pi` 真实试运行与操作者最终通过。

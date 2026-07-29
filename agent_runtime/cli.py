@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from .agent_deck_projection import export_agent_deck_snapshot
+from .agent_deck_mission_intake import submit_agent_deck_mission
 from .adapter_approval import ApprovalCheckResult, check_adapter_approval
 from .adapter_gate import GateCheckResult, check_adapter_gate
 from .adapter_plan import PlanResult, plan_adapter_action
@@ -1585,6 +1586,27 @@ def _cmd_orchestration_workflow_plan(args: argparse.Namespace) -> int:
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
         print(result.render_human())
+    return result.exit_code()
+
+
+def _cmd_agent_deck_mission_submit(args: argparse.Namespace) -> int:
+    """Preview or formally register one bounded Agent Deck mission."""
+    result = submit_agent_deck_mission(
+        _root_path(args),
+        goal=args.goal,
+        dry_run=args.dry_run,
+        commit=args.commit,
+    )
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"状态：{payload['status']}")
+        print(f"任务编号：{payload.get('task_id') or '-'}")
+        print(f"阶段：{payload.get('phase_label_zh', '-')}")
+        for finding in payload.get("findings", []):
+            if isinstance(finding, dict):
+                print(f"- {finding.get('rule_id', 'agent-deck')}：{finding.get('message', '')}")
     return result.exit_code()
 
 
@@ -3828,6 +3850,15 @@ def build_parser() -> argparse.ArgumentParser:
     agent_deck_snapshot_parser.add_argument("--commit", action="store_true", help="原子写入固定运行时安全快照")
     _add_global_args(agent_deck_snapshot_parser)
     agent_deck_snapshot_parser.set_defaults(func=_cmd_agent_deck_snapshot)
+    agent_deck_mission_parser = agent_deck_subparsers.add_parser("mission", help="受控登记 Agent Deck 正式任务")
+    agent_deck_mission_subparsers = agent_deck_mission_parser.add_subparsers(dest="agent_deck_mission_command", required=True)
+    agent_deck_mission_submit_parser = agent_deck_mission_subparsers.add_parser("submit", help="预览或正式登记一项自然语言任务目标")
+    agent_deck_mission_submit_parser.add_argument("--goal", required=True, help="有界单段任务目标；不会作为命令或路径执行")
+    mission_mode = agent_deck_mission_submit_parser.add_mutually_exclusive_group(required=True)
+    mission_mode.add_argument("--dry-run", action="store_true", help="只预览固定账本登记，不写入文件")
+    mission_mode.add_argument("--commit", action="store_true", help="登记一项任务和一条 created 事件；不会启动 Agent")
+    _add_global_args(agent_deck_mission_submit_parser)
+    agent_deck_mission_submit_parser.set_defaults(func=_cmd_agent_deck_mission_submit)
 
     # orchestration overview
     orchestration_parser = subparsers.add_parser(

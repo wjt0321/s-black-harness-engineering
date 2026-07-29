@@ -60,6 +60,7 @@ export function TaskWorkspace({ draftGoal, tasks }: { draftGoal: string | null; 
                     <div>
                       <p className="font-medium">{task.title_zh}</p>
                       <p className="mt-1 text-xs text-zinc-500">{task.task_id} · {task.assignee_label_zh}</p>
+                      {task.planning_state_zh && <p className="mt-2 text-xs text-amber-200">{task.planning_state_zh}</p>}
                     </div>
                     <span className="rounded-full bg-zinc-800 px-2 py-1 text-xs text-zinc-200">{task.status_label_zh}</span>
                   </div>
